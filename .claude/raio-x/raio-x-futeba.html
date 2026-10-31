@@ -1,0 +1,644 @@
+<title>Raio-X Futeba dos Parças</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: relatório de vestiário — coluna de leitura de ~72ch, tabelas largas roláveis, faixa de placar no topo */
+:root{
+  --bg:#F5F7F4; --surface:#FFFFFF; --sunk:#E9EEE8; --line:#CFD8CE;
+  --fg:#18211B; --muted:#56635A; --accent:#1C6B3C; --accent-soft:#DCEDE1;
+  --bloq:#B42318; --bloq-soft:#FDE7E4; --alto:#B54708; --alto-soft:#FEF0E2;
+  --medio:#8A6A00; --medio-soft:#FBF3D5; --ok:#1C6B3C; --ok-soft:#DCEDE1;
+  --info:#2F5D8A; --info-soft:#E3ECF6;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111613; --surface:#18201B; --sunk:#1F2922; --line:#2E3B32;
+  --fg:#E6ECE7; --muted:#9AA89E; --accent:#6CCB8E; --accent-soft:#1E3A28;
+  --bloq:#FF8A7A; --bloq-soft:#3D1D19; --alto:#FFB067; --alto-soft:#3A2614;
+  --medio:#E8C766; --medio-soft:#352D12; --ok:#6CCB8E; --ok-soft:#1E3A28;
+  --info:#8DB7E3; --info-soft:#1B2A3A; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#111613; --surface:#18201B; --sunk:#1F2922; --line:#2E3B32;
+  --fg:#E6ECE7; --muted:#9AA89E; --accent:#6CCB8E; --accent-soft:#1E3A28;
+  --bloq:#FF8A7A; --bloq-soft:#3D1D19; --alto:#FFB067; --alto-soft:#3A2614;
+  --medio:#E8C766; --medio-soft:#352D12; --ok:#6CCB8E; --ok-soft:#1E3A28;
+  --info:#8DB7E3; --info-soft:#1B2A3A; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1040px;margin:0 auto}
+.prose{max-width:72ch}
+header.top{padding-block:40px 24px;border-bottom:3px solid var(--accent);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(36px,6vw,56px);line-height:1;margin:8px 0 12px;text-wrap:balance;letter-spacing:.01em}
+h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.1;margin:56px 0 8px;text-wrap:balance;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-family:var(--display);font-weight:600;font-size:21px;margin:28px 0 6px;letter-spacing:.01em}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.88em;background:var(--sunk);padding:1px 5px;border-radius:4px;word-break:break-word}
+.lede{font-size:17px;color:var(--fg);max-width:72ch}
+.meta{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:18px;font-size:13.5px}
+nav.toc a{text-decoration:none;color:var(--muted);border-bottom:1px dotted var(--line)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);outline:none;border-bottom-color:var(--accent)}
+/* placar */
+.score{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:22px 0 6px}
+.score div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.score b{display:block;font-family:var(--display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.score span{font-size:12.5px;color:var(--muted)}
+.score .r b{color:var(--bloq)} .score .o b{color:var(--alto)} .score .g b{color:var(--ok)}
+/* veredito */
+.verdict{background:var(--bloq-soft);border-left:4px solid var(--bloq);padding:14px 18px;border-radius:0 8px 8px 0;margin:18px 0}
+.verdict strong{color:var(--bloq)}
+.callout{background:var(--info-soft);border-left:4px solid var(--info);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14.5px}
+/* chips */
+.chip{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 7px;border-radius:999px;white-space:nowrap;vertical-align:1px}
+.c-bloq{background:var(--bloq-soft);color:var(--bloq)} .c-alto{background:var(--alto-soft);color:var(--alto)}
+.c-medio{background:var(--medio-soft);color:var(--medio)} .c-ok{background:var(--ok-soft);color:var(--ok)}
+.c-info{background:var(--info-soft);color:var(--info)} .c-nt{background:var(--sunk);color:var(--muted)}
+/* tabelas */
+.tbl{overflow-x:auto;margin:10px 0 18px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:8px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--sunk);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono)}
+/* listas */
+ul,ol{padding-left:22px;margin:6px 0 14px} li{margin:4px 0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.cols > *{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.panel h3{margin-top:0}
+/* fases */
+.phase{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:16px 0;overflow:hidden}
+.phase > .ph{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;padding:12px 16px;background:var(--sunk);border-bottom:1px solid var(--line)}
+.phase .ph b{font-family:var(--display);font-size:22px;letter-spacing:.01em}
+.phase .ph .when{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.phase .pb{padding:12px 16px}
+.gate{margin-top:10px;padding:10px 12px;border:1px dashed var(--accent);border-radius:8px;font-size:14px}
+.gate b{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto}
+.foot{margin-top:56px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Diagnóstico completo · 31/10/2026 · master <code>966ab168</code> (#4386)</div>
+  <h1>Raio-X Futeba dos Parças</h1>
+  <p class="lede">Acessos, ferramentas, histórico, backlog, dados e fluxos, segurança, produto e o plano de evolução para o lançamento público. Levantado por um time de 8 especialistas (Opus, Sonnet, Haiku e Explore) e conferido por leitura direta do código e de produção.</p>
+  <div class="score">
+    <div class="r"><b>7</b><span>bloqueadores confirmados</span></div>
+    <div class="o"><b>14</b><span>riscos altos</span></div>
+    <div><b>18</b><span>contas em produção</span></div>
+    <div><b>173</b><span>Cloud Functions em produção</span></div>
+    <div><b>~104</b><span>coleções no Firestore</span></div>
+    <div class="g"><b>3</b><span>issues abertas</span></div>
+    <div><b>1.457</b><span>commits no master</span></div>
+  </div>
+  <nav class="toc" aria-label="Seções">
+    <a href="#veredito">Veredito</a><a href="#acessos">Acessos</a><a href="#ambiente">Ambiente</a><a href="#historico">Histórico</a>
+    <a href="#backlog">Issues e épicos</a><a href="#cicd">CI/CD e lojas</a><a href="#publico">Presença pública</a>
+    <a href="#dados">Dados e fluxos</a><a href="#seguranca">Segurança e LGPD</a><a href="#produto">Produto</a>
+    <a href="#escala">Escala e custo</a><a href="#plano">Plano de lançamento</a><a href="#decisoes">Decisões suas</a>
+  </nav>
+</header>
+
+<section id="veredito" class="prose">
+  <h2>Veredito</h2>
+  <div class="verdict"><strong>Não está pronto para lançamento público.</strong> O produto é grande e maduro na web e no Android, a base de código é bem testada (≈590 arquivos de teste) e as regras de segurança cobrem bem os dados mais sensíveis. O que impede abrir as portas é um conjunto pequeno e bem definido de problemas. Os de código levam de 1 a 5 dias cada; revisão das lojas, revisão jurídica e assinatura do iOS dependem de terceiros e de você.</div>
+  <h3>Os 7 bloqueadores (todos conferidos no código ou em produção)</h3>
+  <ol>
+    <li><span class="chip c-bloq">bloqueador</span> <b>Excluir conta não funciona.</b> Web e Android chamam a callable <code>deleteAccount</code>, que não existe em produção (só num arquivo de exemplo, <code>functions/src/middleware/rate-limiter.example.ts:66</code>). A sonda HTTP devolve 404. iOS nem tem o botão. Viola a política do Google Play, a regra 5.1.1(v) da App Store e o art. 18 VI da LGPD. Sem issue aberta.</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>Política de privacidade defasada.</b> A versão no ar é de 29/12/2025 e não declara CPF, telefone, GPS, DMs, vídeos, pagamentos nem comprovantes. Faltam base legal, encarregado, retenção e direitos do titular.</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>Fotos e vídeos de jogos privados legíveis por qualquer conta.</b> <code>firestore.rules:4505</code> e <code>:4546</code> usam <code>allow read: if isAuthenticated()</code>, o que inclui listar a coleção inteira, e a URL guarda token de download.</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>CI parado.</b> Nenhum runner self-hosted está registrado; 26 execuções esperam na fila desde 29/10. Sem CI, nenhum gate protege o master, e a proteção de branch não existe no plano free (API devolve 403).</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>O app não está publicado.</b> A Play Store responde 404 para <code>com.futebadosparcas</code> (a 1.41.0 está em revisão desde 12/10, #4201) e a App Store não tem o app. O iOS não tem caminho de publicação: 0 certificados de assinatura no Mac e nenhum secret de iOS no GitHub.</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>Nenhum alerta chega a uma pessoa.</b> 0 canais de notificação, 0 uptime checks, Error Reporting desligado. Uma queda no domingo à noite só seria notada por reclamação.</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>Banco sem backup.</b> 0 agendas de backup, nenhum export, proteção contra exclusão desligada; só 7 dias de PITR.</li>
+  </ol>
+  <h3>O que está bom</h3>
+  <ul>
+    <li>Web completa (95 rotas), traduzida em pt/en/es com paridade total, site rápido (0,25 s), HSTS, CSP e SEO corretos.</li>
+    <li>Regras protegem bem perfil, PII (<code>users_private</code>), localização com consentimento, DMs, XP e estatísticas (só o servidor escreve).</li>
+    <li>82 das 83 callables exportadas exigem App Check no código (a exceção, syncFieldOwnerClaim, roda antes do token ficar pronto e tem auth + rate limit); rate limit em ~70; nenhuma função HTTP pública.</li>
+    <li>Zero segredos vazados no repositório e no histórico (gitleaks).</li>
+    <li>85 issues fechadas em outubro. Atenção: pelo menos 3 frentes foram fechadas sem a correção chegar a produção (exclusão de conta #1029/#1142/#1166, política de privacidade #3301/#1967, App Check #3869/#3991).</li>
+  </ul>
+</section>
+
+<section id="acessos">
+  <h2>Acessos</h2>
+  <p class="prose">Cada linha foi testada nesta sessão com uma chamada real, somente leitura.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Acesso</th><th>Estado</th><th>Evidência</th><th>O que falta</th></tr></thead>
+    <tbody>
+      <tr><td>GitHub CLI (pessoal/TF)</td><td><span class="chip c-ok">ok</span></td><td><code>renanlocatizfernandes</code> ativo, escopos repo, workflow, read:org</td><td>—</td></tr>
+      <tr><td>GitHub CLI (Prime DB)</td><td><span class="chip c-ok">ok</span></td><td><code>renanfernandesprimedb</code> logado, inativo (correto)</td><td>—</td></tr>
+      <tr><td>Git por SSH</td><td><span class="chip c-ok">ok</span></td><td><code>github.com-personal</code> e <code>github.com-work</code> autenticam; <code>ls-remote</code> ok</td><td>—</td></tr>
+      <tr><td>SSH servidores TF</td><td><span class="chip c-ok">ok</span></td><td><code>v3-tfbot</code> e <code>tf-atendimento-prod</code> (prod01, via WireGuard conectado)</td><td>—</td></tr>
+      <tr><td>Firebase CLI</td><td><span class="chip c-ok">ok</span></td><td>15.23.0, <code>renankakinho69@gmail.com</code>, projeto <code>futebadosparcas</code></td><td>—</td></tr>
+      <tr><td>Google Cloud (gcloud)</td><td><span class="chip c-ok">ok</span></td><td>Token válido; leitura de Functions e API do App Check funcionando</td><td><span class="chip c-alto">alto</span> A service account admin <code>firebase-adminsdk-fbsvc@</code> tem <b>5 chaves gerenciadas por usuário ativas</b> (jan a jun/2026) e uma delas está credenciada no gcloud local. O AGENTS.md marca a chave como "a revogar"</td></tr>
+      <tr><td>OCI perfil TECHFERNANDES</td><td><span class="chip c-ok">ok</span></td><td>44 regiões listadas</td><td>—</td></tr>
+      <tr><td>OCI perfil DEFAULT</td><td><span class="chip c-ok">ok</span></td><td>44 regiões listadas</td><td>—</td></tr>
+      <tr><td>Bitwarden (cofre)</td><td><span class="chip c-alto">bloqueado</span></td><td><code>bw</code> locked; <code>bw-agent</code> locked com conta certa</td><td>Você: <code>export BW_SESSION="$(bw unlock --raw)"</code> e <code>bw-agent start</code></td></tr>
+      <tr><td>Bitwarden Secrets Manager</td><td><span class="chip c-ok">ok</span></td><td>Projeto <code>futeba-web</code>: 12 segredos acessíveis</td><td>—</td></tr>
+      <tr><td>Runners do GitHub Actions</td><td><span class="chip c-bloq">falha</span></td><td>API lista só 2 runners Windows offline; <code>~/actions-runner-2</code> sem registro (<code>.runner</code> ausente)</td><td>Registrar de novo o runner do Mac (precisa de token de registro gerado por você)</td></tr>
+      <tr><td>Proteção do master</td><td><span class="chip c-alto">indisponível</span></td><td>HTTP 403: exige GitHub Pro ou repo público</td><td>Decisão sua: GitHub Team/Pro ou disciplina + hook local</td></tr>
+      <tr><td>Play Console</td><td><span class="chip c-nt">indireto</span></td><td>Secret <code>PLAY_STORE_SERVICE_ACCOUNT_JSON</code> existe; não há acesso local</td><td>Confirmar no console o estado da revisão da 1.41.0</td></tr>
+      <tr><td>App Store Connect / assinatura iOS</td><td><span class="chip c-bloq">falha</span></td><td>0 identidades de assinatura no Keychain; nenhum secret de iOS no GitHub</td><td>Certificado de distribuição, provisioning profile e chave da API (você)</td></tr>
+      <tr><td>Xcode 27.1</td><td><span class="chip c-ok">ok</span></td><td>Primeira checagem saiu com 69; a consulta ao <code>simctl</code> instalou um componente pendente do simulador e a segunda checagem saiu com 0</td><td>—</td></tr>
+      <tr><td>Android SDK</td><td><span class="chip c-ok">ok</span></td><td><code>android-36</code> instalado; nenhum aparelho conectado; pacote do emulador não instalado</td><td>Instalar o emulador pelo SDK Manager se quiser testes locais</td></tr>
+      <tr><td>Conectores do Claude</td><td><span class="chip c-ok">ok</span></td><td>Microsoft 365, Gmail, Drive, Calendar, Claude Docs, Context7, FinOps, Wiki PrimeDB, Word, PowerPoint, Mac, agendador</td><td>Plugin GitHub MCP desligado (o <code>gh</code> cobre). Dezenas de plugins de vendas e marketing pedem login via <code>/mcp</code>, mas não servem a este projeto</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ambiente">
+  <h2>Ambiente e ferramentas</h2>
+  <div class="cols">
+    <div class="panel">
+      <h3>Toolchain</h3>
+      <ul>
+        <li><span class="chip c-ok">ok</span> mise, Node 22.23.4 (pelo <code>.nvmrc</code>), Java 21.0.12, Python 3.14.9, Go 1.27.3</li>
+        <li><span class="chip c-ok">ok</span> CocoaPods 1.17.0, firebase-tools 15.23.0, gh, chezmoi, jq, gitleaks, bw, bws, oci</li>
+        <li><span class="chip c-ok">ok</span> <code>node_modules</code> de <code>web/</code> e <code>functions/</code> presentes</li>
+        <li><span class="chip c-medio">atenção</span> Docker parado; fastlane fora do PATH (as lanes do <code>fastlane/</code> não rodam local)</li>
+        <li><span class="chip c-medio">atenção</span> Ollama com 5 modelos, nenhum gerador de código (o <code>deepcoder:14b</code> foi removido)</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Mac</h3>
+      <ul>
+        <li>macOS 27.0.1, 24 GB de RAM, ligado há 21 dias</li>
+        <li><span class="chip c-alto">alto</span> Memória no limite: ~145 MB livres e ~7 GB comprimidos, carga 5 a 7</li>
+        <li><span class="chip c-medio">atenção</span> Disco de dados em 75% (229 GB livres)</li>
+        <li><span class="chip c-medio">atenção</span> <code>sleep=1</code>: o Mac só fica acordado enquanto o Claude segura. Já matou execuções agendadas antes</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Claude Code</h3>
+      <ul>
+        <li>Versão 2.1.294, plano Ultra, 19% da cota semanal usada (renova 01/11)</li>
+        <li>14 plugins ativos; hook de início de sessão; MCP <code>headroom</code></li>
+        <li><span class="chip c-alto">alto</span> As duas auditorias diárias (<code>daily-find-bugs-firebase-functions</code> e <code>daily-best-visual</code>) estão <b>desligadas</b> desde 30/09. Isso explica a lacuna de um mês nas auditorias</li>
+        <li>Memória do projeto: 187 arquivos, índice com 16,8 KB (perto do limite de 17,1 KB)</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Repositório local</h3>
+      <ul>
+        <li><span class="chip c-alto">alto</span> O checkout está em <code>chore/release-2026-10-01</code>, <b>131 commits atrás</b> do master. O único commit próprio já entrou no master (#4176). Pode ser descartado</li>
+        <li>10 worktrees e 12 stashes acumulados</li>
+        <li><code>CLAUDE.md</code> desatualizado: diz que o CMP Phase 3/4 está "planejado" (entrou em maio) e cita ~20 testes de functions (são ~129)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="historico">
+  <h2>Histórico: tudo que foi feito</h2>
+  <p class="prose">10 meses, 1.457 commits no master, cerca de 1.156 PRs e 342 tags. O ritmo explodiu em maio, quando o trabalho passou a ser feito por frotas de agentes.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Período</th><th>Fase</th><th>Marcos</th></tr></thead>
+    <tbody>
+      <tr><td>dez/2025 – jan/2026</td><td>Base Android</td><td>Primeiro commit 30/12/2025; endurecimento do Firebase; App Check em debug; Google Sign-In; módulo KMP (04/01)</td></tr>
+      <tr><td>fev/2026</td><td>Endurecimento e iOS KMP</td><td>iOS KMP fase 1 (01/02); custom claims PERF_001 (03/02); CMP Phase 0, Hilt→Koin e GitLive no mesmo dia (19/02, #159–#161); <b>web reescrita em React</b> (#194, 23/02)</td></tr>
+      <tr><td>mar – abr/2026</td><td>Pausa</td><td>22 e 17 commits; telas web completas (#210); 76 bugs de functions corrigidos</td></tr>
+      <tr><td>mai/2026</td><td>Explosão (512 commits, 477 PRs)</td><td>App Check com enforce na web; telefone + CPF; correção de escalada de privilégio (#454); pipeline da Play Store (#524); <b>CMP Phase 3: UI compartilhada para iOS</b> (#561); auditorias diárias começam</td></tr>
+      <tr><td>jun – jul/2026</td><td>Produto social e paridade</td><td>Tags por plataforma; primeira versão iOS com tag (1.6.1, 10/07); Auth Overhaul; rede social; Jogo ao Vivo; 31 decisões registradas em julho</td></tr>
+      <tr><td>ago/2026</td><td>Desaceleração</td><td>39 commits; release 1.56.9 / 1.39.5 / 1.12.6 / iOS 1.7.2 (28/08)</td></tr>
+      <tr><td>set/2026</td><td>Parado</td><td><b>0 commits</b>; recuperação de branches em 05/09 (24 tags <code>archive/</code>)</td></tr>
+      <tr><td>01 – 12/out/2026</td><td>Retomada</td><td>144 commits: release 1.57/1.40/1.13/iOS 1.8 (06/10); quadras em 10+ cidades; SEO e prerender; workflow TestFlight; promoção gradual na Play (#4258); requisitos de 16 KB e edge-to-edge; <b>Android 1.41.0</b> (12/10)</td></tr>
+      <tr><td>13 – 31/out/2026</td><td>Parado</td><td>Nenhum commit no master há 19 dias; CI sem runner desde 29/10</td></tr>
+    </tbody>
+  </table></div>
+  <div class="cols">
+    <div class="panel">
+      <h3>Versões atuais (master)</h3>
+      <div class="tbl" style="margin:0"><table style="min-width:0">
+        <tbody>
+          <tr><td>Web</td><td class="num">1.59.0</td></tr>
+          <tr><td>Android</td><td class="num">1.41.0 (82)</td></tr>
+          <tr><td>iOS</td><td class="num">1.8.0 (24)</td></tr>
+          <tr><td>Functions</td><td class="num">1.13.0</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="panel">
+      <h3>Specs (SDD)</h3>
+      <p>224 specs: 113 aprovadas, ~34 concluídas, 8 em andamento desde julho (provavelmente nunca fechadas), 7 rascunhos. Abertas de peso: migração CMP, TestFlight (adiada), localização em segundo plano (planejada), antifraude por evidência (rascunho).</p>
+    </div>
+  </div>
+</section>
+
+<section id="backlog">
+  <h2>Issues e épicos abertos</h2>
+  <p class="prose">Há só <b>3 issues abertas</b>. O backlog de bugs foi zerado em outubro (85 fechadas: 37 bugs, 19 auditorias, 9 features). O problema é o contrário: <b>não existe backlog de lançamento</b>. Nenhum dos bloqueadores desta página tem issue.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Tipo</th><th>Estado real</th></tr></thead>
+    <tbody>
+      <tr><td>#4188</td><td>Épico: cadência de releases</td><td>80% (4 de 5 sub-issues fechadas). O checklist do corpo ainda mostra 0/5</td></tr>
+      <tr><td>#4201</td><td>Release Android 1.41.0</td><td>Em revisão na Play desde 12/10, rollout de 20% para o Brasil. A revisão anterior (19/05) foi recusada por "App crashes". Parada há 19 dias</td></tr>
+      <tr><td>#4265</td><td>Toolchain Android/KMP</td><td>~80%; falta a etapa 4b (CMP 1.12/iosX64), que depende de Mac</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>PR</th><th>Conteúdo</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>#4389</td><td>Dependabot <code>undici</code> (testes de rules)</td><td>Checks pendentes (sem runner)</td></tr>
+      <tr><td>#4388</td><td>Dependabot <code>dompurify</code> 3.4.17 (segurança, web)</td><td>Checks cancelados</td></tr>
+      <tr><td>#4387</td><td><code>mise.toml</code> fixando Node 22 e Java 21</td><td>Checks cancelados</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Milestones 13 a 15 estão zerados e podem ser fechados; o milestone 10 "v2.0 CMP" está vazio.</p>
+</section>
+
+<section id="cicd">
+  <h2>CI/CD e lojas</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Nível</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td>Runners</td><td><span class="chip c-bloq">bloqueador</span></td><td>32 workflows pedem runners Linux <code>futeba-general</code> ou macOS ARM64 <code>futeba</code>; nenhum existe. Nos últimos 200 runs dominam <code>cancelled</code> e <code>queued</code>; rules tests, E2E e secret scan sem execução concluída recente</td></tr>
+      <tr><td>Proteção do master</td><td><span class="chip c-alto">alto</span></td><td>Inexistente no plano free; o CLAUDE.md promete "4 CI gates" que não são aplicados</td></tr>
+      <tr><td>Play Store</td><td><span class="chip c-alto">alto</span></td><td><code>deploy-production.yml</code> sobe para <code>internal</code> (último sucesso 28/08, 1.39.5). <code>play-promote.yml</code> existe com rollout gradual mas nunca rodou</td></tr>
+      <tr><td>iOS</td><td><span class="chip c-bloq">bloqueador</span></td><td><code>ios-testflight.yml</code> só manual; último build iOS falhou; sem certificados nem secrets</td></tr>
+      <tr><td>Staging</td><td><span class="chip c-alto">alto</span></td><td><code>.firebaserc</code> aponta 3 aliases para o mesmo projeto de produção. Tudo vai direto para prod</td></tr>
+      <tr><td>Testes</td><td><span class="chip c-ok">bom</span></td><td>~129 arquivos de functions, 345 unitários web, 114 Android, mas só 9 E2E web</td></tr>
+      <tr><td>Rollback</td><td><span class="chip c-medio">médio</span></td><td>Skill <code>/futeba-rollback</code> e tags por plataforma existem; falta smoke test pós-deploy e runbook escrito</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="publico">
+  <h2>Presença pública</h2>
+  <div class="cols">
+    <div class="panel">
+      <h3>Funciona</h3>
+      <ul>
+        <li><code>futebadosparcas.com.br</code> 200 em 0,25 s; <code>www</code> redireciona; HTTP/2</li>
+        <li>HSTS, CSP restritiva, X-Frame-Options, nosniff, Referrer-Policy</li>
+        <li>OG, Twitter card, canonical, manifest, robots, sitemap, favicon</li>
+        <li><code>assetlinks.json</code> válido (Android App Links)</li>
+        <li>Certificado Google Trust Services até 10/12/2026 (renovação automática)</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Falta</h3>
+      <ul>
+        <li><span class="chip c-bloq">bloqueador</span> App ausente das duas lojas</li>
+        <li><span class="chip c-alto">alto</span> <code>apple-app-site-association</code> vazio: Universal Links do iOS não funcionam</li>
+        <li><span class="chip c-alto">alto</span> Páginas legais desatualizadas; URLs sem <code>.html</code> devolvem a home</li>
+        <li><span class="chip c-medio">médio</span> DMARC <code>p=none</code>, SPF <code>~all</code>; sem <code>Permissions-Policy</code></li>
+        <li><span class="chip c-medio">médio</span> Imagem OG com 1,2 MB; sitemap sem páginas legais e sem <code>lastmod</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="dados">
+  <h2>Mapa de dados e fluxos</h2>
+  <h3>Coleções principais</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Coleção</th><th>Quem escreve</th><th>Quem lê</th><th>Dados pessoais</th><th>Limpeza</th></tr></thead>
+    <tbody>
+      <tr><td><code>users/{uid}</code></td><td>Próprio usuário (sem XP, role, verified)</td><td>Dono, admin; outros só se pesquisável e sem PII</td><td>Ainda tem e-mail, telefone, nascimento, foto, gênero (migração incompleta, <code>firestore.rules:728</code>)</td><td>Anonimizado ao excluir</td></tr>
+      <tr><td><code>users_private</code></td><td>Só Cloud Function</td><td>Dono, admin</td><td>Toda a PII</td><td>Apagado ao excluir</td></tr>
+      <tr><td><code>user_locations</code></td><td>Dono ou <code>updateMyLocation</code></td><td>Dono, admin</td><td>GPS (lat/lng, geohash) com consentimento</td><td>Apagado ao excluir</td></tr>
+      <tr><td><code>chats/*/messages</code></td><td>Só callable</td><td>Participantes</td><td>Mensagens diretas</td><td>Sem TTL; anonimizado ao excluir</td></tr>
+      <tr><td><code>games</code></td><td>Cliente cria; LIVE e FINISHED só servidor</td><td>Verificado ou em carência, conforme visibilidade</td><td>Local do jogo</td><td>Soft-delete + limpeza semanal</td></tr>
+      <tr><td><code>confirmations</code>, <code>waitlist</code>, <code>teams</code></td><td>Cliente conforme papel; fila só servidor</td><td>Autenticado ou membro (fila: <span class="chip c-medio">qualquer um</span>)</td><td>Nome e foto</td><td>—</td></tr>
+      <tr><td><code>groups/*</code> (membros, mural, caixa, mensalidade)</td><td>Cliente no social; caixa só servidor</td><td>Membro</td><td>Nomes; comprovantes no Storage</td><td>Anonimizado ao excluir</td></tr>
+      <tr><td><code>locations</code></td><td>Cliente ou gestor; comercial só servidor</td><td>Pública se ativa, verificada e publicada</td><td>Contato do local</td><td>—</td></tr>
+      <tr><td><code>game_photos</code>, <code>game_videos</code></td><td>Só callable</td><td><span class="chip c-bloq">qualquer autenticado</span></td><td>Rostos</td><td>Apagados ao excluir</td></tr>
+      <tr><td><code>xp_logs</code>, <code>statistics</code>, <code>season_participation</code>, <code>user_badges</code></td><td>Só servidor</td><td>Autenticado (XP só o dono)</td><td>Não</td><td><code>cleanupOldXpLogs</code></td></tr>
+      <tr><td><code>cpf_index</code>, <code>phone_index</code>, <code>push_tokens</code>, <code>rate_limits</code></td><td>Só servidor</td><td>Ninguém</td><td>Hashes e tokens</td><td>Limpeza agendada</td></tr>
+      <tr><td><code>error_logs</code>, <code>user_feedback</code></td><td>Qualquer autenticado, <span class="chip c-medio">sem limite</span></td><td>Admin</td><td>Stack traces e prints</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Regra final nega tudo no Firestore (<code>:4629</code>) e no Storage (<code>:672</code>). Cinco coleções usadas pelo app <b>não têm regra</b> e caem no "nega tudo": <code>saved_formations</code>, <code>payments</code>, <code>user_groups</code>, <code>analytics/*/field_counts</code> e <code>_migrations</code>. Só 5 coleções internas têm TTL. 176 índices compostos.</p>
+
+  <h3>Cloud Functions em produção</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tipo</th><th class="num">Qtd.</th><th>Observação</th></tr></thead>
+    <tbody>
+      <tr><td>Callables</td><td class="num">89</td><td>82 de 83 exportadas exigem App Check no código; rate limit em ~70</td></tr>
+      <tr><td>Gatilhos do Firestore</td><td class="num">46</td><td>XP, contadores, notificações, limpezas</td></tr>
+      <tr><td>Agendadas</td><td class="num">32</td><td>Fila de push a cada 1 min, waitlist a cada 5 min, fechamento de jogos a cada hora</td></tr>
+      <tr><td>Gatilhos do Storage</td><td class="num">4</td><td>Thumbnails de foto, logo e vídeo (ffmpeg)</td></tr>
+      <tr><td>Gatilhos do Auth (v1, us-central1)</td><td class="num">2</td><td><code>onUserCreate</code>, <code>onUserDeleted</code></td></tr>
+      <tr><td>HTTP públicas</td><td class="num">0</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Tudo em <code>southamerica-east1</code>, com <code>maxInstances: 10</code> global (<code>functions/src/index.ts:53</code>). Integrações externas: ViaCEP, Google Maps, reCAPTCHA Enterprise, Play Integrity, App Attest. Único segredo de servidor: <code>CPF_SALT</code>.</p>
+
+  <h3>Fluxo principal: a vida de uma pelada</h3>
+  <pre class="mermaid">
+flowchart LR
+  A[Cadastro<br/>Auth] --> B[onUserCreate<br/>+ claims + users_private]
+  B --> C[Criar grupo<br/>perfil completo]
+  C --> D[Convite<br/>invites/code]
+  D --> E[Criar jogo<br/>SCHEDULED<br/>exige CPF+telefone]
+  E --> F[Confirmações<br/>waitlist a cada 5 min]
+  F --> G[Times]
+  G --> H[startGameLifecycle<br/>LIVE + eventos]
+  H --> I[finishGameLifecycle<br/>FINISHED]
+  I --> J[onGameStatusUpdate<br/>XP, streak, stats]
+  J --> K[Badges, liga,<br/>atividade]
+  I --> L[Votação MVP /<br/>Bola Murcha]
+  L --> M[concludeMvpVoting<br/>XP final]
+  J -.-> N[Season mensal<br/>reset dia 1]
+  </pre>
+  <div class="cols">
+    <div class="panel">
+      <h3>Outros fluxos</h3>
+      <ul>
+        <li><b>Push:</b> gatilhos enfileiram em <code>notification_queue</code>; <code>processNotificationBatch</code> envia a cada minuto (único caminho)</li>
+        <li><b>DMs:</b> <code>createDirectChat</code> e <code>submitDirectMessage</code>; web lê em tempo real</li>
+        <li><b>Por perto:</b> <code>updateMyLocation</code> grava geohash; busca devolve distância arredondada a 0,1 km</li>
+        <li><b>Mídia:</b> callables criam o doc; Storage gera thumbnails; vídeos com reconciliação</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Conta e LGPD</h3>
+      <ul>
+        <li><b>Exclusão:</b> <code>onUserDeleted</code> limpa ~25 alvos corretamente, <b>mas nada no app consegue disparar</b> (bloqueador 1)</li>
+        <li><b>Merge de contas:</b> <code>requestAccountMerge</code> e <code>completeAccountMerge</code></li>
+        <li><b>Exportação de dados:</b> não existe</li>
+        <li><b>Caixa:</b> contabilidade manual; sem gateway de pagamento</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="seguranca">
+  <h2>Segurança e LGPD</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Achado</th><th>Nível</th><th>Correção</th></tr></thead>
+    <tbody>
+      <tr><td>Callable <code>deleteAccount</code> inexistente; iOS sem tela de exclusão</td><td><span class="chip c-bloq">bloqueador</span></td><td>Criar a callable com <code>secureCallable</code>, login recente e <code>auth().deleteUser(uid)</code>; tela no iOS; teste E2E</td></tr>
+      <tr><td>Política de privacidade e termos de dez/2025 e jan/2026</td><td><span class="chip c-bloq">bloqueador</span></td><td>Reescrever com jurídico cobrindo cada feature; link no cadastro</td></tr>
+      <tr><td>Mídia de jogo legível e listável por qualquer conta</td><td><span class="chip c-bloq">bloqueador</span></td><td>Mesmo gate do jogo pai; URL gerada sob demanda, sem token</td></tr>
+      <tr><td>App Check <code>UNENFORCED</code> em Firestore, Storage e Auth (conferido na API); Play Integrity aceita <code>NO_INTEGRITY</code></td><td><span class="chip c-alto">alto</span></td><td>Medir tokens válidos, ligar Firestore e Storage, depois Auth; subir para <code>MEETS_DEVICE_INTEGRITY</code></td></tr>
+      <tr><td>Sem exportação de dados (art. 18 V)</td><td><span class="chip c-alto">alto</span></td><td>Callable <code>exportMyData</code>, ou pedido por e-mail com prazo na política</td></tr>
+      <tr><td>iOS: DeviceCheck sem chave no console</td><td><span class="chip c-medio">médio</span></td><td>Cadastrar a chave .p8</td></tr>
+      <tr><td>Fila de espera mostra nome e foto a qualquer conta (<code>firestore.rules:1266</code>)</td><td><span class="chip c-medio">médio</span></td><td>Gate do jogo pai</td></tr>
+      <tr><td>Termos pedem 13+ sem verificação de idade; app tem DMs, proximidade e fotos</td><td><span class="chip c-medio">médio</span></td><td>Verificação no cadastro; avaliar ECA Digital (Lei 15.211/2025) com jurídico</td></tr>
+      <tr><td>10 callables ADMIN de uso único publicadas</td><td><span class="chip c-medio">médio</span></td><td>Tirar do deploy</td></tr>
+      <tr><td>Callables sem rate limit: <code>joinPublicGame</code>, <code>toggleFollowUser</code>, <code>confirmGamePresence</code>, lifecycle</td><td><span class="chip c-medio">médio</span></td><td>Adicionar <code>rateLimit</code> no wrapper</td></tr>
+      <tr><td>Update de <code>users</code> por lista de proibidos</td><td><span class="chip c-medio">médio</span></td><td>Migrar para <code>affectedKeys().hasOnly([...])</code></td></tr>
+      <tr><td>Dono pode trocar o MVP depois de FINISHED (<code>firestore.rules:1218</code>)</td><td><span class="chip c-medio">médio</span></td><td>Bloquear após encerrar a votação</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">Segredos: gitleaks no diretório e no histórico completo deu 0 achados com a allowlist do repo. Sem ela, 9 achados inofensivos (chave pública da web e exemplos de documentação). Nenhum keystore, <code>.env</code> real, <code>google-services.json</code> ou plist versionado.</div>
+</section>
+
+<section id="produto">
+  <h2>Produto e paridade</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>Android</th><th>iOS (CMP)</th><th>Web</th></tr></thead>
+    <tbody>
+      <tr><td>Cadastro e onboarding</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-medio">parcial</span> sem telefone/CPF</td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Grupos</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-alto">casca</span> só atalhos</td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Criar jogo</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-bloq">ausente</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Confirmar presença e fila</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-bloq">ausente</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Jogo ao vivo</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-bloq">ausente</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>MVP / Bola Murcha</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-bloq">indisponível</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Relatório pós-jogo</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-ok">real</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Liga, season, estatísticas</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-alto">leitura parcial</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>DMs e jogadores por perto</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-bloq">ausente</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Caixa e mensalidade</td><td><span class="chip c-ok">completo</span></td><td><span class="chip c-medio">leitura</span></td><td><span class="chip c-ok">completo</span></td></tr>
+      <tr><td>Excluir conta</td><td><span class="chip c-bloq">quebrado</span></td><td><span class="chip c-bloq">ausente</span></td><td><span class="chip c-bloq">quebrado</span></td></tr>
+      <tr><td>Deep links</td><td><span class="chip c-ok">App Links</span></td><td><span class="chip c-bloq">ausente</span></td><td><span class="chip c-ok">rotas</span></td></tr>
+      <tr><td>Idiomas</td><td><span class="chip c-medio">en/es em 14%</span></td><td><span class="chip c-medio">só pt</span></td><td><span class="chip c-ok">pt/en/es</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="cols">
+    <div class="panel">
+      <h3>Primeira experiência de quem chega por link</h3>
+      <ul>
+        <li><span class="chip c-bloq">p0</span> Link de jogo exige login (<code>/game/:id</code> é rota protegida): quem recebe no WhatsApp vê a tela de entrar, sem saber que jogo é</li>
+        <li><span class="chip c-bloq">p0</span> Preview do link é genérico (uma única OG para o site todo)</li>
+        <li><span class="chip c-alto">p1</span> CPF e telefone exigidos para criar jogo, cedo demais no funil</li>
+        <li><span class="chip c-medio">p1</span> Descoberta de peladas e quadras existe, mas só depois do login</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Negócio</h3>
+      <ul>
+        <li>Nenhuma receita: sem assinatura, anúncios ou cobrança</li>
+        <li>Caixa e mensalidade são só contabilidade, sem cobrança real</li>
+        <li><span class="chip c-medio">limpeza</span> Gerador de Pix falso em <code>shared/.../PaymentRepositoryImpl.kt:51</code> (telefone fixo, CRC aleatório). A tela que o usa não é chamada em lugar nenhum: é código morto a remover</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="escala">
+  <h2>Escala, custo e observabilidade</h2>
+  <div class="callout"><b>Contexto que muda a leitura de tudo:</b> produção tem <b>18 contas</b> no Auth. Em 30 dias foram 71 mil requisições às functions, quase todas de crons (a fila de push sozinha soma 43.200). Ou seja: o lançamento público é, na prática, o primeiro uso real. Os números de 10 mil e 100 mil usuários abaixo vêm de um modelo, não de medição.</div>
+  <h3>Bloqueadores operacionais (conferidos no GCP)</h3>
+  <ul class="prose">
+    <li><span class="chip c-bloq">bloqueador</span> <b>Nenhum alerta chega a uma pessoa.</b> 0 canais de notificação, 1 política de alerta sem canal, 0 uptime checks, Error Reporting desligado. O <code>alerting.ts</code> só grava na coleção <code>alerts</code>.</li>
+    <li><span class="chip c-bloq">bloqueador</span> <b>Sem backup.</b> PITR com 7 dias, mas 0 agendas de backup, nenhum export e <code>DELETE_PROTECTION_DISABLED</code>. Um <code>firestore:delete</code> errado apaga tudo sem volta depois de 7 dias.</li>
+  </ul>
+  <h3>Riscos de escala</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Risco</th><th>Nível</th><th>Detalhe</th></tr></thead>
+    <tbody>
+      <tr><td>Amplificação de triggers no jogo</td><td><span class="chip c-alto">alto</span></td><td><code>games/{id}</code> tem 11 triggers, 9 disparam em todo update; cada confirmação gera ~11 invocações. Uma pelada inteira custa ~250 a 350 invocações</td></tr>
+      <tr><td>Hotspot de escrita no documento do jogo</td><td><span class="chip c-alto">alto</span></td><td>Contador em transação no próprio doc; 20 a 30 confirmações em segundos estouram o limite de ~1 escrita/s e cada retry dispara de novo os triggers</td></tr>
+      <tr><td>Índices fora de produção</td><td><span class="chip c-alto">alto</span></td><td>3 overrides <code>COLLECTION_GROUP</code> do repo não estão em prod (<code>members.user_id</code>, <code>reviews.user_id</code>, <code>cashbox.created_by</code>). As functions de prod são de 09/10; o próximo deploy quebra os nudges se os índices não forem antes</td></tr>
+      <tr><td>Nudges varrem todos os usuários</td><td><span class="chip c-alto">alto</span></td><td><code>sendGamificationNudgesDaily</code> faz 8 a 12 leituras por usuário; a 100 mil a varredura leva dias</td></tr>
+      <tr><td>Custo de saída de mídia sem teto</td><td><span class="chip c-alto">alto</span></td><td>Vídeos de até 25 MB, bucket sem lifecycle, App Check desligado</td></tr>
+      <tr><td>Invalidação do ranking</td><td><span class="chip c-medio">médio</span></td><td>14 invalidações por jogo finalizado; no domingo o cache quase não serve</td></tr>
+      <tr><td>Crons quebrados ou de teste</td><td><span class="chip c-medio">médio</span></td><td><code>cleanupOldAlerts</code> falha por falta de índice; <code>testGameReminders</code> roda de verdade em 01/01/2027; <code>maintainStreaksData</code> trunca em 5 mil usuários</td></tr>
+      <tr><td>Concorrência</td><td><span class="chip c-medio">médio</span></td><td>167 functions com <code>maxInstances=10</code>; gatilhos de Auth em us-central1 com concorrência 1, longe do Firestore em São Paulo</td></tr>
+      <tr><td>Lixo de deploy</td><td><span class="chip c-medio">médio</span></td><td>Bucket <code>gcf-v2-sources</code> com 19 GB acumulados</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Custo mensal estimado</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Item</th><th class="num">10 mil MAU</th><th class="num">100 mil MAU</th></tr></thead>
+    <tbody>
+      <tr><td>Firestore</td><td class="num">US$ 12–25</td><td class="num">US$ 135–260</td></tr>
+      <tr><td>Cloud Functions</td><td class="num">US$ 0–10</td><td class="num">US$ 60–150</td></tr>
+      <tr><td>Storage e saída de mídia</td><td class="num">US$ 10–90</td><td class="num">US$ 100–900</td></tr>
+      <tr><td>Logging, Hosting, Scheduler</td><td class="num">US$ 5–10</td><td class="num">US$ 15–60</td></tr>
+      <tr><td><b>Total</b></td><td class="num"><b>US$ 30–135</b></td><td class="num"><b>US$ 310–1.370</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Premissas: 25% de DAU/MAU, grupos de 15, 1 jogo por grupo por semana, preços aproximados de <code>southamerica-east1</code>. O orçamento atual é de R$ 150/mês, só com e-mail e sem corte de gasto; no cenário alto de 10 mil usuários ele já estoura. A mídia é a maior incerteza.</p>
+  <h3>As 5 otimizações de maior retorno</h3>
+  <ol class="prose">
+    <li>Tirar o contador do documento do jogo (subdocumento ou shards) e juntar os 9 triggers num despachante que sai cedo quando só o contador mudou: corta ~50% das invocações.</li>
+    <li>Ranking: marcar como desatualizado e reconstruir agendado, em vez de apagar o cache a cada escrita.</li>
+    <li>Nudges só para usuários ativos nos últimos 14 dias, com os grupos guardados no próprio usuário.</li>
+    <li>Métricas horárias com <code>count()</code> viram diárias ou contadores mantidos; DAU vem do Analytics.</li>
+    <li>Mídia: lifecycle no bucket, compressão de vídeo, cache de CDN, App Check enforced e limite em <code>error_logs</code>.</li>
+  </ol>
+</section>
+
+<section id="plano">
+  <h2>Plano de evolução para o lançamento público</h2>
+  <p class="prose">A ambição: virar <b>o app padrão da pelada no Brasil</b>. O plano tem 6 fases com portões de saída mensuráveis. Uma fase só termina quando o portão está verde. Cada item de código precisa de spec aprovada em <code>/specs/</code> antes de começar (regra 1 do SDD); este plano é o roteiro, não a spec.</p>
+
+  <div class="phase">
+    <div class="ph"><b>Fase 0 · Destravar a operação</b><span class="when">semana 1</span></div>
+    <div class="pb">
+      <ul>
+        <li>Registrar de novo o runner do Mac e ajustar <code>RUNNER_LABELS_*</code>; drenar a fila de 26 runs e reexecutar #4387, #4388, #4389</li>
+        <li>Instalar fastlane e o emulador Android; ligar o Docker</li>
+        <li>Descartar <code>chore/release-2026-10-01</code>; limpar worktrees e stashes; atualizar o <code>CLAUDE.md</code></li>
+        <li>Religar as auditorias diárias, com teto e uma por vez</li>
+        <li>Revogar as 5 chaves da service account admin e tirar a credencial do gcloud local; atualizar o item no Bitwarden e o command-center</li>
+        <li><b>Backup já</b>: agenda diária de backup do Firestore, proteção contra exclusão ligada, export semanal para bucket separado</li>
+        <li><b>Alertas já</b>: canal de e-mail e push, uptime check do site e de 1 callable, Error Reporting ligado, orçamento ligado ao canal</li>
+        <li>Publicar os 3 índices <code>COLLECTION_GROUP</code> pendentes <b>antes</b> do próximo deploy das functions (prod está em 09/10)</li>
+        <li>Decidir a proteção do master: GitHub Team, ou hook <code>pre-push</code> obrigatório com rules, functions e web</li>
+        <li>Criar o épico "Lançamento público" no GitHub com uma issue por item deste plano</li>
+      </ul>
+      <div class="gate"><b>Portão</b> · CI verde no master por 3 dias seguidos; todos os gates (rules, E2E, secret scan) executando; um backup restaurado com sucesso; um alerta de teste chegando no seu celular.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="ph"><b>Fase 1 · Blindagem</b><span class="when">semanas 1 a 3</span></div>
+    <div class="pb">
+      <div class="cols">
+        <div>
+          <h3>Conformidade (bloqueadores)</h3>
+          <ul>
+            <li>Callable <code>deleteAccount</code> + tela no iOS + teste E2E nas 3 plataformas</li>
+            <li><code>exportMyData</code> com arquivo JSON por e-mail ou download</li>
+            <li>Política de privacidade, termos e child safety reescritos com jurídico; aceite versionado no cadastro</li>
+            <li>Verificação de idade no cadastro; regras para menores (sem DM e sem proximidade abaixo de 18)</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Segurança</h3>
+          <ul>
+            <li>Regras de <code>game_photos</code>, <code>game_videos</code> e <code>waitlist</code> com o gate do jogo; URL sem token</li>
+            <li>App Check enforced em Firestore e Storage, depois Auth; Play Integrity em <code>MEETS_DEVICE_INTEGRITY</code>; chave DeviceCheck</li>
+            <li>Rate limit nas 5 callables restantes; remover 10 callables admin de uso único</li>
+            <li>Regras para as 5 coleções sem match; update de <code>users</code> por allowlist; terminar a migração de PII</li>
+            <li>Teste de intrusão externo (pago) sobre rules e callables</li>
+          </ul>
+        </div>
+      </div>
+      <div class="gate"><b>Portão</b> · Zero bloqueadores e zero altos de segurança abertos; exclusão e exportação testadas de ponta a ponta; política publicada.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="ph"><b>Fase 2 · Fundação para escala</b><span class="when">semanas 2 a 5</span></div>
+    <div class="pb">
+      <ul>
+        <li><b>Projeto Firebase de staging</b> (<code>futebadosparcas-staging</code>) com deploy automático do master; produção só por tag</li>
+        <li>Observabilidade: Crashlytics no iOS e alertas de crash-free; Performance Monitoring; Error Reporting com alerta; uptime check do site; <b>alerta de orçamento</b> no billing</li>
+        <li>Custo e escala: contador fora do documento do jogo, despachante único de triggers, ranking com reconstrução agendada, nudges só para ativos, lifecycle e compressão de mídia</li>
+        <li>Capacidade: revisar <code>maxInstances: 10</code> por função; mover gatilhos de Auth para <code>southamerica-east1</code>; teste de carga (k6 ou o workflow "Realtime Multiuser Load") simulando 1.000 jogos simultâneos no domingo à noite</li>
+        <li>Backups: PITR e export agendado do Firestore; teste de restauração</li>
+        <li>Limites em queries sem <code>limit</code> e fan-out de presença em grupos grandes</li>
+        <li>Runbook de incidente e de rollback (Hosting, Functions, rules, halt de rollout na Play)</li>
+      </ul>
+      <div class="gate"><b>Portão</b> · Teste de carga a 10× o pico atual sem erro acima de 0,5%; p95 das callables abaixo de 800 ms; alertas disparando num ensaio.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="ph"><b>Fase 3 · Funil e viralidade</b><span class="when">semanas 4 a 8</span></div>
+    <div class="pb">
+      <p>A pelada já é viral por natureza: 1 organizador traz 10 a 20 jogadores. O produto precisa deixar esse convite sem atrito.</p>
+      <ul>
+        <li><b>Página pública do jogo</b> (<code>/j/:id</code>) sem login, com quem vai, vagas, local e botão "Tô dentro"; o login vem depois do clique</li>
+        <li><b>Preview dinâmico no WhatsApp</b>: imagem OG gerada por jogo (título, data, quadra, vagas) e por resultado (placar, MVP)</li>
+        <li><b>CPF e telefone fora do caminho</b>: entrar e confirmar presença sem verificação; verificação só para organizar jogo público ou cobrar</li>
+        <li><b>Onboarding sem grupo</b>: "achar uma pelada perto de você" ou "organizar a minha" na primeira tela</li>
+        <li><b>Cartão de resultado automático</b> após cada jogo, pronto para os stories</li>
+        <li><b>SEO por cidade e quadra</b>: páginas públicas das quadras já importadas (10+ cidades) e de peladas públicas</li>
+        <li>Universal Links no iOS (<code>apple-app-site-association</code>) e App Links já existentes ligados aos novos caminhos</li>
+        <li>Analytics de funil: visita → cadastro → 1ª confirmação → 1º jogo jogado → 2º jogo</li>
+      </ul>
+      <div class="gate"><b>Portão</b> · Num beta com 20 grupos reais: conversão de link de convite em cadastro acima de 40%; 60% dos grupos jogam o 2º jogo em 14 dias.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="ph"><b>Fase 4 · Lojas e lançamento Brasil</b><span class="when">semanas 6 a 12</span></div>
+    <div class="pb">
+      <ul>
+        <li><b>Android</b>: resolver a revisão da 1.41.0 (#4201); rollout de 10% → 50% → 100% pelo <code>play-promote.yml</code>, com 48 h de Android Vitals entre etapas; listagem com screenshots e vídeo</li>
+        <li><b>iOS: escolha de escopo</b> (decisão sua, abaixo). Caminho A: lançar só Android + web, com a web instalável no iPhone (PWA). Caminho B: fechar o ciclo no iOS (criar jogo, confirmar, ao vivo, MVP, exclusão de conta) e publicar no TestFlight e na App Store</li>
+        <li>Lançamento em ondas: 3 cidades piloto onde já há quadras importadas, depois capitais, depois nacional</li>
+        <li>Canais: quadras parceiras (QR na quadra para entrar no jogo), grupos de pelada no WhatsApp, influenciadores de futebol amador</li>
+        <li>Suporte: canal de atendimento, FAQ, denúncia e bloqueio de usuário</li>
+      </ul>
+      <div class="gate"><b>Portão</b> · Crash-free acima de 99,5% e ANR abaixo de 0,47% na Play; nota 4,5+; custo por usuário ativo dentro do orçamento.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="ph"><b>Fase 5 · Receita e liderança</b><span class="when">meses 3 a 9</span></div>
+    <div class="pb">
+      <ul>
+        <li><b>Cobrança de mensalidade com Pix real</b> (gateway com split ou Pix estático com a chave do grupo e CRC correto), lembrete de inadimplência e conciliação automática do caixa</li>
+        <li><b>Plano do organizador</b>: grupos grandes, histórico ilimitado, ligas entre grupos, estatísticas avançadas</li>
+        <li><b>Quadras</b>: perfil verificado, agenda e reserva, patrocínio local; marketplace de horários vagos</li>
+        <li><b>Ligas e campeonatos</b> entre grupos da mesma cidade, ranking regional</li>
+        <li>Antifraude por evidência (spec em rascunho), multi-região e expansão para América Latina (web já traduzida em es)</li>
+      </ul>
+      <div class="gate"><b>Metas</b> · 10 mil usuários ativos/mês no 3º mês; 100 mil no 9º; 5% dos grupos pagando; K-factor acima de 1 nas cidades piloto.</div>
+    </div>
+  </div>
+
+  <h3>Indicadores que acompanham todas as fases</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Indicador</th><th>Meta</th><th>Fonte</th></tr></thead>
+    <tbody>
+      <tr><td>Crash-free (Android e iOS)</td><td class="num">≥ 99,5%</td><td>Crashlytics / Android Vitals</td></tr>
+      <tr><td>p95 das callables críticas</td><td class="num">≤ 800 ms</td><td>Cloud Monitoring</td></tr>
+      <tr><td>Ativação: cadastro → 1º jogo jogado em 7 dias</td><td class="num">≥ 50%</td><td>Analytics de funil</td></tr>
+      <tr><td>Retenção de grupo: 4 jogos no 1º mês</td><td class="num">≥ 40%</td><td>Firestore (agregado)</td></tr>
+      <tr><td>Convites aceitos por jogo</td><td class="num">≥ 3</td><td>Analytics</td></tr>
+      <tr><td>Custo de infraestrutura por usuário ativo</td><td class="num">≤ R$ 0,05</td><td>Billing</td></tr>
+      <tr><td>Bloqueadores de segurança abertos</td><td class="num">0</td><td>GitHub</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Como executar com times de agentes</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Time</th><th>Modelo</th><th>Arquivos que só ele edita</th><th>Fases</th></tr></thead>
+    <tbody>
+      <tr><td>Conformidade e regras</td><td>Opus</td><td><code>firestore.rules</code>, <code>storage.rules</code>, <code>functions/src/auth/</code></td><td>1</td></tr>
+      <tr><td>Backend e escala</td><td>Opus</td><td><code>functions/src/</code> (exceto auth), índices</td><td>1, 2</td></tr>
+      <tr><td>Web e funil</td><td>Sonnet</td><td><code>web/</code></td><td>3</td></tr>
+      <tr><td>Android e loja</td><td>Sonnet</td><td><code>app/</code>, <code>fastlane/</code></td><td>3, 4</td></tr>
+      <tr><td>iOS / CMP</td><td>Sonnet</td><td><code>composeApp/</code>, <code>iosApp/</code></td><td>4</td></tr>
+      <tr><td>CI, infra e release</td><td>Sonnet</td><td><code>.github/</code>, <code>scripts/</code>, <code>.firebaserc</code></td><td>0, 2</td></tr>
+      <tr><td>Verificação e sondas</td><td>Haiku</td><td>Nenhum (só leitura)</td><td>todas</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Navegação, <code>strings.xml</code> e <code>DECISIONS.md</code> ficam com o líder. Uma frente por conjunto de arquivos; todo achado CRÍTICO passa por verificação independente antes de virar issue (a taxa histórica de falso positivo neste repo é de ~50%).</p>
+</section>
+
+<section id="decisoes" class="prose">
+  <h2>Decisões que dependem de você</h2>
+  <ol>
+    <li><b>iOS no lançamento:</b> lançar só Android + web (PWA no iPhone) agora, ou investir 4 a 6 semanas para fechar o ciclo no iOS antes?</li>
+    <li><b>Proteção do master:</b> pagar GitHub Team (habilita proteção de branch no repo privado) ou ficar com hooks locais?</li>
+    <li><b>Runner:</b> só o Mac (que dorme e está sem memória sobrando) ou um runner Linux dedicado (por exemplo uma VM da OCI já paga)?</li>
+    <li><b>Jurídico:</b> quem revisa política, termos e regras para menores?</li>
+    <li><b>Auditorias diárias:</b> religar com teto diário e uma execução por vez?</li>
+    <li><b>Monetização:</b> qual entra primeiro, cobrança de mensalidade com Pix ou plano do organizador?</li>
+    <li><b>Ações que só você pode fazer:</b> desbloquear o Bitwarden, gerar o token de registro do runner, criar certificados iOS, conferir a revisão na Play Console, revogar as 5 chaves da service account admin.</li>
+  </ol>
+</section>
+
+<div class="foot">Levantamento somente leitura, sem deploy e sem escrita em produção. Fontes: código no master <code>966ab168</code>, <code>gcloud</code>, Firebase CLI, API do App Check, GitHub API, sondas HTTP públicas. Achados críticos foram conferidos por leitura direta antes de entrar nesta página.</div>
+</div>
