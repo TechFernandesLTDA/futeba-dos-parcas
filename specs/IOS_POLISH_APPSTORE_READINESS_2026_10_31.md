@@ -194,8 +194,12 @@ Nada novo neste ciclo.
   a rota `delete_account` cai no estado "indisponível" e o Perfil exige login; as duas
   confirmações, o mapeamento de erros e o logout com pilha limpa ainda não rodaram.
   QA com Firebase real fica para depois do deploy de #4391.
-- O `ComposeApp.framework` é dinâmico (`Mach-O dynamically linked shared library`), então
-  o `embed: true` está certo; não há biblioteca estática solta em `Frameworks/`.
+- O `ComposeApp.framework` é estático (`ar archive`) e entra no binário do app no link.
+  O `embed: true` copiava um stub vazio de 33 KB para `Frameworks/`; agora `embed: false`
+  (24a23688). Build verde depois da troca; não reaberto no simulador (travado), mas o
+  `otool -L` do app já não listava o ComposeApp, então nada em runtime dependia da cópia.
+- O `xcodebuild` final avisou "CoreSimulator is out of date (1174.9.2 < 1174.21.0)": o
+  serviço do simulador ficou desatualizado em relação ao Xcode, provável causa dos travamentos.
 
 ### 5.2 Checklist de Revisão
 
