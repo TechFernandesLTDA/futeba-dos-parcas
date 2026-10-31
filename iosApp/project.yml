@@ -52,9 +52,11 @@ targets:
     # o `shared.framework` estático duplicava o runtime (1152 símbolos duplicados no
     # Xcode 27.1 com Kotlin 2.4.20). Nenhum .swift faz `import shared`.
     dependencies:
+      # Framework ESTÁTICO (`ar archive`): o código entra no binário do app no link.
+      # Com `embed: true` o Xcode copiava para Frameworks/ um stub vazio de 33 KB
+      # que nada carrega (otool -L não lista o ComposeApp).
       - framework: ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework
-        embed: true
-        codeSign: true
+        embed: false
     attributes:
       SystemCapabilities:
         com.apple.Push:
