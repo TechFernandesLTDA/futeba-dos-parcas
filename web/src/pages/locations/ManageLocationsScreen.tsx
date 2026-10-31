@@ -1088,7 +1088,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
                 flexShrink: 0,
                 position: 'sticky',
                 top: 176,
-                maxHeight: 'calc(100vh - 192px)',
+                maxHeight: 'calc(100dvh - 192px)',
                 overflowY: 'auto',
                 pr: 0.5,
                 pt: 1,

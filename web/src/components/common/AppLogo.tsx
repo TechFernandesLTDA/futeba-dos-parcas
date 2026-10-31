@@ -1,7 +1,7 @@
 /**
  * AppLogo — componente padronizado para renderizar a logo do app.
  *
- * Usa /logo.png (asset canônico, mesmo arquivo do Android ic_app_logo_full).
+ * Usa /logo-360.webp (derivado do /logo.png, asset canônico, mesmo arquivo do Android ic_app_logo_full).
  * Centraliza tamanho, shape e fallback para garantir consistência visual em
  * sidebar, top bar, login, register e outras telas de branding.
  *
@@ -48,7 +48,12 @@ export function AppLogo({
   return (
     <Box
       component="img"
-      src="/logo.png"
+      // WebP 360px (~10 KB) em vez do PNG 512px (~290 KB): o maior uso é 180px
+      // (360px cobre 2x). O logo.png segue para SEO/JSON-LD.
+      src={px <= 48 ? '/logo-96.webp' : '/logo-360.webp'}
+      width={px}
+      height={px}
+      decoding="async"
       alt={alt}
       sx={{
         width: px,

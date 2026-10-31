@@ -78,7 +78,7 @@ export const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ note, open, onCl
           mx: 'auto',
           width: { xs: '100%', sm: 520 },
           maxWidth: '100%',
-          maxHeight: '85vh',
+          maxHeight: '85dvh',
           overflowY: 'auto',
           zIndex: theme.zIndex.snackbar,
           borderTopLeftRadius: 16,

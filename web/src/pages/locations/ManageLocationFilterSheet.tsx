@@ -32,7 +32,7 @@ export const ManageLocationFilterSheet: React.FC<SheetProps> = ({
       onClose={onClose}
       PaperProps={{
         sx: {
-          maxHeight: '92vh',
+          maxHeight: '92dvh',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
           display: 'flex',

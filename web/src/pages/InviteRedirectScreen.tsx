@@ -28,7 +28,7 @@ export const InviteRedirectScreen: React.FC = () => {
   }, [code, firebaseUser, loading, navigate]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50dvh' }}>
       <CircularProgress size={40} />
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
         {t('welcome.processingInvite')}
