@@ -39,7 +39,7 @@ concurrency:
 jobs:
   publish:
     name: Publish release notes
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_HEAVY || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 10
     # Publica a partir do que esta na master (fonte unica das notas).
     if: github.ref == 'refs/heads/master'
