@@ -320,6 +320,8 @@ export function LoginScreen() {
               to="/forgot-password"
               variant="body2"
               underline="hover"
+              // Alvo de toque >= 48px (WCAG 2.5.8 / Material) sem mudar o visual
+              sx={{ display: 'inline-flex', alignItems: 'center', minHeight: 48, px: 1 }}
             >
               {t('auth.forgotPassword')}
             </Link>
@@ -354,7 +356,7 @@ export function LoginScreen() {
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               {t('auth.noAccount')}{' '}
-              <Link component={RouterLink} to={buildRegisterLink()} underline="hover" sx={{ whiteSpace: 'nowrap' }}>
+              <Link component={RouterLink} to={buildRegisterLink()} underline="hover" sx={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', minHeight: 48, px: 0.5 }}>
                 {t('auth.createAccount')}
               </Link>
             </Typography>

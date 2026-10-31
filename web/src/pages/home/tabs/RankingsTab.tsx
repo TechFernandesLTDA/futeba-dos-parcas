@@ -482,11 +482,11 @@ export function RankingsTab() {
         onChange={(_, v) => setTabValue(v)}
         variant="fullWidth"
         aria-label={t('ranking.categoriesAria')}
-        sx={{ minHeight: 40 }}
+        sx={{ minHeight: 44 }}
       >
-        <Tab label={t('nav.league')} sx={{ minHeight: 40, py: 0 }} />
-        <Tab label={t('ranking.xpGlobal')} sx={{ minHeight: 40, py: 0 }} />
-        <Tab label={t('ranking.xpSystem')} sx={{ minHeight: 40, py: 0 }} />
+        <Tab label={t('nav.league')} sx={{ minHeight: 44, py: 0 }} />
+        <Tab label={t('ranking.xpGlobal')} sx={{ minHeight: 44, py: 0 }} />
+        <Tab label={t('ranking.xpSystem')} sx={{ minHeight: 44, py: 0 }} />
       </Tabs>
 
       <PullToRefresh onRefresh={handleRefresh}>

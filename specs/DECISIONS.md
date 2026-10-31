@@ -4,6 +4,59 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+## 2026-10-31 — Leitura de mídia de jogo e fila de espera segue a visibilidade do jogo (#4393)
+
+**Contexto:** `game_photos`, `game_videos` e `games/{gameId}/waitlist`
+liberavam `read` (GET e LIST) para qualquer autenticado. Uma LIST sem
+filtro devolvia mídia de jogos `GROUP_ONLY` com URL de download tokenizada
+e a fila expunha nome e foto. No Storage, fotos e vídeos de jogo também
+liberavam leitura e listagem para qualquer autenticado.
+
+**Decisão:**
+- Helper `canViewGameById(gameId)` em `firestore.rules`, espelhando o
+  `allow get` de `games`: admin; jogo `PUBLIC_OPEN`/`PUBLIC_CLOSED`; ou, se
+  não soft-deleted, dono/coorganizador, membro ativo do grupo do jogo ou
+  participante. Admin vem antes do `get(games/...)` para manter a limpeza
+  de mídia órfã (#4049).
+- Participante = confirmação própria com status `PENDING`, `CONFIRMED`,
+  `ON_THE_WAY` ou `CHECKED_IN` (os dois últimos existem nos clientes e no
+  `reminders.ts`; `hasOwnGameInvitation` só cobre os dois primeiros e não
+  foi alterado para não ampliar o GET de `games`).
+- Mídia: acesso direto a `resource.data.game_id` (sem default), então LIST
+  exige filtro por `game_id` (vetor #4126). Fila: `gameId` do path, mais a
+  própria entrada sempre legível.
+- **Sem** gate `isVerifiedOrGrace()` na mídia e na fila, ao contrário de
+  `games`. O vazamento era entre grupos; quem não lê o jogo não chega à
+  aba de mídia, e o gate de verificação continua na porta de entrada
+  (`games`). Evita acoplar mídia ao rollout da claim `verified`.
+- Storage: `canViewGameMedia(gameId)` com no máximo 2 `firestore.get()`
+  distintos (limite das Storage Rules): jogo + membro do grupo quando o
+  jogo tem `group_id`, senão confirmação própria. Convidado não-membro de
+  jogo de grupo privado perde só o `getDownloadURL` de recuperação.
+- `games/{gameId}/video_thumbnails/{file}` ganhou match só de leitura com a
+  mesma visibilidade. O caminho é escrito por
+  `generate-video-thumbnails.ts` e caía no deny-all, então o poster do web
+  nunca resolvia. Escrita continua server-only.
+
+**Alternativas descartadas:** liberar LIST de mídia sem filtro e filtrar no
+cliente (rules não são filtros, vazaria); exigir verificação também na mídia
+(acoplamento sem ganho de segurança neste vetor); denormalizar
+`visibility`/`group_id` no doc de mídia (exigiria migração e sincronização
+em toda mudança de visibilidade do jogo).
+
+**Consequências:** URLs tokenizadas já emitidas continuam válidas porque o
+download por token não passa pelas Storage Rules. Rotacionar tokens de
+objetos de jogos privados é follow-up de operação. A query `in` da galeria
+do grupo (`GroupDetailScreen.tsx:242`) é tudo-ou-nada e consome até 11
+leituras de rules por chunk de 10, acima do teto de 10. Passou no emulador, mas o emulador não aplica o teto nesse caso (calibração com 20 leituras também passou). Recomendado reduzir o chunk do cliente para 9 antes do deploy; é o primeiro
+lugar a olhar se surgir `permission-denied` em produção.
+
+**Relacionado:** `#4393`, `#4126`, `#4049`.
+
+---
+
+---
+
 ## 2026-10-31 — Exclusão de conta pelo titular: callable fina + cascata no trigger (#4391)
 
 **Contexto:** web e Android chamam a callable `deleteAccount`, que nunca
