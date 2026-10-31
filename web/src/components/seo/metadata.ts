@@ -1,6 +1,6 @@
 export const SEO_SITE_URL = 'https://futebadosparcas.com.br';
 export const SEO_SITE_NAME = 'Futeba dos Parças';
-export const SEO_IMAGE_URL = `${SEO_SITE_URL}/og-futeba-dos-parcas.png`;
+export const SEO_IMAGE_URL = `${SEO_SITE_URL}/og-futeba-dos-parcas.jpg`;
 const SEO_LOGO_URL = `${SEO_SITE_URL}/logo.png`;
 // O Futeba dos Parças é um produto da Tech Fernandes LTDA (techfernandes.com.br).
 // A atribuição aparece no rodapé da landing e nos metadados OG/Twitter/JSON-LD.
@@ -192,7 +192,7 @@ export function applySeoMetadata(pathname: string): SeoRouteMetadata {
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: metadata.type ?? 'website' });
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: url });
   upsertMeta('meta[property="og:image"]', { property: 'og:image', content: ogImageUrl });
-  upsertMeta('meta[property="og:image:type"]', { property: 'og:image:type', content: 'image/png' });
+  upsertMeta('meta[property="og:image:type"]', { property: 'og:image:type', content: 'image/jpeg' });
   upsertMeta('meta[property="og:image:width"]', { property: 'og:image:width', content: '1200' });
   upsertMeta('meta[property="og:image:height"]', { property: 'og:image:height', content: '630' });
   upsertMeta('meta[property="og:image:alt"]', {
