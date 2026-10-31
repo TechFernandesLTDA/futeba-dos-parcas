@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { runsOnRegExp, MAC_IOS_RUNS_ON } = require('./runner-selector');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
@@ -15,10 +16,10 @@ function jobBody(id) {
   return match[1];
 }
 
-test('KMP shared unit tests use hosted Linux with a complete Android SDK contract', () => {
+test('KMP shared unit tests run on the heavy Gradle pool with a complete Android SDK contract', () => {
   const tests = jobBody('kmp-shared-tests');
 
-  assert.match(tests, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"ubuntu-24\.04\"\]'\) \}\}/);
+  assert.match(tests, runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.match(tests, /uses: android-actions\/setup-android@v4/);
   assert.match(tests, /sdkmanager "platforms;android-37\.0"/);
   assert.match(tests, /echo "sdk\.dir=\$ANDROID_SDK_ROOT" > local\.properties/);
@@ -27,9 +28,8 @@ test('KMP shared unit tests use hosted Linux with a complete Android SDK contrac
 
 test('iOS framework and app builds stay pinned to the self-hosted Mac (no hosted macOS minutes)', () => {
   for (const id of ['build-shared-framework', 'build-ios-app']) {
-    assert.match(
-      jobBody(id),
-      /runs-on: \[self-hosted, macOS, ARM64, futeba\]/,
+    assert.ok(
+      jobBody(id).includes(MAC_IOS_RUNS_ON),
       `${id} must run on the self-hosted futeba Mac`
     );
   }
@@ -37,7 +37,7 @@ test('iOS framework and app builds stay pinned to the self-hosted Mac (no hosted
 
   assert.match(
     jobBody('notify'),
-    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["self-hosted","Linux","X64","futeba-general"\]'\) \}\}/,
+    runsOnRegExp('RUNNER_LABELS_LINUX'),
     'notify must remain on the configurable runner pool'
   );
 });

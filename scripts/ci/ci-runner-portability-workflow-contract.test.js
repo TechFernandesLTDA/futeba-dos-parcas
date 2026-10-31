@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { runsOnRegExp, MAC_IOS_RUNS_ON } = require('./runner-selector');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -31,28 +32,25 @@ test('Functions tests install the verified media runtime in the same job', () =>
   assert.match(testJob, /run: npm run install:ffmpeg[\s\S]*?name: Run Tests/);
 });
 
-test('Firestore and media runtime gates use Linux runners (tf-wsl, fallback hosted)', () => {
+test('Firestore and media runtime gates use the configured runner pools', () => {
   const rulesWorkflow = read('.github/workflows/firestore-rules-ci.yml');
   const functionsWorkflow = read('.github/workflows/functions-ci.yml');
-  // Orçamento hospedado esgotado (out/2026): o job usa tf-wsl via RUNNER_LABELS_LINUX, com
-  // fallback para ubuntu-24.04 hospedado quando a variável não existe.
-  const hostedSelector = String.raw`runs-on: (?:ubuntu-24\.04|\$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["ubuntu-24\.04"\]'\) \}\})`;
-  const selfHostedSelector = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS/;
-  // Jobs que sobem emuladores vão para o runner dedicado (futeba-emulators): todos os
-  // runners WSL compartilham 127.0.0.1:9099/8085.
-  const emulatorSelector = String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| vars\.RUNNER_LABELS_LINUX \|\| '\["ubuntu-24\.04"\]'\) \}\}`;
+  // Jobs que sobem emuladores vão para o runner dedicado (futeba-emulators, Mac): portas fixas
+  // 127.0.0.1:9099/8085. O job de mídia usa docker, que só o Mac tem (o runner da prod-01 não
+  // pertence ao grupo docker), por isso fica em RUNNER_LABELS_HEAVY.
+  const emulatorSelector = runsOnRegExp('RUNNER_LABELS_EMULATORS', 'RUNNER_LABELS_LINUX');
 
-  assert.match(job(rulesWorkflow, 'rules-tests'), new RegExp(emulatorSelector));
-  assert.match(job(functionsWorkflow, 'firestore-query-perf'), new RegExp(emulatorSelector));
+  assert.match(job(rulesWorkflow, 'rules-tests'), emulatorSelector);
+  assert.match(job(functionsWorkflow, 'firestore-query-perf'), emulatorSelector);
   const mediaJob = job(functionsWorkflow, 'media-runtime-linux');
-  assert.match(mediaJob, new RegExp(hostedSelector));
+  assert.match(mediaJob, runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.match(mediaJob, /docker run --rm --platform linux\/amd64/);
   assert.match(mediaJob, /node:22-bookworm@sha256:[a-f0-9]{64}/);
   assert.match(mediaJob, /test\/group-wall-media-ffmpeg\.test\.ts/);
-  assert.match(job(functionsWorkflow, 'test'), new RegExp(hostedSelector));
-  for (const jobId of ['build', 'lint', 'mutation']) {
-    assert.match(job(functionsWorkflow, jobId), selfHostedSelector, `${jobId} must remain self-hosted`);
+  for (const jobId of ['test', 'build', 'lint']) {
+    assert.match(job(functionsWorkflow, jobId), runsOnRegExp('RUNNER_LABELS_LINUX'), jobId);
   }
+  assert.match(job(functionsWorkflow, 'mutation'), runsOnRegExp('RUNNER_LABELS_HEAVY'));
 });
 
 test('Android PR validation uses Linux runner and validates SDK 37', () => {
@@ -63,7 +61,7 @@ test('Android PR validation uses Linux runner and validates SDK 37', () => {
 
   assert.ok(androidJobStart >= 0, 'Android validation job must exist');
   assert.ok(validateJobStart > androidJobStart, 'Android job must precede validate');
-  assert.match(androidJob, /runs-on: (?:ubuntu-24\.04|\$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX)/);
+  assert.match(androidJob, runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.match(androidJob, /uses: android-actions\/setup-android@v4/);
   assert.match(androidJob, /sdkmanager --install[\s\S]*platforms;android-37\.0/);
   assert.match(androidJob, /platforms\/android-37\.0\/android\.jar/);
@@ -73,7 +71,7 @@ test('Android PR validation uses Linux runner and validates SDK 37', () => {
 test('Lighthouse selects a Linux browser explicitly', () => {
   const workflow = read('.github/workflows/web-lighthouse-ci.yml');
   const lighthouseConfig = read('web/.lighthouserc.cjs');
-  assert.match(workflow, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}/);
+  assert.match(workflow, runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.match(workflow, /playwright install chromium/);
   assert.doesNotMatch(workflow, /--with-deps/);
   assert.match(workflow, /CHROME_PATH=.*chromium\.executablePath/);
@@ -89,20 +87,22 @@ test('Functions integration polling allows slow emulator triggers', () => {
   assert.doesNotMatch(integrationTest, /pollUntil[\s\S]*\b(?:30000|45000)\b/);
 });
 
-test('Heavy emulator, browser and Android jobs run on the Linux WSL runners', () => {
-  const linux = new RegExp(String.raw`runs-on: \$\{\{ fromJSON\((vars\.RUNNER_LABELS_EMULATORS \|\| )?vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}`);
+test('Heavy emulator, browser and Android jobs run on the self-hosted Mac pools', () => {
+  const emulators = runsOnRegExp('RUNNER_LABELS_EMULATORS', 'RUNNER_LABELS_LINUX');
+  const heavyPool = runsOnRegExp('RUNNER_LABELS_HEAVY');
   const heavy = {
-    'web-e2e-ci.yml': ['web-e2e'],
-    'web-lighthouse-ci.yml': ['lighthouse'],
-    'functions-integration-ci.yml': ['functions-integration'],
-    'realtime-load-ci.yml': ['realtime-load'],
-    'test-harness-ci.yml': ['test-harness'],
-    'android-ci.yml': ['lint', 'detekt', 'test', 'build', 'gate'],
+    'web-e2e-ci.yml': [['web-e2e', emulators]],
+    'web-lighthouse-ci.yml': [['lighthouse', heavyPool]],
+    'functions-integration-ci.yml': [['functions-integration', emulators]],
+    'realtime-load-ci.yml': [['realtime-load', emulators]],
+    'test-harness-ci.yml': [['test-harness', emulators]],
+    'android-ci.yml': [['lint', heavyPool], ['detekt', heavyPool], ['test', heavyPool], ['build', heavyPool],
+      ['gate', runsOnRegExp('RUNNER_LABELS_LINUX')]],
   };
   for (const [file, jobs] of Object.entries(heavy)) {
     const workflow = read(`.github/workflows/${file}`);
-    for (const jobId of jobs) {
-      assert.match(job(workflow, jobId), linux, `${file}:${jobId} must use RUNNER_LABELS_LINUX`);
+    for (const [jobId, selector] of jobs) {
+      assert.match(job(workflow, jobId), selector, `${file}:${jobId} must use its runner pool`);
       assert.doesNotMatch(job(workflow, jobId), /runs-on: ubuntu-/, `${file}:${jobId} must not use hosted minutes`);
     }
   }
@@ -123,11 +123,11 @@ test('Android CI on Linux provisions the SDK instead of relying on a Mac install
 
 test('Sem runner macOS: macrobenchmark manual no Linux (x86_64) e iOS só com IOS_MAC_RUNNER', () => {
   const macro = read('.github/workflows/android-macrobenchmark.yml');
-  assert.match(job(macro, 'macrobenchmark'), new RegExp(String.raw`runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}`));
+  assert.match(job(macro, 'macrobenchmark'), runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.match(macro, /arch: x86_64/);
   assert.doesNotMatch(macro, /\n  push:/, 'macrobenchmark não roda em push (emulador pesado no pool compartilhado)');
   const ios = read('.github/workflows/ios-build.yml');
-  assert.match(ios, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
+  assert.ok(ios.includes(MAC_IOS_RUNS_ON));
   assert.match(job(ios, 'build-shared-framework'), /if: vars\.IOS_MAC_RUNNER == 'true'/);
   assert.match(job(ios, 'build-ios-app'), /if: vars\.IOS_MAC_RUNNER == 'true' && /);
   assert.match(job(read('.github/workflows/ios-testflight.yml'), 'diagnose'), /if: vars\.IOS_MAC_RUNNER == 'true'/);
@@ -136,7 +136,7 @@ test('Sem runner macOS: macrobenchmark manual no Linux (x86_64) e iOS só com IO
 test('E2E Gate polling jobs use the light futeba-poller runners, never hosted minutes', () => {
   const gate = read('.github/workflows/e2e-gate.yml');
   for (const jobId of ['e2e-gate', 'post-merge-issue']) {
-    assert.match(job(gate, jobId), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_POLLER \|\| vars\.RUNNER_LABELS_LINUX \|\| /, jobId);
+    assert.match(job(gate, jobId), runsOnRegExp('RUNNER_LABELS_POLLER', 'RUNNER_LABELS_LINUX'), jobId);
     assert.doesNotMatch(job(gate, jobId), /runs-on: ubuntu-/, jobId);
   }
 });
@@ -144,7 +144,7 @@ test('E2E Gate polling jobs use the light futeba-poller runners, never hosted mi
 test('Emulator jobs on the shared WSL host serialize through the dedicated emulator runner', () => {
   // Um único runner (label futeba-emulators) serializa os jobs de emulador.
   // O grupo global antigo cancelava runs pendentes de OUTROS refs (fila de 1).
-  const emu = /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| /;
+  const emu = runsOnRegExp('RUNNER_LABELS_EMULATORS', 'RUNNER_LABELS_LINUX');
   for (const [file, jobId] of [['web-e2e-ci.yml', 'web-e2e'], ['test-harness-ci.yml', 'test-harness'],
     ['functions-integration-ci.yml', 'functions-integration'], ['realtime-load-ci.yml', 'realtime-load']]) {
     assert.match(job(read(`.github/workflows/${file}`), jobId), emu, `${file}:${jobId}`);
