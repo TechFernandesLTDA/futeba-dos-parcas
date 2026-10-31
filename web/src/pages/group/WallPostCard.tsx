@@ -446,7 +446,7 @@ export const WallPostCard: React.FC<WallPostCardProps> = ({
             alt={t('groupWall.imageAlt', { name: post.authorName })}
             sx={{
               width: '100%',
-              maxHeight: '90vh',
+              maxHeight: '90dvh',
               objectFit: 'contain',
             }}
           />

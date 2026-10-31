@@ -358,7 +358,7 @@ export const GroupPhotosPanel: React.FC<{
         {selectedPhoto && (
           <>
             <Box sx={{ bgcolor: theme.palette.common.black, display: 'flex', justifyContent: 'center' }}>
-              <Box component="img" src={selectedPhoto.url} alt={t('groupPhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
+              <Box component="img" src={selectedPhoto.url} alt={t('groupPhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78dvh', objectFit: 'contain' }} />
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
               <Avatar src={selectedPhoto.uploadedByPhoto} alt={selectedPhoto.uploadedByName}>{selectedPhoto.uploadedByName.charAt(0).toUpperCase()}</Avatar>
