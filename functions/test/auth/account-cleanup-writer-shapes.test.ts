@@ -87,14 +87,16 @@ function makeSnap(path: string): FakeSnap {
 function makeQuery(
   scope: string,
   matchesPath: (path: string) => boolean,
-  filters: Array<{field: string; value: unknown}> = [],
+  filters: Array<{field: string; op: string; value: unknown}> = [],
   limitValue?: number,
   afterPath?: string,
 ): Record<string, unknown> {
   return {
     where: (field: string, op: string, value: unknown) => {
-      if (op !== "==") throw new Error(`operador não suportado no fake: ${op}`);
-      return makeQuery(scope, matchesPath, [...filters, {field, value}], limitValue, afterPath);
+      if (!["==", "array-contains"].includes(op)) {
+        throw new Error(`operador não suportado no fake: ${op}`);
+      }
+      return makeQuery(scope, matchesPath, [...filters, {field, op, value}], limitValue, afterPath);
     },
     limit: (value: number) => makeQuery(scope, matchesPath, filters, value, afterPath),
     startAfter: (snap: FakeSnap) =>
@@ -110,8 +112,12 @@ function makeQuery(
       // Firestore real, inclusive em collectionGroup).
       let paths = [...state.keys()]
         .filter(matchesPath)
-        .filter((path) => filters.every(({field, value}) =>
-          (state.get(path) ?? {})[field] === value))
+        .filter((path) => filters.every(({field, op, value}) => {
+          const current = (state.get(path) ?? {})[field];
+          return op === "array-contains" ?
+            Array.isArray(current) && current.includes(value) :
+            current === value;
+        }))
         .sort();
       if (afterPath !== undefined) paths = paths.filter((path) => path > afterPath);
       if (limitValue !== undefined) paths = paths.slice(0, limitValue);
@@ -158,6 +164,30 @@ const fakeDb = {
       return parts.length >= 2 && parts[parts.length - 2] === name;
     }),
   batch: () => makeBatch(),
+  getAll: async (...refs: FakeRef[]) => refs.map((ref) => makeSnap(ref.path)),
+  runTransaction: async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
+    const batch = makeBatch();
+    const result = await fn({
+      get: async (ref: FakeRef) => makeSnap(ref.path),
+      delete: batch.delete,
+      update: batch.update,
+    });
+    await batch.commit();
+    return result;
+  },
+  // #4391: recursiveDelete REAL no fake — apaga o doc e todo o subtree.
+  // Sem isto o fake lançava TypeError (engolido pelo try/catch do trigger) e
+  // escondia que o recursiveDelete apagava users/{uid}/groups antes de a
+  // anonimização de membros ler os links.
+  bulkWriter: () => ({
+    onWriteError: jest.fn(),
+    close: jest.fn().mockResolvedValue(undefined),
+  }),
+  recursiveDelete: async (ref: FakeRef) => {
+    for (const path of [...state.keys()]) {
+      if (path === ref.path || path.startsWith(`${ref.path}/`)) state.delete(path);
+    }
+  },
 };
 
 jest.mock("firebase-admin", () => {
@@ -586,7 +616,7 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
 
   test(
     "groups/{id}/members/{uid}: anonimiza user_name e fotos (web e KMP), " +
-    "preserva role/status e não toca outros membros",
+    "preserva role, sai do grupo (INACTIVE, #4391) e não toca outros membros",
     async () => {
       await runCleanup();
 
@@ -596,14 +626,14 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
         user_name: ANON,
         user_photo_url: null,
         role: "OWNER",
-        status: "ACTIVE",
+        status: "INACTIVE",
       });
       expect(state.get(`groups/g-member/members/${UID}`)).toMatchObject({
         user_id: UID,
         user_name: ANON,
         user_photo: null,
         role: "MEMBER",
-        status: "ACTIVE",
+        status: "INACTIVE",
       });
       expect(state.get(`groups/g-owned/members/${OTHER}`)).toEqual({
         id: OTHER,
@@ -859,8 +889,9 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
   );
 
   test(
-    "sem índice novo: collectionGroup só em cashbox.created_by e " +
-    "reviews.user_id (fieldOverrides existentes); nada em activities (#1968)",
+    "sem índice novo: collectionGroup só em cashbox.created_by, " +
+    "members.user_id e reviews.user_id (fieldOverrides existentes); nada em " +
+    "activities (#1968)",
     async () => {
       await runCleanup();
 
@@ -870,6 +901,7 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
           `${scope.slice("collectionGroup:".length)}.${fields.join("+")}`));
       expect([...collectionGroupQueries].sort()).toEqual([
         "cashbox.created_by",
+        "members.user_id",
         "reviews.user_id",
       ]);
       // Financeiro do pagador: escopo COLLECTION, grupo a grupo.
@@ -1010,5 +1042,176 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
       members: [UID],
     });
     expect(finalCounts()).toMatchObject({groups_owner_anonymized: 2});
+  });
+});
+
+/**
+ * #4391 — etapas novas do onUserDeleted (account-deletion-cascade.ts),
+ * disparado pela callable deleteAccount. Mesmo fake em memória: as
+ * asserções são sobre o estado final, com documentos na forma dos
+ * escritores reais:
+ * - follow: social/follow.ts (toggleFollowUser);
+ * - waitlist: waitlist/join-game-waitlist.ts;
+ * - confirmations: KMP FirebaseDataSource.kt / games/join-public-game.ts;
+ * - games: web useGames.ts (owner_id, owner_name, co_organizers).
+ */
+describe("onUserDeleted — #4391 cascata da exclusão de conta", () => {
+  const FOLLOWED = "followed-user";
+  const FOLLOWER = "follower-user";
+
+  beforeEach(() => {
+    mockLoggerInfo.mockClear();
+    seedWriterShapes();
+
+    // Seguidores (toggleFollowUser grava as duas pontas + contadores).
+    state.set(`users/${FOLLOWED}`, {name: "Seguido", followers_count: 3});
+    state.set(`users/${UID}/following/${FOLLOWED}`, {target_user_id: FOLLOWED});
+    state.set(`users/${FOLLOWED}/followers/${UID}`, {follower_user_id: UID});
+    state.set(`users/${FOLLOWER}`, {name: "Seguidor", following_count: 1});
+    state.set(`users/${UID}/followers/${FOLLOWER}`, {follower_user_id: FOLLOWER});
+    state.set(`users/${FOLLOWER}/following/${UID}`, {target_user_id: UID});
+
+    // Jogos do grupo g-member: um futuro, um finalizado.
+    state.set("games/game-future", {
+      group_id: "g-member",
+      status: "SCHEDULED",
+      owner_id: UID,
+      owner_name: "Fulano da Silva",
+      co_organizers: [OTHER],
+    });
+    state.set("games/game-done", {
+      group_id: "g-member",
+      status: "FINISHED",
+      owner_id: OTHER,
+      owner_name: "Outro Jogador",
+      co_organizers: [UID, OTHER],
+    });
+    state.set(`games/game-future/waitlist/${UID}`, {
+      user_id: UID,
+      user_name: "Fulano da Silva",
+      user_photo: "https://cdn.example/fulano.jpg",
+      status: "WAITING",
+    });
+    state.set(`games/game-future/waitlist/${OTHER}`, {
+      user_id: OTHER,
+      user_name: "Outro Jogador",
+      status: "WAITING",
+    });
+    state.set(`confirmations/game-future_${UID}`, {
+      game_id: "game-future",
+      user_id: UID,
+      user_name: "Fulano da Silva",
+      user_photo: "https://cdn.example/fulano.jpg",
+      status: "CONFIRMED",
+    });
+    state.set(`confirmations/game-done_${UID}`, {
+      game_id: "game-done",
+      user_id: UID,
+      user_name: "Fulano da Silva",
+      user_photo: "https://cdn.example/fulano.jpg",
+      status: "CONFIRMED",
+      goals: 2,
+    });
+    // Forma legada camelCase (account-merge.ts lê `userId`).
+    state.set("confirmations/legacy-camel", {
+      gameId: "game-future",
+      userId: UID,
+      userName: "Fulano da Silva",
+    });
+
+    // Grupo que o usuário já DEIXOU: sem link em users/{uid}/groups.
+    state.set("groups/g-left", {name: "Racha Antigo", owner_id: OTHER});
+    state.set(`groups/g-left/members/${UID}`, {
+      user_id: UID,
+      user_name: "Fulano da Silva",
+      user_photo_url: "https://cdn.example/fulano.jpg",
+      role: "MEMBER",
+      status: "INACTIVE",
+    });
+    state.set(`notification_settings/${UID}`, {push_enabled: true});
+  });
+
+  test("seguidores: apaga os espelhos nos outros usuários e corrige os contadores", async () => {
+    await runCleanup();
+
+    expect(state.has(`users/${FOLLOWED}/followers/${UID}`)).toBe(false);
+    expect(state.has(`users/${FOLLOWER}/following/${UID}`)).toBe(false);
+    expect(state.get(`users/${FOLLOWED}`)).toEqual({name: "Seguido", followers_count: 2});
+    expect(state.get(`users/${FOLLOWER}`)).toEqual({name: "Seguidor", following_count: 0});
+    // Subtree do titular apagado pelo recursiveDelete, que agora roda depois.
+    expect([...state.keys()].filter((path) => path.startsWith(`users/${UID}`)))
+      .toEqual([]);
+    expect(finalCounts()).toMatchObject({
+      follow_edges_following: 1,
+      follow_edges_followers: 1,
+    });
+  });
+
+  test("confirmations: apaga a do jogo futuro (e a legada) e anonimiza a do jogo finalizado", async () => {
+    await runCleanup();
+
+    expect(state.has(`confirmations/game-future_${UID}`)).toBe(false);
+    expect(state.has("confirmations/legacy-camel")).toBe(false);
+    expect(state.get(`confirmations/game-done_${UID}`)).toEqual({
+      game_id: "game-done",
+      user_id: UID,
+      user_name: ANON,
+      user_photo: null,
+      status: "CONFIRMED",
+      goals: 2,
+    });
+    expect(finalCounts()).toMatchObject({
+      confirmations: 2,
+      confirmations_anonymized: 1,
+    });
+  });
+
+  test("fila de espera: apaga só a entrada do titular", async () => {
+    await runCleanup();
+
+    expect(state.has(`games/game-future/waitlist/${UID}`)).toBe(false);
+    expect(state.has(`games/game-future/waitlist/${OTHER}`)).toBe(true);
+    expect(finalCounts()).toMatchObject({waitlist_entries: 1});
+  });
+
+  test("jogos: anonimiza owner_name e tira o uid de co_organizers, sem apagar o jogo", async () => {
+    await runCleanup();
+
+    expect(state.get("games/game-future")).toMatchObject({
+      owner_id: UID,
+      owner_name: ANON,
+      status: "SCHEDULED",
+    });
+    expect(state.get("games/game-done")).toMatchObject({
+      owner_name: "Outro Jogador",
+      co_organizers: [OTHER],
+    });
+    expect(finalCounts()).toMatchObject({
+      games_owner_anonymized: 1,
+      games_co_organizer_removed: 1,
+    });
+  });
+
+  test("grupo já deixado (sem link) é achado via collectionGroup e anonimizado", async () => {
+    await runCleanup();
+
+    expect(state.get(`groups/g-left/members/${UID}`)).toEqual({
+      user_id: UID,
+      user_name: ANON,
+      user_photo_url: null,
+      role: "MEMBER",
+      status: "INACTIVE",
+    });
+    expect(state.has(`notification_settings/${UID}`)).toBe(false);
+  });
+
+  test("idempotente: rodar duas vezes não quebra nem duplica decremento", async () => {
+    await runCleanup();
+    const afterFirst = new Map(state);
+    await expect(runCleanup()).resolves.toBeUndefined();
+
+    expect(state.get(`users/${FOLLOWED}`)).toEqual({name: "Seguido", followers_count: 2});
+    expect(state.get(`users/${FOLLOWER}`)).toEqual({name: "Seguidor", following_count: 0});
+    expect(new Map(state)).toEqual(afterFirst);
   });
 });
