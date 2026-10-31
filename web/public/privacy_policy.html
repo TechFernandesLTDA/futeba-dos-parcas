@@ -66,6 +66,29 @@
             text-decoration: underline;
         }
 
+        .table-wrap {
+            overflow-x: auto;
+            margin: 15px 0 25px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.92em;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f0f4f8;
+        }
+
         .footer {
             margin-top: 40px;
             font-size: 0.9em;
@@ -81,65 +104,272 @@
     <div class="container">
         <h1>Futeba dos Parças</h1>
         <h2>Política de Privacidade</h2>
-        <p><strong>Última atualização: 29 de Dezembro de 2025</strong></p>
+        <p><strong>Versão 2.0 · Em vigor desde 31 de outubro de 2026</strong><br>
+            Versão anterior: 29 de dezembro de 2025.</p>
 
-        <p>A <strong>Tech Fernandes Ltda</strong> ("nós", "nosso") opera o aplicativo <strong>Futeba dos
-                Parças</strong>. Esta página informa sobre nossas políticas relativas à coleta, uso e divulgação de
-            Dados Pessoais quando você usa nosso Serviço.</p>
+        <p>Esta política explica quais dados pessoais o aplicativo <strong>Futeba dos Parças</strong> (Android, iOS e
+            web) trata, para quê, por quanto tempo, com quem os compartilhamos e como você exerce seus direitos. Ela
+            segue a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018) e, para crianças e adolescentes, o Estatuto
+            Digital da Criança e do Adolescente (Lei 15.211/2025).</p>
 
-        <h2>1. Coleta e Uso de Dados</h2>
-        <p>Para fornecer e melhorar nosso Serviço, podemos coletar os seguintes tipos de informações:</p>
-
-        <h3>Dados Fornecidos por Você</h3>
-        <ul>
-            <li><strong>Informações de Identificação:</strong> Nome, apelido e endereço de e-mail (utilizado para
-                autenticação via Google Sign-In).</li>
-            <li><strong>Mídia:</strong> Foto de perfil (opcional) para identificação nas partidas e rankings.</li>
-            <li><strong>Dados de Jogo:</strong> Estatísticas de partidas, posições preferidas e avaliações de desempenho
-                (para o sistema de gamificação).</li>
-        </ul>
-
-        <h3>Dados Coletados Automaticamente</h3>
-        <ul>
-            <li><strong>Informações do Dispositivo:</strong> Modelo do aparelho, sistema operacional e identificadores
-                únicos para fins de diagnóstico e correção de erros (via Firebase Crashlytics e Analytics).</li>
-            <li><strong>Logs:</strong> Registros de acesso e uso para segurança e manutenção do sistema.</li>
-        </ul>
-
-        <h2>2. Como Usamos Seus Dados</h2>
-        <p>Utilizamos os dados coletados para:</p>
-        <ul>
-            <li>Gerenciar sua conta e fornecer acesso às funcionalidades do aplicativo.</li>
-            <li>Calcular rankings, estatísticas e progressão de nível (Gamificação).</li>
-            <li>Organizar partidas e facilitar a comunicação entre jogadores.</li>
-            <li>Monitorar o uso do serviço e detectar problemas técnicos.</li>
-        </ul>
-
-        <h2>3. Compartilhamento de Dados</h2>
-        <p>Não vendemos suas informações pessoais. Seus dados podem ser compartilhados apenas nas seguintes
-            circunstâncias:</p>
-        <ul>
-            <li><strong>Provedores de Serviço:</strong> Utilizamos o Google Firebase para hospedagem de banco de dados,
-                autenticação e análises.</li>
-            <li><strong>Requisitos Legais:</strong> Se exigido por lei ou em resposta a solicitações válidas de
-                autoridades públicas.</li>
-        </ul>
-
-        <h2>4. Exclusão de Dados</h2>
-        <p>Você tem o direito de solicitar a exclusão de sua conta e de todos os seus dados a qualquer momento. Para
-            saber como proceder, visite nossa página dedicada:</p>
-        <p><a href="delete_account.html">Instruções para Exclusão de Conta</a></p>
-
-        <h2>5. Segurança</h2>
-        <p>A segurança dos seus dados é importante para nós. Utilizamos protocolos padrão da indústria e criptografia
-            fornecida pelo Google Cloud Platform para proteger suas informações. No entanto, lembre-se de que nenhum
-            método de transmissão pela Internet é 100% seguro.</p>
-
-        <h2>6. Contato</h2>
-        <p>Se você tiver alguma dúvida sobre esta Política de Privacidade, entre em contato conosco:</p>
+        <h2>1. Quem é o controlador</h2>
+        <p>O controlador dos seus dados é a <strong>Tech Fernandes Ltda</strong>, que opera o Futeba dos Parças.</p>
         <div class="email-box">
-            <p><strong>E-mail:</strong> <a href="mailto:techfernandesltda@gmail.com">techfernandesltda@gmail.com</a></p>
+            <p><strong>Contato e Encarregado de Dados (DPO):</strong> <a
+                    href="mailto:techfernandesltda@gmail.com">techfernandesltda@gmail.com</a></p>
         </div>
+        <p>Esse é o canal do encarregado pelo tratamento de dados pessoais (art. 41 da LGPD). Use-o para dúvidas e
+            pedidos de titulares. Ele também recebe as comunicações da Autoridade Nacional de Proteção de Dados
+            (ANPD).</p>
+
+        <h2>2. Dados que tratamos, para quê e com qual base legal</h2>
+        <p>Cada tratamento tem uma finalidade e uma base legal do art. 7º da LGPD. "Execução do contrato" quer dizer
+            o que é necessário para o app funcionar para você.</p>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dados</th>
+                        <th>Finalidade</th>
+                        <th>Base legal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Conta:</strong> nome, apelido, e-mail, foto de perfil, identificador da conta e
+                            método de login (Google, e-mail e senha ou telefone)</td>
+                        <td>Criar e proteger sua conta; identificar você nos jogos e rankings</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Telefone:</strong> número e verificação por SMS</td>
+                        <td>Login por telefone, verificação de identidade e prevenção de contas falsas ou duplicadas
+                        </td>
+                        <td>Execução do contrato (art. 7º, V) e legítimo interesse em segurança e prevenção à fraude
+                            (art. 7º, IX)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CPF:</strong> não guardamos o número. Guardamos apenas um código irreversível
+                            (hash com chave secreta) e a data da verificação</td>
+                        <td>Garantir uma conta por pessoa e prevenir fraudes</td>
+                        <td>Legítimo interesse em segurança e prevenção à fraude (art. 7º, IX)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Perfil esportivo (opcional):</strong> posição, pé dominante, estilo de jogo,
+                            altura, peso, data de nascimento, gênero, time do coração, autoavaliações</td>
+                        <td>Montar times equilibrados e personalizar o perfil. A data de nascimento também ajuda a
+                            verificar a faixa etária</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Atividade esportiva:</strong> presença em jogos, gols, assistências, defesas,
+                            cartões, votos de MVP e Bola Murcha, avaliações pós-jogo, XP, níveis, conquistas,
+                            sequências, rankings e temporadas</td>
+                        <td>Gamificação, estatísticas e rankings do grupo</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Grupos e vida social:</strong> grupos de que você participa, convites, seguidores e
+                            seguindo, bloqueios, mural do grupo, enquetes, caronas e comentários</td>
+                        <td>Organizar peladas e permitir a convivência entre os jogadores</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mensagens</strong> diretas e de grupo (conteúdo, remetente, horário)</td>
+                        <td>Conversa entre jogadores e avisos de jogo</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fotos e vídeos</strong> do álbum dos jogos, do mural e dos locais, e logos de
+                            grupos</td>
+                        <td>Memória dos jogos e identidade visual dos grupos</td>
+                        <td>Execução do contrato (art. 7º, V). Outras pessoas podem aparecer nas imagens: envie apenas
+                            o que elas aceitam compartilhar</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Financeiro do grupo:</strong> lançamentos do caixa, mensalidades, pagamentos, quem
+                            pagou e comprovantes enviados</td>
+                        <td>Controle de caixa e cobrança entre o organizador e os jogadores. O app não processa cartão
+                            nem guarda dados bancários</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Localização (GPS):</strong> posição aproximada, somente se você ativar</td>
+                        <td>Check-in em campo, locais próximos e descoberta de jogadores por proximidade. Para a
+                            descoberta, as coordenadas ficam em área separada do perfil e os outros jogadores veem
+                            apenas uma distância aproximada</td>
+                        <td>Consentimento (art. 7º, I). Você pode desfazê-lo a qualquer momento nas configurações</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Avaliações de locais</strong> (nota e texto)</td>
+                        <td>Ajudar outros jogadores a escolher onde jogar</td>
+                        <td>Execução do contrato (art. 7º, V)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Notificações:</strong> token do dispositivo (FCM) e preferências</td>
+                        <td>Avisos de jogo, convites, lembretes e conquistas</td>
+                        <td>Execução do contrato (art. 7º, V). Você pode desligar nas configurações do app ou do
+                            aparelho</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dados técnicos:</strong> modelo do aparelho, sistema, versão do app, identificadores
+                            do app, relatórios de falha, métricas de uso e de desempenho (Firebase Crashlytics,
+                            Analytics e Performance)</td>
+                        <td>Corrigir erros, medir desempenho e melhorar o app</td>
+                        <td>Legítimo interesse (art. 7º, IX)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Segurança:</strong> tokens de verificação do app (App Check: Play Integrity, App
+                            Attest, reCAPTCHA Enterprise), registros de auditoria, limite de requisições e denúncias
+                        </td>
+                        <td>Impedir robôs, abuso, fraude e acesso indevido</td>
+                        <td>Legítimo interesse em segurança e prevenção à fraude (art. 7º, IX); dever de segurança
+                            (art. 46)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Suporte e denúncias:</strong> o que você nos escrever e os dados da denúncia</td>
+                        <td>Atender pedidos e moderar conteúdo</td>
+                        <td>Legítimo interesse (art. 7º, IX) e cumprimento de obrigação legal (art. 7º, II)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Dados sensíveis</h3>
+        <p>Não pedimos dados sensíveis do art. 5º, II da LGPD (saúde, origem racial, religião, biometria e similares).
+            Peso e altura são usados só para formar times e não são tratados como dado de saúde. A foto de perfil serve
+            para identificar você, e não para reconhecimento facial. Não escreva dados sensíveis em mensagens, mural ou
+            avaliações. Se um dia tratarmos dado sensível, será com seu consentimento específico (art. 11).</p>
+
+        <h2>3. Com quem compartilhamos</h2>
+        <p>Não vendemos seus dados e não fazemos publicidade direcionada.</p>
+        <ul>
+            <li><strong>Outros jogadores e membros dos seus grupos:</strong> nome, apelido, foto, posição, estatísticas,
+                XP, nível, conquistas, mensagens, mural, fotos e caixa do grupo ficam visíveis conforme as regras do
+                grupo. Quem organiza o grupo vê os dados de presença e de pagamento necessários para gerir a pelada.
+                Seu perfil pode aparecer em buscas e rankings quando estiver configurado como público ou pesquisável
+                (você muda isso nas configurações de privacidade). Seu e-mail, telefone, data de nascimento, peso,
+                altura e CPF não são exibidos a outros jogadores.</li>
+            <li><strong>Operadores de infraestrutura:</strong> Google Firebase e Google Cloud (autenticação, banco de
+                dados Firestore, armazenamento de arquivos, funções, notificações, Remote Config, Crashlytics,
+                Analytics e App Check), Google Maps e Places (mapas e busca de locais) e ViaCEP (consulta de endereço
+                por CEP). Eles tratam os dados apenas para nos prestar o serviço.</li>
+            <li><strong>Autoridades:</strong> quando houver ordem judicial, obrigação legal ou necessidade de proteger
+                direitos e a segurança de pessoas, inclusive denúncia de exploração sexual infantil (veja a página de
+                <a href="child_safety.html">Segurança Infantil</a>).</li>
+            <li><strong>Reorganização da empresa:</strong> em caso de fusão ou venda, seus dados poderão acompanhar o
+                serviço, com a mesma proteção desta política e aviso prévio a você.</li>
+        </ul>
+
+        <h2>4. Transferência internacional</h2>
+        <p>Nossas funções de servidor e nosso banco de dados ficam em São Paulo (região
+            <code>southamerica-east1</code>). Alguns serviços do Google, como Analytics, Crashlytics, notificações,
+            Maps, App Check e reCAPTCHA, podem processar dados fora do Brasil, inclusive nos Estados Unidos. Essa
+            transferência segue o art. 33 da LGPD, com as cláusulas contratuais e as garantias de segurança que o
+            Google oferece aos clientes do Firebase e do Google Cloud. Para saber mais, escreva ao encarregado.</p>
+
+        <h2>5. Por quanto tempo guardamos</h2>
+        <p>Guardamos os dados enquanto sua conta existir e for necessário para as finalidades acima. Prazos que já
+            aplicamos:</p>
+        <ul>
+            <li><strong>Conta excluída:</strong> seus dados pessoais são apagados ou anonimizados em até 30 dias
+                (seção 7). Podemos manter por mais tempo apenas o que a lei exigir ou o que for necessário para defesa
+                em processos, com acesso restrito.</li>
+            <li><strong>Grupos e jogos apagados:</strong> ficam em lixeira por 30 dias antes da remoção definitiva.</li>
+            <li><strong>Histórico de XP:</strong> registros com mais de 1 ano são removidos automaticamente.</li>
+            <li><strong>Atividades do feed:</strong> removidas após 90 dias.</li>
+            <li><strong>Notificações lidas:</strong> removidas após 30 dias.</li>
+            <li><strong>Localização para descoberta de jogadores:</strong> só é usada se tiver sido atualizada nos
+                últimos 30 dias. Ao desativar o compartilhamento, a localização deixa de ser usada.</li>
+            <li><strong>Registros técnicos de operação</strong> (limite de requisições, deduplicação de
+                notificações, amostras de desempenho): expiram automaticamente em curto prazo.</li>
+            <li><strong>Relatórios de falha e métricas de uso:</strong> seguem os prazos configurados no Firebase.</li>
+            <li><strong>Demais dados da conta</strong> (perfil, estatísticas, mensagens, fotos, avaliações): mantidos
+                enquanto a conta existir, ou até você apagar o conteúdo.</li>
+        </ul>
+        <p>Conteúdo que outros jogadores já receberam (por exemplo, uma mensagem enviada em um grupo) pode continuar
+            visível para eles, nos termos da seção 7.</p>
+
+        <h2>6. Seus direitos (art. 18 da LGPD)</h2>
+        <p>Você pode, a qualquer momento e sem custo:</p>
+        <ul>
+            <li>confirmar se tratamos seus dados e acessá-los;</li>
+            <li>corrigir dados incompletos, inexatos ou desatualizados (no perfil do app);</li>
+            <li>pedir anonimização, bloqueio ou eliminação de dados desnecessários, excessivos ou tratados fora da
+                lei;</li>
+            <li>pedir a portabilidade dos seus dados a outro fornecedor;</li>
+            <li>pedir a eliminação dos dados tratados com base no seu consentimento;</li>
+            <li>saber com quais entidades compartilhamos seus dados;</li>
+            <li>ser informado sobre a possibilidade de não consentir e sobre as consequências;</li>
+            <li>revogar o consentimento (por exemplo, desligar a localização nas configurações);</li>
+            <li>se opor a um tratamento feito com base em legítimo interesse;</li>
+            <li>pedir revisão de decisões tomadas apenas de forma automatizada. Rankings, XP e a formação automática
+                de times seguem regras do app, e você pode pedir explicação dos critérios;</li>
+            <li>reclamar à ANPD (<a href="https://www.gov.br/anpd" rel="noopener">gov.br/anpd</a>).</li>
+        </ul>
+        <p><strong>Como exercer:</strong> use as configurações do próprio app (editar perfil, privacidade,
+            localização, notificações e exclusão de conta) ou escreva para <a
+                href="mailto:techfernandesltda@gmail.com">techfernandesltda@gmail.com</a>, com o assunto "Direitos do
+            titular - Futeba dos Parças" e o e-mail da sua conta. Podemos pedir confirmação da sua identidade.
+            Respondemos em até 15 dias. Na portabilidade, entregamos seus dados em formato estruturado e de uso
+            comum.</p>
+
+        <h2>7. Exclusão de conta</h2>
+        <p>Você pode excluir sua conta no app (Configurações &gt; Excluir Conta) ou por e-mail. O passo a passo está em
+            <a href="delete_account.html">Exclusão de Conta e Dados</a>. Em até 30 dias removemos ou anonimizamos seus
+            dados pessoais: perfil, foto, localização, token de notificações e vínculos sociais. Estatísticas de jogos
+            de que você participou podem permanecer de forma anonimizada, para não alterar o histórico e os rankings
+            dos outros jogadores. Mensagens que você enviou em grupos e conteúdos compartilhados com outros jogadores
+            são removidos ou desvinculados do seu nome. Registros financeiros do grupo podem ser mantidos sem
+            identificação sua quando forem necessários à prestação de contas do grupo e a obrigações legais.</p>
+
+        <h2>8. Segurança</h2>
+        <p>Adotamos medidas técnicas e organizacionais para proteger seus dados: criptografia em trânsito e em repouso
+            na infraestrutura do Google Cloud; regras de acesso por usuário e por grupo no banco de dados e no
+            armazenamento de arquivos; dados mais sensíveis (e-mail, telefone, data de nascimento e CPF verificado)
+            em área privada, legível só por você; CPF guardado apenas como hash com chave secreta; verificação do app
+            (App Check); limite de requisições contra abuso; e registros de auditoria. Nenhum sistema é totalmente
+            seguro. Se ocorrer um incidente que possa causar risco ou dano relevante, comunicaremos você e a ANPD nos
+            termos do art. 48 da LGPD.</p>
+
+        <h2>9. Crianças e adolescentes</h2>
+        <p>O Futeba dos Parças não é voltado a crianças. A idade mínima para criar conta é <strong>13 anos</strong>.
+            Quem tem de 13 a 17 anos só deve usar o app com o conhecimento e o consentimento de pai, mãe ou
+            responsável legal. Conforme o Estatuto Digital da Criança e do Adolescente (Lei 15.211/2025), a conta de
+            quem tem <strong>menos de 16 anos</strong> deve estar vinculada a um responsável legal, que pode pedir
+            acesso, correção ou exclusão dos dados do menor pelo e-mail do encarregado.</p>
+        <p>Tratamos dados de menores sempre no melhor interesse deles (art. 14 da LGPD): sem publicidade direcionada,
+            sem venda de dados e com a localização desligada até que a pessoa a ative. Se soubermos que alguém com
+            menos de 13 anos criou uma conta, vamos excluí-la. Se você é responsável por um menor e acredita que isso
+            aconteceu, escreva para o encarregado. Veja também os <a href="child_safety.html">Padrões de Segurança
+                Infantil</a>.</p>
+
+        <h2>10. Cookies e armazenamento local (versão web)</h2>
+        <p>A versão web usa o armazenamento do navegador (<em>localStorage</em>, <em>sessionStorage</em> e IndexedDB)
+            para manter sua sessão de login, o tema claro ou escuro, rascunhos de formulários, a fila de gravações
+            feitas sem internet, locais favoritos, avisos já vistos e preferências de tela. Esses itens são
+            necessários ao funcionamento. O Firebase Analytics e o Crashlytics podem usar identificadores do navegador
+            ou do aparelho para métricas de uso. Não usamos cookies de publicidade. Você pode limpar esses dados nas
+            configurações do navegador, o que encerra sua sessão.</p>
+
+        <h2>11. Serviços de terceiros</h2>
+        <p>O app pode abrir mapas e páginas de terceiros. Cada um tem sua própria política de privacidade, e não
+            controlamos esses serviços.</p>
+
+        <h2>12. Alterações nesta política</h2>
+        <p>Podemos atualizar esta política. A versão vigente é a indicada no topo da página. Mudanças relevantes,
+            principalmente novas finalidades ou novos tipos de dado, serão avisadas pelo aplicativo ou por e-mail antes
+            de valerem, e pediremos novo consentimento quando a lei exigir.</p>
+
+        <h2>13. Contato</h2>
+        <p>Dúvidas sobre esta política ou sobre seus dados:</p>
+        <div class="email-box">
+            <p><strong>Tech Fernandes Ltda, Encarregado de Dados:</strong> <a
+                    href="mailto:techfernandesltda@gmail.com">techfernandesltda@gmail.com</a></p>
+        </div>
+        <p>Documentos relacionados: <a href="terms_of_service.html">Termos de Uso</a> · <a
+                href="delete_account.html">Exclusão de Conta</a> · <a href="child_safety.html">Segurança Infantil</a>
+        </p>
 
         <div class="footer">
             <p>&copy; 2024-2026 Tech Fernandes Ltda. Todos os direitos reservados.</p>

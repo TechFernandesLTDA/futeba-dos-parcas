@@ -80,7 +80,7 @@ export function PeladaManagementPage() {
   });
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary' }}>
       <GrowthHeader currentPage="/gestao-de-pelada" />
       <GrowthBreadcrumbs items={[{ label: 'Gestão Financeira e Caixa' }]} />
 
