@@ -58,6 +58,12 @@ import com.futebadosparcas.compose.resources.cd_back
 import com.futebadosparcas.compose.resources.delete_account_acknowledge
 import com.futebadosparcas.compose.resources.delete_account_button
 import com.futebadosparcas.compose.resources.delete_account_button_cd
+import com.futebadosparcas.compose.resources.delete_account_blocking_groups_body
+import com.futebadosparcas.compose.resources.delete_account_blocking_groups_body_no_names
+import com.futebadosparcas.compose.resources.delete_account_blocking_groups_close
+import com.futebadosparcas.compose.resources.delete_account_blocking_groups_list_cd
+import com.futebadosparcas.compose.resources.delete_account_blocking_groups_title
+import com.futebadosparcas.compose.resources.delete_account_blocking_groups_unnamed
 import com.futebadosparcas.compose.resources.delete_account_confirm_action
 import com.futebadosparcas.compose.resources.delete_account_confirm_body
 import com.futebadosparcas.compose.resources.delete_account_confirm_title
@@ -77,6 +83,7 @@ import com.futebadosparcas.compose.resources.delete_account_retention_note
 import com.futebadosparcas.compose.resources.delete_account_title
 import com.futebadosparcas.compose.resources.delete_account_web_url
 import com.futebadosparcas.compose.resources.retry
+import com.futebadosparcas.platform.firebase.CallableGroup
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import org.jetbrains.compose.resources.stringResource
 
@@ -230,7 +237,9 @@ private fun DeleteAccountContent(
                     )
                 }
 
-                if (state is DeleteAccountUiState.Error) {
+                if (state is DeleteAccountUiState.Error &&
+                    state.reason != DeleteAccountError.SOLE_OWNER_GROUPS
+                ) {
                     DeleteAccountErrorCard(
                         error = state.reason,
                         onRetry = {
@@ -268,6 +277,13 @@ private fun DeleteAccountContent(
                 }
             }
         }
+    }
+
+    // #4440: dono único de grupos com outros membros; reautenticar não resolve.
+    if (state is DeleteAccountUiState.Error &&
+        state.reason == DeleteAccountError.SOLE_OWNER_GROUPS
+    ) {
+        BlockingGroupsDialog(groups = state.blockingGroups, onDismiss = onDismissError)
     }
 
     // Confirmação 2: alerta final com a ação destrutiva destacada em vermelho.
@@ -330,7 +346,9 @@ private fun DeleteAccountErrorCard(
     val message = when (error) {
         DeleteAccountError.RECENT_LOGIN_REQUIRED -> Res.string.delete_account_error_recent_login
         DeleteAccountError.BACKEND_UNAVAILABLE -> Res.string.delete_account_error_unavailable
-        DeleteAccountError.GENERIC -> Res.string.delete_account_error_generic
+        // SOLE_OWNER_GROUPS tem diálogo próprio; aqui só por exaustividade.
+        DeleteAccountError.GENERIC,
+        DeleteAccountError.SOLE_OWNER_GROUPS -> Res.string.delete_account_error_generic
     }
     Card(
         colors = CardDefaults.cardColors(
@@ -354,7 +372,8 @@ private fun DeleteAccountErrorCard(
                     DeleteAccountError.BACKEND_UNAVAILABLE -> {
                         { runCatching { uriHandler.openUri(webUrl) }; Unit }
                     }
-                    DeleteAccountError.GENERIC -> onRetry
+                    DeleteAccountError.GENERIC,
+                    DeleteAccountError.SOLE_OWNER_GROUPS -> onRetry
                 },
                 modifier = Modifier.heightIn(min = 48.dp)
             ) {
@@ -365,11 +384,72 @@ private fun DeleteAccountErrorCard(
                                 Res.string.delete_account_error_recent_login_action
                             DeleteAccountError.BACKEND_UNAVAILABLE ->
                                 Res.string.delete_account_error_unavailable_action
-                            DeleteAccountError.GENERIC -> Res.string.retry
+                            DeleteAccountError.GENERIC,
+                            DeleteAccountError.SOLE_OWNER_GROUPS -> Res.string.retry
                         }
                     )
                 )
             }
         }
     }
+}
+
+/** Lista os grupos que bloqueiam a exclusão (#4440), com a saída: transferir posse ou remover membros. */
+@Composable
+private fun BlockingGroupsDialog(
+    groups: List<CallableGroup>,
+    onDismiss: () -> Unit
+) {
+    val listDescription = stringResource(Res.string.delete_account_blocking_groups_list_cd)
+    val unnamed = stringResource(Res.string.delete_account_blocking_groups_unnamed)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.WarningAmber,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        },
+        title = { Text(stringResource(Res.string.delete_account_blocking_groups_title)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(
+                        if (groups.isEmpty()) {
+                            Res.string.delete_account_blocking_groups_body_no_names
+                        } else {
+                            Res.string.delete_account_blocking_groups_body
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (groups.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.semantics { contentDescription = listDescription },
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        groups.forEach { group ->
+                            BulletLine(text = group.name.ifBlank { unnamed })
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 48.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.delete_account_blocking_groups_close),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    )
 }

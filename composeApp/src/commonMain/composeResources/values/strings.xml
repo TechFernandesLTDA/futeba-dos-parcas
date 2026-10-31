@@ -4140,6 +4140,12 @@ subir no ranking!</string>
     <string name="delete_account_error_recent_login_action">Sair e entrar de novo</string>
     <string name="delete_account_error_unavailable">A exclusão pelo app ainda não está disponível. Você pode pedir a exclusão pela página oficial, com o mesmo resultado.</string>
     <string name="delete_account_error_unavailable_action">Pedir exclusão pela web</string>
+    <string name="delete_account_blocking_groups_title">Transfira seus grupos antes de excluir</string>
+    <string name="delete_account_blocking_groups_body">Você é o único dono dos grupos abaixo, e eles têm outros membros. Transfira a posse para outro membro ou remova os membros e tente de novo.</string>
+    <string name="delete_account_blocking_groups_body_no_names">Você é o único dono de grupos que têm outros membros. Transfira a posse para outro membro ou remova os membros e tente de novo.</string>
+    <string name="delete_account_blocking_groups_unnamed">Grupo sem nome</string>
+    <string name="delete_account_blocking_groups_close">Entendi</string>
+    <string name="delete_account_blocking_groups_list_cd">Grupos que impedem a exclusão</string>
     <string name="delete_account_error_generic">Não foi possível excluir a conta agora. Verifique a conexão e tente de novo.</string>
     <string name="delete_account_unavailable_env">A exclusão de conta precisa de conexão com o servidor, que não está configurada neste ambiente.</string>
     <string name="delete_account_web_url">https://futebadosparcas.com.br/delete_account.html</string>

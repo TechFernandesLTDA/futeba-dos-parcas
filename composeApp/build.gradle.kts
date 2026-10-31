@@ -89,6 +89,11 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
         }
 
+        // #4440: testes unitários de lógica pura (ex.: classificação de erros de ViewModel).
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+
         androidMain.dependencies {
             // Android-specific dependencies
             implementation("androidx.activity:activity-compose:1.12.3")
