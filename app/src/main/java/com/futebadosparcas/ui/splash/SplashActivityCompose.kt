@@ -17,7 +17,6 @@ import com.futebadosparcas.ui.auth.LoginActivityCompose
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.PreferencesManager
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import kotlin.random.Random
@@ -91,9 +90,11 @@ class SplashActivityCompose : AppCompatActivity() {
         lifecycleScope.launch {
             if (authRepository.isLoggedIn()) {
                 userRepository.getCurrentUser().onSuccess { user ->
+                    // PERF (spec PERF_ANDROID_OPTIMIZATIONS_2026_10_31): sem delay aqui.
+                    // Enquanto userChecked=false o brasão fica com alpha 0, então a
+                    // espera de 800 ms que existia era invisível e somava ao delay de
+                    // exibição do brasão que o SplashScreen já faz depois do check.
                     userState = user
-                    // Aguarda animação completar
-                    delay(800)
                 }.onFailure {
                     userState = null
                 }
