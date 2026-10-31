@@ -3,11 +3,13 @@ package com.futebadosparcas.data.repository
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -226,6 +228,11 @@ class AuthRepository constructor(
         }
     }
 
+    /**
+     * Exclui a conta via callable `deleteAccount` (#4391).
+     * Falhas de negócio viram [DeleteAccountError] dentro do Result.failure:
+     * [DeleteAccountError.RequiresRecentLogin] e [DeleteAccountError.SoleOwnerGroups].
+     */
     suspend fun deleteAccount(): Result<Unit> {
         return try {
             functions
@@ -237,6 +244,37 @@ class AuthRepository constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e(TAG, "deleteAccount failed: ${e.message}", e)
+            Result.failure(mapDeleteAccountError(e))
+        }
+    }
+
+    /** Provedores de reautenticação suportados pelo app: "google.com" e/ou "password". */
+    fun getReauthProviders(): List<String> =
+        getLinkedProviders().filter { it == "google.com" || it == "password" }
+
+    /** Reautentica com um Google ID token e renova o ID token (atualiza `auth_time`). */
+    suspend fun reauthenticateWithGoogle(idToken: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(IllegalStateException("Not authenticated"))
+        return try {
+            user.reauthenticate(GoogleAuthProvider.getCredential(idToken, null)).await()
+            user.getIdToken(true).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "reauthenticateWithGoogle failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /** Reautentica com e-mail/senha da conta atual e renova o ID token. */
+    suspend fun reauthenticateWithPassword(password: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(IllegalStateException("Not authenticated"))
+        val email = user.email ?: return Result.failure(IllegalStateException("No email"))
+        return try {
+            user.reauthenticate(EmailAuthProvider.getCredential(email, password)).await()
+            user.getIdToken(true).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "reauthenticateWithPassword failed: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -307,5 +345,50 @@ class AuthRepository constructor(
             AppLogger.e(TAG, "unlinkGoogleAccount failed: ${e.message}", e)
             Result.failure(e)
         }
+    }
+}
+
+
+/** Grupo que impede a exclusão da conta (usuário é dono e há outros membros ativos). */
+data class BlockingGroup(val id: String, val name: String)
+
+/** Erros tipados da callable `deleteAccount` (#4391). */
+sealed class DeleteAccountError(message: String, cause: Throwable? = null) : Exception(message, cause) {
+    /** Login com mais de 10 min: é preciso reautenticar e repetir. */
+    class RequiresRecentLogin(cause: Throwable? = null) :
+        DeleteAccountError("requires-recent-login", cause)
+
+    /** Usuário é dono de grupos com outros membros ativos. */
+    class SoleOwnerGroups(val groups: List<BlockingGroup>, cause: Throwable? = null) :
+        DeleteAccountError("sole-owner-groups", cause)
+
+    /** Qualquer outra falha. */
+    class Generic(cause: Throwable? = null) :
+        DeleteAccountError(cause?.message ?: "delete-account-failed", cause)
+}
+
+/**
+ * Converte a exceção da callable em [DeleteAccountError], lendo
+ * `details.reason` de um FAILED_PRECONDITION.
+ */
+fun mapDeleteAccountError(error: Throwable): DeleteAccountError {
+    if (error is DeleteAccountError) return error
+    if (error !is FirebaseFunctionsException ||
+        error.code != FirebaseFunctionsException.Code.FAILED_PRECONDITION
+    ) {
+        return DeleteAccountError.Generic(error)
+    }
+    val details = error.details as? Map<*, *> ?: return DeleteAccountError.Generic(error)
+    return when (details["reason"]) {
+        "requires-recent-login" -> DeleteAccountError.RequiresRecentLogin(error)
+        "sole-owner-groups" -> {
+            val groups = (details["groups"] as? List<*>).orEmpty().mapNotNull { item ->
+                val map = item as? Map<*, *> ?: return@mapNotNull null
+                val id = map["id"] as? String ?: return@mapNotNull null
+                BlockingGroup(id = id, name = (map["name"] as? String).orEmpty())
+            }
+            DeleteAccountError.SoleOwnerGroups(groups, error)
+        }
+        else -> DeleteAccountError.Generic(error)
     }
 }
