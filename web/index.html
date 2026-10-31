@@ -18,25 +18,43 @@
          qualquer modo e o conteúdo respeita safe-area via env() nos bars. -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <!-- FIX #4131: apple-touch-startup-images (2º critério do #2716) —
-         fundo sólido por tamanho/dispositivo; elimina o flash branco no 1º launch do PWA no iPhone. Nota: as imagens são light; no dark o fundo combina com o default light theme do PWA em Cold Start. -->
-    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-640x1096.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-1096x640.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-750x1294.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-1294x750.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1125x2436.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2436x1125.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1242x2688.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2688x1242.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1170x2532.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2532x1170.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1284x2778.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2778x1284.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/startup/light-1290x2796.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/startup/light-2796x1290.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-1536x2048.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-2048x1536.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/startup/light-2048x2732.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/startup/light-2732x2048.png" />
+         fundo sólido por tamanho/dispositivo; elimina o flash branco no 1º launch do PWA no iPhone. #4405: cada tamanho tem variante light e dark (prefers-color-scheme), sem flash claro no cold start em modo escuro. -->
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-640x1096.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-640x1096.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-1096x640.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 548px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-1096x640.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-750x1294.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-750x1294.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-1294x750.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 647px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-1294x750.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-1125x2436.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-1125x2436.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2436x1125.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2436x1125.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-1242x2688.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-1242x2688.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2688x1242.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2688x1242.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-1170x2532.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-1170x2532.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2532x1170.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2532x1170.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-1284x2778.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-1284x2778.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2778x1284.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2778x1284.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-1290x2796.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-1290x2796.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2796x1290.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2796x1290.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-1536x2048.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-1536x2048.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2048x1536.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2048x1536.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/startup/light-2048x2732.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/startup/dark-2048x2732.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: light)" href="/startup/light-2732x2048.png" />
+    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape) and (prefers-color-scheme: dark)" href="/startup/dark-2732x2048.png" />
     <link rel="canonical" href="https://futebadosparcas.com.br/" />
     <!-- A imagem do hero da landing é o LCP: pré-carrega com alta prioridade. -->
     <link rel="preload" as="image" href="/og-futeba-dos-parcas-hero.webp" type="image/webp" fetchpriority="high" />
@@ -44,8 +62,8 @@
     <meta property="og:description" content="Organize peladas, monte times equilibrados, acompanhe estatísticas e gerencie seu futebol amador com o Futeba dos Parças. Um produto da Tech Fernandes." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://futebadosparcas.com.br/" />
-    <meta property="og:image" content="https://futebadosparcas.com.br/og-futeba-dos-parcas.png" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image" content="https://futebadosparcas.com.br/og-futeba-dos-parcas.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Futeba dos Parças — organize sua pelada" />
@@ -54,7 +72,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Futeba dos Parças | Organize sua pelada" />
     <meta name="twitter:description" content="Organize peladas, monte times equilibrados, acompanhe estatísticas e gerencie seu futebol amador com o Futeba dos Parças. Um produto da Tech Fernandes." />
-    <meta name="twitter:image" content="https://futebadosparcas.com.br/og-futeba-dos-parcas.png" />
+    <meta name="twitter:image" content="https://futebadosparcas.com.br/og-futeba-dos-parcas.jpg" />
     <meta name="twitter:image:alt" content="Futeba dos Parças — organize sua pelada" />
     <meta name="twitter:url" content="https://futebadosparcas.com.br/" />
     <meta property="al:android:package" content="com.futebadosparcas" />

@@ -29,7 +29,8 @@ export function GrowthBreadcrumbs({ items }: GrowthBreadcrumbsProps) {
             sx={{
               fontSize: '0.875rem',
               fontWeight: 500,
-              minHeight: 44,
+              minHeight: 48,
+              minWidth: 48,
               display: 'inline-flex',
               alignItems: 'center',
             }}
@@ -46,7 +47,8 @@ export function GrowthBreadcrumbs({ items }: GrowthBreadcrumbsProps) {
                   sx={{
                     fontSize: '0.875rem',
                     fontWeight: 700,
-                    minHeight: 44,
+                    minHeight: 48,
+              minWidth: 48,
                     display: 'inline-flex',
                     alignItems: 'center',
                   }}
@@ -65,7 +67,8 @@ export function GrowthBreadcrumbs({ items }: GrowthBreadcrumbsProps) {
                 sx={{
                   fontSize: '0.875rem',
                   fontWeight: 500,
-                  minHeight: 44,
+                  minHeight: 48,
+              minWidth: 48,
                   display: 'inline-flex',
                   alignItems: 'center',
                 }}
