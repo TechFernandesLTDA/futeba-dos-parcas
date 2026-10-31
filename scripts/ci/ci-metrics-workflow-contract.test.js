@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import runnerSelector from './runner-selector.js';
+
+const { runsOnRegExp } = runnerSelector;
 
 const workflow = readFileSync('.github/workflows/ci-metrics.yml', 'utf8');
 
@@ -17,7 +20,7 @@ test('CI Metrics uses the configurable self-hosted runner pool', () => {
   assert.match(workflow, /workflow_run\.head_branch == 'master'/);
   assert.match(
     workflow,
-    /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\["self-hosted","Linux","X64","futeba-general"\]'\) \}\}/
+    runsOnRegExp('RUNNER_LABELS_LINUX')
   );
 });
 

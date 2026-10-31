@@ -51,7 +51,7 @@ jobs:
     name: Build TypeScript
     needs: [ changes ]
     if: github.event_name != 'schedule' && needs.changes.outputs.functions == 'true'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 15
 
     steps:
@@ -74,7 +74,7 @@ jobs:
   lint:
     name: ESLint Check
     needs: [ build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 15
 
     steps:
@@ -97,7 +97,7 @@ jobs:
   media-runtime-linux:
     name: FFmpeg 8.1.2 Linux Security Gate
     needs: [ build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_HEAVY || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 20
 
     steps:
@@ -138,7 +138,7 @@ jobs:
   test:
     name: Unit Tests
     needs: [ build ]
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 15
 
     steps:
@@ -227,7 +227,7 @@ jobs:
     name: Firestore Query Performance
     needs: [ build ]
     # Gate pesado isolado do pool self-hosted para evitar OOM/exit 137 (#4074).
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_EMULATORS || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_EMULATORS || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 20
     # Tests perf são experimentais — ESM modules de @google-cloud/firestore
     # quebram com ts-jest default. Marcar non-blocking até ajustar transform.
@@ -286,7 +286,7 @@ jobs:
 
   mutation:
     name: Mutation Testing (Stryker)
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_HEAVY || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     # Caro: roda apenas no schedule noturno ou disparo manual com run_mutation=true — NUNCA em push/PR.
     # Usa uma instalacao isolada. Fora do caminho
     # critico de PR.
