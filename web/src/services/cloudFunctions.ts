@@ -737,6 +737,9 @@ export const toggleFollowUser = httpsCallable<
 >(functions, 'toggleFollowUser');
 
 // Exclusão de conta — LGPD art. 18 (direito ao esquecimento)
+// Erros (HttpsError, tratados em hooks/useDeleteAccount via utils/deleteAccountErrors):
+// failed-precondition + details.reason 'requires-recent-login' | 'sole-owner-groups'
+// (com details.groups [{id, name}]) e resource-exhausted (3 por hora).
 export const deleteAccount = httpsCallable<void, { success: boolean }>(functions, 'deleteAccount');
 
 // Soft Delete

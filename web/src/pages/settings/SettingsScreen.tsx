@@ -24,6 +24,7 @@ import {
   DialogActions,
   TextField,
   Avatar,
+  Alert,
 } from '@mui/material';
 import {
   Business as BusinessIcon,
@@ -49,10 +50,10 @@ import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ErrorState } from '../../components/common/ErrorState';
 import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
-import { deleteAccount } from '../../services/cloudFunctions';
-import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
+import { DeleteAccountReauthDialog } from '../../components/settings/DeleteAccountReauthDialog';
+import { DeleteAccountBlockedGroupsDialog } from '../../components/settings/DeleteAccountBlockedGroupsDialog';
+import { useDeleteAccount } from '../../hooks/useDeleteAccount';
 import { TeamBadge } from '../../components/team/TeamBadge';
-import { queryClient } from '../../services/queryClient';
 import { avatarSizes } from '../../theme/iconSizes';
 
 const logger = createLogger('SettingsScreen');
@@ -68,14 +69,25 @@ export const SettingsScreen: React.FC = () => {
   useDocumentTitle(t('page.title.settings'));
   const navigate = useNavigate();
   const goBack = useNavigateBack();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // Fluxo de exclusão de conta — LGPD art. 18
   const [deleteStep1Open, setDeleteStep1Open] = useState(false);
   const [deleteStep2Open, setDeleteStep2Open] = useState(false);
   const [deleteEmailInput, setDeleteEmailInput] = useState('');
-  const [deleting, setDeleting] = useState(false);
+  const {
+    status: deleteStatus,
+    blockingGroups,
+    errorMessage: deleteErrorMessage,
+    reauthMethods,
+    start: startDeleteAccount,
+    reauthenticateWithPassword,
+    reauthenticateWithGoogle,
+    reset: resetDeleteAccount,
+  } = useDeleteAccount();
+  const deleting = deleteStatus === 'deleting';
+  const reauthOpen = deleteStatus === 'needs-reauth' || deleteStatus === 'reauthenticating';
 
   const [settings, setSettings] = useState<Settings>({
     notifications: true,
@@ -149,28 +161,16 @@ export const SettingsScreen: React.FC = () => {
     setDeleteStep2Open(true);
   };
 
-  // Executa a exclusão definitiva da conta via Cloud Function
+  // Executa a exclusão definitiva da conta via Cloud Function (#4391).
+  // O hook só desloga em caso de sucesso; erros mantêm a sessão.
   const handleDeleteAccountConfirm = async () => {
     if (!user || deleteEmailInput.trim().toLowerCase() !== user.email?.toLowerCase()) return;
-    setDeleting(true);
-    try {
-      await deleteAccount();
-      showSuccess(t('settings.deleteAccountSuccess'));
-      navigate('/login', { replace: true });
-    } catch (err) {
-      logger.error('Error deleting account:', err);
-      showError(getFunctionErrorMessage(err, 'deleteAccount', t('settings.deleteAccountError')));
-      return;
-    } finally {
-      try {
-        await logout();
-      } catch (logoutErr) {
-        logger.warn('Account deleted but local logout failed:', logoutErr);
-        queryClient.clear();
-      }
-      setDeleting(false);
-      setDeleteStep2Open(false);
-    }
+    await startDeleteAccount();
+  };
+
+  const closeDeleteFlow = () => {
+    resetDeleteAccount();
+    setDeleteStep2Open(false);
   };
 
   return (
@@ -436,8 +436,8 @@ export const SettingsScreen: React.FC = () => {
 
       {/* Dialog passo 2: confirmar com email para evitar exclusão acidental */}
       <Dialog
-        open={deleteStep2Open}
-        onClose={() => !deleting && setDeleteStep2Open(false)}
+        open={deleteStep2Open && (deleteStatus === 'idle' || deleteStatus === 'deleting' || deleteStatus === 'error')}
+        onClose={() => !deleting && closeDeleteFlow()}
         fullWidth
         maxWidth="sm"
         role="alertdialog"
@@ -462,9 +462,14 @@ export const SettingsScreen: React.FC = () => {
             aria-label={t('settings.deleteEmailAria')}
             inputProps={{ 'aria-describedby': 'delete-step2-desc', maxLength: 254 }}
           />
+          {deleteStatus === 'error' && deleteErrorMessage && (
+            <Alert severity="error" sx={{ mt: 2 }} role="alert">
+              {deleteErrorMessage}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteStep2Open(false)} disabled={deleting}>
+          <Button onClick={closeDeleteFlow} disabled={deleting}>
             {t('common.cancel')}
           </Button>
           <Button
@@ -482,6 +487,24 @@ export const SettingsScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Reautenticação exigida pela callable (login com mais de 10 minutos) */}
+      <DeleteAccountReauthDialog
+        open={reauthOpen}
+        busy={deleteStatus === 'reauthenticating'}
+        errorMessage={deleteErrorMessage}
+        methods={reauthMethods}
+        onSubmitPassword={(password) => { void reauthenticateWithPassword(password); }}
+        onGoogle={() => { void reauthenticateWithGoogle(); }}
+        onCancel={closeDeleteFlow}
+      />
+
+      {/* Grupos de que o usuário é dono e que ainda têm outros membros */}
+      <DeleteAccountBlockedGroupsDialog
+        open={deleteStatus === 'blocked-groups'}
+        groups={blockingGroups}
+        onClose={closeDeleteFlow}
+      />
     </Box>
   );
 };

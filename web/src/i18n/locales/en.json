@@ -3486,7 +3486,24 @@
       "systemDesc": "Auto (system)",
       "title": "Theme"
     },
-    "title": "Settings"
+    "title": "Settings",
+    "deleteBlockedDesc_one": "You own a group that still has other active members. Transfer ownership to another member or remove the members before deleting your account.",
+    "deleteBlockedDesc_other": "You own {{count}} groups that still have other active members. Transfer ownership to another member or remove the members from each group before deleting your account.",
+    "deleteBlockedGroupAria": "Open group {{name}}",
+    "deleteBlockedListAria": "Groups blocking account deletion",
+    "deleteBlockedTitle_one": "Transfer ownership of 1 group",
+    "deleteBlockedTitle_other": "Transfer ownership of {{count}} groups",
+    "deletePasswordAria": "Your account password",
+    "deletePasswordLabel": "Password",
+    "deleteRateLimited": "You reached the limit of 3 attempts per hour. Wait a while and try again.",
+    "deleteReauthConfirm": "Confirm and delete",
+    "deleteReauthConfirmAria": "Confirm password and delete account",
+    "deleteReauthDesc": "For security, confirm it is you to finish deleting your account.",
+    "deleteReauthGoogle": "Confirm with Google",
+    "deleteReauthGoogleAria": "Confirm identity with your Google account",
+    "deleteReauthTitle": "Confirm your identity",
+    "deleteReauthUnavailable": "We could not confirm your identity here. Sign out, sign in again and repeat the deletion.",
+    "deleteRecentLoginStillRequired": "We could not validate your recent sign-in. Sign out, sign in again and repeat the deletion within 10 minutes."
   },
   "shortcuts": {
     "closeOrBack": "Close modal or return to previous focus",
