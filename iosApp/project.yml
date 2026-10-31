@@ -2,8 +2,7 @@
 # Uso: cd iosApp && xcodegen generate
 #
 # Requisitos prévios:
-# 1. Build dos frameworks KMP:
-#    ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+# 1. Build do framework KMP (ComposeApp já embute o :shared):
 #    ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 # 2. CocoaPods: pod install (usa Podfile)
 # 3. Abrir iosApp.xcworkspace (gerado por pod install)
@@ -48,10 +47,11 @@ targets:
       - path: iosApp/GoogleService-Info.plist
         type: file
         optional: true
+    # Só o ComposeApp é linkado. Ele já contém o código do `:shared` (dependência
+    # `implementation(project(":shared"))`) e o runtime do Kotlin/Native. Linkar também
+    # o `shared.framework` estático duplicava o runtime (1152 símbolos duplicados no
+    # Xcode 27.1 com Kotlin 2.4.20). Nenhum .swift faz `import shared`.
     dependencies:
-      - framework: ../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework
-        embed: true
-        codeSign: true
       - framework: ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework
         embed: true
         codeSign: true
@@ -66,16 +66,16 @@ targets:
         INFOPLIST_FILE: iosApp/Info.plist
         CODE_SIGN_ENTITLEMENTS: iosApp/iosApp.entitlements
         SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
-        FRAMEWORK_SEARCH_PATHS:
+        # Caminho por SDK: evita o aviso "directory not found" do framework de device
+        # num build de simulador (e vice-versa).
+        "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]":
           - "$(inherited)"
-          - "$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework"
-          - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
-          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework"
           - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
+        "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]":
+          - "$(inherited)"
+          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework"
         OTHER_LDFLAGS:
           - "$(inherited)"
-          - "-framework"
-          - "shared"
           - "-framework"
           - "ComposeApp"
         SWIFT_OBJC_BRIDGING_HEADER: ""
@@ -98,11 +98,10 @@ targets:
             exit 0
           fi
           cd "$SRCROOT/.."
-          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+          # O ComposeApp embute o :shared; não é preciso linkar o shared.framework.
           ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
-        name: "Build KMP Frameworks (shared + ComposeApp)"
+        name: "Build KMP Framework (ComposeApp, inclui shared)"
         outputFiles:
-          - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework"
           - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework"
 
   iosAppTests:
@@ -123,7 +122,6 @@ targets:
         BUNDLE_LOADER: "$(TEST_HOST)"
         FRAMEWORK_SEARCH_PATHS:
           - "$(inherited)"
-          - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
           - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
 
 # Esquema explícito para garantir que xcodegen crie .xcscheme compartilhado.

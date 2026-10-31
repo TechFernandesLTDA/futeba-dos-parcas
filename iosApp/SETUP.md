@@ -10,10 +10,10 @@
 brew install xcodegen      # se ainda não tem
 # Xcode + iOS Simulator instalados (ver reference_xcode_ios_simulator memory)
 
-# 1. Build frameworks KMP (shared + composeApp pra Simulator ARM64)
+# 1. Build do framework KMP pra Simulator ARM64. Só o ComposeApp é linkado no app:
+#    ele já embute o :shared e o runtime do Kotlin/Native (ver "1152 duplicate symbols").
 cd /path/to/futeba-dos-parcas
-./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 \
-          :composeApp:linkDebugFrameworkIosSimulatorArm64
+./gradlew --max-workers=3 :composeApp:linkDebugFrameworkIosSimulatorArm64
 
 # 2. Gerar .xcodeproj + Pods (NESTA ORDEM — xcodegen ANTES de pod install)
 cd iosApp
@@ -137,6 +137,10 @@ Chaves principais:
 - Sign in with Apple: requer entitlement de paid program
 
 ## Troubleshooting
+
+**`ld: 1152 duplicate symbols` (`Kotlin_*`, `kotlin::gc::*`) no link do `iosApp`** (Xcode 27.1 + Kotlin 2.4.20, 31/10/2026): o app linkava `shared.framework` e `ComposeApp.framework`, os dois estáticos e cada um com uma cópia do runtime do Kotlin/Native. O `ComposeApp` já embute o `:shared`, e nenhum `.swift` faz `import shared`, então o `project.yml` linka só o `ComposeApp`. Se um dia o Swift precisar de tipos do `:shared`, exporte-os pelo ComposeApp (`export(project(":shared"))` no bloco `framework {}`), nunca linkando um segundo framework Kotlin.
+
+**Aviso `libicu.icudtl_dat.o was built for newer iOS-simulator version (17.2)`**: são dois objetos de dados do ICU que vêm no Compose Multiplatform. Não há código nesses objetos; o aviso é inofensivo e não exige subir o deployment target.
 
 **Erro Ruby/CocoaPods Unicode**: Ruby 4.x tem bug com `unicode_normalize`. Workaround: rodar `pod install` com `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`.
 
