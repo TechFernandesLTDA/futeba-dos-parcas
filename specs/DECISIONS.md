@@ -1842,6 +1842,41 @@ seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
 
 **Relacionado:** issues #4096–#4115.
 
+### [2026-10-31] Otimizações de performance do Android (#4400)
+
+**Contexto:** APK release de 55,13 MB, 79% em brasões PNG de 1536x1024
+duplicados por densidade; dependências da era XML sem uso; trabalho síncrono no
+`Application.onCreate`. Spec: `specs/PERF_ANDROID_OPTIMIZATIONS_2026_10_31.md`.
+
+**Decisões:**
+1. **Brasões:** WebP com alfa, 768x512, só em `drawable-nodpi/`. Nenhuma tela
+   mostra brasão acima de ~200 dp; 768 px cobre xxxhdpi com folga. Arte nova de
+   brasão entra no mesmo formato e pasta, nunca PNG por densidade.
+2. **Estabilidade Compose:** `app/compose-stability.conf` lista só tipos sem
+   estado mutável: `domain.model.**` (0 `var` em 31/10/2026), coleções
+   read-only do Kotlin, `java.time` e `kotlinx.datetime`. `data.model` fica de
+   fora porque tem `var`. Quem adicionar `var` em `domain.model` precisa tirar o
+   pacote do arquivo. Relatórios só com `-PcomposeCompilerReports=true`.
+3. **App Check:** o provider sai de source set (`src/debug` e `src/nonDebug`)
+   em vez de `if (BuildConfig.DEBUG)`, para o `firebase-appcheck-debug` ser
+   `debugImplementation` e não entrar no release.
+4. **Coil:** um único `ImageLoader`, o singleton lazy de `CoilConfig`. O
+   `ImageKoinModule` (segundo loader nunca injetado, mesmo diretório de disk
+   cache com outro teto) foi apagado.
+5. **Splash:** sai o `delay(800)` da `SplashActivityCompose`, que acontecia com
+   o brasão ainda invisível. A espera de `SplashScreen.kt` e a splash dupla
+   ficam para decisão de UX.
+6. **Dependências:** removidas as que não têm import no `app/` (MPAndroidChart,
+   Lottie, Shimmer, SwipeRefreshLayout, CircleImageView, Navigation
+   Fragment/UI, Safe Args, Accompanist, `runtime-livedata`,
+   `lifecycle-livedata-ktx`, `viewpager2`). `navigation-compose` passa a ser
+   declarada explicitamente. `preference-ktx` fica enquanto os themes.xml
+   declararem `preferenceTheme`.
+7. **R8:** as keeps amplas (Firebase, GMS, Compose, Room, Work) continuam. Tirar
+   exige smoke test em device e fica como proposta no épico.
+
+**Relacionado:** épico #4400.
+
 <!-- Adicione novas decisões acima desta linha -->
 
 ## 2026-09-05: Porta efemera para Web E2E
