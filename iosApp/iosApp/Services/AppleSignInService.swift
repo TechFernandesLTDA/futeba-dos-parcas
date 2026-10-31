@@ -55,7 +55,12 @@ import CryptoKit
     // MARK: - ASAuthorizationControllerPresentationContextProviding
 
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return UIApplication.shared.windows.first { $0.isKeyWindow }!
+        // `UIApplication.windows` está deprecado desde o iOS 15: procura a janela-chave
+        // nas cenas conectadas e, sem nenhuma, devolve uma âncora vazia em vez de crashar.
+        let windows = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+        return windows.first { $0.isKeyWindow } ?? windows.first ?? ASPresentationAnchor()
     }
 
     // MARK: - Helpers

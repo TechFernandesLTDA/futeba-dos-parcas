@@ -2457,7 +2457,7 @@ subir no ranking!</string>
     <string name="league_rating_components">Componentes do Rating</string>
 
     <!-- FCM Service Strings -->
-    <string name="fcm_channel_name">Futeba dos Parcas</string>
+    <string name="fcm_channel_name">Futeba dos Parças</string>
     <string name="fcm_channel_description">Notificações de jogos e confirmações</string>
     <string name="fcm_new_token_received">Novo FCM token recebido</string>
     <string name="fcm_error_updating_token">Erro ao atualizar FCM token</string>
@@ -2917,7 +2917,7 @@ subir no ranking!</string>
     <string name="app_guide_groups_title">Grupos</string>
     <string name="app_guide_groups_desc">Participe de grupos de pelada e organize jogos com a galera</string>
     <string name="app_guide_tip">Dica: Jogue regularmente para subir de nível e desbloquear badges exclusivas!</string>
-    <string name="app_guide_start">Comecar a usar</string>
+    <string name="app_guide_start">Começar a usar</string>
 
     <!-- ==================== LOCATION ONBOARDING (progressive empty state) ==================== -->
 
@@ -4068,7 +4068,7 @@ subir no ranking!</string>
     <string name="cd_collapse_release_version">Recolher versão</string>
 
     <!-- WelcomeScreen -->
-    <string name="welcome_onboarding_app_name">Futeba dos Parcas</string>
+    <string name="welcome_onboarding_app_name">Futeba dos Parças</string>
     <string name="welcome_onboarding_subtitle">Entre com tudo na organização da rodada, no acompanhamento das partidas e no histórico do jogador.</string>
     <string name="welcome_onboarding_feature_matches">Jogos com presença, campo e status na mesma visão</string>
     <string name="welcome_onboarding_feature_groups">Grupos e convites mais alinhados com a resenha</string>
@@ -4111,5 +4111,67 @@ subir no ranking!</string>
     <string name="a11y_state_not_selected">Não selecionado</string>
     <string name="feature_hub_action_content_description">%1$s. %2$s</string>
     <string name="home_tool_summary_content_description">%1$s. %2$s</string>
+
+    <!-- Conta: sair e excluir (#4391/#4401, App Store 5.1.1(v)) -->
+    <string name="profile_hub_section_account">Conta</string>
+    <string name="profile_hub_action_logout">Sair da conta</string>
+    <string name="profile_hub_action_logout_body">Encerra a sessão neste iPhone. Seus dados continuam salvos.</string>
+    <string name="profile_hub_action_delete_account">Excluir conta</string>
+    <string name="profile_hub_action_delete_account_body">Apaga sua conta e seus dados pessoais de forma permanente.</string>
+    <string name="logout_confirm_title">Sair da conta?</string>
+    <string name="logout_confirm_body">Você vai precisar entrar de novo para ver seus jogos e grupos.</string>
+    <string name="logout_confirm_action">Sair</string>
+    <string name="delete_account_title">Excluir conta</string>
+    <string name="delete_account_headline">Esta ação não pode ser desfeita</string>
+    <string name="delete_account_intro">Ao excluir sua conta, o Futeba dos Parças apaga ou anonimiza:</string>
+    <string name="delete_account_item_profile">Seu perfil, foto, e-mail e dados de acesso</string>
+    <string name="delete_account_item_stats">Seu XP, nível, conquistas e estatísticas</string>
+    <string name="delete_account_item_groups">Sua participação em grupos e confirmações em jogos</string>
+    <string name="delete_account_item_messages">Suas mensagens e notificações</string>
+    <string name="delete_account_retention_note">Registros que outras pessoas precisam manter, como a movimentação do caixa de um grupo, ficam anônimos, sem o seu nome.</string>
+    <string name="delete_account_acknowledge">Entendo que a exclusão é permanente</string>
+    <string name="delete_account_button">Excluir minha conta</string>
+    <string name="delete_account_button_cd">Excluir minha conta de forma permanente</string>
+    <string name="delete_account_confirm_title">Excluir a conta definitivamente?</string>
+    <string name="delete_account_confirm_body">Seus dados serão apagados agora. Não será possível recuperar a conta depois.</string>
+    <string name="delete_account_confirm_action">Excluir</string>
+    <string name="delete_account_in_progress">Excluindo sua conta…</string>
+    <string name="delete_account_error_recent_login">Por segurança, a exclusão exige um login recente. Saia, entre de novo e repita a exclusão.</string>
+    <string name="delete_account_error_recent_login_action">Sair e entrar de novo</string>
+    <string name="delete_account_error_unavailable">A exclusão pelo app ainda não está disponível. Você pode pedir a exclusão pela página oficial, com o mesmo resultado.</string>
+    <string name="delete_account_error_unavailable_action">Pedir exclusão pela web</string>
+    <string name="delete_account_error_generic">Não foi possível excluir a conta agora. Verifique a conexão e tente de novo.</string>
+    <string name="delete_account_unavailable_env">A exclusão de conta precisa de conexão com o servidor, que não está configurada neste ambiente.</string>
+    <string name="delete_account_web_url">https://futebadosparcas.com.br/delete_account.html</string>
+
+    <!-- Rotas sem tela completa no iOS (estados de erro/indisponível) -->
+    <string name="route_unavailable_retry">Tentar novamente</string>
+    <string name="route_unavailable_back">Voltar</string>
+    <string name="route_game_detail_title">Detalhes do jogo</string>
+    <string name="route_post_game_report_title">Relatório pós-jogo</string>
+    <string name="route_team_formation_title">Formação dos times</string>
+    <string name="route_mvp_voting_title">Votação pós-jogo</string>
+    <string name="route_mvp_voting_unavailable">A votação ainda não está disponível no iPhone. Vote pelo app Android ou pelo site.</string>
+    <string name="route_owner_stats_title">Estatísticas do organizador</string>
+    <string name="route_owner_stats_missing">Não foi possível identificar o organizador.</string>
+    <string name="route_owner_stats_unavailable">As estatísticas do organizador ainda não estão disponíveis no iPhone.</string>
+    <string name="route_invite_players_title">Convidar jogadores</string>
+    <string name="route_invite_players_missing_group">Não foi possível identificar o grupo deste jogo.</string>
+    <string name="route_invite_players_unavailable">Convites ainda não estão disponíveis neste ambiente.</string>
+    <string name="route_missing_game_id">Não foi possível identificar o jogo.</string>
+    <string name="route_game_unavailable_env">Os detalhes do jogo precisam de conexão com o servidor, que não está configurada neste ambiente.</string>
+    <string name="route_game_load_error">Não foi possível carregar o jogo.</string>
+    <string name="route_confirmations_load_error">Não foi possível carregar as confirmações.</string>
+    <string name="route_teams_load_error">Não foi possível carregar os times.</string>
+    <string name="route_teams_loaded_readonly">%1$d time(s) carregado(s). A edição da formação ainda não está disponível no iPhone.</string>
+    <string name="route_post_game_share_title">Relatório pós-jogo</string>
+    <string name="route_post_game_share_text">Relatório pós-jogo do Futeba dos Parças.</string>
+    <string name="game_detail_fallback_title">Jogo</string>
+    <string name="game_detail_action_team_formation">Formação dos times</string>
+    <string name="game_detail_action_voting">Votação pós-jogo</string>
+    <string name="group_detail_title">Grupo</string>
+    <string name="group_detail_body">Atalhos para jogos, caixa e ferramentas do grupo.</string>
+    <string name="group_detail_action_cashbox">Caixa</string>
+    <string name="group_detail_action_cashbox_body">Resumo financeiro e histórico das movimentações.</string>
 
 </resources>

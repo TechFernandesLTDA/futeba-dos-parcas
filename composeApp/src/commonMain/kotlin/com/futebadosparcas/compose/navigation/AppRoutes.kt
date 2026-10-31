@@ -54,6 +54,9 @@ object AppRoutes {
     /** Tema (Claro / Escuro / Sistema + alto contraste) — paridade com Android/Web (#4097). */
     const val THEME_SETTINGS = "theme_settings"
 
+    /** Exclusão de conta (#4391/#4401, App Store 5.1.1(v)). Acesso pelo hub de Perfil. */
+    const val DELETE_ACCOUNT = "delete_account"
+
     // ─── Bucket Gamification ─────────────────────────────────────────────────
     const val RANKING = "ranking"
     const val BADGES = "badges"

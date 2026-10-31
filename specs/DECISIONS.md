@@ -93,6 +93,34 @@ anonimizados.
 Tabela completa e lacunas conhecidas em
 `specs/BUGFIX_4391_DELETE_ACCOUNT.md`.
 
+---
+
+## 2026-10-31 — iOS: build, prontidão para a App Store e exclusão de conta (#4401, #4391)
+
+**Contexto:** o app de iPhone (`iosApp/` + `composeApp/`) não abria no simulador e
+faltavam exigências da App Store. Spec: `specs/IOS_POLISH_APPSTORE_READINESS_2026_10_31.md`.
+
+**Decisões:**
+
+1. **Linkar só o `ComposeApp.framework`.** Ele já embute o `:shared` e o runtime do
+   Kotlin/Native; linkar também o `shared.framework` estático duplicava 1152 símbolos
+   no Xcode 27.1. Nenhum `.swift` faz `import shared`.
+2. **Recursos do Compose copiados por fase de script** (`project.yml`,
+   `assembleIos*MainResources` → `iosApp.app/compose-resources`). Alternativa
+   descartada: migrar para o plugin CocoaPods do Kotlin ou para
+   `embedAndSignAppleFrameworkForXcode`, mudança maior do que o problema.
+3. **iPhone apenas no lançamento** (`TARGETED_DEVICE_FAMILY = 1`). As telas do
+   `composeApp` são de telefone e "universal" exigiria ícones e capturas de iPad.
+4. **Sem `GoogleService-Info.plist`, o Koin do iOS não registra nada que toque o
+   Firebase.** O SDK lança NSException (não capturável pelo `catch` do Kotlin); as
+   rotas usam o estado "indisponível" que já existe.
+5. **Exclusão de conta:** confirmação dupla, logout só depois do sucesso da callable,
+   pilha de navegação limpa. Enquanto a callable responde `not-found` (sem deploy), a
+   tela oferece a página web `delete_account.html` em vez de falhar em silêncio.
+6. **`CallableException(code)` no `:shared`** (mudança mínima e aditiva): o
+   `composeApp` reage ao código do protocolo sem depender do SDK GitLive nem da
+   mensagem de erro.
+
 ## 2026-10-01 — Streak de participação: janela de 8 dias (#4150)
 
 **Contexto:** o escritor autoritativo de `user_streaks` é o servidor

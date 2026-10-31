@@ -93,6 +93,16 @@ expect class FirebaseDataSource() {
      */
     suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit>
 
+    /**
+     * #4391/#4401: exclui a conta do usuário autenticado pela callable `deleteAccount`
+     * (sem payload; retorno `{ success: true }`). Não faz logout: quem chama decide.
+     *
+     * Em falha da callable, devolve [CallableException] com o código do Functions
+     * (`not-found`, `unauthenticated`, `failed-precondition`...), para a UI distinguir
+     * "backend ainda sem deploy" de "login não recente".
+     */
+    suspend fun deleteAccount(): Result<Unit>
+
     /** Registra o token FCM em armazenamento privado por instalação. */
     suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit>
 

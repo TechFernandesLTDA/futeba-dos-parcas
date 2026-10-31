@@ -1,15 +1,18 @@
 package com.futebadosparcas.ui.core
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -52,10 +55,18 @@ fun WelcomeScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
+        // Centraliza quando cabe e rola quando não cabe: com Dynamic Type grande (ou em
+        // telas baixas) o botão "Começar" ficava cortado fora da área visível (#4401).
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .systemBarsPadding()
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically)
@@ -117,7 +128,7 @@ fun WelcomeScreen(
                 onClick = onContinue,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .heightIn(min = 56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
@@ -125,6 +136,7 @@ fun WelcomeScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
             }
+        }
         }
     }
 }

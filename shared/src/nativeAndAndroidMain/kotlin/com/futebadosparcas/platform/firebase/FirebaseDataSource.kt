@@ -10,6 +10,8 @@ import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.Query
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.functions.FirebaseFunctionsException
+import dev.gitlive.firebase.functions.code
 import dev.gitlive.firebase.functions.functions
 import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.async
@@ -772,6 +774,26 @@ actual class FirebaseDataSource actual constructor() {
             functions.httpsCallable("updateUserPii")
                 .invoke(updates)
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("deleteAccount")
+                .invoke()
+            Result.success(Unit)
+        } catch (e: FirebaseFunctionsException) {
+            // "NOT_FOUND" -> "not-found": mesmo formato do código no protocolo das callables.
+            Result.failure(
+                CallableException(
+                    code = e.code.name.lowercase().replace('_', '-'),
+                    message = e.message,
+                    cause = e
+                )
+            )
         } catch (e: Exception) {
             Result.failure(e)
         }
