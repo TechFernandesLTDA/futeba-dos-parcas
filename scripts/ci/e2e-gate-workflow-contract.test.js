@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { runsOnRegExp } = require('./runner-selector');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -26,7 +27,7 @@ test('job chama-se E2E Gate (nome do check que a convenção exige verde)', () =
 test('gate roda nos runners Linux do WSL e classifica escopo para sempre reportar', () => {
   assert.match(gate, /\n  changes:\n    name: Classify changes\n    uses: \.\/\.github\/workflows\/change-scope\.yml/);
   assert.match(gate, /needs: \[changes\]/);
-  assert.match(gate, /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_POLLER \|\| vars\.RUNNER_LABELS_LINUX \|\| '\["self-hosted","Linux","X64","futeba-general"\]'\) \}\}/);
+  assert.match(gate, runsOnRegExp('RUNNER_LABELS_POLLER', 'RUNNER_LABELS_LINUX'));
   assert.doesNotMatch(gate, /runs-on: ubuntu-/);
   // Falha da classificação reprova o check (não fica skipped).
   assert.match(gate, /if: \$\{\{ !cancelled\(\) \}\}/);
