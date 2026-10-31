@@ -589,4 +589,17 @@
     <string name="venue_location_allow">Permitir</string>
     <string name="venue_location_not_now">Ahora no</string>
     <string name="venue_sort_recent_use">Últimos usados</string>
+    <string name="delete_account_error_generic">No se pudo eliminar la cuenta. Inténtalo de nuevo.</string>
+    <string name="delete_account_reauth_title">Confirma tu identidad</string>
+    <string name="delete_account_reauth_message">Por seguridad, inicia sesión de nuevo para terminar la eliminación. La confirmación vale 10 minutos.</string>
+    <string name="delete_account_reauth_password">Contraseña</string>
+    <string name="delete_account_reauth_google">Continuar con Google</string>
+    <string name="delete_account_reauth_confirm">Confirmar y eliminar</string>
+    <string name="delete_account_reauth_error">No se pudo confirmar tu identidad. Revisa los datos e inténtalo de nuevo.</string>
+    <string name="delete_account_reauth_google_error">No se pudo iniciar sesión con Google. Inténtalo de nuevo.</string>
+    <string name="delete_account_blocked_title">Aún eres dueño de grupos</string>
+    <string name="delete_account_blocked_message">Para eliminar la cuenta, transfiere la propiedad de estos grupos o elimina a los demás miembros antes:</string>
+    <string name="delete_account_blocked_group_item">• %1$s</string>
+    <string name="delete_account_blocked_group_unnamed">Grupo sin nombre</string>
+    <string name="delete_account_blocked_ok">Entendido</string>
 </resources>

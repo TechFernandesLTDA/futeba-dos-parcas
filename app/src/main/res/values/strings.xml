@@ -4786,4 +4786,17 @@ subir no ranking!</string>
     <string name="venue_location_allow">Permitir</string>
     <string name="venue_location_not_now">Agora não</string>
     <string name="venue_sort_recent_use">Últimas utilizações</string>
+    <string name="delete_account_error_generic">Não foi possível excluir a conta. Tente novamente.</string>
+    <string name="delete_account_reauth_title">Confirme sua identidade</string>
+    <string name="delete_account_reauth_message">Por segurança, entre de novo na sua conta para concluir a exclusão. A confirmação vale por 10 minutos.</string>
+    <string name="delete_account_reauth_password">Senha</string>
+    <string name="delete_account_reauth_google">Continuar com Google</string>
+    <string name="delete_account_reauth_confirm">Confirmar e excluir</string>
+    <string name="delete_account_reauth_error">Não foi possível confirmar sua identidade. Confira os dados e tente novamente.</string>
+    <string name="delete_account_reauth_google_error">Não foi possível entrar com o Google. Tente novamente.</string>
+    <string name="delete_account_blocked_title">Você ainda é dono de grupos</string>
+    <string name="delete_account_blocked_message">Para excluir a conta, transfira a posse destes grupos ou remova os outros membros antes:</string>
+    <string name="delete_account_blocked_group_item">• %1$s</string>
+    <string name="delete_account_blocked_group_unnamed">Grupo sem nome</string>
+    <string name="delete_account_blocked_ok">Entendi</string>
 </resources>

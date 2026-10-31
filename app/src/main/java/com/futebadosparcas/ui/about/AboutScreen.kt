@@ -34,14 +34,33 @@ fun AboutScreen(
     onNavigateBack: () -> Unit,
     onDeleteAccount: () -> Unit,
     onLogout: () -> Unit,
-    onNavigateToWhatsNew: () -> Unit = {}
+    onNavigateToWhatsNew: () -> Unit = {},
+    deleteState: DeleteAccountUiState = DeleteAccountUiState(),
+    onReauthWithPassword: (String) -> Unit = {},
+    onReauthWithGoogleToken: (String) -> Unit = {},
+    onReauthGoogleFailed: () -> Unit = {},
+    onDismissReauth: () -> Unit = {},
+    onDismissBlockingGroups: () -> Unit = {},
+    onDismissDeleteError: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var showFirstStepDialog by remember { mutableStateOf(false) }
     var showSecondStepDialog by remember { mutableStateOf(false) }
     var confirmEmail by remember { mutableStateOf("") }
-    var isDeleting by remember { mutableStateOf(false) }
-    var deleteError by remember { mutableStateOf<String?>(null) }
+    val isDeleting = deleteState.isDeleting
+    val deleteError = deleteState.errorRes?.let { stringResource(it) }
+
+    DeleteAccountReauthDialog(
+        state = deleteState,
+        onReauthWithPassword = onReauthWithPassword,
+        onReauthWithGoogleToken = onReauthWithGoogleToken,
+        onReauthGoogleFailed = onReauthGoogleFailed,
+        onDismiss = onDismissReauth
+    )
+    DeleteAccountBlockingGroupsDialog(
+        groups = deleteState.blockingGroups,
+        onDismiss = onDismissBlockingGroups
+    )
 
     if (showFirstStepDialog) {
         AlertDialog(
@@ -97,7 +116,7 @@ fun AboutScreen(
                     if (deleteError != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = deleteError ?: stringResource(R.string.error_unknown),
+                            text = deleteError,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -111,8 +130,7 @@ fun AboutScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        isDeleting = true
-                        deleteError = null
+                        onDismissDeleteError()
                         onDeleteAccount()
                     },
                     enabled = confirmEmail.isNotBlank() && !isDeleting,

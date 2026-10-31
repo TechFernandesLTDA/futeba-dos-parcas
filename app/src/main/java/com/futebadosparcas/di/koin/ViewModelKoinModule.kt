@@ -362,6 +362,13 @@ val viewModelKoinModule = module {
         )
     }
 
+    // #4391: exclusão de conta (reauth + grupos sem dono)
+    viewModel {
+        com.futebadosparcas.ui.about.DeleteAccountViewModel(
+            authRepository = get<AndroidAuthRepository>()
+        )
+    }
+
     viewModel {
         SchedulesViewModel(
             scheduleRepository = get(),
