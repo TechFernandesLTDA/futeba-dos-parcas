@@ -294,6 +294,21 @@ describe("deleteAccount (#4391)", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 
+  test("grupo em DELETING (tentativa anterior interrompida) é retomado, não ignorado", async () => {
+    // A cascata anterior gravou DELETING e falhou; membros podem continuar ACTIVE
+    // ou já INACTIVE. O grupo não pode ficar preso com o dono excluído.
+    state.set("groups/g-meio", {name: "Pela metade", owner_id: UID, status: "DELETING"});
+    state.set(`groups/g-meio/members/${OTHER}`, {user_id: OTHER, status: "ACTIVE"});
+
+    await expect(callDeleteAccount(makeRequest())).resolves.toEqual({success: true});
+
+    expect(mockSoftDeleteGroupCascade).toHaveBeenCalledWith(
+      "g-meio", UID, expect.stringContaining("LGPD"),
+    );
+    expect(mockSoftDeleteGroupCascade.mock.invocationCallOrder[0])
+      .toBeLessThan(mockDeleteUser.mock.invocationCallOrder[0]);
+  });
+
   test("sucesso: exclui o Auth e grava auditoria sem PII (só hash do uid)", async () => {
     await expect(callDeleteAccount(makeRequest())).resolves.toEqual({success: true});
 

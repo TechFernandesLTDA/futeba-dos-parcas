@@ -162,7 +162,7 @@ grupo não excluído com **outro membro ativo** (status `ACTIVE`, ou sem status,
 - Grupos em que **só o titular** continua ativo são excluídos junto, com o mesmo
   `softDeleteGroupCascade` do `softDeleteGroup` (jogos do grupo marcados juntos). Se essa etapa falhar,
   o Auth não é excluído e o usuário pode repetir.
-- Grupos já `DELETED`/`DELETING` ou com `deleted_at` não entram na decisão.
+- Grupos já `DELETED` ou com `deleted_at` não entram na decisão. Grupo em `DELETING` (cascata de uma tentativa anterior interrompida) é tratado como órfão e a cascata é retomada; sem isso ele ficaria preso em `DELETING` com o dono já excluído.
 
 ### 3.4 Tabela da cascata (coberto)
 

@@ -57,11 +57,13 @@ export const HISTORY_GAME_STATUSES: ReadonlySet<string> = new Set([
   "LIVE",
 ]);
 
-/** Status de grupo que já não exige decisão sobre a posse. */
-const GROUP_GONE_STATUSES: ReadonlySet<string> = new Set([
-  "DELETED",
-  "DELETING",
-]);
+/**
+ * Status do soft delete em andamento: `softDeleteGroupCascade` grava
+ * DELETING antes de varrer os filhos e só no fim grava DELETED/deleted_at.
+ * Um grupo nesse estado veio de uma tentativa anterior que falhou no meio e
+ * precisa ser retomado, não ignorado.
+ */
+const GROUP_DELETING_STATUS = "DELETING";
 
 /**
  * Espelha `isActiveMember` de groups/member-counter.ts: doc legado sem
@@ -443,10 +445,12 @@ export interface OwnedGroup {
 
 /**
  * Classifica os grupos em que o titular é DONO (`owner_id`; `ownerId`
- * legado), ignorando grupos já excluídos:
+ * legado), ignorando grupos já excluídos (`deleted_at` ou DELETED):
  * - `blocking`: há outro membro ativo ⇒ a exclusão da conta é bloqueada até
  *   o titular transferir a posse (ou excluir o grupo);
  * - `orphan`: ninguém mais ativo ⇒ o grupo é excluído junto (soft delete).
+ *   Grupo em DELETING (cascata anterior interrompida) vai direto para cá, sem
+ *   contar membros, que já podem estar INACTIVE; o helper retoma a cascata.
  *
  * @param {Firestore} db Firestore
  * @param {string} uid Titular
@@ -471,12 +475,14 @@ export async function classifyOwnedGroups(
           seen.add(doc.id);
           const data = doc.data();
           if (data[ownerField] !== uid) continue;
-          if (data.deleted_at || GROUP_GONE_STATUSES.has(data.status)) continue;
+          if (data.deleted_at || data.status === "DELETED") continue;
           const group = {
             id: doc.id,
             name: typeof data.name === "string" ? data.name : "",
           };
-          if (await hasOtherActiveMember(db, doc.id, uid)) {
+          if (data.status === GROUP_DELETING_STATUS) {
+            orphan.push(group);
+          } else if (await hasOtherActiveMember(db, doc.id, uid)) {
             blocking.push(group);
           } else {
             orphan.push(group);
