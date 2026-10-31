@@ -27,7 +27,9 @@ export const SkipNav = React.memo(function SkipNav() {
       <Link
         href="#main-content"
         sx={{
-          display: 'inline-block',
+          display: 'inline-flex',
+          alignItems: 'center',
+          minHeight: 48,
           px: 2,
           py: 1,
           bgcolor: 'primary.main',
