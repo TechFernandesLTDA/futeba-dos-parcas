@@ -105,7 +105,7 @@ body{margin:0}
 .pr-hero{background:rgba(0,133,42,.03);padding:32px 0 48px}
 .pr-chip{display:inline-block;height:24px;line-height:24px;padding:0 12px;border-radius:12px;background:rgba(0,133,42,.1);color:#00852a;font-weight:800;font-size:13px;letter-spacing:.5px;margin-bottom:12px}
 .pr-h1{margin:0;font-size:2rem;line-height:1.15;font-weight:900;letter-spacing:-1px}
-.pr-lead{margin:20px 0 0;font-size:1.0625rem;line-height:1.6;color:#444746}
+.pr-lead{margin:20px 0 0;font-size:1.0625rem;line-height:1.6;letter-spacing:.5px;font-variant-numeric:tabular-nums;color:#444746}
 .pr-btn{display:inline-flex;align-items:center;min-height:48px;margin-top:28px;padding:0 28px;border-radius:999px;background:#00852a;color:#fff!important;font-weight:800;font-size:15px}
 .pr-body{padding:48px 0}
 .pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
@@ -116,7 +116,17 @@ body{margin:0}
 .pr-footer p{margin:0 0 8px}
 @media(min-width:600px){.pr-wrap{padding:0 24px}.pr-h1{font-size:2.75rem}}
 @media(min-width:1200px){.pr-nav{display:flex}}@media(min-width:900px){.pr-header{height:73px}.pr-header .pr-wrap{height:72px}.pr-hero{padding:64px 0 80px}.pr-h1{font-size:3.25rem}.pr-lead{font-size:1.2rem}.pr-hero-col{width:calc((100% + 40px) * 7 / 12 - 40px)}}
+.pr-hero-col.pr-hero-center{width:auto;max-width:840px;margin:0 auto;text-align:center}
 `.replace(/\n/g, '');
+
+// Lead do hero. Se a página React destaca um trecho em <strong> (route.leadStrong), o estático faz o mesmo: o peso
+// da fonte muda a largura das linhas, e um texto estático mais estreito que o do React deixa o LCP para o app (#4403).
+function leadHtml(route) {
+  const lead = escapeHtml(route.contentLead);
+  if (!route.leadStrong) return lead;
+  const strong = escapeHtml(route.leadStrong);
+  return lead.replace(strong, () => `<strong>${strong}</strong>`);
+}
 
 function generateSemanticContent(route) {
   const nav = [
@@ -142,10 +152,10 @@ function generateSemanticContent(route) {
     </div></header>
     <div class="pr-crumb"><div class="pr-wrap"><nav aria-label="breadcrumb"><a href="/">Início</a> › <strong>${escapeHtml(route.breadcrumb)}</strong></nav></div></div>
     <main>
-      <section class="pr-hero"><div class="pr-wrap"><div class="pr-hero-col">
+      <section class="pr-hero"><div class="pr-wrap"><div class="pr-hero-col${route.heroCenter ? ' pr-hero-center' : ''}">
         <span class="pr-chip">${escapeHtml(route.chip)}</span>
         <h1 class="pr-h1">${escapeHtml(route.contentHeading)}</h1>
-        <p class="pr-lead">${escapeHtml(route.contentLead)}</p>
+        <p class="pr-lead">${leadHtml(route)}</p>
         <a class="pr-btn" href="${register('hero_cta')}">Criar Minha Conta</a>
       </div></div></section>
       <section class="pr-body"><div class="pr-wrap"><div class="pr-grid">${sections}</div></div></section>

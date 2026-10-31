@@ -223,7 +223,7 @@ describe('Growth pages: copy verificável e CTAs', () => {
     '%s: hero do prerender (scripts/prerender-routes.mjs) coincide com a página React',
     async (path, Page) => {
       const { routes } = (await import('../../../scripts/prerender-routes.mjs')) as {
-        routes: Array<{ path: string; contentHeading: string; contentLead: string; chip: string }>;
+        routes: Array<{ path: string; contentHeading: string; contentLead: string; chip: string; leadStrong?: string }>;
       };
       const route = routes.find((r) => r.path === path)!;
       const { container } = render(
@@ -236,6 +236,12 @@ describe('Growth pages: copy verificável e CTAs', () => {
       expect(normalize(h1?.textContent ?? '')).toBe(route.contentHeading);
       expect(normalize(container.textContent ?? '')).toContain(route.contentLead);
       expect(normalize(container.textContent ?? '')).toContain(route.chip);
+      // #4403: o peso da fonte altera a largura do texto; se o React destaca um trecho no lead, o estático também
+      // precisa destacar, senão o texto do app fica maior e vira o LCP depois do handoff.
+      if (route.leadStrong) {
+        const strongs = [...container.querySelectorAll('strong')].map((el) => normalize(el.textContent ?? ''));
+        expect(strongs).toContain(route.leadStrong);
+      }
     }
   );
 

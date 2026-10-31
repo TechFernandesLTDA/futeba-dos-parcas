@@ -98,6 +98,10 @@ export const routes = [
     contentHeading: 'Como Funciona o Futeba dos Parças',
     contentLead:
       'Uma plataforma unificada desenvolvida pela Tech Fernandes para transformar o futebol amador. Veja como o app atende organizadores, jogadores e donos de quadra.',
+    // Trecho em negrito no lead da página React; o estático precisa do mesmo peso de fonte (#4403).
+    leadStrong: 'Tech Fernandes',
+    // Hero centralizado (maxWidth 840) na página React; o estático segue o mesmo alinhamento (#4403).
+    heroCenter: true,
     chip: 'VISÃO GERAL DO PRODUTO',
     sections: [
       {
