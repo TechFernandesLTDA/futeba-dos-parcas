@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { runsOnRegExp } = require('./ci/runner-selector');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -100,8 +101,8 @@ test('optimized E2E preview opts into emulators without weakening production', (
 });
 
 test('CI allocates its own preview port without reusing an unrelated server', () => {
-  // WSL (runners tf-wsl-*) tem as libs do Playwright; E2E não gasta minutos hospedados.
-  assert.match(extractJob(e2eWorkflow, 'web-e2e'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_EMULATORS \|\| vars\.RUNNER_LABELS_LINUX \|\| '\[\"self-hosted\",\"Linux\",\"X64\",\"futeba-general\"\]'\) \}\}/);
+  // Runner de emuladores (Mac) tem as libs do Playwright; E2E não gasta minutos hospedados.
+  assert.match(extractJob(e2eWorkflow, 'web-e2e'), runsOnRegExp('RUNNER_LABELS_EMULATORS', 'RUNNER_LABELS_LINUX'));
   assert.doesNotMatch(e2eWorkflow, /playwright install --with-deps/);
   assert.match(e2eWorkflow, /run: node scripts\/ci\/allocate-web-e2e-port\.js/);
   assert.ok(e2eWorkflow.indexOf('allocate-web-e2e-port.js') < e2eWorkflow.indexOf('- name: E2E ('));

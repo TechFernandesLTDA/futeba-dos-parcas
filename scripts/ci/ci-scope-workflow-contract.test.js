@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { runsOnRegExp, selfHostedRunsOn, escapeRegExp, MAC_IOS_RUNS_ON } = require('./runner-selector');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -44,7 +45,7 @@ test('Android heavy jobs run only for trusted scoped events', () => {
       /github\.event_name != 'pull_request'/,
       `${id} must skip untrusted pull request code`
     );
-    assert.match(body, /fromJSON\(vars\.RUNNER_LABELS/);
+    assert.match(body, runsOnRegExp('RUNNER_LABELS_HEAVY'));
   }
 
   assert.match(jobBody(androidWorkflow, 'lint'), /\.\/gradlew .* lint/);
@@ -69,7 +70,7 @@ test('PR code uses read-only checkout credentials and hosted Android tooling', (
     assert.equal(nonPersistent, checkouts, `${name} must not persist checkout credentials`);
   }
 
-  assert.match(jobBody(prWorkflow, 'android'), /runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"ubuntu-24\.04\"\]'\) \}\}/);
+  assert.match(jobBody(prWorkflow, 'android'), runsOnRegExp('RUNNER_LABELS_HEAVY'));
   assert.doesNotMatch(jobBody(prWorkflow, 'android'), /Ensure unzip|apt-get|sudo/);
   assert.match(codeowners, /^\/scripts\/ci\/ @TechFernandesLTDA\/dev-team$/m);
   assert.match(codeowners, /^\/scripts\/web-ci-workflow-contract\.test\.js @TechFernandesLTDA\/dev-team$/m);
@@ -146,11 +147,11 @@ test('reusable classifier exports every versioned domain and manual runs remain 
 
 test('iOS app build consumes the narrow classifier contract', () => {
   const iosAppJob = jobBody(iosWorkflow, 'build-ios-app');
-  assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?runs-on: \$\{\{ fromJSON\(vars\.RUNNER_LABELS_LINUX \|\| '\[\"ubuntu-24\.04\"\]'\) \}\}/);
+  assert.match(iosWorkflow, new RegExp(String.raw`ios_app_scope:[\s\S]*?` + escapeRegExp(selfHostedRunsOn('RUNNER_LABELS_LINUX'))));
   assert.match(iosWorkflow, /ios_app_scope:[\s\S]*?should_run: \$\{\{ steps\.detect\.outputs\.should_run \}\}/);
   assert.match(iosAppJob, /needs: \[build-shared-framework, ios_app_scope\]/);
   assert.match(iosAppJob, /if: vars\.IOS_MAC_RUNNER == 'true' && needs\.ios_app_scope\.outputs\.should_run == 'true'/);
-  assert.match(iosAppJob, /runs-on: \[self-hosted, macOS, ARM64, futeba\]/);
+  assert.ok(iosAppJob.includes(MAC_IOS_RUNS_ON));
   assert.doesNotMatch(iosAppJob, /fromJSON\(vars\.RUNNER_LABELS/);
   assert.match(iosAppJob, /Setup Xcode/);
   assert.match(iosDetector, /ios_app_patterns/);
