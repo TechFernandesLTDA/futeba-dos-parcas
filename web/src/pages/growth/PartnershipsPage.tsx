@@ -79,7 +79,7 @@ export function PartnershipsPage() {
     'mailto:techfernandesltda@gmail.com?subject=Interesse%20em%20Parceria%20-%20Arena%20de%20Futebol&body=Ol%C3%A1%20equipe%20Tech%20Fernandes,%0A%0ATenho%20interesse%20em%20divulgar%20minha%20arena/quadra%20no%20Futeba%20dos%20Par%C3%A7as.%0A%0ANome%20da%20Arena:%20%0ACidade/UF:%20%0AN%C3%BAmero%20de%20Quadras:%20%0ATelefone%20de%20Contato:%20%0A%0AObrigado!';
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary' }}>
       <GrowthHeader currentPage="/parcerias" />
       <GrowthBreadcrumbs items={[{ label: 'Parcerias com Arenas e Quadras' }]} />
 

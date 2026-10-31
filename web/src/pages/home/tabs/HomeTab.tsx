@@ -970,6 +970,8 @@ export function HomeTab() {
                   cursor: 'pointer',
                   appearance: 'none',
                   p: 0,
+                  // #4407: selo de 28px; amplia a área de toque para 48px sem mudar o visual
+                  '&::after': { content: '""', position: 'absolute', inset: -10 },
                 }}
               >
                 {/* #4055: o primeiro plano agora é derivado do FUNDO real (a cor

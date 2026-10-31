@@ -328,7 +328,7 @@ export function AppSidebar() {
         PaperProps={{
           sx: {
             minWidth: 200,
-            maxHeight: 'min(70vh, 480px)',
+            maxHeight: 'min(70dvh, 480px)',
             overflowY: 'auto',
           },
         }}

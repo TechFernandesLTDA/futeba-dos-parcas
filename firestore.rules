@@ -333,6 +333,46 @@ service cloud.firestore {
       );
     }
 
+    // FIX #4393: participação própria no jogo (convite pendente, confirmado,
+    // a caminho ou check-in). ID determinístico gameId_uid; nunca amplia LIST
+    // porque só é chamado com gameId vindo do path ou de filtro de igualdade.
+    function isOwnGameParticipant(gameId) {
+      let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + userId()));
+      return confirmationDoc != null &&
+        confirmationDoc.data.get('user_id', null) == userId() &&
+        confirmationDoc.data.get('status', null) in ['PENDING', 'CONFIRMED', 'ON_THE_WAY', 'CHECKED_IN'];
+    }
+
+    // FIX #4393: quem pode ver o jogo pode ver os recursos derivados dele
+    // (game_photos, game_videos, games/{id}/waitlist). Espelha o `allow get`
+    // de games: público (PUBLIC_OPEN/PUBLIC_CLOSED) ou, se não soft-deleted,
+    // dono/coorganizador, membro ativo do grupo do jogo ou participante.
+    // Admin vem ANTES do get(games/...) para manter a válvula de escape da
+    // mídia órfã (#4049): sem o jogo, só admin enxerga para poder limpar.
+    // Os defaults (`.get(k, default)`) aqui são seguros: atuam sobre o doc do
+    // JOGO lido via get(), nunca sobre `resource.data` da query (vetor #4126).
+    // Ordem dos ramos = do mais barato ao mais caro (0, 1, 2 e 3 leituras).
+    function canViewGameById(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return isAuthenticated() && (
+        isAdmin() ||
+        (
+          gameDoc != null && (
+            gameDoc.data.get('visibility', null) in ['PUBLIC_OPEN', 'PUBLIC_CLOSED'] ||
+            (
+              gameDoc.data.get('deleted_at', null) == null && (
+                canManageGame(gameDoc.data) ||
+                (gameDoc.data.get('group_id', null) is string &&
+                 gameDoc.data.get('group_id', '') != '' &&
+                 isGroupMember(gameDoc.data.group_id)) ||
+                isOwnGameParticipant(gameId)
+              )
+            )
+          )
+        )
+      );
+    }
+
     // Verifica se um usuario especifico esta confirmado no jogo
     function isConfirmedUserForGame(gameId, targetUserId) {
       let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + targetUserId));
@@ -1262,8 +1302,15 @@ service cloud.firestore {
       // rules). Cliente so ENTRA (create da propria) e SAI (delete da
       // propria); nunca atualiza status (nao pode auto-promover).
       match /waitlist/{waitlistId} {
-        // Qualquer autenticado pode ler a fila (exibir posicao/contagem)
-        allow read: if isAuthenticated();
+        // FIX #4393: antes qualquer autenticado lia a fila (nome e foto dos
+        // jogadores) de qualquer jogo, inclusive privado. Agora: a propria
+        // entrada sempre, ou quem pode ver o jogo (participantes, membros do
+        // grupo, organizadores, admin; qualquer um em jogo publico).
+        // gameId vem do path, entao LIST da subcolecao nao depende de filtro.
+        allow read: if isAuthenticated() && (
+          resource.data.user_id == userId() ||
+          canViewGameById(gameId)
+        );
 
         // Entrar: somente a propria entrada, status inicial WAITING,
         // game_id coerente com o path, campos minimos validados.
@@ -4496,13 +4543,24 @@ service cloud.firestore {
     // COLECAO: game_photos (álbum de fotos pós-jogo)
     // ============================================
     // Issue #2982: Jogadores confirmados e organizadores podem
-    // subir fotos em jogos finalizados. Todos autenticados podem ver.
+    // subir fotos em jogos finalizados.
     // Apenas uploader, organizador do jogo ou admin podem deletar.
     // FIX #4049: criação migrada para a callable createGamePhoto, que aplica
     // MAX_PHOTOS_PER_GAME / MAX_PHOTOS_PER_USER_PER_GAME server-side (como o
     // #4024 fez para vídeos). Cliente não cria o doc autoritativo.
     match /game_photos/{photoId} {
-      allow read: if isAuthenticated();
+      // FIX #4393: antes `allow read: if isAuthenticated()` cobria GET e LIST,
+      // e `getDocs(collection(db, 'game_photos'))` devolvia a mídia (com URL
+      // de download tokenizada) de jogos privados para qualquer conta.
+      // Agora só lê quem pode ver o jogo (canViewGameById). Acesso DIRETO a
+      // `resource.data.game_id` (sem default): numa LIST o engine só aprova se
+      // a query filtrar `game_id` por igualdade/in — LIST sem filtro é negada
+      // (exceto admin, que vem primeiro para moderação/limpeza de órfãs).
+      allow read: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.game_id is string &&
+        canViewGameById(resource.data.game_id)
+      );
 
       allow create: if false;
 
@@ -4543,7 +4601,13 @@ service cloud.firestore {
     // Issue #3238: Mesma matriz de acesso de game_photos, com validação
     // extra de MP4/25MB e status de processamento server-side.
     match /game_videos/{videoId} {
-      allow read: if isAuthenticated();
+      // FIX #4393: mesma restrição de game_photos — leitura (GET e LIST) só
+      // para quem pode ver o jogo; LIST exige filtro por `game_id`.
+      allow read: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.game_id is string &&
+        canViewGameById(resource.data.game_id)
+      );
 
       // FIX #4024: o documento autoritativo e criado somente pela callable
       // createGameVideo, que confirma o objeto no Storage, deriva a URL e

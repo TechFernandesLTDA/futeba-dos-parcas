@@ -15,6 +15,8 @@ rules_version = '2';
 // - locations/{locationId}/fields/{timestamp}.jpg (legado)
 // - temp_fields/{timestamp}.jpg (temporário, sem locationId)
 // - games/{gameId}/photos/{userId}/{timestamp}.jpg
+// - games/{gameId}/videos/{userId}/{fileName}.mp4
+// - games/{gameId}/video_thumbnails/{fileName}.jpg (server-only, leitura)
 // ============================================
 
 service firebase.storage {
@@ -119,6 +121,46 @@ service firebase.storage {
     // Requer token JWT atualizado — usuário precisa re-logar após promoção para obter claim.
     function isAdmin() {
       return isAuthenticated() && request.auth.token.role == 'ADMIN';
+    }
+
+    // FIX #4393: leitura de mídia de jogo (fotos/vídeos/thumbnails) só para
+    // quem pode ver o jogo, em paridade com canViewGameById do firestore.rules.
+    // Storage Rules permitem no máximo 2 firestore.get()/exists() distintos
+    // por requisição (excedente = permission denied). Por isso o 2º acesso é
+    // escolhido pelo tipo do jogo: jogo de grupo checa o membro do grupo;
+    // jogo sem grupo checa a confirmação própria. Convidado não-membro de jogo
+    // de grupo privado não lê pelo SDK do Storage (só o fluxo de recuperação
+    // de URL usa getDownloadURL; a URL tokenizada do doc continua valendo).
+    function canViewGameMedia(gameId) {
+      let game = firestore.get(/databases/(default)/documents/games/$(gameId));
+      return isAuthenticated() && (
+        isAdmin() ||
+        (
+          game != null && (
+            game.data.get('visibility', null) in ['PUBLIC_OPEN', 'PUBLIC_CLOSED'] ||
+            (
+              game.data.get('deleted_at', null) == null && (
+                game.data.get('owner_id', null) == request.auth.uid ||
+                request.auth.uid in game.data.get('co_organizers', []) ||
+                (
+                  (game.data.get('group_id', null) is string && game.data.get('group_id', '') != '')
+                    ? isGroupMember(game.data.group_id)
+                    : isOwnGameParticipant(gameId)
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    // FIX #4393: participação própria (convite pendente, confirmado, a caminho
+    // ou check-in) pelo ID determinístico gameId_uid.
+    function isOwnGameParticipant(gameId) {
+      let confirmation = firestore.get(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid));
+      return confirmation != null &&
+             confirmation.data.get('user_id', null) == request.auth.uid &&
+             confirmation.data.get('status', null) in ['PENDING', 'CONFIRMED', 'ON_THE_WAY', 'CHECKED_IN'];
     }
 
     function isWallMediaFile(fileName) {
@@ -560,9 +602,9 @@ service firebase.storage {
     // Jogadores confirmados podem postar fotos
     // ============================================
     match /games/{gameId}/photos/{fileName} {
-      // Qualquer autenticado pode ver fotos de jogos
-      allow read: if isAuthenticated() &&
-                     firestore.exists(/databases/(default)/documents/games/$(gameId));
+      // FIX #4393: só quem pode ver o jogo (antes: qualquer autenticado,
+      // inclusive LIST do diretório de fotos de jogos privados).
+      allow read: if canViewGameMedia(gameId);
 
       // #2160: confirmacao exige status == CONFIRMED (nao apenas existencia do doc)
       allow write: if resource == null &&
@@ -592,8 +634,8 @@ service firebase.storage {
     // O userId no path permite exclusão segura pelo próprio uploader.
     // ============================================
     match /games/{gameId}/photos/{userId}/{fileName} {
-      allow read: if isAuthenticated() &&
-                     firestore.exists(/databases/(default)/documents/games/$(gameId));
+      // FIX #4393: só quem pode ver o jogo.
+      allow read: if canViewGameMedia(gameId);
 
       allow write: if resource == null &&
                      isOwner(userId) &&
@@ -627,8 +669,8 @@ service firebase.storage {
     // em Cloud Function on-finalize; Storage bloqueia tipo/tamanho/path.
     // ============================================
     match /games/{gameId}/videos/{userId}/{fileName} {
-      allow read: if isAuthenticated() &&
-                     firestore.exists(/databases/(default)/documents/games/$(gameId));
+      // FIX #4393: só quem pode ver o jogo.
+      allow read: if canViewGameMedia(gameId);
 
       allow write: if resource == null &&
                      isOwner(userId) &&
@@ -655,6 +697,18 @@ service firebase.storage {
                            request.auth.uid in firestore.get(/databases/(default)/documents/games/$(gameId)).data.get('co_organizers', []))
                         )
                       );
+    }
+
+    // ============================================
+    // THUMBNAILS DE VÍDEOS DE JOGOS (gerados server-side)
+    // Path: games/{gameId}/video_thumbnails/{fileName}.jpg
+    // FIX #4393: o caminho escrito por generate-video-thumbnails.ts não tinha
+    // match e caía no deny-all (o poster do web nunca resolvia). Leitura com a
+    // mesma visibilidade do vídeo; escrita/remoção seguem só via Admin SDK.
+    // ============================================
+    match /games/{gameId}/video_thumbnails/{fileName} {
+      allow read: if canViewGameMedia(gameId);
+      allow write: if false;
     }
 
     // ============================================

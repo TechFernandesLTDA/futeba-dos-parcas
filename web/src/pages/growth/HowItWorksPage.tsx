@@ -102,7 +102,7 @@ export function HowItWorksPage() {
   });
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary' }}>
       <GrowthHeader currentPage="/como-funciona" />
       <GrowthBreadcrumbs items={[{ label: 'Como Funciona' }]} />
 

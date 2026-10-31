@@ -89,7 +89,7 @@ export function HowToOrganizePage() {
   });
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary' }}>
       <GrowthHeader currentPage="/organizar-pelada" />
       <GrowthBreadcrumbs items={[{ label: 'Como Organizar Pelada' }]} />
 

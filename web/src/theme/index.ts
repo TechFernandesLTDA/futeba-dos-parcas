@@ -681,6 +681,25 @@ export const futebaTheme = createTheme({
           'a[href]:not(.MuiButtonBase-root):active, button:not(.MuiButtonBase-root):active, [role="button"]:not(.MuiButtonBase-root):active': {
             opacity: 0.72,
           },
+          // #4407: chips clicáveis (filtros) medem 24-37px. Em touch, amplia só a
+          // área de toque para 44px (pseudo-elemento invisível), sem mudar o visual.
+          // Tabs e segmented controls: o root tem overflow hidden (o pseudo-elemento
+          // seria cortado), então o piso de 44px é aplicado na própria altura.
+          '.MuiTab-root.MuiTab-root, .MuiToggleButton-root.MuiToggleButton-root': {
+            minHeight: 44,
+          },
+          '.MuiChip-clickable, .MuiChip-deletable': {
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: '50%',
+              height: 'max(100%, 44px)',
+              transform: 'translateY(-50%)',
+            },
+          },
         },
         // #4114: color-scheme precisa valer em html, body E #root — o
         // controle nativo do user agent (glifo do picker de data/hora, popup

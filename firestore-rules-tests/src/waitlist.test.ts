@@ -171,9 +171,12 @@ describe("waitlist — read", () => {
     );
   });
 
-  it("Qualquer usuario autenticado pode ler entradas da waitlist", async () => {
+  // FIX #4393: comportamento INVERTIDO de proposito. Antes qualquer
+  // autenticado lia a fila (nome/foto) de qualquer jogo; agora so quem pode
+  // ver o jogo. PlayerC nao e dono, membro, participante nem o jogo e publico.
+  it("Usuario sem acesso ao jogo NAO pode ler entradas alheias da waitlist (#4393)", async () => {
     const db = asPlayerC(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc(`games/${GAME_ID}/waitlist/${UID_PLAYER_B}`).get()
     );
   });

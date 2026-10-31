@@ -195,8 +195,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             // posicionamento do Snackbar; agora usamos seletor de maior
             // especificidade (`&.MuiSnackbar-root`), sem `!important`.
             toast.undo || toast.severity === 'error'
-              ? { '&.MuiSnackbar-root': { bottom: 16 + index * 64 }, zIndex: 99999 }
-              : { '&.MuiSnackbar-root': { top: 80 + index * 60 }, zIndex: 99999 }
+              ? { '&.MuiSnackbar-root': { bottom: `calc(${16 + index * 64}px + env(safe-area-inset-bottom, 0px))` }, zIndex: 99999 } // safe-area: home indicator do iPhone
+              : { '&.MuiSnackbar-root': { top: `calc(${80 + index * 60}px + env(safe-area-inset-top, 0px))` }, zIndex: 99999 } // safe-area: notch
           }
         >
           <Alert

@@ -234,9 +234,11 @@ export const GroupPhotosPanel: React.FC<{
 
       try {
         const gameLookup = new Map(games.map((game) => [game.id, game]));
+        // Lotes de 9 (não 10): a regra de game_photos lê cada jogo do `in` mais o
+        // registro de membro, e o limite em produção é 10 leituras por query (#4393).
         const chunks: string[][] = [];
-        for (let i = 0; i < games.length; i += 10) {
-          chunks.push(games.slice(i, i + 10).map((game) => game.id));
+        for (let i = 0; i < games.length; i += 9) {
+          chunks.push(games.slice(i, i + 9).map((game) => game.id));
         }
 
         const snapshots = await Promise.all(chunks.map((chunk) => getDocs(query(
@@ -358,7 +360,7 @@ export const GroupPhotosPanel: React.FC<{
         {selectedPhoto && (
           <>
             <Box sx={{ bgcolor: theme.palette.common.black, display: 'flex', justifyContent: 'center' }}>
-              <Box component="img" src={selectedPhoto.url} alt={t('groupPhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
+              <Box component="img" src={selectedPhoto.url} alt={t('groupPhotos.photoAlt', { name: selectedPhoto.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78dvh', objectFit: 'contain' }} />
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
               <Avatar src={selectedPhoto.uploadedByPhoto} alt={selectedPhoto.uploadedByName}>{selectedPhoto.uploadedByName.charAt(0).toUpperCase()}</Avatar>

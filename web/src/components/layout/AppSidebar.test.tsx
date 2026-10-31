@@ -341,7 +341,7 @@ describe('AppSidebar', () => {
 
     const menu = screen.getByRole('menu');
     const paper = menu.parentElement;
-    expect(paper).toHaveStyle({ maxHeight: 'min(70vh, 480px)', overflowY: 'auto' });
+    expect(paper).toHaveStyle({ maxHeight: 'min(70dvh, 480px)', overflowY: 'auto' });
   });
 
   it('renderiza drawer expanded em desktop (lg+)', () => {
