@@ -2018,3 +2018,12 @@ dependencia Homebrew quebrada observada no job 101372805251. O Playwright usa
 locale pt-BR, idioma dos seletores da suite; o snapshot do run 33990197521
 confirmou que a deteccao de idioma do navegador renderizava Sign In em ingles.
 Nenhum teste ou gate foi desabilitado.
+
+## 2026-10-31: LCP das guias públicas (#4403)
+
+- O LCP de /organizar-pelada, /como-funciona e /parcerias (~6 s) vinha do parágrafo do React, não do HTML estático: o
+  Chrome só troca o candidato por um elemento maior, e o lead do app era mais largo (letter-spacing 0,5px do body1,
+  `<strong>` e hero centralizado em /como-funciona).
+- Decisão: igualar o hero estático ao do React (CSS e dois campos opcionais em prerender-routes.mjs: `leadStrong`,
+  `heroCenter`). Não adiar o App Check nem mexer na CSP: os scripts de terceiros só pesavam porque o candidato do React era o LCP.
+- Spec: BUGFIX_4403_LANDING_LCP.md.
