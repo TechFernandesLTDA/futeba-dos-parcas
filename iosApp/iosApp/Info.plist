@@ -49,33 +49,21 @@
     <key>UIUserInterfaceStyle</key>
     <string>Automatic</string>
 
-    <!-- Minimum iOS version -->
-    <key>MinimumOSVersion</key>
-    <string>15.0</string>
-
     <!-- Privacy - Photo Library -->
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Necessário acessar suas fotos para selecionar foto de perfil e compartilhar imagens dos jogos</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Salvar fotos dos jogos na sua biblioteca</string>
+    <string>O Futeba dos Parças usa suas fotos para você escolher a foto de perfil e compartilhar imagens dos jogos.</string>
 
     <!-- Privacy - Camera -->
     <key>NSCameraUsageDescription</key>
-    <string>Necessário acessar a câmera para tirar foto de perfil e registrar momentos dos jogos</string>
+    <string>O Futeba dos Parças usa a câmera para você tirar a foto de perfil e registrar momentos dos jogos.</string>
 
     <!-- Privacy - Location -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Necessário acessar sua localização para encontrar jogos próximos e marcar locais de peladas</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Necessário acessar sua localização para notificações de jogos próximos</string>
+    <string>O Futeba dos Parças usa sua localização para mostrar jogos e quadras perto de você e confirmar o check-in na pelada.</string>
 
-    <!-- Privacy - Notifications -->
-    <key>NSUserNotificationsUsageDescription</key>
-    <string>Receba notificações sobre convites para jogos, lembretes e atualizações importantes</string>
-
-    <!-- Privacy - Contacts (optional for future features) -->
-    <key>NSContactsUsageDescription</key>
-    <string>Encontre amigos que também usam o Futeba dos Parças</string>
+    <!-- Export compliance: o app só usa criptografia padrão do sistema (HTTPS/TLS) -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
 
     <!-- App Transport Security -->
     <key>NSAppTransportSecurity</key>
@@ -83,12 +71,6 @@
         <key>NSAllowsArbitraryLoads</key>
         <false/>
     </dict>
-
-    <!-- Firebase Dynamic Links (optional) -->
-    <key>FirebaseDynamicLinksCustomDomains</key>
-    <array>
-        <string>https://futebadosparcas.page.link</string>
-    </array>
 
     <!-- URL Types for OAuth -->
     <key>CFBundleURLTypes</key>

@@ -63,6 +63,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas
         PRODUCT_NAME: iosApp
+        # iPhone apenas no lançamento (DECISIONS 2026-10-31): as telas do composeApp
+        # ainda são de telefone, e "universal" exigiria ícones e capturas de iPad
+        # na submissão. Para liberar iPad, troque para "1,2" e complete o AppIcon.
+        TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: iosApp/Info.plist
         CODE_SIGN_ENTITLEMENTS: iosApp/iosApp.entitlements
         SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
