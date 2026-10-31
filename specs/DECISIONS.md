@@ -55,8 +55,6 @@ lugar a olhar se surgir `permission-denied` em produção.
 
 ---
 
----
-
 ## 2026-10-31 — Exclusão de conta pelo titular: callable fina + cascata no trigger (#4391)
 
 **Contexto:** web e Android chamam a callable `deleteAccount`, que nunca
