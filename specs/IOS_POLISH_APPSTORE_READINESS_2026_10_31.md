@@ -164,6 +164,7 @@ Nada novo neste ciclo.
 | 19 | P3 | `ComposeAppModule.kt:31,35`, `PostGameReportScreen.kt:171`, `WhatsNewContent.kt:95-97` | Deprecações (DSL `viewModel`, `Icons.Filled.Chat`, `kotlinx.datetime.Instant`) | Aberto (issue filha) |
 | 20 | P3 | `Info.plist:10` | Nome "Futeba dos Parças" não cabe sob o ícone: o iOS mostra "FutebadosParças" | Aberto (decisão de produto) |
 | 21 | P3 | `PostGameReportScreen.kt:63-65` | Cores de medalha fixas (exceção de gamificação permitida) | Aceito |
+| 22 | P1 | `iosApp/project.yml` (preBuildScript e `FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]`) | Archive/Release nunca gera framework de device em Release: o script só roda `linkDebugFrameworkIosSimulatorArm64` e o caminho de device aponta para `iosArm64/debugFramework` | Aberto (#4395) |
 
 ### 4.2 Plano de paridade (iOS)
 
@@ -189,6 +190,12 @@ Nada novo neste ciclo.
 - `./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64` verde.
 - `xcodebuild ... CODE_SIGNING_ALLOWED=NO SKIP_KMP_BUILD=YES build` → `BUILD SUCCEEDED`.
 - `composeApp` não tem source set de teste; o `classify` do VM fica coberto pela issue de testes.
+- **A exclusão de conta foi verificada só por compilação.** Sem `GoogleService-Info.plist`
+  a rota `delete_account` cai no estado "indisponível" e o Perfil exige login; as duas
+  confirmações, o mapeamento de erros e o logout com pilha limpa ainda não rodaram.
+  QA com Firebase real fica para depois do deploy de #4391.
+- O `ComposeApp.framework` é dinâmico (`Mach-O dynamically linked shared library`), então
+  o `embed: true` está certo; não há biblioteca estática solta em `Frameworks/`.
 
 ### 5.2 Checklist de Revisão
 
@@ -201,9 +208,10 @@ Nada novo neste ciclo.
 ### 5.3 Demo
 
 Capturas no scratchpad da sessão (`shots/`): boas-vindas em claro antes e depois da
-correção do botão. O `simctl io screenshot` travou ao alternar para o modo escuro e o
-CoreSimulator não reiniciou no tempo da sessão; as capturas de escuro e AX3 ficam
-para a issue de QA visual.
+correção do botão. **Escuro e Dynamic Type AX3 não foram entregues:** o
+`simctl io screenshot` travou logo depois de trocar a aparência, e nem `simctl shutdown`
+respondeu após reiniciar o CoreSimulatorService (RAM do Mac em ~128 MB livres com outros
+builds rodando). Ficam para a issue de QA visual.
 
 ---
 
