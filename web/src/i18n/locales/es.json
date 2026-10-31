@@ -3486,7 +3486,24 @@
       "systemDesc": "Automático (sistema)",
       "title": "Tema"
     },
-    "title": "Configuración"
+    "title": "Configuración",
+    "deleteBlockedDesc_one": "Eres dueño de un grupo que aún tiene otros miembros activos. Transfiere la propiedad a otro miembro o elimina a los miembros antes de eliminar tu cuenta.",
+    "deleteBlockedDesc_other": "Eres dueño de {{count}} grupos que aún tienen otros miembros activos. Transfiere la propiedad a otro miembro o elimina a los miembros de cada grupo antes de eliminar tu cuenta.",
+    "deleteBlockedGroupAria": "Abrir el grupo {{name}}",
+    "deleteBlockedListAria": "Grupos que impiden eliminar la cuenta",
+    "deleteBlockedTitle_one": "Transfiere la propiedad de 1 grupo",
+    "deleteBlockedTitle_other": "Transfiere la propiedad de {{count}} grupos",
+    "deletePasswordAria": "Contraseña de tu cuenta",
+    "deletePasswordLabel": "Contraseña",
+    "deleteRateLimited": "Alcanzaste el límite de 3 intentos por hora. Espera un poco e inténtalo de nuevo.",
+    "deleteReauthConfirm": "Confirmar y eliminar",
+    "deleteReauthConfirmAria": "Confirmar la contraseña y eliminar la cuenta",
+    "deleteReauthDesc": "Por seguridad, confirma que eres tú para terminar de eliminar la cuenta.",
+    "deleteReauthGoogle": "Confirmar con Google",
+    "deleteReauthGoogleAria": "Confirmar la identidad con tu cuenta de Google",
+    "deleteReauthTitle": "Confirma tu identidad",
+    "deleteReauthUnavailable": "No pudimos confirmar tu identidad aquí. Cierra sesión, entra de nuevo y repite la eliminación.",
+    "deleteRecentLoginStillRequired": "No pudimos validar el inicio de sesión reciente. Cierra sesión, entra de nuevo y repite la eliminación en 10 minutos."
   },
   "shortcuts": {
     "closeOrBack": "Cerrar modal o volver al foco anterior",
