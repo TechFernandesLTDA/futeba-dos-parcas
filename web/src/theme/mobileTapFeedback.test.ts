@@ -11,4 +11,11 @@ describe('mobile tap feedback', () => {
       'a[href]:not(.MuiButtonBase-root):active, button:not(.MuiButtonBase-root):active, [role="button"]:not(.MuiButtonBase-root):active',
     );
   });
+
+  it('garante área de toque de 44px em chips, tabs e toggles no touch (#4407)', () => {
+    const overrides = futebaTheme.components?.MuiCssBaseline?.styleOverrides as Record<string, Record<string, Record<string, unknown>>>;
+    const coarse = overrides['@media (hover: none) and (pointer: coarse)'];
+    expect(coarse['.MuiTab-root.MuiTab-root, .MuiToggleButton-root.MuiToggleButton-root']).toMatchObject({ minHeight: 44 });
+    expect(coarse['.MuiChip-clickable, .MuiChip-deletable']).toHaveProperty('&::after');
+  });
 });
