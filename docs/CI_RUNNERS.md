@@ -66,6 +66,13 @@ runs-on: ${{ fromJSON(<EVENTO_CONFIAVEL> && (vars.RUNNER_LABELS_X || '["ubuntu-2
 - Jobs iOS (`ios-build`) usam o Mac próprio em evento confiável e `macos-15` hospedado no resto.
   `ios-testflight` é só `workflow_dispatch` e continua fixo no Mac.
 - Se a variável sumir, o fallback é o hospedado.
+- **O filtro é defesa em profundidade, não a barreira.** Num PR de fork o YAML vem do fork, que
+  pode reescrever o `runs-on`. A barreira é a configuração do repositório *Require approval for all
+  external contributors* (`actions/permissions/fork-pr-contributor-approval` =
+  `all_external_contributors`). **Antes de aprovar um run de fork, leia o diff de `.github/`** e de
+  qualquer script que o workflow execute; se o PR mexe em workflow, não aprove.
+- `pr-review-to-issues` só cria issue para comentário de `OWNER`/`MEMBER`/`COLLABORATOR` ou do
+  `github-actions[bot]`; `issue-automation` só rotula e comenta, com `GITHUB_TOKEN`.
 
 ## Regras de workflow (aplicadas e auditadas por `actionlint`)
 

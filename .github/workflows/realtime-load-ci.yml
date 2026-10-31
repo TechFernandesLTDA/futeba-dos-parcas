@@ -41,7 +41,7 @@ permissions:
 jobs:
   realtime-load:
     name: Firestore realtime — 10/100/1000 VUs
-    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_EMULATORS || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_EMULATORS || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 30
     env:
       # Dedicated port: rules/web/function jobs share self-hosted runners.

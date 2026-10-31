@@ -7,10 +7,15 @@
 // push, schedule, workflow_dispatch e pull_request de branch do próprio repo (exceto Dependabot).
 // PR de fork, Dependabot, issues, comentários e workflow_run vão para o runner hospedado, que é
 // gratuito em repositório público e descartável a cada job.
+//
+// Isto é defesa em profundidade, não a barreira: num PR de fork o YAML vem do próprio fork, que pode
+// reescrever o runs-on. A barreira é a configuração "aprovação obrigatória para todos os
+// contribuidores externos" do repositório; antes de aprovar um run de fork, leia o diff de `.github/`.
+// `head.repo.full_name` em vez de `head.repo.fork`: com o fork apagado, `head.repo` é nulo.
 
 const TRUSTED_EVENT =
   "(contains(fromJSON('[\"push\",\"schedule\",\"workflow_dispatch\"]'), github.event_name) || " +
-  "(github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && " +
+  "(github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && " +
   "github.event.pull_request.user.login != 'dependabot[bot]'))";
 
 const HOSTED_FALLBACK = '\'["ubuntu-24.04"]\'';

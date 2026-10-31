@@ -44,7 +44,7 @@ jobs:
   # em paralelo com o classificador para reduzir fan-out e tempo de fila.
   validate-conventions:
     name: Conventions (audit, secrets, rules, grace, headers)
-    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 10
     steps:
       - name: Checkout code
@@ -132,7 +132,7 @@ jobs:
   validate-pre-push:
     name: Pre-Push Validation
     needs: [changes]
-    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 20
     steps:
       - name: Checkout code

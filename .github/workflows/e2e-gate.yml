@@ -44,7 +44,7 @@ jobs:
     if: ${{ !cancelled() }}
     # O gate só faz polling (até 45 min). Roda nos runners leves `futeba-poller`
     # (tf-wsl-gate, tf-wsl-gate-2) para não ocupar o pool geral; o E2E roda no futeba-emulators.
-    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_POLLER || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_POLLER || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 60
 
     steps:
@@ -91,7 +91,7 @@ jobs:
     name: Issue de falha do E2E pós-merge
     needs: [e2e-gate]
     if: ${{ failure() && github.event_name == 'push' }}
-    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_POLLER || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_POLLER || vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 5
     permissions:
       contents: read
