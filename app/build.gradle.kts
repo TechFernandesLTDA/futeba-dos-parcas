@@ -5,7 +5,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-    id("androidx.navigation.safeargs.kotlin")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
     id("com.google.firebase.firebase-perf")
@@ -217,7 +216,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.2")
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
 
     // Jetpack Compose (Modern UI)
     val composeBom = platform("androidx.compose:compose-bom:2025.09.01")
@@ -237,24 +235,20 @@ dependencies {
     implementation("androidx.graphics:graphics-shapes:1.0.1")
     implementation("androidx.activity:activity-compose:1.12.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
-    implementation("androidx.compose.runtime:runtime-livedata") // Interop with LiveData if needed
-    implementation("com.google.accompanist:accompanist-themeadapter-material3:0.36.0") // Bridge M3 XML Theme to Compose
-    implementation("com.google.accompanist:accompanist-swiperefresh:0.36.0") // Pull-to-refresh para Compose
-
-    // Compose Multiplatform Resources
-    implementation(project(":shared"))
-
-
+    // Removidas em 31/10/2026 (0 usos em app/src): runtime-livedata,
+    // accompanist-themeadapter-material3 e accompanist-swiperefresh (PullToRefreshBox é o padrão).
 
     // Architecture Components
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0") // Para collectAsStateWithLifecycle
-    implementation("androidx.navigation:navigation-fragment-ktx:2.10.2")
-    implementation("androidx.navigation:navigation-ui-ktx:2.10.2")
+    // Navegação Compose declarada explicitamente. Antes chegava só por transitividade
+    // (koin-compose-viewmodel-navigation, 2.9.1) e era alinhada a 2.10.2 pelo
+    // navigation-fragment-ktx, que não tem uso (app 100% Compose, sem nav graph XML).
+    implementation("androidx.navigation:navigation-compose:2.10.2")
+    // Mantida só porque os themes.xml ainda declaram preferenceTheme (sem tela de
+    // Preference em uso). Remover junto com esse item quando o tema for revisto.
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
@@ -294,9 +288,6 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 
-    // Shimmer Effect
-    implementation("com.facebook.shimmer:shimmer:0.5.0")
-
     // Google Maps & Places
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation("com.google.maps.android:maps-compose:4.4.2")
@@ -307,8 +298,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-ui:1.5.1")
 
-    // Charts
-    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    // Charts (Vico/Compose; MPAndroidChart removido em 31/10/2026, sem uso)
     implementation("com.patrykandpatrick.vico:compose:1.14.0")
     implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
     implementation("com.patrykandpatrick.vico:core:1.14.0")
@@ -385,15 +375,9 @@ dependencies {
     // Gson for Object Conversion
     implementation("com.google.code.gson:gson:2.14.0")
 
-    // Lottie Animations
-    implementation("com.airbnb.android:lottie:6.7.1")
-
     // Baseline Profile - ProfileInstaller para aplicar profiles em runtime
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     "baselineProfile"(project(":baselineprofile"))
-
-    // CircleImageView
-    implementation("de.hdodenhof:circleimageview:3.1.0")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
