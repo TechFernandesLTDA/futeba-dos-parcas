@@ -101,6 +101,14 @@ android {
         }
     }
 
+    // Código compartilhado pelas variantes não-debug (release e benchmark), hoje só o
+    // provider de App Check Play Integrity. Debug tem a própria versão em src/debug,
+    // o que permite firebase-appcheck-debug como debugImplementation.
+    sourceSets {
+        getByName("release").java.srcDir("src/nonDebug/java")
+        getByName("benchmark").java.srcDir("src/nonDebug/java")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -259,7 +267,8 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-perf")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
-    implementation("com.google.firebase:firebase-appcheck-debug")
+    // Provider de debug só no build debug (src/debug/.../AppCheckProviders.kt).
+    debugImplementation("com.google.firebase:firebase-appcheck-debug")
     implementation("com.google.firebase:firebase-config")
 
     // Credentials para Google Sign-In
