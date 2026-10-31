@@ -39,7 +39,7 @@ jobs:
     name: Coletar métricas de CI
     # Só métricas do branch principal (PRs geravam dezenas de runs enfileirados).
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'master'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 5
     steps:
       - name: Checkout code

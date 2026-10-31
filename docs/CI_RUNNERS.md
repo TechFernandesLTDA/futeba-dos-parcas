@@ -1,6 +1,6 @@
 # CI: runners, workflows e como reativar
 
-> Atualizado em 09/10/2026. Este documento é a fonte de verdade da topologia de CI.
+> Atualizado em 31/10/2026 (#4394). Este documento é a fonte de verdade da topologia de CI.
 > `scripts/SELF_HOSTED_RUNNER.md` e `docs/ci/wsl2-self-hosted-runner.md` descrevem a instalação
 > de runners; a tabela de workflows de `SELF_HOSTED_RUNNER.md` está desatualizada.
 
@@ -14,36 +14,58 @@
 
 ## Topologia de runners
 
-> **Sem runner macOS desde 09/10/2026.** O `MacBook-Pro-de-Renan` foi removido. Tudo roda nos
-> runners Linux do WSL do PC. iOS está estacionado (#4202).
+> Desde 31/10/2026 o CI roda no Mac do Renan e na VM `tf-atendimento-prod-01` (OCI, E5.Flex).
+> Os runners WSL do PC (`tf-wsl-*`) não existem mais.
 
-| Runner (org) | Labels | Papel | Variável |
+| Runner (repo) | Labels | Papel | Variável |
 | --- | --- | --- | --- |
-| `tf-wsl-1` | `self-hosted, Linux, X64, futeba-emulators` | Exclusivo dos jobs com emulador Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load, rules-tests, query-perf) | `RUNNER_LABELS_EMULATORS` |
-| `tf-wsl-2..4` | `self-hosted, Linux, X64, futeba-general` (+ `bv2`, compartilhado com o brazuka-v2) | Pool geral: Android (lint, testes, build, **deploy na Play**, release), Web, Lighthouse, Functions, Semgrep, automações | `RUNNER_LABELS_LINUX` |
-| `tf-wsl-gate`, `tf-wsl-gate-2` | `futeba-poller` (sem labels padrão) | Jobs leves: E2E Gate (polling), issue pós-merge, classificação de escopo | `RUNNER_LABELS_POLLER` |
-| `futeba-windows-local`, `tf-desktop-runner` (repo) | `self-hosted, Windows, X64` | Standby; nenhum workflow usa hoje | — |
+| `mac-futeba-1` (`~/actions-runner-2`) | `futeba`, `futeba-general`, `futeba-emulators`, `futeba-linux` | Único runner pesado: Gradle (Android, KMP), emuladores Firebase, Lighthouse, docker (Colima), deploys com segredo, iOS | `RUNNER_LABELS_HEAVY`, `RUNNER_LABELS_EMULATORS` e parte do pool leve |
+| `oci-prod01-futeba` (prod-01, usuário `gha-futeba`) | `Linux`, `X64`, `futeba-linux` | Pool leve: Functions (build, lint, testes), Web (shards e gate), Semgrep, gitleaks, padrões, automações | `RUNNER_LABELS_LINUX` (junto com o Mac) |
+| `mac-futeba-poller-1/2` | `futeba-poller` | Polling do E2E Gate, issue pós-merge, classificação de escopo | `RUNNER_LABELS_POLLER` |
+| `futeba-windows-local`, `tf-desktop-runner` | `self-hosted, Windows, X64` | Standby, offline; nenhum workflow usa | — |
 
-Os runners vivem na VM do WSL. O keepalive é a tarefa agendada do Windows `WSL-Runners-Keepalive`
-(a cada 5 min, `hermes/scripts/wsl-keepalive.ps1`), e o `.wslconfig` tem `vmIdleTimeout=-1`.
-Os serviços de runner de **outros repositórios** no mesmo host (`bv2-*`, `bkc-*`, `cc-*`) não
-pertencem a este repo e não devem ser alterados.
+Valores das variáveis do repositório:
+
+| Variável | Valor | Runners |
+| --- | --- | --- |
+| `RUNNER_LABELS_HEAVY` | `["self-hosted","futeba-general"]` | Mac |
+| `RUNNER_LABELS_EMULATORS` | `["self-hosted","futeba-emulators"]` | Mac |
+| `RUNNER_LABELS_LINUX` | `["self-hosted","futeba-linux"]` | Mac e prod-01 |
+| `RUNNER_LABELS_POLLER` | `["self-hosted","futeba-poller"]` | pollers do Mac |
+
+### Isolamento do runner da prod-01
+
+A prod-01 também roda o runtime de produção da TF. O runner é um convidado e não pode enxergá-lo:
+
+- Usuário próprio `gha-futeba`, sem `sudo`, fora do grupo `docker`, home `0750`. As pastas do
+  runtime (`/run/tf*`, `/etc/tf-studio`, `/usr/local/lib/tf`) são `root` 0700/0750.
+- Rede (`/usr/local/sbin/gha-futeba-egress` + `gha-futeba-egress.service`): regra `owner` no
+  `OUTPUT` bloqueia metadados da OCI (169.254.0.0/16, token de instance principal), VCN, WireGuard,
+  bridges dos containers e serviços locais. No loopback só passam DNS e portas efêmeras (≥32768),
+  onde os próprios testes do job sobem servidores.
+- systemd (`actions.runner...oci-prod01-futeba.service.d/10-limites.conf`): `MemoryMax=6G` sem
+  swap, `CPUQuota=200%` (2 das 4 vCPUs), pesos de CPU e IO baixos, `Nice=10`, `NoNewPrivileges`,
+  `ProtectSystem=full`, `PrivateTmp`.
+- Por isso nada de Gradle, docker ou segredo de deploy na prod-01: esses jobs usam `RUNNER_LABELS_HEAVY`.
+- Não ampliar CPU nem memória da VM sem autorização do Renan.
 
 ### Como cada workflow escolhe o runner
 
-- `runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}`:
-  pool geral (padrão). Os jobs de emulador usam `vars.RUNNER_LABELS_EMULATORS || ...` e os de polling
-  usam `vars.RUNNER_LABELS_POLLER || ...`. A variável legada `RUNNER_LABELS` (Mac) não é mais lida.
-- `fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]')`: jobs que antes eram hospedados.
-  O fallback hospedado só vale se a variável sumir; o orçamento hospedado é US$ 0.
-- Os builds Gradle que dependiam do SDK pré-instalado no Mac (`deploy-production`, `deploy-beta`,
-  `release`, `android-macrobenchmark`) instalam o SDK com `android-actions/setup-android@v4` + `sdkmanager`.
-- `android-macrobenchmark`: só `workflow_dispatch`, emulador `x86_64` (KVM do WSL). Não roda em push.
-- **iOS** (`ios-build`: `build-shared-framework`/`build-ios-app`; `ios-testflight`): continuam
-  fixos em `[self-hosted, macOS, ARM64, futeba]`, mas só rodam com `vars.IOS_MAC_RUNNER == 'true'`.
-  Sem Mac, o `ios-build` roda só os testes KMP compartilhados (Linux) e o `notify` passa.
-  **Nunca** usar `macos-*` hospedado (10x os minutos). Para retomar o iOS: registrar um runner macOS
-  com o label `futeba` e `gh variable set IOS_MAC_RUNNER -R TechFernandesLTDA/futeba-dos-parcas --body true`.
+Todo `runs-on` segue o contrato de `scripts/ci/runner-selector.js`, verificado por
+`scripts/ci/runner-selector-workflow-contract.test.js`:
+
+```yaml
+runs-on: ${{ fromJSON(<EVENTO_CONFIAVEL> && (vars.RUNNER_LABELS_X || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
+```
+
+- **Evento confiável** = `push`, `schedule`, `workflow_dispatch` ou `pull_request` de branch do
+  próprio repositório que não seja do Dependabot. Só quem tem escrita no repo gera esses eventos.
+- **Todo o resto** (PR de fork, Dependabot, `issues`, `issue_comment`, reviews, `workflow_run`)
+  vai para o runner hospedado `ubuntu-24.04`. Com o repositório público, os runners hospedados
+  padrão (Linux e macOS) são gratuitos e descartáveis; código de fora nunca toca o Mac nem a prod-01.
+- Jobs iOS (`ios-build`) usam o Mac próprio em evento confiável e `macos-15` hospedado no resto.
+  `ios-testflight` é só `workflow_dispatch` e continua fixo no Mac.
+- Se a variável sumir, o fallback é o hospedado.
 
 ## Regras de workflow (aplicadas e auditadas por `actionlint`)
 
@@ -147,13 +169,15 @@ cd C:\Users\renan\actions-runner
 
 ## Runner dedicado a emuladores (futeba-emulators)
 
-Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load) usam `vars.RUNNER_LABELS_EMULATORS = ["self-hosted","Linux","X64","futeba-emulators"]`. Só o runner de org `tf-wsl-1` tem essa label. Todos os runners WSL compartilham 127.0.0.1 (9099/8085/5001), então um único runner serializa esses jobs pela fila nativa do GitHub, sem cancelar nada. O grupo de concurrency global antigo (`firebase-emulator-integration`) cancelava runs pendentes de outros refs, porque o GitHub guarda só 1 pendente por grupo. Para adicionar capacidade, use portas dinâmicas por job antes de pôr a label em outro runner.
+Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load) usam `vars.RUNNER_LABELS_EMULATORS = ["self-hosted","futeba-emulators"]`. Só o `mac-futeba-1` tem essa label (antes era o `tf-wsl-1`). Os runners de um mesmo host compartilham 127.0.0.1 (9099/8085/5001), então um único runner serializa esses jobs pela fila nativa do GitHub, sem cancelar nada. O grupo de concurrency global antigo (`firebase-emulator-integration`) cancelava runs pendentes de outros refs, porque o GitHub guarda só 1 pendente por grupo. Para adicionar capacidade, use portas dinâmicas por job antes de pôr a label em outro runner.
 
 ## Runners do E2E Gate (futeba-poller)
 
-O job `E2E Gate` só faz polling por até 45 min. Ele roda em `vars.RUNNER_LABELS_POLLER = ["futeba-poller"]`, nos runners leves `tf-wsl-gate` e `tf-wsl-gate-2` (serviços systemd em /opt/ar-tf-wsl-gate*, sem labels padrão). Assim o pool geral (`futeba-general`) fica livre para Android, Web e Lighthouse.
+O job `E2E Gate` só faz polling por até 45 min. Ele roda em `vars.RUNNER_LABELS_POLLER = ["futeba-poller"]`, nos runners leves `mac-futeba-poller-1/2` (sem labels de trabalho pesado). Assim o runner pesado fica livre para Android, emuladores e Lighthouse.
 
-## Memória e Gradle nos runners WSL (09/10/2026)
+## Memória e Gradle nos runners WSL (histórico, 09/10/2026)
+
+> Os runners WSL foram desligados. No Mac, o runner pesado usa `GRADLE_USER_HOME=~/.gradle-ci` com o mesmo ajuste (`-Xmx4g`, 4 workers).
 
 - `.wslconfig` do host: `memory=8GB`, `processors=8`, `swap=8GB`, `autoMemoryReclaim=dropCache` (devolve o cache ao Windows). Com 12 GB a VM tomava a RAM do PC e, com 3 builds Gradle de 6 GB em paralelo, caía inteira.
 - `tf-wsl-4` está desligado: com 8 GB cabem 2 jobs Gradle + emuladores + gates.

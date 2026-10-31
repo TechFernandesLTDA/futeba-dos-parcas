@@ -35,7 +35,7 @@ permissions:
 jobs:
   ios_app_scope:
     name: Detect iOS app changes
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 5
     outputs:
       should_run: ${{ steps.detect.outputs.should_run }}
@@ -57,7 +57,7 @@ jobs:
 
   kmp-shared-tests:
     name: KMP Shared Unit Tests
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_HEAVY || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 30
     steps:
       - name: Checkout code
@@ -114,7 +114,7 @@ jobs:
     # nunca em runner hospedado (macOS hospedado consome 10x os minutos gratuitos).
     # Sem runner macOS desde 09/10/2026 (iOS estacionado, #4202): liga com vars.IOS_MAC_RUNNER=true.
     if: vars.IOS_MAC_RUNNER == 'true'
-    runs-on: [self-hosted, macOS, ARM64, futeba]
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && '["self-hosted","macOS","ARM64","futeba"]' || '"macos-15"') }}
     timeout-minutes: 40
     needs: kmp-shared-tests
     steps:
@@ -147,7 +147,7 @@ jobs:
   build-ios-app:
     name: Build iOS App
     # Xcode so existe no Mac self-hosted (label `futeba`); sem minutos hospedados.
-    runs-on: [self-hosted, macOS, ARM64, futeba]
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && '["self-hosted","macOS","ARM64","futeba"]' || '"macos-15"') }}
     timeout-minutes: 60
     needs: [build-shared-framework, ios_app_scope]
     if: vars.IOS_MAC_RUNNER == 'true' && needs.ios_app_scope.outputs.should_run == 'true'
@@ -217,7 +217,7 @@ jobs:
 
   notify:
     name: Notify Build Status
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS_LINUX || '["self-hosted","Linux","X64","futeba-general"]') }}
+    runs-on: ${{ fromJSON((contains(fromJSON('["push","schedule","workflow_dispatch"]'), github.event_name) || (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]')) && (vars.RUNNER_LABELS_LINUX || '["ubuntu-24.04"]') || '"ubuntu-24.04"') }}
     timeout-minutes: 5
     needs: [kmp-shared-tests, build-shared-framework, build-ios-app, ios_app_scope]
     if: always()
