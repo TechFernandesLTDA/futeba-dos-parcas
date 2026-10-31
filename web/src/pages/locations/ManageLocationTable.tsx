@@ -58,7 +58,7 @@ export const ManageLocationTable: React.FC<TableProps> = ({
   const allSelected = locations.length > 0 && selectedCount === locations.length;
 
   return (
-    <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 'calc(100vh - 280px)' }}>
+    <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 'calc(100dvh - 280px)' }}>
       <Table size="small" stickyHeader aria-label={t('locations.manageFilters.tableLabel')}>
         <TableHead>
           <TableRow>

@@ -85,7 +85,7 @@ export function AmateurRankingPage() {
   });
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ minHeight: '100dvh', bgcolor: 'background.default', color: 'text.primary' }}>
       <GrowthHeader currentPage="/ranking-futebol-amador" />
       <GrowthBreadcrumbs items={[{ label: 'Ranking de Futebol Amador' }]} />
 

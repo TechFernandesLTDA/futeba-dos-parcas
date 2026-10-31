@@ -433,7 +433,7 @@ export const GamePhotosTab: React.FC<GamePhotosTabProps> = ({
               >
                 <CloseIcon />
               </IconButton>
-              <Box component="img" src={selectedPhotoLive.url} alt={t('gamePhotos.photoAlt', { name: selectedPhotoLive.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain' }} />
+              <Box component="img" src={selectedPhotoLive.url} alt={t('gamePhotos.photoAlt', { name: selectedPhotoLive.uploadedByName })} sx={{ maxWidth: '100%', maxHeight: '78dvh', objectFit: 'contain' }} />
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
               <Avatar src={selectedPhotoLive.uploadedByPhoto} alt={selectedPhotoLive.uploadedByName}>{selectedPhotoLive.uploadedByName.charAt(0).toUpperCase()}</Avatar>
