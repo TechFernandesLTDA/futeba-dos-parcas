@@ -44,8 +44,8 @@ pertence a outras pessoas é anonimizado.
 
 ### 2.1 Investigação
 
-- Evidência da issue: `gcloud functions list` (31/10/2026) com 173 funções, nenhuma `deleteAccount`. A sonda HTTP na URL da
-  callable devolveu 404; a de uma callable existente devolveu 400.
+- Evidência da issue: `gcloud functions list` (31/10/2026) com 173 funções, nenhuma `deleteAccount`. Na
+  sonda HTTP relatada na issue, a URL da callable devolveu 404 e a de uma callable existente, 400.
 - Já existe o trigger `onUserDeleted` (`functions/src/auth/account-cleanup.ts`, Auth v1 `onDelete`,
   `failurePolicy: true`, teto de 24h), com a cascata LGPD de ~16 coleções. Faltava a porta de entrada
   para o próprio usuário.
@@ -210,7 +210,7 @@ Ação: **apagar**, **anonimizar** (nome vira "Usuário removido", foto vira `nu
 | `chats/{id}/messages` | `sender_id` | anonimizar remetente (texto fica) | T |
 | `game_photos`, `game_videos` + objetos no Storage | `uploaded_by`, `storage_path` | apagar | T |
 | Storage `users/{uid}/`, `profile_photos/{uid}.*`, miniaturas | prefixo | apagar | T |
-| `audit_logs` `ACCOUNT_DELETED` | `uid_sha256` | **manter** (prova da exclusão, sem PII) | C |
+| `audit_logs` `ACCOUNT_DELETED` | `uid_sha256` | **manter por obrigação legal** (prova do atendimento ao art. 18, VI; sem PII) | C |
 
 **DMs (decisão):** anonimizar o remetente e manter o texto (comportamento do #4120). A mensagem também
 é do interlocutor, que já a leu. Apagar o texto quebraria a conversa dele, e sem nome e foto o texto não
@@ -289,5 +289,6 @@ Nenhuma dessas coleções está na tabela 3.4, de propósito: o critério de ace
 
 - Fake de teste sem `recursiveDelete` escondeu a regressão do #4139. Fakes de Firestore precisam
   implementar toda API que o código chama (ou falhar alto), não deixar `TypeError` ser engolido.
-- Callable que os clientes chamam precisa de teste que importe o `index.ts` e confirme o export (aqui:
-  `deleteAccount` exportado no `index.ts` e coberto por teste próprio).
+- Callable que os clientes chamam precisa de teste que importe o `index.ts` e confirme o export. Aqui:
+  `functions/test/index.test.ts` ("exporta a callable deleteAccount") importa o `index.ts` real e falha
+  se o export sumir (conferido removendo a linha do export).
