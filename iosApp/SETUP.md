@@ -170,6 +170,20 @@ Fixado 2026-05-11.
 
 **Keychain error -34018 (FirebaseAuth saved-user no Simulator)**: normal — Simulator sem Keychain entitlement válido. Não bloqueia. Resolve em device real.
 
+### `MissingResourceException: ... strings.commonMain.cvr` ao abrir o app
+
+Os recursos do Compose (`composeResources/`) não vão dentro do framework. A fase
+"Copiar recursos do Compose" do `project.yml` gera e copia para
+`iosApp.app/compose-resources`. Se o erro aparecer, rode `xcodegen generate` e
+`pod install` de novo (o projeto antigo não tem a fase) ou gere à mão com
+`./gradlew :composeApp:assembleIosSimulatorArm64MainResources`.
+
+### App fecha com `FIRIllegalStateException` sem `GoogleService-Info.plist`
+
+Esperado só em versões antigas: o módulo Koin do iOS (`PlatformComposeAppModule.ios.kt`)
+não registra dependências de Firebase quando o plist não está no bundle. Se um código
+novo usar `Firebase.*` direto, ele precisa da mesma guarda (`isFirebaseConfigured()`).
+
 ## Próximos passos
 
 1. **Bootstrap free no seu iPhone** → ver [BOOTSTRAP_FREE.md](BOOTSTRAP_FREE.md) (sem $99 Apple Dev, validação local de device-real)
