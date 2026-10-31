@@ -83,6 +83,8 @@ targets:
           - "-framework"
           - "ComposeApp"
         SWIFT_OBJC_BRIDGING_HEADER: ""
+        # As fases de script chamam o Gradle e gravam no bundle fora de saídas declaradas.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       configs:
         Debug:
@@ -107,6 +109,35 @@ targets:
         name: "Build KMP Framework (ComposeApp, inclui shared)"
         outputFiles:
           - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework"
+    # Recursos do Compose Multiplatform (strings.xml, files/). O framework linkado à mão
+    # (sem o plugin CocoaPods nem embedAndSignAppleFrameworkForXcode) NÃO leva os .cvr;
+    # sem esta fase o app fecha no primeiro stringResource() com MissingResourceException
+    # (".../iosApp.app/compose-resources/composeResources/.../strings.commonMain.cvr").
+    postCompileScripts:
+      - script: |
+          if [ "$PLATFORM_NAME" = "iphonesimulator" ]; then
+            KMP_TARGET=iosSimulatorArm64
+            GRADLE_TASK=assembleIosSimulatorArm64MainResources
+          else
+            KMP_TARGET=iosArm64
+            GRADLE_TASK=assembleIosArm64MainResources
+          fi
+          SRC="$SRCROOT/../composeApp/build/generated/compose/resourceGenerator/assembledResources/${KMP_TARGET}Main"
+          # Tarefa barata (só converte XML em .cvr): roda também com SKIP_KMP_BUILD
+          # quando os recursos ainda não existem, para o CI não gerar um app que fecha.
+          if [ "$SKIP_KMP_BUILD" != "YES" ] || [ ! -d "$SRC/composeResources" ]; then
+            (cd "$SRCROOT/.." && ./gradlew ":composeApp:$GRADLE_TASK") || exit 1
+          fi
+          if [ ! -d "$SRC/composeResources" ]; then
+            echo "error: recursos do Compose ausentes em $SRC"
+            exit 1
+          fi
+          DEST="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/compose-resources"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp -R "$SRC/" "$DEST/"
+        name: "Copiar recursos do Compose (compose-resources)"
+        basedOnDependencyAnalysis: false
 
   iosAppTests:
     type: bundle.unit-test

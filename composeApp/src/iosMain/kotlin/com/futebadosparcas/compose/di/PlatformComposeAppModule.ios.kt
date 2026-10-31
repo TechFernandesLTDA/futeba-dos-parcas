@@ -29,7 +29,7 @@ import platform.Foundation.NSBundle
  * que o `runCatching` do Kotlin não captura: o app fechava ao abrir. Mesmo critério
  * do `AppDelegate.swift`.
  */
-private fun isFirebaseConfigured(): Boolean =
+internal fun isFirebaseConfigured(): Boolean =
     NSBundle.mainBundle.pathForResource("GoogleService-Info", ofType = "plist") != null
 
 internal actual fun platformComposeAppModules(): List<Module> = listOf(

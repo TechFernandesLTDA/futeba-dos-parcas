@@ -2457,7 +2457,7 @@ subir no ranking!</string>
     <string name="league_rating_components">Componentes do Rating</string>
 
     <!-- FCM Service Strings -->
-    <string name="fcm_channel_name">Futeba dos Parcas</string>
+    <string name="fcm_channel_name">Futeba dos Parças</string>
     <string name="fcm_channel_description">Notificações de jogos e confirmações</string>
     <string name="fcm_new_token_received">Novo FCM token recebido</string>
     <string name="fcm_error_updating_token">Erro ao atualizar FCM token</string>
@@ -2917,7 +2917,7 @@ subir no ranking!</string>
     <string name="app_guide_groups_title">Grupos</string>
     <string name="app_guide_groups_desc">Participe de grupos de pelada e organize jogos com a galera</string>
     <string name="app_guide_tip">Dica: Jogue regularmente para subir de nível e desbloquear badges exclusivas!</string>
-    <string name="app_guide_start">Comecar a usar</string>
+    <string name="app_guide_start">Começar a usar</string>
 
     <!-- ==================== LOCATION ONBOARDING (progressive empty state) ==================== -->
 
@@ -4068,7 +4068,7 @@ subir no ranking!</string>
     <string name="cd_collapse_release_version">Recolher versão</string>
 
     <!-- WelcomeScreen -->
-    <string name="welcome_onboarding_app_name">Futeba dos Parcas</string>
+    <string name="welcome_onboarding_app_name">Futeba dos Parças</string>
     <string name="welcome_onboarding_subtitle">Entre com tudo na organização da rodada, no acompanhamento das partidas e no histórico do jogador.</string>
     <string name="welcome_onboarding_feature_matches">Jogos com presença, campo e status na mesma visão</string>
     <string name="welcome_onboarding_feature_groups">Grupos e convites mais alinhados com a resenha</string>

@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.whatsnew
 
+import com.futebadosparcas.compose.di.isFirebaseConfigured
 import com.futebadosparcas.data.ReleaseNotesRepositoryImpl
 import com.futebadosparcas.domain.repository.ReleaseNotesRepository
 import com.futebadosparcas.domain.usecase.GetUnseenReleaseNotesUseCase
@@ -23,7 +24,12 @@ private const val PLATFORM_IOS = "ios"
 actual fun releaseNotesModule(): Module = module {
     single { ReleaseNotesAssetReader() }
     single { LastSeenVersionStore() }
-    single<ReleaseNotesRepository> { ReleaseNotesRepositoryImpl(get()) }
+    single<ReleaseNotesRepository> {
+        // Sem GoogleService-Info.plist (modo smoke-test), o `Firebase.firestore` do
+        // repositório lança FIRIllegalStateException, uma NSException que o `catch` do
+        // Kotlin não pega: o app fechava ao montar o pop-up de Novidades (#4401).
+        if (isFirebaseConfigured()) ReleaseNotesRepositoryImpl(get()) else EmptyReleaseNotesRepository()
+    }
     single { GetUnseenReleaseNotesUseCase(get(), get()) }
     viewModel {
         WhatsNewViewModel(
