@@ -85,20 +85,20 @@ describe('profile save payloads', () => {
   });
 
   it('não mascara deleção de conta bem-sucedida quando logout local falha', () => {
-    const settingsScreen = readRepoFile('web/src/pages/settings/SettingsScreen.tsx');
-    const deleteFlow = sliceBetween(
-      settingsScreen,
-      'const handleDeleteAccountConfirm = async () => {',
-      '  return ('
-    );
-    const successPath = sliceBetween(deleteFlow, 'try {', '} catch (err) {');
-    const cleanupPath = sliceBetween(deleteFlow, '} finally {', '      setDeleting(false);');
+    // #4391: o fluxo vive no hook; logout só após o sucesso da callable
+    const hook = readRepoFile('web/src/hooks/useDeleteAccount.ts');
+    const successPath = sliceBetween(hook, 'const finishSuccess = useCallback(', '  /** Chama a callable.');
+    const attemptFlow = sliceBetween(hook, 'const attempt = useCallback(', '  const start = useCallback');
+    const catchPath = sliceBetween(attemptFlow, '} catch (err) {', '      await finishSuccess();');
 
-    expect(successPath).toContain('await deleteAccount();');
+    expect(successPath).toContain('await logout();');
+    expect(successPath).toContain('queryClient.clear();');
     expect(successPath).toContain("navigate('/login', { replace: true });");
-    expect(successPath).not.toContain('await logout();');
-    expect(cleanupPath).toContain('await logout();');
-    expect(cleanupPath).toContain('queryClient.clear();');
+    expect(attemptFlow).toContain('await deleteAccount();');
+    expect(catchPath).not.toContain('logout');
+
+    const settingsScreen = readRepoFile('web/src/pages/settings/SettingsScreen.tsx');
+    expect(settingsScreen).not.toContain('logout');
   });
 
   it('preserva timestamps originais em saves determinísticos de pós-jogo', () => {

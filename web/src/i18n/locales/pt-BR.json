@@ -3486,7 +3486,24 @@
       "systemDesc": "Automático (sistema)",
       "title": "Tema"
     },
-    "title": "Configurações"
+    "title": "Configurações",
+    "deleteBlockedDesc_one": "Você é dono de um grupo que ainda tem outros membros ativos. Transfira a posse para outro membro ou remova os membros antes de excluir sua conta.",
+    "deleteBlockedDesc_other": "Você é dono de {{count}} grupos que ainda têm outros membros ativos. Transfira a posse para outro membro ou remova os membros de cada grupo antes de excluir sua conta.",
+    "deleteBlockedGroupAria": "Abrir o grupo {{name}}",
+    "deleteBlockedListAria": "Grupos que impedem a exclusão da conta",
+    "deleteBlockedTitle_one": "Transfira a posse de 1 grupo",
+    "deleteBlockedTitle_other": "Transfira a posse de {{count}} grupos",
+    "deletePasswordAria": "Senha da sua conta",
+    "deletePasswordLabel": "Senha",
+    "deleteRateLimited": "Você atingiu o limite de 3 tentativas por hora. Aguarde um pouco e tente de novo.",
+    "deleteReauthConfirm": "Confirmar e excluir",
+    "deleteReauthConfirmAria": "Confirmar a senha e excluir a conta",
+    "deleteReauthDesc": "Por segurança, confirme que é você para concluir a exclusão da conta.",
+    "deleteReauthGoogle": "Confirmar com Google",
+    "deleteReauthGoogleAria": "Confirmar a identidade com a conta Google",
+    "deleteReauthTitle": "Confirme sua identidade",
+    "deleteReauthUnavailable": "Não foi possível confirmar sua identidade aqui. Saia da conta, entre de novo e repita a exclusão.",
+    "deleteRecentLoginStillRequired": "Não foi possível validar o login recente. Saia da conta, entre de novo e repita a exclusão em até 10 minutos."
   },
   "shortcuts": {
     "closeOrBack": "Fechar modal ou voltar ao foco anterior",

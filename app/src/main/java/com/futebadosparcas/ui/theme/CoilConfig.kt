@@ -29,15 +29,31 @@ import java.util.concurrent.TimeUnit
  * **Impacto esperado: 100-200ms mais rápido em listagens**
  */
 object CoilConfig {
+    /**
+     * Registra a fábrica do ImageLoader global sem construí-lo.
+     *
+     * PERF (spec PERF_ANDROID_OPTIMIZATIONS_2026_10_31): antes o ImageLoader e o
+     * OkHttpClient eram montados no Application.onCreate, no caminho crítico do
+     * cold start. Agora o Coil chama a fábrica na primeira requisição de imagem e
+     * o OkHttpClient só é criado na primeira busca de rede (cache hit não o cria).
+     * A configuração (caches, timeouts) é a mesma.
+     */
     fun setupCoil(context: Context) {
-        // OkHttp client configurado
-        val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
+        val appContext = context.applicationContext ?: context
+        coil3.SingletonImageLoader.setSafe { buildImageLoader(appContext) }
+    }
 
-        val imageLoader = ImageLoader.Builder(context)
+    private fun buildImageLoader(context: Context): ImageLoader {
+        // OkHttp client configurado (lazy: criado na primeira busca de rede)
+        val okHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build()
+        }
+
+        return ImageLoader.Builder(context)
             // ✅ Memory Cache: 25% of available RAM (up to ~100MB)
             .memoryCache {
                 MemoryCache.Builder()
@@ -55,11 +71,8 @@ object CoilConfig {
             }
             // ✅ HTTP Client: Persistent connection pooling (Coil 3 requires explicit network fetcher)
             .components {
-                add(OkHttpNetworkFetcherFactory(callFactory = okHttpClient))
+                add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
             }
             .build()
-
-        // Set as global ImageLoader for entire app
-        coil3.SingletonImageLoader.setSafe { imageLoader }
     }
 }

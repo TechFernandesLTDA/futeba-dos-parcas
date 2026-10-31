@@ -1045,17 +1045,14 @@ fun AppNavHost(
         composable(Screen.About.route) {
             val context = LocalContext.current
             val androidAuthRepo: com.futebadosparcas.data.repository.AuthRepository = koinInject()
-            var deleteAccountTrigger by remember { mutableStateOf(false) }
+            val deleteViewModel: com.futebadosparcas.ui.about.DeleteAccountViewModel = koinViewModel()
+            val deleteState by deleteViewModel.uiState.collectAsStateWithLifecycle()
 
-            LaunchedEffect(deleteAccountTrigger) {
-                if (deleteAccountTrigger) {
-                    val result = androidAuthRepo.deleteAccount()
-                    if (result.isSuccess) {
-                        val intent = android.content.Intent(context, com.futebadosparcas.ui.auth.LoginActivityCompose::class.java)
-                        intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        context.startActivity(intent)
-                    }
-                    deleteAccountTrigger = false
+            LaunchedEffect(deleteState.deleted) {
+                if (deleteState.deleted) {
+                    val intent = android.content.Intent(context, com.futebadosparcas.ui.auth.LoginActivityCompose::class.java)
+                    intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    context.startActivity(intent)
                 }
             }
 
@@ -1065,7 +1062,14 @@ fun AppNavHost(
             ) {
                 AboutScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onDeleteAccount = { deleteAccountTrigger = true },
+                    onDeleteAccount = { deleteViewModel.deleteAccount() },
+                    deleteState = deleteState,
+                    onReauthWithPassword = deleteViewModel::reauthenticateWithPassword,
+                    onReauthWithGoogleToken = deleteViewModel::reauthenticateWithGoogle,
+                    onReauthGoogleFailed = deleteViewModel::onGoogleCredentialFailed,
+                    onDismissReauth = deleteViewModel::dismissReauth,
+                    onDismissBlockingGroups = deleteViewModel::dismissBlockingGroups,
+                    onDismissDeleteError = deleteViewModel::dismissError,
                     onNavigateToWhatsNew = { navController.navigate(Screen.WhatsNew.route) },
                     onLogout = {
                         androidAuthRepo.logout()

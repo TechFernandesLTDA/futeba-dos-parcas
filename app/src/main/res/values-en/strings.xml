@@ -589,4 +589,17 @@
     <string name="venue_location_allow">Allow</string>
     <string name="venue_location_not_now">Not now</string>
     <string name="venue_sort_recent_use">Recently used</string>
+    <string name="delete_account_error_generic">Could not delete the account. Please try again.</string>
+    <string name="delete_account_reauth_title">Confirm your identity</string>
+    <string name="delete_account_reauth_message">For security, sign in again to finish the deletion. The confirmation is valid for 10 minutes.</string>
+    <string name="delete_account_reauth_password">Password</string>
+    <string name="delete_account_reauth_google">Continue with Google</string>
+    <string name="delete_account_reauth_confirm">Confirm and delete</string>
+    <string name="delete_account_reauth_error">Could not confirm your identity. Check your details and try again.</string>
+    <string name="delete_account_reauth_google_error">Could not sign in with Google. Please try again.</string>
+    <string name="delete_account_blocked_title">You still own groups</string>
+    <string name="delete_account_blocked_message">To delete your account, transfer ownership of these groups or remove the other members first:</string>
+    <string name="delete_account_blocked_group_item">• %1$s</string>
+    <string name="delete_account_blocked_group_unnamed">Unnamed group</string>
+    <string name="delete_account_blocked_ok">Got it</string>
 </resources>

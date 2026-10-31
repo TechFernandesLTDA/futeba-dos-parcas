@@ -10,7 +10,6 @@ val allKoinModules = listOf(
     cacheKoinModule,
     dataStoreKoinModule,
     dispatchersKoinModule,
-    imageKoinModule,
     themeKoinModule,
     utilKoinModule,
     viewModelKoinModule

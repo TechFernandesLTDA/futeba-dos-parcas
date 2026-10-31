@@ -33,11 +33,6 @@
 -keep class com.futebadosparcas.data.model.** { *; }
 -keep class com.futebadosparcas.data.remote.** { *; }
 
-# Hilt
--keepclasseswithmembers class * {
-    @dagger.hilt.android.lifecycle.HiltViewModel <init>(...);
-}
-
 # Firebase
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
@@ -48,9 +43,6 @@
 -dontwarn com.google.android.libraries.places.internal.zzboz
 -dontwarn com.google.android.libraries.places.internal.zzbou
 -dontwarn com.google.android.gms.internal.location.zze
-
-# MPAndroidChart
--keep class com.github.mikephil.charting.** { *; }
 
 # Navigation Component Safe Args
 -keepnames class * extends android.os.Parcelable
@@ -77,9 +69,8 @@
 -keep class androidx.work.impl.WorkDatabase { *; }
 -keep class androidx.work.impl.WorkDatabase_Impl { *; }
 
-# Hilt WorkManager Factory
+# WorkManager Factory (KoinWorkerFactory). Regras do Hilt removidas: o projeto usa Koin.
 -keep class * extends androidx.work.WorkerFactory
--keep class androidx.hilt.work.HiltWorkerFactory { *; }
 
 # Silence benign R8 warnings from third-party libraries
 -ignorewarnings

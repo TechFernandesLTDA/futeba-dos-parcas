@@ -55,6 +55,46 @@ lugar a olhar se surgir `permission-denied` em produção.
 
 ---
 
+## 2026-10-31 — Exclusão de conta pelo titular: callable fina + cascata no trigger (#4391)
+
+**Contexto:** web e Android chamam a callable `deleteAccount`, que nunca
+foi exportada (só existia em `rate-limiter.example.ts`); a exclusão
+falhava sempre. A cascata LGPD já existia no `onUserDeleted` (Auth
+`onDelete`, retry por 24h), mas o `recursiveDelete(users/{uid})`
+adicionado no #4139 rodava antes das etapas que leem `users/{uid}/groups`,
+e desde então membros, caixa e pagadores mensais deixaram de ser
+anonimizados.
+
+**Decisão:**
+1. `deleteAccount` (via `secureCallable`: App Check sem consumir o token,
+   login obrigatório, 3 por hora) só valida e decide, e exclui o usuário
+   do Auth **por último**. A limpeza em massa continua no `onUserDeleted`,
+   único dono da cascata. Alternativa descartada: cascata síncrona na
+   callable. Ela estoura o timeout de ~70s dos SDKs e duplicaria o
+   trigger, que também atende exclusões pelo console.
+2. Login recente obrigatório: `auth_time` ≤ 10 min, senão
+   `failed-precondition` com `details.reason = "requires-recent-login"`.
+3. Dono de grupo com outro membro ativo: **bloquear**
+   (`reason = "sole-owner-groups"`, lista de grupos). Não transferimos
+   sozinhos, porque isso passaria caixa e responsabilidade a alguém sem
+   consentimento. Grupos em que só o titular está ativo recebem soft
+   delete antes da exclusão no Auth.
+4. DMs: remetente anonimizado e texto mantido (regra do #4120). A conversa
+   também pertence ao interlocutor.
+5. Confirmações de jogo FINISHED/LIVE são anonimizadas, não apagadas, para
+   preservar súmula e `players_count`. Confirmações futuras são apagadas e
+   liberam a vaga. Membros ficam `INACTIVE` com nome/foto anonimizados.
+6. Auditoria própria sem PII (`uid_sha256`, data, contagens); o audit do
+   wrapper fica desligado porque grava uid cru + IP.
+7. O `recursiveDelete` do subtree passou para o fim do trigger e é pulado
+   quando uma etapa de anonimização falha, para o retry ainda achar os
+   vínculos.
+
+Tabela completa e lacunas conhecidas em
+`specs/BUGFIX_4391_DELETE_ACCOUNT.md`.
+
+---
+
 ## 2026-10-31 — iOS: build, prontidão para a App Store e exclusão de conta (#4401, #4391)
 
 **Contexto:** o app de iPhone (`iosApp/` + `composeApp/`) não abria no simulador e
@@ -1918,6 +1958,41 @@ seis pontos. Spec: `specs/BUGFIX_2026-09-21_OPEN_ISSUES_BATCH_4096_4115.md`.
     comentário livre da avaliação não é alterado.
 
 **Relacionado:** issues #4096–#4115.
+
+### [2026-10-31] Otimizações de performance do Android (#4400)
+
+**Contexto:** APK release de 55,13 MB, 79% em brasões PNG de 1536x1024
+duplicados por densidade; dependências da era XML sem uso; trabalho síncrono no
+`Application.onCreate`. Spec: `specs/PERF_ANDROID_OPTIMIZATIONS_2026_10_31.md`.
+
+**Decisões:**
+1. **Brasões:** WebP com alfa, 768x512, só em `drawable-nodpi/`. Nenhuma tela
+   mostra brasão acima de ~200 dp; 768 px cobre xxxhdpi com folga. Arte nova de
+   brasão entra no mesmo formato e pasta, nunca PNG por densidade.
+2. **Estabilidade Compose:** `app/compose-stability.conf` lista só tipos sem
+   estado mutável: `domain.model.**` (0 `var` em 31/10/2026), coleções
+   read-only do Kotlin, `java.time` e `kotlinx.datetime`. `data.model` fica de
+   fora porque tem `var`. Quem adicionar `var` em `domain.model` precisa tirar o
+   pacote do arquivo. Relatórios só com `-PcomposeCompilerReports=true`.
+3. **App Check:** o provider sai de source set (`src/debug` e `src/nonDebug`)
+   em vez de `if (BuildConfig.DEBUG)`, para o `firebase-appcheck-debug` ser
+   `debugImplementation` e não entrar no release.
+4. **Coil:** um único `ImageLoader`, o singleton lazy de `CoilConfig`. O
+   `ImageKoinModule` (segundo loader nunca injetado, mesmo diretório de disk
+   cache com outro teto) foi apagado.
+5. **Splash:** sai o `delay(800)` da `SplashActivityCompose`, que acontecia com
+   o brasão ainda invisível. A espera de `SplashScreen.kt` e a splash dupla
+   ficam para decisão de UX.
+6. **Dependências:** removidas as que não têm import no `app/` (MPAndroidChart,
+   Lottie, Shimmer, SwipeRefreshLayout, CircleImageView, Navigation
+   Fragment/UI, Safe Args, Accompanist, `runtime-livedata`,
+   `lifecycle-livedata-ktx`, `viewpager2`). `navigation-compose` passa a ser
+   declarada explicitamente. `preference-ktx` fica enquanto os themes.xml
+   declararem `preferenceTheme`.
+7. **R8:** as keeps amplas (Firebase, GMS, Compose, Room, Work) continuam. Tirar
+   exige smoke test em device e fica como proposta no épico.
+
+**Relacionado:** épico #4400.
 
 <!-- Adicione novas decisões acima desta linha -->
 

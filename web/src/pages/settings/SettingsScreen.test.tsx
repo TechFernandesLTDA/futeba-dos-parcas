@@ -45,6 +45,9 @@ vi.mock('firebase/firestore', () => ({
 const mockSignOut = vi.fn().mockResolvedValue(undefined);
 vi.mock('firebase/auth', () => ({
   signOut: (...args: any[]) => mockSignOut(...args),
+  EmailAuthProvider: { credential: vi.fn() },
+  reauthenticateWithCredential: vi.fn(),
+  reauthenticateWithPopup: vi.fn(),
 }));
 
 vi.mock('../../services/cloudFunctions', () => ({
@@ -61,6 +64,7 @@ vi.mock('../../services/firebase', () => ({
   app: {},
   db: {},
   auth: {},
+  googleProvider: {},
 }));
 
 vi.mock('../../services/queryClient', () => ({
