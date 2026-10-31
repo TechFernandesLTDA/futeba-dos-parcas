@@ -791,7 +791,10 @@ actual class FirebaseDataSource actual constructor() {
                 CallableException(
                     code = e.code.name.lowercase().replace('_', '-'),
                     message = e.message,
-                    cause = e
+                    cause = e,
+                    // #4440: details.reason/groups distinguem os dois failed-precondition.
+                    reason = CallableException.reasonFromDetails(e.details),
+                    groups = CallableException.groupsFromDetails(e.details)
                 )
             )
         } catch (e: Exception) {

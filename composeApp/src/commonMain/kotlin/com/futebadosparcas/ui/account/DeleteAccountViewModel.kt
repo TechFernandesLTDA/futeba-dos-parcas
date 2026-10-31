@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.platform.firebase.CallableException
+import com.futebadosparcas.platform.firebase.CallableGroup
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +23,27 @@ sealed interface DeleteAccountUiState {
     data object Idle : DeleteAccountUiState
     data object Deleting : DeleteAccountUiState
     data object Deleted : DeleteAccountUiState
-    data class Error(val reason: DeleteAccountError) : DeleteAccountUiState
+    data class Error(
+        val reason: DeleteAccountError,
+        /** Preenchido só em [DeleteAccountError.SOLE_OWNER_GROUPS] (#4440). */
+        val blockingGroups: List<CallableGroup> = emptyList()
+    ) : DeleteAccountUiState
 }
 
 enum class DeleteAccountError {
-    /** `failed-precondition` / `unauthenticated`: login não recente ou sessão expirada. */
+    /**
+     * `failed-precondition` com `details.reason = requires-recent-login` (ou sem `reason`,
+     * quando o SDK não entrega `details`) / `unauthenticated`: login não recente ou
+     * sessão expirada. Pede reautenticação.
+     */
     RECENT_LOGIN_REQUIRED,
+
+    /**
+     * `failed-precondition` com `details.reason = sole-owner-groups` (#4440): o usuário é
+     * o único dono de grupos com outros membros. Reautenticar não resolve; é preciso
+     * transferir a posse ou remover os membros.
+     */
+    SOLE_OWNER_GROUPS,
 
     /** `not-found`: callable ainda sem deploy; o caminho é a página web de exclusão. */
     BACKEND_UNAVAILABLE,
@@ -72,7 +88,7 @@ class DeleteAccountViewModel(
                     _uiState.value = DeleteAccountUiState.Deleted
                 },
                 onFailure = { error ->
-                    _uiState.value = DeleteAccountUiState.Error(classify(error))
+                    _uiState.value = classify(error)
                 }
             )
         }
@@ -99,12 +115,27 @@ class DeleteAccountViewModel(
     }
 
     internal companion object {
-        fun classify(error: Throwable): DeleteAccountError =
-            when ((error as? CallableException)?.code) {
-                CallableException.FAILED_PRECONDITION,
-                CallableException.UNAUTHENTICATED -> DeleteAccountError.RECENT_LOGIN_REQUIRED
-                CallableException.NOT_FOUND -> DeleteAccountError.BACKEND_UNAVAILABLE
-                else -> DeleteAccountError.GENERIC
+        fun classify(error: Throwable): DeleteAccountUiState.Error {
+            val callable = error as? CallableException
+                ?: return DeleteAccountUiState.Error(DeleteAccountError.GENERIC)
+            return when (callable.code) {
+                CallableException.FAILED_PRECONDITION -> when (callable.reason) {
+                    CallableException.REASON_SOLE_OWNER_GROUPS -> DeleteAccountUiState.Error(
+                        DeleteAccountError.SOLE_OWNER_GROUPS,
+                        callable.groups
+                    )
+                    // Sem `reason` (SDK sem details ou servidor antigo): mantém o
+                    // comportamento anterior, que é o caso mais comum.
+                    null, CallableException.REASON_REQUIRES_RECENT_LOGIN ->
+                        DeleteAccountUiState.Error(DeleteAccountError.RECENT_LOGIN_REQUIRED)
+                    else -> DeleteAccountUiState.Error(DeleteAccountError.GENERIC)
+                }
+                CallableException.UNAUTHENTICATED ->
+                    DeleteAccountUiState.Error(DeleteAccountError.RECENT_LOGIN_REQUIRED)
+                CallableException.NOT_FOUND ->
+                    DeleteAccountUiState.Error(DeleteAccountError.BACKEND_UNAVAILABLE)
+                else -> DeleteAccountUiState.Error(DeleteAccountError.GENERIC)
             }
+        }
     }
 }
