@@ -354,12 +354,14 @@ export const GameVideosTab: React.FC<GameVideosTabProps> = ({
         });
       }
       if (video.thumbnailPath) {
-        await deleteObject(storageRef(storage, video.thumbnailPath)).catch((storageErr) => {
-          const code = typeof storageErr === 'object' && storageErr && 'code' in storageErr ? String(storageErr.code) : '';
-          if (code !== 'storage/object-not-found') {
-            throw storageErr;
-          }
-        });
+        // FIX #4480: a miniatura é gerada pelo servidor e as rules do Storage negam escrita do
+        // cliente nela, então a exclusão pode falhar. É só limpeza: vira aviso e não pode
+        // impedir a exclusão do documento (mesma semântica do Android, #4472).
+        try {
+          await deleteObject(storageRef(storage, video.thumbnailPath));
+        } catch (thumbErr) {
+          logger.warn('Miniatura do vídeo não foi apagada:', thumbErr);
+        }
       }
       await deleteDoc(doc(db, 'game_videos', video.id));
       showSuccess(t('gameVideos.deleteSuccess'));
