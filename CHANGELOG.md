@@ -13,12 +13,19 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## Unreleased
 
-### Segurança
-- Corrige os 38 alertas abertos do Dependabot em `web`, `scripts`, `firestore-rules-tests`, `archive/backend` e `kotlin-js-store/wasm`, incluindo o alerta crítico de `shell-quote`.
+Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da próxima versão de cada plataforma.
 
-### Documentação
-- Atualiza README, índice de documentação, mapa do projeto e estratégia de branches com o status GitHub/release verificado em 2026-06-28.
-- Adiciona `docs/GITHUB_STATUS.md` como painel operacional de issues, PRs, proteção de branch e versões correntes.
+### Android (próxima versão após 1.41.0)
+- APK de 55 para 14 MB, startup mais leve e dependências mortas removidas (#4412).
+- Exclusão de conta trata reautenticação e grupos sem dono (#4391, #4438).
+
+### iOS (próxima versão após 1.8.0)
+- App abre no simulador, exclusão de conta pela callable `deleteAccount` e ajustes de prontidão para a App Store (#4421).
+- Exclusão de conta distingue grupos sem dono de login antigo (#4442).
+
+### Repositório e CI
+- Repositório público com ruleset na `master` (PR, squash, 5 checks), aprovação para PRs de fork e secret scanning (#4394).
+- Runners self-hosted no Mac e no prod-01; versões do projeto fixadas com mise (#4387).
 
 <!-- AUTOGEN:START -->
 
@@ -385,6 +392,24 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.60.0][web-1.60.0] - 2026-10-31
+
+#### Adicionado
+- `useDeleteAccount`, `deleteAccountErrors` e diálogos de reautenticação e de grupos bloqueantes, consumindo `details.reason` da callable `deleteAccount` (#4419).
+- Links `apple-touch-startup-image` do tema escuro em 18 tamanhos com `prefers-color-scheme` (#4405).
+
+#### Mudado
+- `vh` → `dvh` em 14 pontos; toasts com `env(safe-area-inset-*)` (#4402).
+- Alvos de toque de 48px (links de login, breadcrumb, skip link) e de 44px em `pointer: coarse` para chips, tabs e toggles (#4402, #4406, #4407).
+- `AppLogo` em WebP (9,8 KB, antes PNG de 292 KB); og:image da home em JPEG 1200x630 de 240 KB (antes PNG de 1,2 MB) (#4402, #4404).
+- Hero estático das guias públicas igual ao do React (`.pr-lead`, `leadStrong`, `heroCenter`), para o LCP ficar no HTML pré-renderizado (#4403).
+- `GroupDetailScreen` consulta jogos em lotes de 9, dentro do limite de 10 leituras por query das novas rules (#4414).
+
+#### Segurança
+- Dependências: dompurify 3.4.17, undici 7.30.1, re2js 2.9.1, qs 6.17.1 e transitivas do lockfile (#4441, #4447, #4450).
+
+_Issues: #4391, #4393, #4403, #4404, #4405, #4406, #4407 · PRs: #4402, #4414, #4415, #4419, #4441, #4446, #4447, #4450_
 
 ### [1.59.0][web-1.59.0] - 2026-10-12
 
@@ -2364,6 +2389,23 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.14.0][functions-1.14.0] - 2026-10-31
+
+#### Adicionado
+- Callable `deleteAccount`, que web e Android já chamavam mas nunca tinha sido exportada; erros com `details.reason` para reautenticação e grupos bloqueantes (#4416).
+
+#### Mudado
+- `firestore.rules`: `canViewGameById(gameId)` na mídia e na fila de espera de jogos; listagem de mídia sem filtro por `game_id` negada (#4414).
+- `storage.rules`: `canViewGameMedia` nos caminhos de fotos e vídeos de jogo; caminho só de leitura para `video_thumbnails` (#4414).
+
+#### Corrigido
+- `onUserDeleted` apagava a lista de grupos antes de anonimizar membros, caixa e pagadores; a cascata agora também cobre seguidores, presenças antigas, fila de espera, jogos e grupos deixados (#4416).
+
+#### Segurança
+- Dependências: multer 2.5.0, undici e transitivas do lockfile (zod 4.6.7, body-parser 2.4.0, qs 6.17.1) (#4441, #4450).
+
+_Issues: #4391, #4393 · PRs: #4414, #4416, #4441, #4450_
+
 ### [1.13.0][functions-1.13.0] - 2026-10-01
 
 #### Adicionado
@@ -3248,6 +3290,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.60.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.60.0.md
 [web-1.59.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.59.0.md
 [web-1.58.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.1.md
 [web-1.58.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.0.md
@@ -3433,6 +3476,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.14.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.14.0.md
 [functions-1.13.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.13.0.md
 [functions-1.12.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.6.md
 [functions-1.12.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.5.md
