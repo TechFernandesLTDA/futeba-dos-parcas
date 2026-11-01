@@ -381,3 +381,25 @@ describe("monitoring/alerting — systemHealthCheck", () => {
     }
   });
 });
+
+describe("monitoring/alerting — cleanupOldAlerts (#4479)", () => {
+  it("a query de limpeza tem índice composto declarado em firestore.indexes.json", () => {
+    // Regressão: igualdade (acknowledged) + range/orderBy (created_at) exige
+    // índice composto; sem ele a function terminava com FAILED_PRECONDITION.
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "../../src/monitoring/alerting.ts"), "utf8");
+    const bloco = src.slice(src.indexOf("export const cleanupOldAlerts"));
+    expect(bloco).toContain(".where(\"acknowledged\", \"==\", true)");
+    expect(bloco).toContain(".where(\"created_at\", \"<\", cutoff)");
+
+    const indexes = JSON.parse(fs.readFileSync(
+      path.resolve(__dirname, "../../../firestore.indexes.json"), "utf8")).indexes;
+    const idx = indexes.find((i: any) =>
+      i.collectionGroup === "alerts" && i.queryScope === "COLLECTION" &&
+      JSON.stringify(i.fields) === JSON.stringify([
+        {fieldPath: "acknowledged", order: "ASCENDING"},
+        {fieldPath: "created_at", order: "ASCENDING"},
+      ]));
+    expect(idx).toBeDefined();
+  });
+});
