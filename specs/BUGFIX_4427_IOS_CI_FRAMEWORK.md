@@ -14,7 +14,7 @@
 
 - `ios-build.yml` linkava `:shared:linkDebugFrameworkIosSimulatorArm64` e
   `:shared:linkDebugFrameworkIosArm64`, e o job do app linkava o shared de novo. O app
-  iOS não usa esse framework desde 31/10 (`iosApp/project.yml` linka só o ComposeApp, que
+  iOS não usa esse framework desde o #4421 (31/10; `iosApp/project.yml` linka só o ComposeApp, que
   embute o `:shared`; dois frameworks estáticos duplicavam o runtime do Kotlin/Native).
 - `ios-testflight.yml` também linkava `:shared:linkReleaseFrameworkIosArm64`.
 - Em 01/10 o workflow ficou vermelho ou cancelado, com execuções de 5 a 7 h.
@@ -35,7 +35,7 @@ O CI builda só o que o app usa: o `ComposeApp.framework` (simulador e device).
 | 36860738411 (release) | 01/10 | failure | Mesmo passo, mesmo tempo |
 | 36811083259 | 01/10 | failure | Mesmo passo |
 | 36858607570 e outras | 01/10 | cancelled | `cancel-in-progress` com o job na fila do Mac |
-| 41220983148 em diante | 31/10 | success | Mac de volta e `IOS_MAC_RUNNER=true` |
+| 41250138733 (push master) | 31/10 22:53Z | success | Mac de volta e `IOS_MAC_RUNNER=true` |
 
 Os logs de 01/10 expiraram (HTTP 410), então a causa abaixo é inferida dos passos e do
 histórico do workflow.
@@ -59,7 +59,7 @@ histórico do workflow.
 |---------|--------|
 | `.github/workflows/ios-build.yml` | Remover links do `:shared`; ComposeApp para simulador e device |
 | `.github/workflows/ios-testflight.yml` | Remover `:shared:linkReleaseFrameworkIosArm64` |
-| `iosApp/build_shared.sh`, `CLAUDE.md` | Comandos locais passam a gerar o ComposeApp |
+| `iosApp/build_shared.sh`, `iosApp/SETUP.md`, `CLAUDE.md` | Comandos locais passam a gerar o ComposeApp |
 
 ---
 
