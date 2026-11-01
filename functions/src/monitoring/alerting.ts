@@ -115,6 +115,35 @@ const THRESHOLDS = {
   BILLING_AUTOMATION_RUN_WINDOW_MS: 48 * 60 * 60 * 1000,
 };
 
+/**
+ * Marcador do log estruturado que o Cloud Monitoring usa para avisar por
+ * e-mail (#4417). As políticas `monitoring/xp-processing-failed-alert.json` e
+ * `monitoring/health-check-critical-alert.json` filtram por este valor em
+ * `jsonPayload.metric_type`. Antes, os alertas CRITICAL só iam para a coleção
+ * `alerts` do Firestore, que ninguém lê.
+ */
+export const HEALTH_CHECK_CRITICAL_METRIC_TYPE =
+  "health_check_critical_alert";
+
+/**
+ * Monta as entradas de log dos alertas CRITICAL do health check (função pura).
+ * Só alertas CRITICAL viram log: WARNING continua só no Firestore.
+ *
+ * @param {PartialAlert[]} alerts alertas gerados nesta execução
+ * @return {Array<Record<string, unknown>>} payloads para `logger.warn`
+ */
+export function buildCriticalAlertLogPayloads(
+  alerts: Array<Pick<PartialAlert, "type" | "severity" | "title">>
+): Array<Record<string, unknown>> {
+  return alerts
+    .filter((a) => a.severity === "CRITICAL")
+    .map((a) => ({
+      metric_type: HEALTH_CHECK_CRITICAL_METRIC_TYPE,
+      alert_type: a.type,
+      alert_title: a.title,
+    }));
+}
+
 // ==========================================
 // SCHEDULED: Health Check (a cada 15 min)
 // ==========================================
@@ -813,6 +842,16 @@ export const systemHealthCheck =
       };
 
       await saveAlertsWithRetry(alerts);
+
+      // #4417: alerta CRITICAL vira log estruturado para o Cloud Monitoring
+      // mandar e-mail. WARNING (e não ERROR) para não contar em dobro na
+      // política genérica "Cloud Functions com erros".
+      for (const payload of buildCriticalAlertLogPayloads(alerts)) {
+        logger.warn(
+          `[HEALTH_CHECK] Alerta crítico: ${payload.alert_type}`,
+          payload
+        );
+      }
 
       const alertTypes = alerts.map(
         (a) => a.type

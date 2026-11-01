@@ -1,0 +1,25 @@
+{
+  "displayName": "Schedule crítico falhou: temporada (startNewSeason/archiveSeason/checkSeasonEnd)",
+  "documentation": {
+    "content": "Uma execução de um schedule de temporada falhou (#4417). Dispara em qualquer falha registrada pelo Cloud Scheduler (5xx, timeout) ou em log severity>=ERROR dentro da function.\n\nPor que importa: o reset mensal e o arquivamento da temporada rodam uma vez por dia; uma falha silenciosa deixa ranking e Liga presos (ex.: #4128). O Error Reporting mostrava 10 erros do archiveseason até 07/10/2026 sem ninguém ver.\n\nAção:\n1. Logs Explorer: `resource.labels.service_name=(\"startnewseason\" OR \"archiveseason\" OR \"checkseasonend\") AND severity>=ERROR`.\n2. Se for índice ausente, ver a política FAILED_PRECONDITION.\n3. Reexecutar manualmente depois do fix: `gcloud scheduler jobs run firebase-schedule-<Function>-southamerica-east1 --location southamerica-east1 --project futebadosparcas`.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Falha em schedule de temporada",
+      "conditionMatchedLog": {
+        "filter": "(resource.type=\"cloud_scheduler_job\" AND severity>=ERROR AND resource.labels.job_id=(\"firebase-schedule-startNewSeason-southamerica-east1\" OR \"firebase-schedule-archiveSeason-southamerica-east1\" OR \"firebase-schedule-checkSeasonEnd-southamerica-east1\")) OR (resource.type=\"cloud_run_revision\" AND severity>=ERROR AND resource.labels.service_name=(\"startnewseason\" OR \"archiveseason\" OR \"checkseasonend\"))",
+        "labelExtractors": {
+          "job_id": "EXTRACT(resource.labels.job_id)",
+          "service_name": "EXTRACT(resource.labels.service_name)"
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "notificationRateLimit": {"period": "3600s"},
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

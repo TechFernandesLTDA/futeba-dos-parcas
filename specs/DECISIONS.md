@@ -2047,3 +2047,18 @@ Nenhum teste ou gate foi desabilitado.
 - Play Store: a revisão da 1.41.0 foi recusada em 14/10 por falta de credenciais de login para o revisor (#4201). O reenvio
   leva só a 1.41.0 (vc 82, targetSdk 36) a 100%. A release 45 (1.21.3, targetSdk 35) sai do pacote, porque a política da
   API 36 recusa atualizações abaixo dela desde 30/08/2026.
+
+## 2026-11-01: Alertas como código e vigia da Play (#4417)
+
+- Políticas de alerta e métricas de log ficam em `monitoring/` (lista em `monitoring/manifest.json`) e são aplicadas por
+  `scripts/monitoring/apply-monitoring.js`, que só mostra o plano por padrão e casa por `displayName`. As 4 políticas
+  criadas à mão na #4396 foram exportadas para o repositório. A de push token estava sem canal e passa a ter.
+- O XP não é um schedule: o alerta de "processamento de XP" cobre erros do trigger `onGameStatusUpdate` e os alertas
+  CRITICAL de XP do `systemHealthCheck`, que agora também viram log estruturado (antes iam só para a coleção `alerts`).
+- Crashlytics (Android e iOS) entra no canal de e-mail por functions do Firebase Alerts, e não pelo e-mail nativo
+  do Firebase, que é configurado por usuário.
+- A Play Developer API não expõe o status da revisão nem o Status da política (`TrackRelease.status` só tem
+  draft/inProgress/halted/completed). O vigia diário no `play-track-status.yml` existente usa uma heurística: produção
+  gravada e página da loja em 404 abrem uma issue. Depois do lançamento público, o aviso de recusa de atualização depende
+  do e-mail do Play Console. O "auditor semanal" citado na #4201 em 12/10 nunca existiu.
+- Spec: ops-2026-11-01-alertas-runbook-vigia-play-4417.md.
