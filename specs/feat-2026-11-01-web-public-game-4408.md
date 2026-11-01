@@ -3,7 +3,7 @@
 > **Status:** `APPROVED`
 > **Autor:** Claude Code (autonomia ampla autorizada pelo dono do produto)
 > **Data:** 2026-11-01
-> **PR:** a preencher
+> **PR:** #4485
 > **Issue:** #4408 (épico #4398, pai #4399)
 
 ---
