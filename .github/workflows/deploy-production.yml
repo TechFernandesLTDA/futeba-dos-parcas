@@ -154,8 +154,17 @@ jobs:
           jarsigner -verify app/build/outputs/bundle/release/app-release.aab | tail -1
           echo "Dry run: AAB assinado; upload para a Play pulado."
 
+      # A Play exige o parametro changesNotSentForReview de forma oposta conforme a
+      # publicacao gerenciada do app:
+      # - desligada: o commit falha SE o parametro vier ("Changes are sent for review
+      #   automatically...", run 38276700533, android-v1.41.0);
+      # - ligada: o commit falha SE o parametro NAO vier ("Changes cannot be sent for
+      #   review automatically...", run 41351311196, android-v1.42.0).
+      # Tenta sem o parametro e, se falhar, repete com ele (mesma logica do play-promote.js).
       - name: Upload AAB to Play Store (Internal Testing)
+        id: play_upload
         if: ${{ !inputs.dry_run }}
+        continue-on-error: true
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
@@ -164,8 +173,15 @@ jobs:
           track: internal
           status: completed
           inAppUpdatePriority: 2
-          # NAO usar changesNotSentForReview: com a publicacao gerenciada desligada a Play
-          # envia as mudancas para revisao automaticamente e o commit do edit falha com
-          # "Changes are sent for review automatically. The query parameter
-          # changesNotSentForReview must not be set." (run 38276700533, android-v1.41.0).
-          # O upload para a trilha internal nao depende de revisao.
+
+      - name: Upload AAB to Play Store (publicacao gerenciada)
+        if: ${{ !inputs.dry_run && steps.play_upload.outcome == 'failure' }}
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+          packageName: com.futebadosparcas
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+          inAppUpdatePriority: 2
+          changesNotSentForReview: true

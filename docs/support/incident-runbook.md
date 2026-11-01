@@ -40,6 +40,9 @@ links e textos públicos.
 - [ ] Validar recuperação com smoke mínimo.
 - [ ] Encerrar com causa, duração, impacto, ação preventiva e follow-ups.
 
+Ação por alerta, recusa da Play e passos de rollback (skill `futeba-rollback`):
+[../production-launch/monitoring-rollback-runbook.md](../production-launch/monitoring-rollback-runbook.md).
+
 ## Critérios de rollback/hotfix
 
 Rollback é recomendado quando:

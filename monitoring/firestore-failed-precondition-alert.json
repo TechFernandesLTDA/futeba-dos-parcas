@@ -1,0 +1,30 @@
+{
+  "displayName": "Query do Firestore sem índice (FAILED_PRECONDITION)",
+  "documentation": {
+    "content": "Uma function recebeu FAILED_PRECONDITION, normalmente índice composto ausente em produção. Publicar firestore.indexes.json (firebase deploy --only firestore:indexes).\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "FAILED_PRECONDITION > 0 em 1 h",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/firestore_failed_precondition\" AND resource.type=one_of(\"cloud_run_revision\",\"cloud_function\")",
+        "aggregations": [
+          {
+            "alignmentPeriod": "3600s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "duration": "0s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

@@ -1,0 +1,29 @@
+{
+  "project": "futebadosparcas",
+  "notificationChannels": [
+    "projects/futebadosparcas/notificationChannels/12807806903750069265"
+  ],
+  "logMetrics": [
+    "log-metrics/functions_error_count.json",
+    "log-metrics/firestore_failed_precondition.json",
+    "log-metrics/notification_batch_scheduler_failures.json"
+  ],
+  "alertPolicies": [
+    "uptime-site-alert.json",
+    "functions-errors-alert.json",
+    "firestore-failed-precondition-alert.json",
+    "push-token-registry-canonical-lookup-alert.json",
+    "schedule-season-failed-alert.json",
+    "schedule-notification-batch-failed-alert.json",
+    "schedule-notification-batch-stopped-alert.json",
+    "xp-processing-failed-alert.json",
+    "health-check-critical-alert.json",
+    "firestore-reads-spike-alert.json",
+    "firestore-writes-spike-alert.json",
+    "crashlytics-alert.json"
+  ],
+  "notManaged": {
+    "app-check-missing-invalid-alert.json": "#3869: filtro ainda não validado com um evento real; aplicar à parte quando o enforcement do App Check voltar a ser avaliado.",
+    "realtime-slo-dashboard.json": "Dashboard, não política de alerta. Ver docs/operations/REALTIME_SLO_RUNBOOK.md."
+  }
+}

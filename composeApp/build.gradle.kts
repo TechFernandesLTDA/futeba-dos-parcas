@@ -104,7 +104,12 @@ kotlin {
         }
 
         iosMain.dependencies {
-            // iOS-specific dependencies se necessário
+            // #4422: o Coil 3 não traz rede por padrão. Sem um fetcher de rede o
+            // `AsyncImage` com URL https falha em silêncio no iOS. O Android usa
+            // OkHttp (acima); no iOS usamos Ktor com o engine Darwin (NSURLSession),
+            // na mesma versão do Ktor do :shared.
+            implementation("io.coil-kt.coil3:coil-network-ktor3:3.3.0")
+            implementation("io.ktor:ktor-client-darwin:3.6.0")
         }
     }
 }

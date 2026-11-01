@@ -15,10 +15,6 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da próxima versão de cada plataforma.
 
-### Android (próxima versão após 1.41.0)
-- APK de 55 para 14 MB, startup mais leve e dependências mortas removidas (#4412).
-- Exclusão de conta trata reautenticação e grupos sem dono (#4391, #4438).
-
 ### iOS (próxima versão após 1.8.0)
 - App abre no simulador, exclusão de conta pela callable `deleteAccount` e ajustes de prontidão para a App Store (#4421).
 - Exclusão de conta distingue grupos sem dono de login antigo (#4442).
@@ -30,6 +26,19 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 <!-- AUTOGEN:START -->
 
 ## Android
+
+### [1.42.0][android-1.42.0] - 2026-11-01
+
+#### Mudado
+- APK de 55 para 14 MB, startup mais leve e dependências mortas removidas (#4412).
+- `androidx.datastore` 1.2.0 → 1.3.0: a `libdatastore_shared_counter.so` passa a ser compilada com o NDK r27, como a Play pede para 16 KB (#4475).
+
+#### Corrigido
+- R8: a regra `-keep class com.futebadosparcas.shared.**` não casava com nenhuma classe, e 22 modelos de `domain.model` lidos por `toObject()` eram renomeados ou removidos no release. Agora `domain.model.**` é mantido, e o teste `FirestoreReflectionKeepRulesTest` impede a regressão (#4410, #4471).
+- Exclusão de conta pela callable `deleteAccount`, com reautenticação e grupos sem dono (#4391, #4438).
+- Exclusão de vídeo de jogo não para quando a miniatura falha (#4413, #4472).
+
+_Issues: #4391, #4410, #4413 · PRs: #4412, #4438, #4471, #4472, #4475_
 
 ### [1.41.0][android-1.41.0] - 2026-10-12
 
@@ -3262,6 +3271,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
 [android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md
 [android-1.40.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.40.0.md
 [android-1.39.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.39.5.md

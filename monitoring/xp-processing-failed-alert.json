@@ -1,0 +1,25 @@
+{
+  "displayName": "Processamento de XP com falha (onGameStatusUpdate ou XP travado)",
+  "documentation": {
+    "content": "O XP não roda num schedule: é processado pelo trigger onGameStatusUpdate quando o jogo vai para FINISHED (#4417). Esta política dispara em dois casos:\n\n- log severity>=ERROR no serviço ongamestatusupdate;\n- o systemHealthCheck (a cada 15 min) gerou alerta CRITICAL STALE_XP_PROCESSING (mais de 3 jogos com xp_processing=true há mais de 1 h; o health check já reseta a flag) ou XP_PROCESSING_FAILURES.\n\nO segundo caso depende do log estruturado `health_check_critical_alert`, que entra com o deploy do systemHealthCheck da #4417.\n\nAção:\n1. Logs Explorer: `resource.labels.service_name=\"ongamestatusupdate\" AND severity>=ERROR`.\n2. Firestore: jogos com `xp_processing_error` preenchido.\n3. Validar a integridade do XP (skill futeba-xp-validate) antes de reprocessar.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Erro no onGameStatusUpdate ou alerta CRITICAL de XP do health check",
+      "conditionMatchedLog": {
+        "filter": "resource.type=\"cloud_run_revision\" AND ((resource.labels.service_name=\"ongamestatusupdate\" AND severity>=ERROR) OR (resource.labels.service_name=\"systemhealthcheck\" AND jsonPayload.metric_type=\"health_check_critical_alert\" AND jsonPayload.alert_type=(\"STALE_XP_PROCESSING\" OR \"XP_PROCESSING_FAILURES\")))",
+        "labelExtractors": {
+          "service_name": "EXTRACT(resource.labels.service_name)",
+          "alert_type": "EXTRACT(jsonPayload.alert_type)"
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "notificationRateLimit": {"period": "1800s"},
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

@@ -22,6 +22,9 @@ object AppRoutes {
     /** Onboarding de permissões (notificações, localização, câmera, microfone). #2671 */
     const val PERMISSION_ONBOARDING = "permission_onboarding"
     const val LOGIN = "login"
+
+    /** Cadastro por e-mail e senha (#4424). Aberto pelo "Criar conta" do Login. */
+    const val REGISTER = "register"
     const val GAMES = "games"
     const val GAME_DETAIL = "game/{gameId}"
     const val GROUPS = "groups"

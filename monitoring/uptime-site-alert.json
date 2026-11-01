@@ -1,0 +1,29 @@
+{
+  "displayName": "Site fora do ar (uptime)",
+  "documentation": {
+    "content": "O uptime check de futebadosparcas.com.br falhou em mais de uma região. Ver Firebase Hosting e o runbook de rollback (skill futeba-rollback).\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Uptime check falhando",
+      "conditionThreshold": {
+        "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "600s",
+            "perSeriesAligner": "ALIGN_NEXT_OLDER",
+            "crossSeriesReducer": "REDUCE_COUNT_FALSE",
+            "groupByFields": ["resource.label.host", "metric.label.check_id"]
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 1,
+        "duration": "300s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "enabled": true
+}
