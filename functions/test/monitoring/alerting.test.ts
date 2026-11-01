@@ -97,7 +97,14 @@ jest.mock("firebase-functions/v2", () => ({
   https: {onCall: jest.fn((_c: unknown, h: unknown) => h), HttpsError: jest.fn()},
 }));
 
-import {systemHealthCheck} from "../../src/monitoring/alerting";
+import * as fs from "fs";
+import * as path from "path";
+import {logger as functionsLogger} from "firebase-functions";
+import {
+  buildCriticalAlertLogPayloads,
+  HEALTH_CHECK_CRITICAL_METRIC_TYPE,
+  systemHealthCheck,
+} from "../../src/monitoring/alerting";
 
 const resetState = () => {
   addedMetrics.length = 0;
@@ -335,5 +342,42 @@ describe("monitoring/alerting — systemHealthCheck", () => {
     )).toHaveLength(0);
     const healthCheck = addedMetrics.find((m) => m.type === "health_check");
     expect(healthCheck?.checks).not.toHaveProperty("billing_automation_inconsistent");
+  });
+
+  it("#4417: alerta CRITICAL vira log warn estruturado para o Cloud Monitoring", async () => {
+    const warn = jest.spyOn(functionsLogger, "warn").mockImplementation(() => undefined);
+    queryDocsByCollection.billing_automation_runs = billingRun({
+      inconsistent_locations: 1,
+      inconsistent_location_ids: ["loc-a"],
+    });
+
+    await systemHealthCheck();
+
+    const payloads = warn.mock.calls
+      .map((call) => call[1] as Record<string, unknown> | undefined)
+      .filter((p) => p?.metric_type === HEALTH_CHECK_CRITICAL_METRIC_TYPE);
+    expect(payloads).toEqual([
+      expect.objectContaining({alert_type: "BILLING_AUTOMATION_INCONSISTENT_LOCATIONS"}),
+    ]);
+    warn.mockRestore();
+  });
+
+  it("#4417: só alertas CRITICAL viram log (WARNING fica no Firestore)", () => {
+    expect(buildCriticalAlertLogPayloads([
+      {type: "STALE_XP_PROCESSING", severity: "CRITICAL", title: "XP travado"},
+      {type: "DLQ_ACCUMULATION", severity: "WARNING", title: "DLQ"},
+    ])).toEqual([{
+      metric_type: "health_check_critical_alert",
+      alert_type: "STALE_XP_PROCESSING",
+      alert_title: "XP travado",
+    }]);
+  });
+
+  it("#4417: as políticas de XP e de health check filtram o mesmo metric_type", () => {
+    for (const file of ["xp-processing-failed-alert.json", "health-check-critical-alert.json"]) {
+      const policy = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../../monitoring", file), "utf8"));
+      expect(policy.conditions[0].conditionMatchedLog.filter)
+        .toContain(`jsonPayload.metric_type="${HEALTH_CHECK_CRITICAL_METRIC_TYPE}"`);
+    }
   });
 });

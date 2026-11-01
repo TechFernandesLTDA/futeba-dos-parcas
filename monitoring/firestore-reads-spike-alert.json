@@ -1,0 +1,31 @@
+{
+  "displayName": "Firestore: pico de leituras (> 20 mil por hora)",
+  "documentation": {
+    "content": "Leituras de documentos do Firestore acima de 20.000 em 1 hora (#4417).\n\nBase medida em 01/11/2026 (14 dias, soma horária): mediana 37, p99 1.009, máximo 1.010 por hora; 31.188 no período todo. O limite é cerca de 20 vezes o maior pico e 40% da cota gratuita diária (50 mil) numa hora só: indica listener em loop, polling ou query sem limite, não crescimento orgânico. Reavaliar o limite quando o app ficar público.\n\nAção:\n1. Console do Firestore → Uso, e Cloud Monitoring com `firestore.googleapis.com/document/read_count` agrupado por `module`.\n2. Se começou depois de um deploy de web, considerar o rollback de Hosting (1 clique) do runbook.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Leituras > 20.000 em 1 h",
+      "conditionThreshold": {
+        "filter": "metric.type=\"firestore.googleapis.com/document/read_count\" AND resource.type=\"firestore_instance\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "3600s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 20000,
+        "duration": "0s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

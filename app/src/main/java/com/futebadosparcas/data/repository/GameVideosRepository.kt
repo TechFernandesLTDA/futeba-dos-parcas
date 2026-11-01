@@ -10,7 +10,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.StorageMetadata
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -103,13 +105,34 @@ class GameVideosRepository(
     }.onFailure { AppLogger.e(TAG, "Erro ao enviar vídeo do jogo $gameId", it) }
 
     suspend fun deleteVideo(video: GameVideo): Result<Unit> = runCatching {
-        storage.reference.child(video.storagePath).delete().await()
+        // "Não encontrado" é tolerado: destrava o card que ficou na tela quando uma tentativa
+        // anterior apagou o arquivo, mas não chegou a apagar o documento (#4413).
+        video.storagePath.takeIf { it.isNotBlank() }?.let { path ->
+            deleteStorageObjectIgnoringNotFound(path)
+        }
+        // FIX #4413: a miniatura é gerada pelo servidor e as rules do Storage negam escrita do
+        // cliente em games/{gameId}/video_thumbnails/, então essa exclusão sempre falha. Ela é só
+        // limpeza: a falha vira aviso e não pode impedir a exclusão do documento em game_videos.
         video.thumbnailPath?.takeIf { it.isNotBlank() }?.let { path ->
-            storage.reference.child(path).delete().await()
+            try {
+                storage.reference.child(path).delete().await()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                AppLogger.w(TAG) { "Miniatura do vídeo ${video.id} não foi apagada: ${e.message}" }
+            }
         }
         firestore.collection("game_videos").document(video.id).delete().await()
         Unit
     }.onFailure { AppLogger.e(TAG, "Erro ao excluir vídeo ${video.id}", it) }
+
+    private suspend fun deleteStorageObjectIgnoringNotFound(path: String) {
+        try {
+            storage.reference.child(path).delete().await()
+        } catch (e: StorageException) {
+            if (e.errorCode != StorageException.ERROR_OBJECT_NOT_FOUND) throw e
+        }
+    }
 
     suspend fun toggleReaction(video: GameVideo, emoji: String): Result<Unit> = runCatching {
         require(emoji in SocialReactionEmojis) { "Reação inválida" }
