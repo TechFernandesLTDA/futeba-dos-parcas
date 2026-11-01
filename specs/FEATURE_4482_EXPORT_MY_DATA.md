@@ -4,7 +4,7 @@
 > **Autor:** Claude Code (sessão agente) para Renan Locatiz Fernandes
 > **Data:** 2026-11-01
 > **Issue:** #4482 (filha de #4398). Paridade Android/iOS: #4483
-> **PR:** (preencher ao abrir)
+> **PR:** #4486
 > **Base adaptada:** `_TEMPLATE_FEATURE_MOBILE.md`, sem as seções de Compose (a entrega é web + Functions)
 
 ---
