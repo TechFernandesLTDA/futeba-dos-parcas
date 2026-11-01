@@ -2027,3 +2027,14 @@ Nenhum teste ou gate foi desabilitado.
 - Decisão: igualar o hero estático ao do React (CSS e dois campos opcionais em prerender-routes.mjs: `leadStrong`,
   `heroCenter`). Não adiar o App Check nem mexer na CSP: os scripts de terceiros só pesavam porque o candidato do React era o LCP.
 - Spec: BUGFIX_4403_LANDING_LCP.md.
+
+## 2026-10-31: Repositório público e proteção da master (#4394)
+
+- O plano Free não aplica proteção de branch em repositório privado. Decisão do dono: tornar o repositório público.
+- O segredo OAuth da #4343 não foi rotacionado: nenhuma conta da TF ou pessoal é dona do projeto 564921029129. O literal saiu do
+  código em #4359 e continua só no histórico (PR #4205). A #4343 fica aberta como pendência.
+- Antes de abrir, gitleaks varreu os 4.045 commits de todas as refs, com `.gitleaks.toml` e com as regras padrão: nenhum achado.
+- Ruleset `master` (id 26294809): sem deleção nem force-push, PR obrigatório só com squash, checks exigidos
+  `Web CI Gate`, `Android CI Gate`, `E2E Gate`, `Validate PR` e `gitleaks`. Bypass apenas para o papel admin (merge com `--admin`).
+- PR de fork exige aprovação para todo contribuidor externo, porque os runners são self-hosted (Mac e prod-01).
+- Secret scanning e push protection do GitHub ligados (gratuitos em repositório público).
