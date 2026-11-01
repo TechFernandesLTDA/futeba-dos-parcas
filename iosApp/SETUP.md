@@ -72,9 +72,9 @@ iosApp/
 
 `project.yml` define configurações Xcode em YAML:
 - Bundle ID, deployment target, Swift version
-- Dependências de framework (`shared.framework` do KMP)
+- Dependências de framework (`ComposeApp.framework`, que já embute o `:shared`)
 - Build settings (FRAMEWORK_SEARCH_PATHS, OTHER_LDFLAGS)
-- preBuildScripts: roda `:shared:linkDebugFrameworkIosSimulatorArm64` antes de compilar
+- preBuildScripts: roda `:composeApp:linkDebugFrameworkIosSimulatorArm64` antes de compilar
 
 Atualize `project.yml` em vez do `.xcodeproj` (que é gerado).
 
@@ -146,7 +146,7 @@ Chaves principais:
 
 **`module 'ComposeApp' not found`**: composeApp ainda não tem MainViewController iOS. ContentView placeholder atual usa apenas `shared`. Habilitar quando Phase 3 CMP destrava.
 
-**Framework search path warning**: build pra Simulator gera só `iosSimulatorArm64`. Pra device, rodar `./gradlew :shared:linkDebugFrameworkIosArm64`.
+**Framework search path warning**: build pra Simulator gera só `iosSimulatorArm64`. Pra device, rodar `./gradlew :composeApp:linkDebugFrameworkIosArm64` (#4427).
 
 **`Undefined symbol _OBJC_CLASS_$_FIRFunctions`**: shared.framework usa GitLive Firebase Functions, mas Podfile não tinha `FirebaseFunctions`. Adicionar `pod 'FirebaseFunctions'` no Podfile + `pod install`. Fixado 2026-05-11.
 

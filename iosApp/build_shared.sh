@@ -1,23 +1,25 @@
 #!/bin/bash
 set -e
 
-echo "Building shared framework for iOS..."
+# #4427: o app iOS linka só o ComposeApp.framework, que já embute o :shared
+# (ver iosApp/project.yml). O shared.framework não é mais gerado.
+echo "Building ComposeApp framework for iOS..."
 
 cd "$(dirname "$0")/.."
 
 # Build for simulator (M1/M2 Macs)
 echo "Building for iOS Simulator (Arm64)..."
-./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 
 # Build for device
 echo "Building for iOS Device (Arm64)..."
-./gradlew :shared:linkDebugFrameworkIosArm64
+./gradlew :composeApp:linkDebugFrameworkIosArm64
 
 echo ""
-echo "✅ Shared frameworks built successfully!"
+echo "✅ ComposeApp frameworks built successfully!"
 echo ""
-echo "Simulator: shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework"
-echo "Device: shared/build/bin/iosArm64/debugFramework/shared.framework"
+echo "Simulator: composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework"
+echo "Device: composeApp/build/bin/iosArm64/debugFramework/ComposeApp.framework"
 echo ""
 echo "Next steps:"
 echo "1. Open iosApp.xcworkspace in Xcode"
