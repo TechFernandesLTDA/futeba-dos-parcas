@@ -138,6 +138,10 @@ play-track-status.yml (schedule diário) ─> Play API (trilhas) + página públ
 - Por isso o vigia é heurístico: produção gravada + loja 404. Depois do lançamento público a loja responde 200 e
   uma recusa de atualização volta a ser invisível pela API. Mitigação documentada: notificações por e-mail do Play
   Console para uma caixa monitorada.
+- O vigia roda no runner próprio (`RUNNER_LABELS_HEAVY`); com o runner offline o run fica na fila sem avisar
+  ninguém. Não há alerta sobre a ausência do próprio vigia.
+- A página da loja foi conferida pelo mesmo caminho do script (Node `fetch`, `hl=pt_BR&gl=BR`): 404 para
+  `com.futebadosparcas` e 200 para um app público de controle (01/11/2026).
 - A recusa de 14/10 teria aberto issue já no primeiro run diário (a loja estava em 404 com a 1.41.0 gravada a 20%).
 - Error Reporting: a API `clouderrorreporting` v1beta1 só tem `events`, `groups`, `groupStats` e `deleteEvents`; a
   notificação de erro novo só se liga no console.

@@ -90,6 +90,13 @@ test('buildIssueBody aponta Status da política e o botão Publicar', () => {
   assert.ok(WATCHDOG_ISSUE_TITLE.length > 20);
 });
 
+test('closeComment explica o motivo do fechamento', () => {
+  const { closeComment } = require('./play-track-status');
+  const now = new Date('2026-11-05T12:00:00Z');
+  assert.match(closeComment({ state: 'published' }, now), /respondeu 200/);
+  assert.match(closeComment({ state: 'no_production_release' }, now), /não há mais release/);
+});
+
 test('parseArgs aceita o modo vigia', () => {
   const args = parseArgs(['--audit', '--github-repo', 'dono/repo']);
   assert.equal(args.audit, true);

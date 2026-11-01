@@ -92,6 +92,8 @@ Dois mecanismos cobrem o buraco:
    gravada e a página pública da loja responde 404, abre a issue
    "Play: release de produção gravada, mas o app não está publicado na loja" e comenta a cada 7 dias. Fecha sozinha
    quando a loja responder 200. Para rodar na hora: Actions → Play Track Status → Run workflow com `audit` marcado.
+   Limite: o job roda no runner próprio (`RUNNER_LABELS_HEAVY`). Com o runner fora do ar, o run fica na fila e
+   ninguém é avisado; se a issue não aparecer quando deveria, conferir Actions → Play Track Status.
 2. **E-mail do Play Console** (manual, uma vez): nas preferências de notificação do Play Console (por usuário),
    ligar o e-mail para avisos de política e de status da publicação, e garantir que esse e-mail cai numa caixa
    lida (a recusa de 14/10/2026 ficou 17 dias sem ser vista). Depois do lançamento público é o **único** aviso de recusa de atualização,

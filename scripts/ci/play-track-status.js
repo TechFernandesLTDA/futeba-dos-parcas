@@ -152,6 +152,15 @@ function buildIssueBody(audit, { packageName, storeUrl, runUrl, now }) {
   ].filter((line) => line !== null).join('\n');
 }
 
+/** Comentário de fechamento conforme o motivo (função pura). */
+function closeComment(audit, now) {
+  const day = now.toISOString().slice(0, 10);
+  if (audit.state === 'no_production_release') {
+    return `Em ${day} não há mais release de produção gravada (inProgress/completed/halted). Fechando.`;
+  }
+  return `A página da loja respondeu 200 em ${day}: o app está publicado. Fechando.`;
+}
+
 async function githubRequest(token, method, url, body) {
   const res = await fetch(url, {
     method,
@@ -190,7 +199,7 @@ async function syncWatchdogIssue(audit, ctx) {
     console.log(`Lembrete na issue #${openIssue.number}`);
   } else if (action === 'close') {
     await githubRequest(token, 'POST', `${GITHUB_API}/repos/${repo}/issues/${openIssue.number}/comments`, {
-      body: `A página da loja respondeu 200 em ${now.toISOString().slice(0, 10)} (estado: ${audit.state}). Fechando.`,
+      body: closeComment(audit, now),
     });
     await githubRequest(token, 'PATCH', `${GITHUB_API}/repos/${repo}/issues/${openIssue.number}`, {
       state: 'closed', state_reason: 'completed',
@@ -301,6 +310,7 @@ if (require.main === module) {
 module.exports = {
   WATCHDOG_ISSUE_TITLE,
   buildIssueBody,
+  closeComment,
   decideIssueAction,
   evaluatePlayAudit,
   findVersionCode,
