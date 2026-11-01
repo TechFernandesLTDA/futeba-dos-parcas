@@ -2047,3 +2047,13 @@ Nenhum teste ou gate foi desabilitado.
 - Play Store: a revisão da 1.41.0 foi recusada em 14/10 por falta de credenciais de login para o revisor (#4201). O reenvio
   leva só a 1.41.0 (vc 82, targetSdk 36) a 100%. A release 45 (1.21.3, targetSdk 35) sai do pacote, porque a política da
   API 36 recusa atualizações abaixo dela desde 30/08/2026.
+
+## 2026-11-01: Keep do R8 para modelos lidos por reflexão do Firestore (#4410)
+
+- O `mapping.txt` do release mostrou `domain.model` renomeado e sem `<init>()` (ex.: `Statistics -> jg3`; o `<init>()` de
+  `User` aparece como removido em `usage.txt`). A regra `-keep class com.futebadosparcas.shared.** { *; }` não casava com
+  nenhuma classe.
+- Decisão: `-keep class com.futebadosparcas.domain.model.** { *; }` (por pacote, como `data.model`) e keep explícito da
+  `NotificationSettings`. Não mexer em `isMinifyEnabled`/full mode às vésperas da revisão da Play.
+- Guarda: `FirestoreReflectionKeepRulesTest` exige keep completo para toda classe passada a `toObject`/`toObjects`.
+- Spec: BUGFIX_2026-11-01_R8_KEEP_DOMAIN_MODEL_4410.md.
