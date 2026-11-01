@@ -1,0 +1,31 @@
+{
+  "displayName": "Schedule crítico falhou: processNotificationBatch (3+ falhas em 15 min)",
+  "documentation": {
+    "content": "O processNotificationBatch roda a cada minuto e entrega os pushes da fila (#4417). Uma falha isolada é tolerável (houve uma 500 em 30/10/2026); 3 ou mais em 15 minutos significam pushes atrasando.\n\nAção:\n1. Logs Explorer: `resource.labels.service_name=\"processnotificationbatch\" AND severity>=ERROR`.\n2. Ver a fila `notification_queue` (itens presos em `processing`).\n3. Se começou depois de um deploy, seguir o rollback de Functions do runbook.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Falhas do Scheduler no processNotificationBatch > 2 em 15 min",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/notification_batch_scheduler_failures\" AND resource.type=\"cloud_scheduler_job\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "900s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 2,
+        "duration": "0s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "3600s"
+  },
+  "enabled": true
+}

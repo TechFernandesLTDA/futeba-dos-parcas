@@ -100,6 +100,8 @@ import com.futebadosparcas.compose.resources.route_owner_stats_missing
 import com.futebadosparcas.compose.resources.route_owner_stats_title
 import com.futebadosparcas.compose.resources.route_owner_stats_unavailable
 import com.futebadosparcas.compose.resources.route_post_game_report_title
+import com.futebadosparcas.compose.resources.auth_create_account
+import com.futebadosparcas.compose.resources.route_register_unavailable_env
 import com.futebadosparcas.compose.resources.route_post_game_share_title
 import com.futebadosparcas.compose.resources.route_team_formation_title
 import com.futebadosparcas.compose.resources.route_teams_load_error
@@ -146,6 +148,8 @@ import com.futebadosparcas.ui.HomeScreen
 import com.futebadosparcas.ui.account.DeleteAccountScreen
 import com.futebadosparcas.ui.account.DeleteAccountViewModel
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
+import com.futebadosparcas.ui.auth.RegisterScreen
+import com.futebadosparcas.ui.auth.RegisterViewModel
 import com.futebadosparcas.ui.core.BlockedPlayerData
 import com.futebadosparcas.ui.core.BlockedPlayersScreen
 import com.futebadosparcas.ui.core.GamesScreen
@@ -331,9 +335,7 @@ fun AppNavigation(
 
             LaunchedEffect(uiState) {
                 if (uiState is LoginState.Success) {
-                    navController.navigate(AppRoutes.HOME) {
-                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                    }
+                    navController.navigateToHomeClearingBackStack()
                 }
             }
 
@@ -343,40 +345,66 @@ fun AppNavigation(
                 onGoogleSignInClick = { vm?.onGoogleSignInSuccess() },
                 onEmailPasswordSignIn = { email, password -> vm?.signInWithEmailAndPassword(email, password) },
                 onForgotPassword = { email -> vm?.sendPasswordResetEmail(email) },
+                // #4424: "Criar conta" abre o cadastro, não o setup de perfil.
                 onNavigateToRegister = {
-                    navController.navigate(AppRoutes.PROFILE_SETUP)
+                    navController.navigate(AppRoutes.REGISTER) { launchSingleTop = true }
                 },
-                onNavigateToMain = {
-                    navController.navigate(AppRoutes.HOME) {
-                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                    }
-                }
+                onNavigateToMain = { navController.navigateToHomeClearingBackStack() }
             )
+        }
+
+        // Cadastro por e-mail e senha (#4424). A conta é criada no Firebase Auth e o
+        // documento do usuário vem da Cloud Function onUserCreated; em seguida o usuário
+        // completa o perfil (PROFILE_SETUP) sem poder voltar para o cadastro/login.
+        composable(AppRoutes.REGISTER) {
+            var retryKey by remember { mutableIntStateOf(0) }
+            key(retryKey) {
+                val registerVm = koinViewModelOrNull<RegisterViewModel>()
+                if (registerVm != null) {
+                    val registerState by registerVm.registerState.collectAsStateWithLifecycle()
+                    RegisterScreen(
+                        uiState = registerState,
+                        onRegisterWithEmail = { email, password, name ->
+                            registerVm.registerWithEmailAndPassword(email, password, name)
+                        },
+                        onNavigateToLogin = { navController.popBackStack() },
+                        // Chamado pelo RegisterScreen quando o estado vira Success.
+                        onNavigateToMain = {
+                            navController.navigate(AppRoutes.PROFILE_SETUP) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                } else {
+                    UnavailableRouteScreen(
+                        title = stringResource(Res.string.auth_create_account),
+                        message = stringResource(Res.string.route_register_unavailable_env),
+                        onRetry = { retryKey += 1 },
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
         }
 
         // Perfil setup (pós-registro / primeiro acesso)
         composable(AppRoutes.PROFILE_SETUP) {
             ProfileSetupScreen(
-                onContinue = {
-                    navController.navigate(AppRoutes.HOME) {
-                        popUpTo(AppRoutes.PROFILE_SETUP) { inclusive = true }
-                    }
-                },
-                onSkip = {
-                    navController.navigate(AppRoutes.HOME) {
-                        popUpTo(AppRoutes.PROFILE_SETUP) { inclusive = true }
-                    }
-                }
+                onContinue = { navController.leaveProfileSetup() },
+                onSkip = { navController.leaveProfileSetup() }
             )
         }
 
         // Home
+        // #4425: toda ida a uma aba (Início, Jogos, Grupos, Perfil) usa
+        // `navigateToTopLevel`, inclusive pelos atalhos do conteúdo, para trocar de aba
+        // em vez de empilhar telas.
         composable(AppRoutes.HOME) {
             HomeScreen(
                 onOpenWhatsNew = { navController.navigate(AppRoutes.WHATS_NEW) },
-                onNavigateToGames = { navController.navigate(AppRoutes.GAMES) },
-                onNavigateToGroups = { navController.navigate(AppRoutes.GROUPS) },
-                onNavigateToProfile = { navController.navigate(AppRoutes.PROFILE) },
+                onNavigateToGames = { navController.navigateToTopLevel(AppRoutes.GAMES) },
+                onNavigateToGroups = { navController.navigateToTopLevel(AppRoutes.GROUPS) },
+                onNavigateToProfile = { navController.navigateToTopLevel(AppRoutes.PROFILE) },
                 onOpenProfileSetup = { navController.navigate(AppRoutes.PROFILE_SETUP) }
             )
         }
@@ -388,7 +416,7 @@ fun AppNavigation(
                     selectedGameId = gameId
                     navController.navigate(AppRoutes.gameDetail(gameId))
                 },
-                onCreateGameClick = { navController.navigate(AppRoutes.GROUPS) }
+                onCreateGameClick = { navController.navigateToTopLevel(AppRoutes.GROUPS) }
             )
         }
 
@@ -543,7 +571,7 @@ fun AppNavigation(
                         label = stringResource(Res.string.groups_hub_action_games),
                         description = stringResource(Res.string.groups_hub_action_games_body),
                         icon = Icons.Filled.SportsSoccer,
-                        onClick = { navController.navigate(AppRoutes.GAMES) }
+                        onClick = { navController.navigateToTopLevel(AppRoutes.GAMES) }
                     ),
                     FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_blocked),
@@ -572,7 +600,7 @@ fun AppNavigation(
                         label = stringResource(Res.string.groups_hub_action_games),
                         description = stringResource(Res.string.groups_hub_action_games_body),
                         icon = Icons.Filled.SportsSoccer,
-                        onClick = { navController.navigate(AppRoutes.GAMES) }
+                        onClick = { navController.navigateToTopLevel(AppRoutes.GAMES) }
                     ),
                     FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_blocked),
@@ -1294,6 +1322,47 @@ private fun FeatureHubActionButton(
                 )
             }
         }
+    }
+}
+
+/**
+ * Troca de aba (#4425): Início, Jogos, Grupos e Perfil se comportam como abas, não como
+ * telas empilhadas. Desempilha até o HOME guardando o estado da aba atual, não duplica a
+ * aba de destino e restaura o estado salvo dela. Assim o gesto de voltar sai da aba para
+ * o Início, em vez de percorrer todas as abas tocadas.
+ *
+ * O `popUpTo` usa HOME, e não `graph.findStartDestination()`: o destino inicial muda
+ * (WELCOME quando não há sessão), e desempilhar até ele levaria as abas para o welcome.
+ */
+private fun NavHostController.navigateToTopLevel(route: String) {
+    navigate(route) {
+        popUpTo(AppRoutes.HOME) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+/**
+ * Entra no Início limpando a pilha de autenticação (#4425): depois do login, voltar não
+ * deve reabrir welcome/onboarding/login, que ficavam embaixo do HOME.
+ */
+private fun NavHostController.navigateToHomeClearingBackStack() {
+    navigate(AppRoutes.HOME) {
+        popUpTo(graph.id) { inclusive = true }
+        launchSingleTop = true
+    }
+}
+
+/**
+ * Sai do setup de perfil (#4425). Aberto a partir do Início ou do Perfil, volta para a
+ * tela de origem; navegar para HOME ali empilhava um segundo Início. Logo após o
+ * cadastro (#4424) não há tela anterior, então entra no Início limpando a pilha.
+ */
+private fun NavHostController.leaveProfileSetup() {
+    if (previousBackStackEntry != null) {
+        popBackStack()
+    } else {
+        navigateToHomeClearingBackStack()
     }
 }
 

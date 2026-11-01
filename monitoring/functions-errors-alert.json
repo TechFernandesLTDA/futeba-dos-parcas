@@ -1,0 +1,31 @@
+{
+  "displayName": "Cloud Functions com erros",
+  "documentation": {
+    "content": "Mais de 3 erros (severity>=ERROR) nas Cloud Functions em 10 minutos. Base em 31/10/2026: cerca de 1 erro por dia. Ver Logs Explorer filtrando severity>=ERROR e o Error Reporting (agrupa por stack trace).\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Erros > 3 em 10 min",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/functions_error_count\" AND resource.type=one_of(\"cloud_run_revision\",\"cloud_function\")",
+        "aggregations": [
+          {
+            "alignmentPeriod": "600s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 3,
+        "duration": "0s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

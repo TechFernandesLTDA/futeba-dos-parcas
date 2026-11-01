@@ -2048,6 +2048,31 @@ Nenhum teste ou gate foi desabilitado.
   leva só a 1.41.0 (vc 82, targetSdk 36) a 100%. A release 45 (1.21.3, targetSdk 35) sai do pacote, porque a política da
   API 36 recusa atualizações abaixo dela desde 30/08/2026.
 
+## 2026-11-01: Correções de UI do iOS (#4422, #4424, #4425)
+
+- Decisão do dono: Android e web saem primeiro; no iOS, agora, só correção de bugs.
+- Imagens (#4422): o `composeApp` usa `coil-network-ktor3` + `ktor-client-darwin` no `iosMain` (Ktor 3.6.0, o mesmo do `:shared`).
+  O Android segue só com `coil-network-okhttp`. O fetcher se registra sozinho; nenhum `ImageLoader` customizado.
+- Abas (#4425): Início, Jogos, Grupos e Perfil trocam de aba com `popUpTo(HOME) { saveState }` + `launchSingleTop` + `restoreState`.
+  O alvo é `HOME`, não o destino inicial do grafo, que é `WELCOME` sem sessão. A barra persistente nas outras abas fica para depois (recurso novo).
+- Cadastro (#4424): rota `REGISTER` com o `RegisterScreen` existente; no sucesso vai para `PROFILE_SETUP` limpando a pilha.
+- Specs: BUGFIX_4422_IOS_COIL_NETWORK.md, BUGFIX_4424_IOS_REGISTER_ROUTE.md, BUGFIX_4425_IOS_TAB_NAVIGATION.md.
+
+## 2026-11-01: Alertas como código e vigia da Play (#4417)
+
+- Políticas de alerta e métricas de log ficam em `monitoring/` (lista em `monitoring/manifest.json`) e são aplicadas por
+  `scripts/monitoring/apply-monitoring.js`, que só mostra o plano por padrão e casa por `displayName`. As 4 políticas
+  criadas à mão na #4396 foram exportadas para o repositório. A de push token estava sem canal e passa a ter.
+- O XP não é um schedule: o alerta de "processamento de XP" cobre erros do trigger `onGameStatusUpdate` e os alertas
+  CRITICAL de XP do `systemHealthCheck`, que agora também viram log estruturado (antes iam só para a coleção `alerts`).
+- Crashlytics (Android e iOS) entra no canal de e-mail por functions do Firebase Alerts, e não pelo e-mail nativo
+  do Firebase, que é configurado por usuário.
+- A Play Developer API não expõe o status da revisão nem o Status da política (`TrackRelease.status` só tem
+  draft/inProgress/halted/completed). O vigia diário no `play-track-status.yml` existente usa uma heurística: produção
+  gravada e página da loja em 404 abrem uma issue. Depois do lançamento público, o aviso de recusa de atualização depende
+  do e-mail do Play Console. O "auditor semanal" citado na #4201 em 12/10 nunca existiu.
+- Spec: ops-2026-11-01-alertas-runbook-vigia-play-4417.md.
+
 ## 2026-11-01: Keep do R8 para modelos lidos por reflexão do Firestore (#4410)
 
 - O `mapping.txt` do release mostrou `domain.model` renomeado e sem `<init>()` (ex.: `Statistics -> jg3`; o `<init>()` de

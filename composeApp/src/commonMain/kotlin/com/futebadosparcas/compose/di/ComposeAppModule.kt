@@ -2,6 +2,7 @@ package com.futebadosparcas.compose.di
 
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.ui.account.DeleteAccountViewModel
+import com.futebadosparcas.ui.auth.RegisterViewModel
 import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.settings.ThemeSettingsViewModel
 import com.futebadosparcas.ui.whatsnew.releaseNotesModule
@@ -31,6 +32,10 @@ val composeAppModule = module {
 
     // Bucket Core ViewModels
     viewModel { LoginViewModel(get()) }
+
+    // Cadastro (#4424). Sem `AuthRepository` (modo smoke-test do iOS) a resolução falha
+    // e a rota REGISTER mostra o estado "indisponível".
+    viewModel { RegisterViewModel(get()) }
 
     // Preferências — tema (#4097). `ThemeRepository` é provido por plataforma em
     // platformComposeAppModules(): iOS = NSUserDefaults; Android harness/wasmJs = memória.

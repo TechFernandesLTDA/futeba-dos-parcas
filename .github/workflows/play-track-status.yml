@@ -3,8 +3,17 @@ name: Play Track Status
 # Consulta SOMENTE LEITURA das trilhas do Google Play com a service account de
 # publicacao (PLAY_STORE_SERVICE_ACCOUNT_JSON). Usado para provar que um build
 # (versionCode) esta na trilha apos o workflow `Deploy to Google Play Store`.
+#
+# Vigia diario (#4417): no schedule, roda com --audit. Se ha release de
+# producao gravada e a pagina publica da loja responde 404 (em analise,
+# recusada ou aprovada esperando "Publicar"), abre UMA issue e lembra a cada
+# 7 dias; fecha sozinha quando a loja responder 200. A Play Developer API nao
+# expoe o status da revisao nem o Status da politica: ver o cabecalho de
+# scripts/ci/play-track-status.js.
 
 on:
+  schedule:
+    - cron: '17 12 * * *' # todo dia 12:17 UTC (~09:17 BRT)
   workflow_dispatch:
     inputs:
       version_code:
@@ -16,9 +25,15 @@ on:
         required: false
         default: internal
         type: string
+      audit:
+        description: 'Rodar o vigia (abre/atualiza/fecha a issue da loja)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   status:
@@ -47,6 +62,7 @@ jobs:
           node scripts/ci/describe-service-account.js "$RUNNER_TEMP/play-sa.json"
 
       - name: Query tracks
+        if: github.event_name != 'schedule' && !inputs.audit
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/play-sa.json
           VERSION_CODE: ${{ inputs.version_code }}
@@ -56,6 +72,14 @@ jobs:
           if [ -n "$VERSION_CODE" ]; then ARGS+=(--version-code "$VERSION_CODE"); fi
           if [ -n "$TRACK" ]; then ARGS+=(--track "$TRACK"); fi
           node scripts/ci/play-track-status.js "${ARGS[@]}"
+
+      - name: Play watchdog (loja x producao)
+        if: github.event_name == 'schedule' || inputs.audit
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/play-sa.json
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: node scripts/ci/play-track-status.js --package com.futebadosparcas --audit --github-repo "$REPO"
 
       - name: Cleanup credentials
         if: always()

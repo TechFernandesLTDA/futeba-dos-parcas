@@ -1,0 +1,10 @@
+{
+  "name": "functions_error_count",
+  "description": "Erros (severity>=ERROR) das Cloud Functions gen1/gen2",
+  "filter": "(resource.type=\"cloud_run_revision\" OR resource.type=\"cloud_function\") AND severity>=ERROR",
+  "metricDescriptor": {
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "unit": "1"
+  }
+}

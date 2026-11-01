@@ -1,0 +1,29 @@
+{
+  "displayName": "Schedule crítico parado: processNotificationBatch sem execução há 15 min",
+  "documentation": {
+    "content": "O serviço processnotificationbatch não recebeu nenhuma requisição em 15 minutos, mas o schedule é de 1 em 1 minuto (#4417). Causas comuns: job do Cloud Scheduler pausado ou apagado (por exemplo, num deploy que removeu a função) ou serviço do Cloud Run indisponível.\n\nAção:\n1. `gcloud scheduler jobs describe firebase-schedule-processNotificationBatch-southamerica-east1 --location southamerica-east1 --project futebadosparcas` (state deve ser ENABLED).\n2. `gcloud run services describe processnotificationbatch --region southamerica-east1 --project futebadosparcas`.\n3. Se o job sumiu, refazer o deploy da função: `firebase deploy --only functions:processNotificationBatch --project futebadosparcas`.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Nenhuma requisição ao processnotificationbatch em 15 min",
+      "conditionAbsent": {
+        "filter": "metric.type=\"run.googleapis.com/request_count\" AND resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"processnotificationbatch\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "duration": "900s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "3600s"
+  },
+  "enabled": true
+}
