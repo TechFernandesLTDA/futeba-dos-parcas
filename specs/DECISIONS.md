@@ -2038,3 +2038,12 @@ Nenhum teste ou gate foi desabilitado.
   `Web CI Gate`, `Android CI Gate`, `E2E Gate`, `Validate PR` e `gitleaks`. Bypass apenas para o papel admin (merge com `--admin`).
 - PR de fork exige aprovação para todo contribuidor externo, porque os runners são self-hosted (Mac e prod-01).
 - Secret scanning e push protection do GitHub ligados (gratuitos em repositório público).
+
+## 2026-11-01: Escopo do lançamento — Android e web antes do iOS (#4395)
+
+- Decisão do dono: o lançamento público sai primeiro no Android (Play Store) e na web. O iOS fica para depois.
+- No iOS, por ora, só correções de bugs (#4422, #4424, #4425) e o CI (#4427). Os recursos que faltam (#4423, #4426, #4430,
+  #4434–#4437) esperam até o dono retomar o iOS e configurar a conta Apple Developer.
+- Play Store: a revisão da 1.41.0 foi recusada em 14/10 por falta de credenciais de login para o revisor (#4201). O reenvio
+  leva só a 1.41.0 (vc 82, targetSdk 36) a 100%. A release 45 (1.21.3, targetSdk 35) sai do pacote, porque a política da
+  API 36 recusa atualizações abaixo dela desde 30/08/2026.
