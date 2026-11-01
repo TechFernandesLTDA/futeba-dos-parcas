@@ -66,8 +66,9 @@ sealed class UiState {
 ./gradlew compileDebugKotlin               # Fast compile check (use this often!)
 
 # Build (KMP - iOS Framework) - Requires macOS
-./gradlew :shared:linkDebugFrameworkIosSimulatorArm64  # iOS Simulator (M1/M2 Mac)
-./gradlew :shared:linkDebugFrameworkIosArm64           # iOS Device
+# O app iOS linka só o ComposeApp.framework, que embute o :shared (#4427)
+./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64  # iOS Simulator (M1/M2 Mac)
+./gradlew :composeApp:linkDebugFrameworkIosArm64           # iOS Device
 
 # Tests
 ./gradlew :app:testDebugUnitTest           # Unit tests

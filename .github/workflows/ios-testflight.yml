@@ -130,10 +130,11 @@ jobs:
         with:
           cache-read-only: true
 
-      - name: Build KMP frameworks for device (release)
+      # #4427: só o ComposeApp.framework (já embute o :shared); o app não linka o shared.framework.
+      - name: Build ComposeApp framework for device (release)
         run: |
           chmod +x gradlew
-          ./gradlew :shared:linkReleaseFrameworkIosArm64 :composeApp:linkReleaseFrameworkIosArm64
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64
 
       - name: Generate device Xcode project
         run: |

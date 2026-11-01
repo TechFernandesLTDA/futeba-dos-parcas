@@ -2047,3 +2047,11 @@ Nenhum teste ou gate foi desabilitado.
 - Play Store: a revisão da 1.41.0 foi recusada em 14/10 por falta de credenciais de login para o revisor (#4201). O reenvio
   leva só a 1.41.0 (vc 82, targetSdk 36) a 100%. A release 45 (1.21.3, targetSdk 35) sai do pacote, porque a política da
   API 36 recusa atualizações abaixo dela desde 30/08/2026.
+
+## 2026-11-01: CI do iOS sem shared.framework (#4427)
+
+- O app iOS linka só o `ComposeApp.framework`, que embute o `:shared`. O CI (`ios-build`, `ios-testflight`) e o
+  `iosApp/build_shared.sh` deixam de linkar o `shared.framework`; o job de framework linka o ComposeApp para simulador e device.
+- O vermelho de 01/10 era JDK 17 no job contra o toolchain JetBrains 21 do daemon (foojay 400), corrigido em #4249.
+  As execuções de 5 a 7 h eram fila do único Mac self-hosted mais `cancel-in-progress`. Verde desde 31/10.
+- Spec: BUGFIX_4427_IOS_CI_FRAMEWORK.md.

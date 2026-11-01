@@ -108,8 +108,9 @@ jobs:
             shared/build/test-results/
           retention-days: 7
 
+  # O id `build-shared-framework` fica igual porque `build-ios-app` e `notify` dependem dele.
   build-shared-framework:
-    name: Build Shared KMP Framework
+    name: Build ComposeApp Framework
     # Kotlin/Native para iOS exige macOS: fixo no Mac self-hosted (label `futeba`),
     # nunca em runner hospedado (macOS hospedado consome 10x os minutos gratuitos).
     # Sem runner macOS desde 09/10/2026 (iOS estacionado, #4202): liga com vars.IOS_MAC_RUNNER=true.
@@ -135,14 +136,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build shared framework for iOS Simulator
-        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
-
-      - name: Build shared framework for iOS Device
-        run: ./gradlew :shared:linkDebugFrameworkIosArm64
-
+      # #4427: o app iOS linka só o ComposeApp.framework, que já embute o :shared
+      # (iosApp/project.yml). Linkar também o shared.framework era trabalho morto e,
+      # no Xcode, duplicava o runtime do Kotlin/Native. O código do :shared continua
+      # compilado aqui (dependência do ComposeApp) e testado no job kmp-shared-tests.
       - name: Build ComposeApp framework for iOS Simulator
         run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Build ComposeApp framework for iOS Device
+        run: ./gradlew :composeApp:linkDebugFrameworkIosArm64
 
   build-ios-app:
     name: Build iOS App
@@ -177,10 +179,8 @@ jobs:
       # Cada job pode cair em um runner diferente. Recompilar os frameworks
       # necessários aqui mantém o gate determinístico e independente da cota
       # de armazenamento de artifacts do GitHub Actions.
-      - name: Build simulator frameworks for app job
-        run: |
-          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
-          ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+      - name: Build simulator framework for app job
+        run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 
       - name: Generate Xcode project and install CocoaPods
         run: |
@@ -225,7 +225,7 @@ jobs:
       - name: Check build status
         run: |
           echo "KMP Tests: ${{ needs.kmp-shared-tests.result }}"
-          echo "Framework Build: ${{ needs.build-shared-framework.result }}"
+          echo "ComposeApp Framework Build: ${{ needs.build-shared-framework.result }}"
           echo "iOS App Build: ${{ needs.build-ios-app.result }}"
 
           if [ "${{ vars.IOS_MAC_RUNNER }}" != "true" ]; then
