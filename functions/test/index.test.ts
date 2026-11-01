@@ -150,13 +150,18 @@ jest.mock("../src/_db", () => {
   return { db: dbFn };
 });
 
-import { recalculateLeagueRating, onGameDeleted, onGroupDeleted, onConfirmationWrite, deleteAccount } from "../src/index";
+import { recalculateLeagueRating, onGameDeleted, onGroupDeleted, onConfirmationWrite, deleteAccount, exportMyData } from "../src/index";
 
 describe("Index — exports chamados pelos clientes", () => {
   // #4391: web e Android chamavam deleteAccount, mas a função nunca foi
   // exportada e o deploy não a criava. Este teste falha se o export sumir.
   it("exporta a callable deleteAccount", () => {
     expect(typeof deleteAccount).toBe("function");
+  });
+
+  // #4482: portabilidade (LGPD art. 18, V) — o web chama exportMyData.
+  it("exporta a callable exportMyData", () => {
+    expect(typeof exportMyData).toBe("function");
   });
 });
 
