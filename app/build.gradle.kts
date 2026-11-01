@@ -128,6 +128,8 @@ android {
             // (strip varia por máquina; no Linux sem NDK ele pula e "empacota como está").
             // Manter os símbolos garante o mesmo binário alinhado em qualquer runner.
             // A guarda scripts/ci/check-16kb-alignment.js valida o AAB final no CI.
+            // Além do alinhamento, a Play avisa sobre .so linkada com NDK antigo: por isso o
+            // datastore está na 1.3.0 (NDK r27), ver a dependência abaixo.
             keepDebugSymbols += setOf(
                 "**/libandroidx.graphics.path.so",
                 "**/libdatastore_shared_counter.so"
@@ -359,7 +361,10 @@ dependencies {
     val roomVersion = "2.8.5"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
+    // 1.3.0: primeira versão com libdatastore_shared_counter.so linkada com NDK r27
+    // (.note.android.ident). Até a 1.2.1 a .so vinha do NDK r20 e a Play Console a marca
+    // como "compilada com NDK antigo" para dispositivos de 16 KB, mesmo com p_align 0x4000.
+    implementation("androidx.datastore:datastore-preferences:1.3.0")
     ksp("androidx.room:room-compiler:$roomVersion")
     androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
