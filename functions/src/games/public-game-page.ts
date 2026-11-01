@@ -631,7 +631,13 @@ export const publicGamePage = onRequest(
     // Endpoint anônimo atrás da CDN do Hosting: teto baixo de instâncias
     // limita custo em caso de varredura de ids aleatórios.
     maxInstances: 3,
-    memory: "256MiB",
+    // Com 256MiB a CPU é fracionária e a concorrência fica em 1 por
+    // instância: 3 aberturas simultâneas fora da CDN já dariam 429, inclusive
+    // para usuários logados (todo /game/{id} passa por aqui). CPU inteira
+    // libera 80 requisições por instância sem subir o teto de instâncias.
+    cpu: 1,
+    concurrency: 80,
+    memory: "512MiB",
     timeoutSeconds: 15,
     invoker: "public",
   },
