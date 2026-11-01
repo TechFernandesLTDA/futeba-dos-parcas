@@ -1,0 +1,24 @@
+{
+  "displayName": "Health check: alerta CRITICAL (cobrança, excesso de alertas)",
+  "documentation": {
+    "content": "O systemHealthCheck (a cada 15 min) gerou um alerta CRITICAL que não é de XP (#4417). Hoje: BILLING_AUTOMATION_INCONSISTENT_LOCATIONS (cron de cobrança de quadras com locais inconsistentes) e ALERT_OVERFLOW (alertas não reconhecidos acumulados). Os de XP têm política própria.\n\nO alerta também fica na coleção `alerts` do Firestore, com o detalhe em `metadata`.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Alerta CRITICAL do systemHealthCheck",
+      "conditionMatchedLog": {
+        "filter": "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"systemhealthcheck\" AND jsonPayload.metric_type=\"health_check_critical_alert\" AND NOT jsonPayload.alert_type=(\"STALE_XP_PROCESSING\" OR \"XP_PROCESSING_FAILURES\")",
+        "labelExtractors": {
+          "alert_type": "EXTRACT(jsonPayload.alert_type)"
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "notificationRateLimit": {"period": "3600s"},
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

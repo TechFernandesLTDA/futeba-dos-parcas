@@ -1,0 +1,26 @@
+{
+  "displayName": "Crashlytics: regressão, novo crash fatal ou pico (Android e iOS)",
+  "documentation": {
+    "content": "O Crashlytics publicou um alerta (#4417): issue resolvida que voltou (regressão), primeiro crash fatal de uma issue nova, ou pico de crashes. As functions onCrashlytics*Alert recebem o evento do Firebase Alerts e gravam o log estruturado `crashlytics_alert`; os rótulos do incidente trazem o tipo, o app e o título da issue.\n\nAção:\n1. Firebase Console → Crashlytics → abrir a issue pelo título (rótulo `issue_title`).\n2. Se começou numa release nova em rollout gradual, pausar o rollout (Play Console → Produção → Interromper lançamento) ou não promover (workflow play-promote).\n3. Android Vitals: a Play recusa apps com taxa de crash alta (Auto App Quality).\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Alerta do Crashlytics recebido",
+      "conditionMatchedLog": {
+        "filter": "resource.type=\"cloud_run_revision\" AND jsonPayload.metric_type=\"crashlytics_alert\"",
+        "labelExtractors": {
+          "alert_kind": "EXTRACT(jsonPayload.alert_kind)",
+          "app_id": "EXTRACT(jsonPayload.app_id)",
+          "issue_title": "EXTRACT(jsonPayload.issue_title)"
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "notificationRateLimit": {"period": "300s"},
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

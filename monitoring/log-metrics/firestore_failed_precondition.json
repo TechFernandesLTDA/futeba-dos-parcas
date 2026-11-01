@@ -1,0 +1,10 @@
+{
+  "name": "firestore_failed_precondition",
+  "description": "FAILED_PRECONDITION (query sem índice) nos logs das functions",
+  "filter": "(resource.type=\"cloud_run_revision\" OR resource.type=\"cloud_function\") AND (textPayload:\"FAILED_PRECONDITION\" OR jsonPayload.message:\"FAILED_PRECONDITION\")",
+  "metricDescriptor": {
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "unit": "1"
+  }
+}

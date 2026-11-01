@@ -1,0 +1,48 @@
+{
+  "displayName": "Firestore: pico de escritas ou exclusões (> 5 mil por hora)",
+  "documentation": {
+    "content": "Escritas ou exclusões de documentos do Firestore acima de 5.000 em 1 hora (#4417).\n\nBase medida em 01/11/2026 (14 dias, soma horária): escritas com mediana 41, p99 288 e máximo 294 por hora; exclusões com máximo de 871 por hora (limpezas agendadas). O limite é cerca de 17 vezes o maior pico de escritas e 25% da cota gratuita diária (20 mil) numa hora só: indica trigger em loop (uma escrita que dispara a si mesma), retry sem fim ou limpeza descontrolada.\n\nAção:\n1. Cloud Monitoring: `firestore.googleapis.com/document/write_count` e `delete_count` agrupados por `module`.\n2. Logs das functions disparadas por Firestore no mesmo intervalo (procure a mesma function invocada milhares de vezes).\n3. Se for loop de trigger, o rollback de Functions do runbook é o caminho mais rápido.\n\nRunbook: docs/production-launch/monitoring-rollback-runbook.md",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Escritas > 5.000 em 1 h",
+      "conditionThreshold": {
+        "filter": "metric.type=\"firestore.googleapis.com/document/write_count\" AND resource.type=\"firestore_instance\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "3600s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 5000,
+        "duration": "0s",
+        "trigger": {"count": 1}
+      }
+    },
+    {
+      "displayName": "Exclusões > 5.000 em 1 h",
+      "conditionThreshold": {
+        "filter": "metric.type=\"firestore.googleapis.com/document/delete_count\" AND resource.type=\"firestore_instance\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "3600s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 5000,
+        "duration": "0s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "enabled": true
+}

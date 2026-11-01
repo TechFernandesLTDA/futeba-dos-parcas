@@ -2818,6 +2818,14 @@ export * from "./voting/mvp-voting";
 //   - PHASE 3
 export * from "./monitoring/alerting";
 
+// #4417: alertas do Crashlytics (regressão, novo crash fatal e pico) viram
+// log estruturado, e a política monitoring/crashlytics-alert.json manda e-mail.
+export {
+  onCrashlyticsRegressionAlert,
+  onCrashlyticsNewFatalIssueAlert,
+  onCrashlyticsVelocityAlert,
+} from "./monitoring/crashlytics-alerts";
+
 // ==========================================
 // P2 #28: LEADERBOARD CACHE SERVER-SIDE
 // ==========================================

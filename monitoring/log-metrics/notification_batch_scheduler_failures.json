@@ -1,0 +1,10 @@
+{
+  "name": "notification_batch_scheduler_failures",
+  "description": "Execuções do processNotificationBatch que o Cloud Scheduler registrou como falha (5xx, timeout, indisponível). #4417",
+  "filter": "resource.type=\"cloud_scheduler_job\" AND severity>=ERROR AND resource.labels.job_id=\"firebase-schedule-processNotificationBatch-southamerica-east1\"",
+  "metricDescriptor": {
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "unit": "1"
+  }
+}
