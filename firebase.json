@@ -32,6 +32,24 @@
         "destination": "/index.html"
       },
       {
+        "source": "/game/create",
+        "destination": "/app-shell.html"
+      },
+      {
+        "source": "/game/*",
+        "function": {
+          "functionId": "publicGamePage",
+          "region": "southamerica-east1"
+        }
+      },
+      {
+        "source": "/api/public-game/*",
+        "function": {
+          "functionId": "publicGamePage",
+          "region": "southamerica-east1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/app-shell.html"
       }
