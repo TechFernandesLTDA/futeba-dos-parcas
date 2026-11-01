@@ -2048,6 +2048,16 @@ Nenhum teste ou gate foi desabilitado.
   leva só a 1.41.0 (vc 82, targetSdk 36) a 100%. A release 45 (1.21.3, targetSdk 35) sai do pacote, porque a política da
   API 36 recusa atualizações abaixo dela desde 30/08/2026.
 
+## 2026-11-01: Correções de UI do iOS (#4422, #4424, #4425)
+
+- Decisão do dono: Android e web saem primeiro; no iOS, agora, só correção de bugs.
+- Imagens (#4422): o `composeApp` usa `coil-network-ktor3` + `ktor-client-darwin` no `iosMain` (Ktor 3.6.0, o mesmo do `:shared`).
+  O Android segue só com `coil-network-okhttp`. O fetcher se registra sozinho; nenhum `ImageLoader` customizado.
+- Abas (#4425): Início, Jogos, Grupos e Perfil trocam de aba com `popUpTo(HOME) { saveState }` + `launchSingleTop` + `restoreState`.
+  O alvo é `HOME`, não o destino inicial do grafo, que é `WELCOME` sem sessão. A barra persistente nas outras abas fica para depois (recurso novo).
+- Cadastro (#4424): rota `REGISTER` com o `RegisterScreen` existente; no sucesso vai para `PROFILE_SETUP` limpando a pilha.
+- Specs: BUGFIX_4422_IOS_COIL_NETWORK.md, BUGFIX_4424_IOS_REGISTER_ROUTE.md, BUGFIX_4425_IOS_TAB_NAVIGATION.md.
+
 ## 2026-11-01: Alertas como código e vigia da Play (#4417)
 
 - Políticas de alerta e métricas de log ficam em `monitoring/` (lista em `monitoring/manifest.json`) e são aplicadas por
