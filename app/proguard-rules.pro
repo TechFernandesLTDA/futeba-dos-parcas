@@ -137,7 +137,16 @@
 }
 
 # KMP Shared Module
--keep class com.futebadosparcas.shared.** { *; }
+# FIX #4410: a antiga regra `-keep class com.futebadosparcas.shared.** { *; }` não casava
+# com nenhuma classe (o :shared usa o pacote com.futebadosparcas.domain.*). Os modelos de
+# domain.model são lidos por reflexão via toObject()/toObjects() do Firestore no :app
+# (CustomClassMapper): precisam do construtor sem argumentos, dos getters/campos com o
+# nome original e das constantes de enum com o nome original. Sem esta regra o R8 (full
+# mode) removia o <init>() e renomeava tudo (ex.: Statistics -> jg3, userId -> b).
+# Mesmo formato da regra de data.model, que é o grupo de controle que funciona.
+-keep class com.futebadosparcas.domain.model.** { *; }
+# Única classe fora de data.model/domain.model passada a toObject() (UpdateNotificationSettingsUseCase).
+-keep class com.futebadosparcas.domain.usecase.user.NotificationSettings { *; }
 -keep class app.cash.sqldelight.** { *; }
 
 # ViewBinding
