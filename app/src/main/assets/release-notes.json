@@ -1,7 +1,48 @@
 {
   "platform": "android",
-  "generatedAt": "2026-10-12T15:46:31.269Z",
+  "generatedAt": "2026-11-01T20:14:42.229Z",
   "notes": [
+    {
+      "version": "1.42.0",
+      "buildNumber": 83,
+      "releaseDate": "2026-11-01",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O app ficou quatro vezes menor, abre mais rápido e carrega seus dados sem tropeços.",
+      "highlights": [
+        {
+          "icon": "speed",
+          "title": "Mais leve e rápido",
+          "description": "O download caiu de 55 para 14 MB e o app abre mais depressa."
+        },
+        {
+          "icon": "verified",
+          "title": "Dados sempre carregados",
+          "description": "Perfil, jogos, grupos e temporadas carregam certinho na versão da loja."
+        },
+        {
+          "icon": "delete",
+          "title": "Exclusão de conta completa",
+          "description": "Excluir a conta funciona do começo ao fim, inclusive quando é preciso entrar de novo."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Download menor (55 → 14 MB) e abertura do app mais leve.",
+        "Mais compatibilidade com aparelhos de páginas de memória de 16 KB."
+      ],
+      "fixed": [
+        "Perfil, jogos, grupos e temporadas não deixam mais de carregar na versão da loja.",
+        "Excluir a conta pede para entrar de novo quando necessário e trata grupos que ficariam sem dono.",
+        "Apagar um vídeo do jogo agora remove o card mesmo quando a miniatura não pode ser apagada."
+      ],
+      "issueRefs": [
+        4391,
+        4410,
+        4413
+      ]
+    },
     {
       "version": "1.41.0",
       "buildNumber": 82,
