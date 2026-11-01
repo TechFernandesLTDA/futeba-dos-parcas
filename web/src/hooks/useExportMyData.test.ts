@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 const mockExportMyData = vi.hoisted(() => vi.fn());
@@ -36,6 +36,7 @@ vi.mock('../utils/firebaseErrors', () => ({
 import {
   classifyExportMyDataError,
   exportFileName,
+  REVOKE_OBJECT_URL_DELAY_MS,
   useExportMyData,
 } from './useExportMyData';
 
@@ -75,13 +76,18 @@ describe('useExportMyData (#4482)', () => {
     clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('começa em idle', () => {
     const { result } = renderHook(() => useExportMyData());
     expect(result.current.status).toBe('idle');
     expect(result.current.errorMessage).toBeNull();
   });
 
-  it('baixa o JSON com nome datado, revoga a URL e mostra sucesso', async () => {
+  it('baixa o JSON com nome datado, revoga a URL depois e mostra sucesso', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     mockExportMyData.mockResolvedValue({ data: payload(true) });
     const { result } = renderHook(() => useExportMyData());
 
@@ -101,7 +107,11 @@ describe('useExportMyData (#4482)', () => {
     const anchor = clickSpy.mock.instances[0] as unknown as HTMLAnchorElement;
     expect(anchor.download).toMatch(/^futeba-dos-parcas-meus-dados-\d{4}-\d{2}-\d{2}\.json$/);
     expect(anchor.isConnected).toBe(false);
+    // Revogar no mesmo tick do clique cancela o download no Firefox/Safari
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(REVOKE_OBJECT_URL_DELAY_MS);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:export');
+    vi.useRealTimers();
 
     expect(mockShowSuccess).toHaveBeenCalledWith('Arquivo com seus dados baixado.');
     expect(mockShowWarning).not.toHaveBeenCalled();
@@ -188,6 +198,21 @@ describe('useExportMyData (#4482)', () => {
     expect(result.current.status).toBe('error');
     expect(mockShowError).toHaveBeenCalled();
     expect(mockShowSuccess).not.toHaveBeenCalled();
+  });
+
+  it('clique que falha revoga a URL na hora', async () => {
+    mockExportMyData.mockResolvedValue({ data: payload(true) });
+    clickSpy.mockImplementation(() => {
+      throw new Error('bloqueado');
+    });
+    const { result } = renderHook(() => useExportMyData());
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:export');
   });
 });
 

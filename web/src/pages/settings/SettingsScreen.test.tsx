@@ -198,7 +198,6 @@ describe('SettingsScreen', () => {
       });
       expect(mockExportMyData).toHaveBeenCalledTimes(1);
       expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:export');
     });
 
     it('mostra o estado de carregamento enquanto a exportação roda', async () => {

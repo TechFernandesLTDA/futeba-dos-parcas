@@ -57,14 +57,14 @@ A exportação e a exclusão resolvem o mesmo problema pelos dois lados: enumera
      --sucesso completo--> download do .json + toast de sucesso
      --sucesso parcial---> download do .json + toast de aviso ("algumas seções não puderam ser lidas")
      --limite diário-----> toast de erro "você já baixou seus dados 3 vezes hoje" + Alert inline
-     --outro erro--------> toast de erro + Alert inline com "Tentar de novo"
+     --outro erro--------> toast de erro + Alert inline; o botão volta a ficar ativo para tentar de novo
 ```
 
 ### 2.2 Estados
 
 | Estado | Comportamento |
 |--------|---------------|
-| idle | Botão "Baixar meus dados" (ícone Download), texto de apoio citando LGPD |
+| idle | Botão "Baixar meus dados" (ícone Download), texto de apoio dizendo o que vai no arquivo (JSON com dados pessoais, jogos, estatísticas e publicações) |
 | loading | Botão desabilitado com `CircularProgress` pequeno (ação, não lista) e texto "Gerando arquivo..." |
 | error | `Alert severity="error"` abaixo do botão com a mensagem; toast de erro; botão volta a ficar ativo. Mensagens próprias para limite diário (`resource-exhausted`) e arquivo acima do teto (`resource-exhausted` + `details.reason` `export-too-large`) |
 | success | Download disparado; toast de sucesso (ou de aviso quando parcial) |
@@ -73,7 +73,7 @@ Não há estado "empty": o perfil sempre existe para um usuário logado.
 
 ### 2.3 Responsividade
 
-Botão `fullWidth` dentro do card de privacidade, mesmo padrão do botão de exclusão; altura mínima 48 px. Funciona em phone portrait/landscape e desktop (`PageContainer maxWidth="form"`).
+Botão `fullWidth` logo abaixo do card de opções e acima do botão de exclusão, no mesmo padrão dele; altura mínima 48 px. Funciona em phone portrait/landscape e desktop (`PageContainer maxWidth="form"`).
 
 ### 2.4 Acessibilidade
 
@@ -169,7 +169,7 @@ Campos e esquemas vêm de `uid-owned-collections.ts` (verificados contra os escr
 Opções avaliadas:
 
 1. **Arquivo no Storage + URL assinada curta.** `getSignedUrl` depende de `iam.serviceAccounts.signBlob`, que o #4083 tirou do projeto (as mídias passaram para download token do Firebase). Reintroduzir exige mexer em IAM de produção. O download token do Firebase não expira, então não serve como "URL de curta duração". Além disso deixaria uma cópia persistida que precisaria de TTL e de regra de Storage.
-2. **Retorno direto (escolhida).** A resposta é o próprio JSON. Não cria cópia persistida, não precisa de `storage.rules` nem de limpeza, e o navegador salva o arquivo com `Blob` + `URL.createObjectURL`.
+2. **Retorno direto (escolhida).** A resposta é o próprio JSON. Não cria cópia persistida, não precisa de `storage.rules` nem de limpeza, e o navegador salva o arquivo com `Blob` + `URL.createObjectURL` (a URL é revogada 1 s depois do clique; revogar no mesmo tick cancela o download no Firefox/Safari).
 
 Limites e mitigações:
 

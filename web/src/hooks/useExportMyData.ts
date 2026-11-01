@@ -45,6 +45,12 @@ export function exportFileName(now: Date = new Date()): string {
   return `futeba-dos-parcas-meus-dados-${yyyy}-${mm}-${dd}.json`;
 }
 
+/**
+ * Espera antes de revogar a URL do Blob: Firefox e Safari podem cancelar o
+ * download se a URL for revogada no mesmo tick do clique.
+ */
+export const REVOKE_OBJECT_URL_DELAY_MS = 1000;
+
 /** Entrega o JSON ao navegador como download, sem passar por Storage. */
 function downloadJson(payload: ExportMyDataPayload, fileName: string): void {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -57,9 +63,11 @@ function downloadJson(payload: ExportMyDataPayload, fileName: string): void {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-  } finally {
+  } catch (err) {
     URL.revokeObjectURL(url);
+    throw err;
   }
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_OBJECT_URL_DELAY_MS);
 }
 
 /**
