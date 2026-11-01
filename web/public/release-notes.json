@@ -1,7 +1,38 @@
 {
   "platform": "web",
-  "generatedAt": "2026-10-12T04:52:10.014Z",
+  "generatedAt": "2026-11-01T01:54:55.166Z",
   "notes": [
+    {
+      "version": "1.60.0",
+      "buildNumber": null,
+      "releaseDate": "2026-10-31",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O site ficou mais leve e confortável no celular, e excluir a conta agora funciona do começo ao fim.",
+      "highlights": [],
+      "added": [
+        "Excluir a conta pede um login recente quando precisa, com senha ou Google, e mostra quais grupos você ainda precisa passar adiante antes de sair."
+      ],
+      "improved": [
+        "No iPhone e no Android, as telas não cortam mais embaixo nem rolam à toa por causa da barra do navegador, e os avisos respeitam o notch.",
+        "Botões, abas, chips e links pequenos ficaram mais fáceis de tocar.",
+        "O logo e a imagem de compartilhamento ficaram bem mais leves, e as páginas de apresentação abrem mais rápido.",
+        "No iPhone com tema escuro, a tela de abertura do app instalado também fica escura."
+      ],
+      "fixed": [
+        "Fotos, vídeos e a fila de espera de um jogo só aparecem para quem pode ver o jogo."
+      ],
+      "issueRefs": [
+        4391,
+        4393,
+        4403,
+        4404,
+        4405,
+        4406,
+        4407
+      ]
+    },
     {
       "version": "1.59.0",
       "buildNumber": null,
