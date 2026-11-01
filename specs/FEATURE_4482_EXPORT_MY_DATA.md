@@ -65,8 +65,8 @@ A exportação e a exclusão resolvem o mesmo problema pelos dois lados: enumera
 | Estado | Comportamento |
 |--------|---------------|
 | idle | Botão "Baixar meus dados" (ícone Download), texto de apoio citando LGPD |
-| loading | Botão desabilitado com `CircularProgress` pequeno (ação, não lista) e texto "Preparando seus dados…" |
-| error | `Alert severity="error"` abaixo do botão com a mensagem; toast de erro; botão volta a ficar ativo |
+| loading | Botão desabilitado com `CircularProgress` pequeno (ação, não lista) e texto "Gerando arquivo..." |
+| error | `Alert severity="error"` abaixo do botão com a mensagem; toast de erro; botão volta a ficar ativo. Mensagens próprias para limite diário (`resource-exhausted`) e arquivo acima do teto (`resource-exhausted` + `details.reason` `export-too-large`) |
 | success | Download disparado; toast de sucesso (ou de aviso quando parcial) |
 
 Não há estado "empty": o perfil sempre existe para um usuário logado.
@@ -77,7 +77,7 @@ Botão `fullWidth` dentro do card de privacidade, mesmo padrão do botão de exc
 
 ### 2.4 Acessibilidade
 
-- `aria-label` próprio no botão; `aria-busy` durante o carregamento.
+- Nome acessível = texto visível do botão, com `aria-describedby` apontando para a descrição; `aria-busy` e `disabled` durante o carregamento.
 - `Alert` com `role="alert"`.
 - Alvo de toque ≥ 48 px.
 
@@ -118,7 +118,7 @@ web SettingsScreen
 }
 ```
 
-Cada item de lista leva `id` e `path` (o caminho no Firestore), útil para o titular pedir correção (art. 18, III).
+Cada item de lista leva `document_id` e `document_path` (o caminho no Firestore), útil para o titular pedir correção (art. 18, III).
 
 ### 3.3 Fontes exportadas
 
@@ -219,7 +219,7 @@ Log `[EXPORT_MY_DATA]` com `uidHash`, contagens por fonte, `incomplete_sources`,
 ### Mobile/Web DoD
 
 - [x] Responsividade: botão fullWidth, 48 px, `PageContainer` do card existente
-- [x] Acessibilidade: `aria-label`, `aria-busy`, `role="alert"`
+- [x] Acessibilidade: `aria-describedby`, `aria-busy`, `role="alert"`
 - [x] Performance: leituras paralelas, paginação de 500, sem listener
 - [x] Offline/Erros: erro com mensagem e nova tentativa; exportação parcial avisada
 

@@ -742,6 +742,29 @@ export const toggleFollowUser = httpsCallable<
 // (com details.groups [{id, name}]) e resource-exhausted (3 por hora).
 export const deleteAccount = httpsCallable<void, { success: boolean }>(functions, 'deleteAccount');
 
+/**
+ * Resumo do arquivo devolvido por `exportMyData` (#4482). O conteúdo de `data`
+ * não é interpretado pelo web: vai direto para o arquivo JSON baixado.
+ */
+export interface ExportMyDataPayload {
+  schema_version: number;
+  format: string;
+  generated_at: string;
+  user_id: string;
+  complete: boolean;
+  incomplete_sources: Array<{ source: string; reason: string }>;
+  truncated_sources: string[];
+  counts: Record<string, number>;
+  data: Record<string, unknown>;
+}
+
+// Exportação dos dados do titular — LGPD art. 18, V (portabilidade).
+// Erros: resource-exhausted (3 por 24h) ou resource-exhausted + details.reason
+// 'export-too-large' (acima de 8 MiB). A função tem timeout de 180 s.
+export const exportMyData = httpsCallable<void, ExportMyDataPayload>(functions, 'exportMyData', {
+  timeout: 180000,
+});
+
 // Soft Delete
 export const softDeleteGame = httpsCallable(functions, 'softDeleteGame');
 export const softDeleteGroup = httpsCallable(functions, 'softDeleteGroup');

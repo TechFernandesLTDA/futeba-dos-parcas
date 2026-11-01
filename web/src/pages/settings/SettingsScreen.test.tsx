@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -9,6 +9,8 @@ const mockLogout = vi.hoisted(() => vi.fn());
 const mockShowSuccess = vi.hoisted(() => vi.fn());
 const mockShowError = vi.hoisted(() => vi.fn());
 const mockDeleteAccount = vi.hoisted(() => vi.fn());
+const mockExportMyData = vi.hoisted(() => vi.fn());
+const mockShowWarning = vi.hoisted(() => vi.fn());
 const mockQueryClientClear = vi.hoisted(() => vi.fn());
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -18,9 +20,12 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Usuário estável entre renders, como no AuthContext real: um objeto novo a
+// cada render reabre o efeito [user] e faz o getDoc rodar em laço.
+const mockUser = vi.hoisted(() => ({ id: 'test-id', name: 'Jogador Teste', email: 'test@test.com' }));
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'test-id', name: 'Jogador Teste', email: 'test@test.com' },
+    user: mockUser,
     loading: false,
     logout: mockLogout,
   }),
@@ -30,6 +35,7 @@ vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({
     showSuccess: mockShowSuccess,
     showError: mockShowError,
+    showWarning: mockShowWarning,
   }),
 }));
 
@@ -52,6 +58,7 @@ vi.mock('firebase/auth', () => ({
 
 vi.mock('../../services/cloudFunctions', () => ({
   deleteAccount: mockDeleteAccount,
+  exportMyData: mockExportMyData,
 }));
 
 vi.mock('firebase/functions', () => ({
@@ -153,6 +160,73 @@ describe('SettingsScreen', () => {
     renderSettingsScreen();
     await waitFor(() => {
       expect(screen.getByText('Sobre o App')).toBeInTheDocument();
+    });
+  });
+
+  describe('Baixar meus dados (#4482)', () => {
+    beforeEach(() => {
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        writable: true,
+        value: vi.fn(() => 'blob:export'),
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        writable: true,
+        value: vi.fn(),
+      });
+      // O jsdom tenta navegar para a URL blob: ao clicar no <a download>; o
+      // download em si é coberto em useExportMyData.test.ts
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    });
+
+    it('exibe o botão com a descrição associada', async () => {
+      renderSettingsScreen();
+      const button = await screen.findByRole('button', { name: 'Baixar meus dados' });
+      expect(button).toHaveAttribute('aria-describedby', 'export-my-data-desc');
+      expect(document.getElementById('export-my-data-desc')).toHaveTextContent(
+        /arquivo JSON/,
+      );
+    });
+
+    it('baixa o arquivo e mostra toast de sucesso', async () => {
+      mockExportMyData.mockResolvedValue({ data: { complete: true, data: {} } });
+      renderSettingsScreen();
+      fireEvent.click(await screen.findByRole('button', { name: 'Baixar meus dados' }));
+      await waitFor(() => {
+        expect(mockShowSuccess).toHaveBeenCalledWith('Arquivo com seus dados baixado.');
+      });
+      expect(mockExportMyData).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:export');
+    });
+
+    it('mostra o estado de carregamento enquanto a exportação roda', async () => {
+      let resolveExport: (value: unknown) => void = () => undefined;
+      mockExportMyData.mockReturnValue(
+        new Promise((resolve) => {
+          resolveExport = resolve;
+        }),
+      );
+      renderSettingsScreen();
+      fireEvent.click(await screen.findByRole('button', { name: 'Baixar meus dados' }));
+      const busy = await screen.findByRole('button', { name: 'Gerando arquivo...' });
+      expect(busy).toBeDisabled();
+      expect(busy).toHaveAttribute('aria-busy', 'true');
+      resolveExport({ data: { complete: true, data: {} } });
+      await screen.findByRole('button', { name: 'Baixar meus dados' });
+    });
+
+    it('mostra alerta e toast de erro quando o limite diário estoura', async () => {
+      mockExportMyData.mockRejectedValue({ code: 'functions/resource-exhausted' });
+      renderSettingsScreen();
+      fireEvent.click(await screen.findByRole('button', { name: 'Baixar meus dados' }));
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('limite de 3 exportações por dia');
+      expect(mockShowError).toHaveBeenCalledWith(
+        'Você atingiu o limite de 3 exportações por dia. Tente de novo amanhã.',
+      );
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });
 

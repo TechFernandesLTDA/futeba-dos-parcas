@@ -34,6 +34,7 @@ import {
   EmojiEvents as TrophyIcon,
   RateReview as FeedbackIcon,
   DeleteForever as DeleteForeverIcon,
+  Download as DownloadIcon,
   Notifications as NotificationsIcon,
   NewReleases as NewReleasesIcon,
   RocketLaunch as RocketLaunchIcon,
@@ -53,6 +54,7 @@ import { ConnectedAccounts } from '../../components/settings/ConnectedAccounts';
 import { DeleteAccountReauthDialog } from '../../components/settings/DeleteAccountReauthDialog';
 import { DeleteAccountBlockedGroupsDialog } from '../../components/settings/DeleteAccountBlockedGroupsDialog';
 import { useDeleteAccount } from '../../hooks/useDeleteAccount';
+import { useExportMyData } from '../../hooks/useExportMyData';
 import { TeamBadge } from '../../components/team/TeamBadge';
 import { avatarSizes } from '../../theme/iconSizes';
 
@@ -87,6 +89,13 @@ export const SettingsScreen: React.FC = () => {
     reset: resetDeleteAccount,
   } = useDeleteAccount();
   const deleting = deleteStatus === 'deleting';
+  // Exportação dos dados — LGPD art. 18, V (#4482)
+  const {
+    status: exportStatus,
+    errorMessage: exportErrorMessage,
+    start: startExportMyData,
+  } = useExportMyData();
+  const exporting = exportStatus === 'exporting';
   const reauthOpen = deleteStatus === 'needs-reauth' || deleteStatus === 'reauthenticating';
 
   const [settings, setSettings] = useState<Settings>({
@@ -367,6 +376,39 @@ export const SettingsScreen: React.FC = () => {
                 </ListItemButton>
               </List>
             </Card>
+
+            {/* Exportação dos dados do titular — LGPD art. 18, V (#4482) */}
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                id="export-my-data-desc"
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
+                {t('settings.exportMyDataDesc')}
+              </Typography>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => {
+                  void startExportMyData();
+                }}
+                disabled={exporting}
+                aria-busy={exporting}
+                aria-describedby="export-my-data-desc"
+                startIcon={
+                  exporting ? <CircularProgress size={18} color="inherit" /> : <DownloadIcon />
+                }
+                sx={{ minHeight: 48 }}
+              >
+                {exporting ? t('settings.exportMyDataLoading') : t('settings.exportMyData')}
+              </Button>
+              {exportStatus === 'error' && exportErrorMessage && (
+                <Alert severity="error" role="alert" sx={{ mt: 1 }}>
+                  {exportErrorMessage}
+                </Alert>
+              )}
+            </Box>
 
             {/* Seção de exclusão de conta — LGPD art. 18 */}
             <Box sx={{ mt: 2 }}>
