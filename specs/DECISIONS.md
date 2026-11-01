@@ -2062,3 +2062,13 @@ Nenhum teste ou gate foi desabilitado.
   gravada e página da loja em 404 abrem uma issue. Depois do lançamento público, o aviso de recusa de atualização depende
   do e-mail do Play Console. O "auditor semanal" citado na #4201 em 12/10 nunca existiu.
 - Spec: ops-2026-11-01-alertas-runbook-vigia-play-4417.md.
+
+## 2026-11-01: Keep do R8 para modelos lidos por reflexão do Firestore (#4410)
+
+- O `mapping.txt` do release mostrou `domain.model` renomeado e sem `<init>()` (ex.: `Statistics -> jg3`; o `<init>()` de
+  `User` aparece como removido em `usage.txt`). A regra `-keep class com.futebadosparcas.shared.** { *; }` não casava com
+  nenhuma classe.
+- Decisão: `-keep class com.futebadosparcas.domain.model.** { *; }` (por pacote, como `data.model`) e keep explícito da
+  `NotificationSettings`. Não mexer em `isMinifyEnabled`/full mode às vésperas da revisão da Play.
+- Guarda: `FirestoreReflectionKeepRulesTest` exige keep completo para toda classe passada a `toObject`/`toObjects`.
+- Spec: BUGFIX_2026-11-01_R8_KEEP_DOMAIN_MODEL_4410.md.
