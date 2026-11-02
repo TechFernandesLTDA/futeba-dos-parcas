@@ -1,7 +1,10 @@
 package com.futebadosparcas.ui.about
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,9 +46,20 @@ fun AboutScreen(
     onReauthGoogleFailed: () -> Unit = {},
     onDismissReauth: () -> Unit = {},
     onDismissBlockingGroups: () -> Unit = {},
-    onDismissDeleteError: () -> Unit = {}
+    onDismissDeleteError: () -> Unit = {},
+    // #4483: baixar meus dados (LGPD art. 18, V)
+    exportState: ExportMyDataUiState = ExportMyDataUiState.Idle,
+    exportSuggestedFileName: () -> String = { "" },
+    onExportFileChosen: (Uri?) -> Unit = {},
+    onExportPickerUnavailable: () -> Unit = {},
+    onDismissExportResult: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    // Seletor do sistema ANTES da callable: cancelar não gasta a cota diária.
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(EXPORT_MIME_TYPE)
+    ) { uri -> onExportFileChosen(uri) }
+    val isExporting = exportState is ExportMyDataUiState.Loading
     var showFirstStepDialog by remember { mutableStateOf(false) }
     var showSecondStepDialog by remember { mutableStateOf(false) }
     var confirmEmail by remember { mutableStateOf("") }
@@ -60,6 +76,10 @@ fun AboutScreen(
     DeleteAccountBlockingGroupsDialog(
         groups = deleteState.blockingGroups,
         onDismiss = onDismissBlockingGroups
+    )
+    ExportMyDataResultDialog(
+        state = exportState,
+        onDismiss = onDismissExportResult
     )
 
     if (showFirstStepDialog) {
@@ -196,6 +216,14 @@ fun AboutScreen(
                         data = Uri.parse("https://futebadosparcas.com.br/terms_of_service.html")
                     }
                     ExternalIntentHelper.startActivitySafely(context, intent)
+                },
+                isExporting = isExporting,
+                onExportMyDataClick = {
+                    try {
+                        exportLauncher.launch(exportSuggestedFileName())
+                    } catch (e: ActivityNotFoundException) {
+                        onExportPickerUnavailable()
+                    }
                 },
                 onDeleteAccountClick = {
                     showFirstStepDialog = true
@@ -412,6 +440,8 @@ private fun LinksCard(
     onContactClick: () -> Unit,
     onPrivacyClick: () -> Unit,
     onTermsClick: () -> Unit,
+    isExporting: Boolean,
+    onExportMyDataClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
     onChildSafetyClick: () -> Unit
 ) {
@@ -464,6 +494,11 @@ private fun LinksCard(
                 onClick = onTermsClick
             )
             HorizontalDivider()
+            ExportMyDataMenuItem(
+                isExporting = isExporting,
+                onClick = onExportMyDataClick
+            )
+            HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.DeleteForever,
                 title = stringResource(R.string.about_delete_account),
@@ -489,10 +524,19 @@ private fun LinkMenuItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    trailing: @Composable () -> Unit = {
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 ) {
     Surface(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -520,13 +564,91 @@ private fun LinkMenuItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            trailing()
         }
     }
+}
+
+/** MIME do arquivo de exportação (#4483). */
+private const val EXPORT_MIME_TYPE = "application/json"
+
+/**
+ * Item "Baixar meus dados" (#4483). Enquanto gera, troca o chevron por um
+ * spinner pequeno e fica desabilitado (sem segundo disparo).
+ */
+@Composable
+private fun ExportMyDataMenuItem(
+    isExporting: Boolean,
+    onClick: () -> Unit
+) {
+    val loadingText = stringResource(R.string.about_export_my_data_loading)
+    LinkMenuItem(
+        icon = Icons.Default.FileDownload,
+        title = stringResource(R.string.about_export_my_data),
+        subtitle = if (isExporting) loadingText else stringResource(R.string.about_export_my_data_desc),
+        onClick = onClick,
+        enabled = !isExporting,
+        trailing = {
+            if (isExporting) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .semantics { contentDescription = loadingText },
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    )
+}
+
+/** Resultado da exportação (#4483): sucesso, parcial ou erro. Idle/Loading não mostram nada. */
+@Composable
+private fun ExportMyDataResultDialog(
+    state: ExportMyDataUiState,
+    onDismiss: () -> Unit
+) {
+    val (titleRes, messageRes, isError) = when (state) {
+        is ExportMyDataUiState.Success -> if (state.partial) {
+            Triple(R.string.about_export_my_data_partial_title, R.string.about_export_my_data_partial, false)
+        } else {
+            Triple(R.string.about_export_my_data_success_title, R.string.about_export_my_data_success, false)
+        }
+        is ExportMyDataUiState.Error ->
+            Triple(R.string.about_export_my_data_error_title, state.messageRes, true)
+        ExportMyDataUiState.Idle, ExportMyDataUiState.Loading -> return
+    }
+    val isPartial = state is ExportMyDataUiState.Success && state.partial
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = when {
+                    isError -> Icons.Default.ErrorOutline
+                    isPartial -> Icons.Default.Warning
+                    else -> Icons.Default.CheckCircle
+                },
+                contentDescription = null,
+                tint = when {
+                    isError -> MaterialTheme.colorScheme.error
+                    isPartial -> MaterialTheme.colorScheme.tertiary
+                    else -> MaterialTheme.colorScheme.primary
+                }
+            )
+        },
+        title = { Text(stringResource(titleRes)) },
+        text = { Text(stringResource(messageRes)) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ok))
+            }
+        }
+    )
 }
 
 /**

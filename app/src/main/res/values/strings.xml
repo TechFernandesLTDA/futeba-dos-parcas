@@ -2776,6 +2776,18 @@ subir no ranking!</string>
     <string name="about_terms_of_service_desc">Condições de uso do aplicativo</string>
     <string name="about_delete_account">Excluir Conta</string>
     <string name="about_delete_account_desc">Solicitar exclusão permanente da sua conta</string>
+    <!-- Baixar meus dados (#4483, LGPD art. 18, V) -->
+    <string name="about_export_my_data">Baixar meus dados</string>
+    <string name="about_export_my_data_desc">Gera um arquivo JSON com seus dados pessoais, jogos, estatísticas e o que você publicou no app.</string>
+    <string name="about_export_my_data_loading">Gerando arquivo…</string>
+    <string name="about_export_my_data_success_title">Dados salvos</string>
+    <string name="about_export_my_data_success">Arquivo com seus dados salvo.</string>
+    <string name="about_export_my_data_partial_title">Exportação parcial</string>
+    <string name="about_export_my_data_partial">Arquivo salvo, mas algumas partes não puderam ser incluídas. Tente de novo mais tarde para obter a cópia completa.</string>
+    <string name="about_export_my_data_error_title">Não foi possível exportar</string>
+    <string name="about_export_my_data_error">Não foi possível gerar o arquivo com seus dados. Tente de novo em instantes.</string>
+    <string name="about_export_my_data_rate_limited">Você atingiu o limite de 3 exportações por dia. Tente de novo amanhã.</string>
+    <string name="about_export_my_data_too_large">Seus dados passaram do tamanho máximo para download direto. Fale com o suporte para receber a cópia.</string>
     <string name="about_delete_account_warning">Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos. Esta ação não pode ser desfeita.</string>
     <string name="about_delete_account_continue">Continuar</string>
     <string name="about_delete_account_confirm_title">Confirme a exclusão</string>

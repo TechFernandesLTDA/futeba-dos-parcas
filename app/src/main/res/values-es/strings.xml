@@ -602,4 +602,16 @@
     <string name="delete_account_blocked_group_item">• %1$s</string>
     <string name="delete_account_blocked_group_unnamed">Grupo sin nombre</string>
     <string name="delete_account_blocked_ok">Entendido</string>
+    <!-- Baixar meus dados (#4483, LGPD art. 18, V) -->
+    <string name="about_export_my_data">Descargar mis datos</string>
+    <string name="about_export_my_data_desc">Genera un archivo JSON con tus datos personales, partidos, estadísticas y lo que publicaste en la app.</string>
+    <string name="about_export_my_data_loading">Generando archivo…</string>
+    <string name="about_export_my_data_success_title">Datos guardados</string>
+    <string name="about_export_my_data_success">Archivo con tus datos guardado.</string>
+    <string name="about_export_my_data_partial_title">Exportación parcial</string>
+    <string name="about_export_my_data_partial">Archivo guardado, pero algunas partes no se pudieron incluir. Inténtalo más tarde para obtener la copia completa.</string>
+    <string name="about_export_my_data_error_title">No se pudo exportar</string>
+    <string name="about_export_my_data_error">No pudimos generar el archivo con tus datos. Inténtalo de nuevo en unos instantes.</string>
+    <string name="about_export_my_data_rate_limited">Alcanzaste el límite de 3 exportaciones por día. Inténtalo de nuevo mañana.</string>
+    <string name="about_export_my_data_too_large">Tus datos superan el tamaño máximo para descarga directa. Contacta al soporte para recibir la copia.</string>
 </resources>

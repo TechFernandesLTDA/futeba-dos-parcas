@@ -1047,6 +1047,9 @@ fun AppNavHost(
             val androidAuthRepo: com.futebadosparcas.data.repository.AuthRepository = koinInject()
             val deleteViewModel: com.futebadosparcas.ui.about.DeleteAccountViewModel = koinViewModel()
             val deleteState by deleteViewModel.uiState.collectAsStateWithLifecycle()
+            // #4483: baixar meus dados (LGPD art. 18, V)
+            val exportViewModel: com.futebadosparcas.ui.about.ExportMyDataViewModel = koinViewModel()
+            val exportState by exportViewModel.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(deleteState.deleted) {
                 if (deleteState.deleted) {
@@ -1070,6 +1073,11 @@ fun AppNavHost(
                     onDismissReauth = deleteViewModel::dismissReauth,
                     onDismissBlockingGroups = deleteViewModel::dismissBlockingGroups,
                     onDismissDeleteError = deleteViewModel::dismissError,
+                    exportState = exportState,
+                    exportSuggestedFileName = exportViewModel::suggestedFileName,
+                    onExportFileChosen = exportViewModel::onFileChosen,
+                    onExportPickerUnavailable = exportViewModel::onPickerUnavailable,
+                    onDismissExportResult = exportViewModel::dismissResult,
                     onNavigateToWhatsNew = { navController.navigate(Screen.WhatsNew.route) },
                     onLogout = {
                         androidAuthRepo.logout()
