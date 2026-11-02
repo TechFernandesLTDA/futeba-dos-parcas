@@ -41,13 +41,13 @@ jobs:
       should_run: ${{ steps.detect.outputs.should_run }}
     steps:
       - name: Checkout code and comparison commits
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up repository Node.js version
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
@@ -61,7 +61,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v6
@@ -100,7 +100,7 @@ jobs:
       - name: Upload test results
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kmp-test-results
           path: |
@@ -120,7 +120,7 @@ jobs:
     needs: kmp-shared-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup JDK 21 (JetBrains, daemon toolchain)
         uses: actions/setup-java@v6
@@ -155,7 +155,7 @@ jobs:
     if: vars.IOS_MAC_RUNNER == 'true' && needs.ios_app_scope.outputs.should_run == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@1242409711ff5721add51979e9e11e23ebb7e5a4  # v1
@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-logs
           path: |
