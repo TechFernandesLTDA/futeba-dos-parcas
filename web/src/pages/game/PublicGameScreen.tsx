@@ -154,7 +154,8 @@ export const PublicGameScreen: React.FC = () => {
     const confirmedLabel = game.maxPlayers !== null
       ? t('publicGame.confirmedOf', { count: game.playersCount, max: game.maxPlayers })
       : t('publicGame.confirmedNoLimit', { count: game.playersCount });
-    const spotsLabel = game.spotsLeft === null
+    // Jogo cancelado/encerrado não aceita confirmação: sem "vagas abertas" (#4492)
+    const spotsLabel = !accepting || game.spotsLeft === null
       ? null
       : game.spotsLeft === 0
         ? t('publicGame.full')
@@ -166,11 +167,13 @@ export const PublicGameScreen: React.FC = () => {
         <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
             <Chip size="small" color={accepting ? 'primary' : 'default'} label={t(STATUS_KEYS[game.status])} />
-            <Chip
-              size="small"
-              variant="outlined"
-              label={game.joinMode === 'OPEN' ? t('publicGame.joinOpen') : t('publicGame.joinClosed')}
-            />
+            {accepting ? (
+              <Chip
+                size="small"
+                variant="outlined"
+                label={game.joinMode === 'OPEN' ? t('publicGame.joinOpen') : t('publicGame.joinClosed')}
+              />
+            ) : null}
           </Stack>
 
           <Typography id="public-game-title" variant="h5" component="h1" color="text.primary" sx={{ mb: 2.5 }}>
