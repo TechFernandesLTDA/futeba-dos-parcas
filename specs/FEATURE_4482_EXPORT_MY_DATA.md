@@ -120,6 +120,8 @@ web SettingsScreen
 
 Cada item de lista leva `document_id` e `document_path` (o caminho no Firestore), útil para o titular pedir correção (art. 18, III).
 
+Exceção (#4489): documentos compartilhados lidos por allowlist levam só `document_ref`, um HMAC do caminho com chave aleatória gerada a cada exportação e nunca devolvida (um hash sem segredo seria reversível por dicionário, já que o titular conhece o próprio uid, os jogos e os colegas de grupo). Ids e caminhos desses documentos podem embutir o uid de terceiros (ex.: `mvp_votes/{gameId}_{voterId}_{categoria}`, chats de DM formados pelos uids dos participantes), o que desfaria o anonimato de quem votou ou avaliou. Jogos e grupos do titular mantêm o id real (id automático da entidade). Mensagens levam `chat_ref` opaco em vez de `chat_id`. A referência é estável só dentro de um arquivo (agrupa mensagens do mesmo chat); para pedir correção de um documento compartilhado, o titular descreve o item (jogo, data, categoria).
+
 ### 3.3 Fontes exportadas
 
 Campos e esquemas vêm de `uid-owned-collections.ts` (verificados contra os escritores reais). "Própria" = documento do titular, exportado inteiro menos credenciais. "Allowlist" = só os campos listados no código.
