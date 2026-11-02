@@ -369,6 +369,13 @@ val viewModelKoinModule = module {
         )
     }
 
+    // #4483: baixar meus dados (LGPD art. 18, V)
+    viewModel {
+        com.futebadosparcas.ui.about.ExportMyDataViewModel(
+            repository = get()
+        )
+    }
+
     viewModel {
         SchedulesViewModel(
             scheduleRepository = get(),

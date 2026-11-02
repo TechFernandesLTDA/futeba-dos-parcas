@@ -602,4 +602,16 @@
     <string name="delete_account_blocked_group_item">• %1$s</string>
     <string name="delete_account_blocked_group_unnamed">Unnamed group</string>
     <string name="delete_account_blocked_ok">Got it</string>
+    <!-- Baixar meus dados (#4483, LGPD art. 18, V) -->
+    <string name="about_export_my_data">Download my data</string>
+    <string name="about_export_my_data_desc">Creates a JSON file with your personal data, games, statistics and what you posted in the app.</string>
+    <string name="about_export_my_data_loading">Creating file…</string>
+    <string name="about_export_my_data_success_title">Data saved</string>
+    <string name="about_export_my_data_success">File with your data saved.</string>
+    <string name="about_export_my_data_partial_title">Partial export</string>
+    <string name="about_export_my_data_partial">File saved, but some parts could not be included. Try again later to get the complete copy.</string>
+    <string name="about_export_my_data_error_title">Could not export</string>
+    <string name="about_export_my_data_error">We could not create the file with your data. Try again in a moment.</string>
+    <string name="about_export_my_data_rate_limited">You reached the limit of 3 exports per day. Try again tomorrow.</string>
+    <string name="about_export_my_data_too_large">Your data is larger than the maximum size for direct download. Contact support to receive the copy.</string>
 </resources>

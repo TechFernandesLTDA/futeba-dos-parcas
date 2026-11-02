@@ -221,4 +221,12 @@ val repositoryKoinModule = module {
     single<com.futebadosparcas.data.repository.GameVideosRepository> {
         com.futebadosparcas.data.repository.GameVideosRepository(get(), get(), get(), get())
     }
+
+    // Issue #4483: exportação dos dados do titular (LGPD art. 18, V)
+    single<com.futebadosparcas.data.repository.MyDataExportRepository> {
+        com.futebadosparcas.data.repository.MyDataExportRepositoryImpl(
+            functions = get(),
+            contentResolver = androidContext().contentResolver
+        )
+    }
 }
