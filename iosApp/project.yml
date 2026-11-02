@@ -2,7 +2,8 @@
 # Uso: cd iosApp && xcodegen generate
 #
 # Requisitos prévios:
-# 1. Build do framework KMP (ComposeApp já embute o :shared):
+# 1. Build do framework KMP (ComposeApp já embute o :shared). A fase de script do
+#    target já escolhe a tarefa pelo SDK e pela configuração; à mão, por exemplo:
 #    ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 # 2. CocoaPods: pod install (usa Podfile)
 # 3. Abrir iosApp.xcworkspace (gerado por pod install)
@@ -51,12 +52,10 @@ targets:
     # `implementation(project(":shared"))`) e o runtime do Kotlin/Native. Linkar também
     # o `shared.framework` estático duplicava o runtime (1152 símbolos duplicados no
     # Xcode 27.1 com Kotlin 2.4.20). Nenhum .swift faz `import shared`.
-    dependencies:
-      # Framework ESTÁTICO (`ar archive`): o código entra no binário do app no link.
-      # Com `embed: true` o Xcode copiava para Frameworks/ um stub vazio de 33 KB
-      # que nada carrega (otool -L não lista o ComposeApp).
-      - framework: ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework
-        embed: false
+    # Framework ESTÁTICO (`ar archive`): o código entra no binário do app no link, via
+    # OTHER_LDFLAGS + FRAMEWORK_SEARCH_PATHS abaixo. Não há `dependencies: framework:`
+    # porque o caminho dela é fixo e prendia o build ao simulador Debug (#4430); e com
+    # `embed: true` o Xcode copiava para Frameworks/ um stub vazio de 33 KB.
     attributes:
       SystemCapabilities:
         com.apple.Push:
@@ -72,14 +71,14 @@ targets:
         INFOPLIST_FILE: iosApp/Info.plist
         CODE_SIGN_ENTITLEMENTS: iosApp/iosApp.entitlements
         SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
-        # Caminho por SDK: evita o aviso "directory not found" do framework de device
-        # num build de simulador (e vice-versa).
-        "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]":
+        # Framework KMP por SDK (KMP_TARGET) e configuração (KMP_BUILD_TYPE, em
+        # `configs`): simulador ou device, debug ou release. O archive (Release,
+        # iphoneos) linka iosArm64/releaseFramework (#4430).
+        "KMP_TARGET[sdk=iphonesimulator*]": iosSimulatorArm64
+        "KMP_TARGET[sdk=iphoneos*]": iosArm64
+        FRAMEWORK_SEARCH_PATHS:
           - "$(inherited)"
-          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
-        "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]":
-          - "$(inherited)"
-          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/$(KMP_TARGET)/$(KMP_BUILD_TYPE)Framework"
         OTHER_LDFLAGS:
           - "$(inherited)"
           - "-framework"
@@ -92,9 +91,11 @@ targets:
         Debug:
           APS_ENVIRONMENT: development
           APP_ATTEST_ENVIRONMENT: development
+          KMP_BUILD_TYPE: debug
         Release:
           APS_ENVIRONMENT: production
           APP_ATTEST_ENVIRONMENT: production
+          KMP_BUILD_TYPE: release
     # Sem `info:` block — Info.plist mantido manualmente (privacy descriptions,
     # CFBundleURLTypes pra OAuth, UISupportedInterfaceOrientations, etc).
     # `info:` faz xcodegen REGENERAR o plist, sobrescrevendo essas keys.
@@ -107,10 +108,19 @@ targets:
           fi
           cd "$SRCROOT/.."
           # O ComposeApp embute o :shared; não é preciso linkar o shared.framework.
-          ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+          # Tarefa conforme SDK e configuração (#4430): ex. linkReleaseFrameworkIosArm64.
+          case "$KMP_BUILD_TYPE" in
+            release) BUILD_TYPE=Release ;;
+            *) BUILD_TYPE=Debug ;;
+          esac
+          case "$KMP_TARGET" in
+            iosArm64) TARGET=IosArm64 ;;
+            *) TARGET=IosSimulatorArm64 ;;
+          esac
+          ./gradlew ":composeApp:link${BUILD_TYPE}Framework${TARGET}"
         name: "Build KMP Framework (ComposeApp, inclui shared)"
         outputFiles:
-          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework"
+          - "$(SRCROOT)/../composeApp/build/bin/$(KMP_TARGET)/$(KMP_BUILD_TYPE)Framework/ComposeApp.framework"
     # Recursos do Compose Multiplatform (strings.xml, files/). O framework linkado à mão
     # (sem o plugin CocoaPods nem embedAndSignAppleFrameworkForXcode) NÃO leva os .cvr;
     # sem esta fase o app fecha no primeiro stringResource() com MissingResourceException
