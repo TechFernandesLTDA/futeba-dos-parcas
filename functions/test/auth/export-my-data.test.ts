@@ -169,6 +169,7 @@ import {
   OTHER_PERSON_PLACEHOLDER,
   buildExport,
   enforceSizeCap,
+  opaqueRef,
   exportMyData,
   stripCredentials,
   toJsonSafe,
@@ -554,9 +555,13 @@ describe("exportMyData — conteúdo", () => {
 
   test("votos e avaliações recebidos não revelam quem votou/avaliou", async () => {
     const {data} = await exportFor();
+    // O id do voto embute o uid de quem votou: só sai a referência opaca.
     expect(data.mvp_votes_received).toEqual([
-      {game_id: "game1", category: "MVP", document_id: "game1_terceiro_MVP", document_path: "mvp_votes/game1_terceiro_MVP"},
+      {game_id: "game1", category: "MVP", document_ref: opaqueRef(UID, "mvp_votes/game1_terceiro_MVP")},
     ]);
+    expect(JSON.stringify(data.mvp_votes_received)).not.toContain(OTHER);
+    expect(JSON.stringify(data.mvp_votes_received)).not.toContain("terceiro");
+    expect(opaqueRef(UID, "x")).not.toEqual(opaqueRef("outro-titular", "x"));
     expect((data.mvp_votes_cast as Data[])[0]).not.toHaveProperty("voted_player_id");
     const received = (data.reputation_received as Data[])[0];
     expect(received).toEqual(expect.objectContaining({overall: 3}));
@@ -582,8 +587,8 @@ describe("exportMyData — conteúdo", () => {
   test("caixa: os dois papéis e o nome do outro pagador apagado da descrição", async () => {
     const {data} = await exportFor();
     const entries = data.cashbox_entries as Data[];
-    const launched = entries.find((entry) => entry.document_id === "c1");
-    const paid = entries.find((entry) => entry.document_id === "c2");
+    const launched = entries.find((entry) => entry.document_ref === opaqueRef(UID, "groups/g1/cashbox/c1"));
+    const paid = entries.find((entry) => entry.document_ref === opaqueRef(UID, "groups/g1/cashbox/c2"));
     expect(launched).toEqual(expect.objectContaining({
       matched_by: ["created_by"],
       description: `Pagamento de ${OTHER_PERSON_PLACEHOLDER}`,
@@ -607,8 +612,9 @@ describe("exportMyData — conteúdo", () => {
     expect((data.notifications as Data[])[0]).not.toHaveProperty("sender_name");
     expect((data.game_summons as Data[])[0]).not.toHaveProperty("summoned_by_name");
     expect(data.direct_messages_sent).toEqual([
-      expect.objectContaining({text: "Bora jogar?", chat_id: "chat1", created_at: ISO}),
+      expect.objectContaining({text: "Bora jogar?", chat_ref: opaqueRef(UID, "chat:chat1"), created_at: ISO}),
     ]);
+    expect(data.direct_messages_sent as Data[]).not.toContainEqual(expect.objectContaining({chat_id: expect.anything()}));
   });
 
   test("auditoria pelos campos do mapa e pelo userId do wrapper, sem IP", async () => {

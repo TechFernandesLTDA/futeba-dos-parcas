@@ -478,19 +478,41 @@ function ownItem(snap: DocumentSnapshot): JsonObject {
 }
 
 /**
- * Documento compartilhado: só a allowlist.
+ * Referência opaca e estável dentro da exportação do titular. Ids e caminhos
+ * de documentos compartilhados podem embutir o uid de terceiros (ex.:
+ * `mvp_votes/{gameId}_{voterId}_{categoria}`), o que desfaria o anonimato de
+ * quem votou ou avaliou. O hash com o uid do titular não é reversível e não
+ * casa entre exportações de pessoas diferentes.
+ *
+ * @param {string} uid titular
+ * @param {string} value caminho ou id a esconder
+ * @return {string} referência opaca
+ */
+export function opaqueRef(uid: string, value: string): string {
+  return createHash("sha256").update(`${uid}:${value}`, "utf8").digest("hex").slice(0, 16);
+}
+
+/**
+ * Documento compartilhado: só a allowlist, com referência opaca no lugar do
+ * id/caminho. `exposeId` só para coleções cujo id é automático e é a própria
+ * entidade (jogo, grupo do titular).
  *
  * @param {DocumentSnapshot} snap documento
  * @param {readonly string[]} fields allowlist
+ * @param {string} uid titular
  * @param {JsonObject} extra campos calculados (papel do titular)
+ * @param {boolean} exposeId mantém document_id/document_path
  * @return {JsonObject} item exportado
  */
 function allowlistItem(
   snap: DocumentSnapshot,
   fields: readonly string[],
+  uid: string,
   extra: JsonObject = {},
+  exposeId = false,
 ): JsonObject {
-  return {...pickFields(snap.data() ?? {}, fields), ...extra, ...docMeta(snap)};
+  const meta = exposeId ? docMeta(snap) : {document_ref: opaqueRef(uid, snap.ref.path)};
+  return {...pickFields(snap.data() ?? {}, fields), ...extra, ...meta};
 }
 
 // ---------------------------------------------------------------------------
@@ -767,14 +789,19 @@ const queryOwn: SourceRunner = async (ctx, spec) => {
  *
  * @param {readonly string[]} fields allowlist
  * @param {boolean} withRole inclui `matched_by`
+ * @param {boolean} exposeId mantém o id real (só ids automáticos de entidade)
  * @return {SourceRunner} leitor
  */
-function queryAllowlist(fields: readonly string[], withRole = false): SourceRunner {
+function queryAllowlist(
+  fields: readonly string[],
+  withRole = false,
+  exposeId = false,
+): SourceRunner {
   return async (ctx, spec) => {
     const collector = new Collector();
     await queryByUidFields(ctx.firestore, spec, ctx.uid, collector);
     return listOutput(collector, (item) =>
-      allowlistItem(item.snap, fields, withRole ? roleOf(item.matchedBy) : {}));
+      allowlistItem(item.snap, fields, ctx.uid, withRole ? roleOf(item.matchedBy) : {}, exposeId));
   };
 }
 
@@ -817,7 +844,7 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
   game_summons: queryAllowlist(ALLOWLISTS.gameSummons),
   group_invites_received: queryAllowlist(ALLOWLISTS.groupInvites),
   group_invites_sent: queryAllowlist(ALLOWLISTS.groupInvites),
-  owned_groups: queryAllowlist(ALLOWLISTS.ownedGroups),
+  owned_groups: queryAllowlist(ALLOWLISTS.ownedGroups, false, true),
   mvp_votes_cast: queryAllowlist(ALLOWLISTS.mvpVotes),
   mvp_votes_received: queryAllowlist(ALLOWLISTS.mvpVotes),
   audit_logs: queryAllowlist(ALLOWLISTS.auditLogs, true),
@@ -836,7 +863,7 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
     return listOutput(collector, (item) => {
       const isOwner = item.matchedBy.has("owner_id");
       const fields = isOwner ? [...ALLOWLISTS.games, ...GAME_OWNER_ONLY_FIELDS] : ALLOWLISTS.games;
-      return allowlistItem(item.snap, fields, roleOf(item.matchedBy));
+      return allowlistItem(item.snap, fields, ctx.uid, roleOf(item.matchedBy), true);
     });
   },
 
@@ -872,7 +899,7 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
     }
     const output = listOutput(collector, (item) => {
       const data = item.snap.data() ?? {};
-      const projected = allowlistItem(item.snap, ALLOWLISTS.cashbox, roleOf(item.matchedBy));
+      const projected = allowlistItem(item.snap, ALLOWLISTS.cashbox, ctx.uid, roleOf(item.matchedBy));
       // A descrição livre pode repetir o nome do pagador ("Pagamento de X").
       // Quando o pagador é outra pessoa, o nome dela sai do texto.
       const playerName = data[CASHBOX.playerNameField];
@@ -944,7 +971,9 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
       if (collector.truncated) break;
     }
     return listOutput(collector, (item) =>
-      allowlistItem(item.snap, ALLOWLISTS.messages, {chat_id: item.snap.ref.path.split("/")[1]}));
+      // O id do chat de DM costuma ser formado pelos uids dos participantes.
+      allowlistItem(item.snap, ALLOWLISTS.messages, ctx.uid,
+        {chat_ref: opaqueRef(ctx.uid, `chat:${item.snap.ref.path.split("/")[1]}`)}));
   },
 
   storage_files: async (ctx) => {
