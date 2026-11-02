@@ -4,7 +4,7 @@
 > **Autor:** Claude Code (sessão agente) para Renan Locatiz Fernandes
 > **Data:** 2026-11-01
 > **Issue:** #4483 (paridade do #4482). Backend e web: `specs/FEATURE_4482_EXPORT_MY_DATA.md`
-> **PR:** (preencher ao abrir)
+> **PR:** #4494
 
 ---
 
@@ -28,7 +28,7 @@ Android não tem a entrada, então quem só usa o app não consegue exercer o di
 ### 1.3 Critérios de aceite
 
 - [ ] CA1: o item "Baixar meus dados" aparece na tela Sobre, logo antes de "Excluir conta", no mesmo padrão de item de lista.
-- [ ] CA2: o toque abre o seletor do sistema (`ActivityResultContracts.CreateDocument("application/json")`) com o nome sugerido `futeba-meus-dados-AAAA-MM-DD.json` (data local).
+- [ ] CA2: o toque abre o seletor do sistema (`ActivityResultContracts.CreateDocument("application/json")`) com o nome sugerido `futeba-dos-parcas-meus-dados-AAAA-MM-DD.json` (data local).
 - [ ] CA3: a callable só é chamada depois que o usuário escolhe o URI. Cancelar o seletor não gasta cota nem mostra erro.
 - [ ] CA4: o JSON devolvido pela callable é gravado inteiro no URI (`contentResolver.openOutputStream(uri, "wt")`).
 - [ ] CA5: `complete == false` ⇒ o arquivo é salvo e o usuário vê o aviso de exportação parcial.
@@ -197,8 +197,7 @@ Comandos: `./gradlew :app:compileDebugKotlin`,
 
 ## 6. Notas
 
-- Nome do arquivo: a tarefa pediu `futeba-meus-dados-AAAA-MM-DD.json`; a web usa
-  `futeba-dos-parcas-meus-dados-AAAA-MM-DD.json`. Ponto em aberto para alinhar, se o dono quiser.
+- Nome do arquivo: `futeba-dos-parcas-meus-dados-AAAA-MM-DD.json`, igual ao da web (paridade).
 
 ## Histórico de Alterações
 

@@ -66,9 +66,9 @@ private val exportJson = Json { prettyPrint = true }
 
 private val fileDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-/** Nome sugerido no seletor: futeba-meus-dados-AAAA-MM-DD.json (data local). */
+/** Nome sugerido no seletor: futeba-dos-parcas-meus-dados-AAAA-MM-DD.json (data local). */
 fun exportMyDataFileName(date: LocalDate): String =
-    "futeba-meus-dados-${date.format(fileDateFormatter)}.json"
+    "futeba-dos-parcas-meus-dados-${date.format(fileDateFormatter)}.json"
 
 /** Classifica o erro da callable. Olha a exceção e a causa direta. */
 fun mapExportMyDataError(error: Throwable): ExportMyDataError {

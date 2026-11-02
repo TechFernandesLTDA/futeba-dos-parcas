@@ -217,7 +217,7 @@ class ExportMyDataViewModelTest {
 
         @Test
         fun suggestedFileName_usesLocalDate() {
-            assertEquals("futeba-meus-dados-2026-11-01.json", newViewModel().suggestedFileName())
+            assertEquals("futeba-dos-parcas-meus-dados-2026-11-01.json", newViewModel().suggestedFileName())
         }
     }
 
@@ -284,7 +284,7 @@ class ExportMyDataViewModelTest {
 
         @Test
         fun exportMyDataFileName_padsMonthAndDay() {
-            assertEquals("futeba-meus-dados-2026-01-05.json", exportMyDataFileName(LocalDate.of(2026, 1, 5)))
+            assertEquals("futeba-dos-parcas-meus-dados-2026-01-05.json", exportMyDataFileName(LocalDate.of(2026, 1, 5)))
         }
     }
 }
