@@ -35,7 +35,7 @@
 import {HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
-import {createHash} from "crypto";
+import {createHash, createHmac, randomBytes} from "crypto";
 import {db} from "../_db";
 import {getStorage} from "../utils/firebase-lazy";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
@@ -478,18 +478,20 @@ function ownItem(snap: DocumentSnapshot): JsonObject {
 }
 
 /**
- * Referência opaca e estável dentro da exportação do titular. Ids e caminhos
- * de documentos compartilhados podem embutir o uid de terceiros (ex.:
- * `mvp_votes/{gameId}_{voterId}_{categoria}`), o que desfaria o anonimato de
- * quem votou ou avaliou. O hash com o uid do titular não é reversível e não
- * casa entre exportações de pessoas diferentes.
+ * Referência opaca, estável só dentro de um arquivo de exportação. Ids e
+ * caminhos de documentos compartilhados podem embutir o uid de terceiros
+ * (ex.: `mvp_votes/{gameId}_{voterId}_{categoria}`), o que desfaria o
+ * anonimato de quem votou ou avaliou. Um hash sem segredo seria reversível
+ * por dicionário (o titular conhece o próprio uid, os jogos e os colegas de
+ * grupo); por isso HMAC com chave aleatória gerada a cada exportação e nunca
+ * devolvida.
  *
- * @param {string} uid titular
+ * @param {Buffer} key chave da exportação
  * @param {string} value caminho ou id a esconder
  * @return {string} referência opaca
  */
-export function opaqueRef(uid: string, value: string): string {
-  return createHash("sha256").update(`${uid}:${value}`, "utf8").digest("hex").slice(0, 16);
+export function opaqueRef(key: Buffer, value: string): string {
+  return createHmac("sha256", key).update(value, "utf8").digest("hex").slice(0, 16);
 }
 
 /**
@@ -499,7 +501,7 @@ export function opaqueRef(uid: string, value: string): string {
  *
  * @param {DocumentSnapshot} snap documento
  * @param {readonly string[]} fields allowlist
- * @param {string} uid titular
+ * @param {Buffer} refKey chave das referências opacas desta exportação
  * @param {JsonObject} extra campos calculados (papel do titular)
  * @param {boolean} exposeId mantém document_id/document_path
  * @return {JsonObject} item exportado
@@ -507,11 +509,11 @@ export function opaqueRef(uid: string, value: string): string {
 function allowlistItem(
   snap: DocumentSnapshot,
   fields: readonly string[],
-  uid: string,
+  refKey: Buffer,
   extra: JsonObject = {},
   exposeId = false,
 ): JsonObject {
-  const meta = exposeId ? docMeta(snap) : {document_ref: opaqueRef(uid, snap.ref.path)};
+  const meta = exposeId ? docMeta(snap) : {document_ref: opaqueRef(refKey, snap.ref.path)};
   return {...pickFields(snap.data() ?? {}, fields), ...extra, ...meta};
 }
 
@@ -666,6 +668,8 @@ interface SourceOutput {
 interface ExportContext {
   firestore: Firestore;
   uid: string;
+  /** Chave HMAC das referências opacas; aleatória por exportação. */
+  refKey: Buffer;
   /** Lista arquivos do Storage por prefixo (injetável nos testes). */
   listStorageFiles: (prefix: string) => Promise<StorageFileInfo[]>;
   groups: Promise<GroupDiscovery> | null;
@@ -801,7 +805,7 @@ function queryAllowlist(
     const collector = new Collector();
     await queryByUidFields(ctx.firestore, spec, ctx.uid, collector);
     return listOutput(collector, (item) =>
-      allowlistItem(item.snap, fields, ctx.uid, withRole ? roleOf(item.matchedBy) : {}, exposeId));
+      allowlistItem(item.snap, fields, ctx.refKey, withRole ? roleOf(item.matchedBy) : {}, exposeId));
   };
 }
 
@@ -863,7 +867,7 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
     return listOutput(collector, (item) => {
       const isOwner = item.matchedBy.has("owner_id");
       const fields = isOwner ? [...ALLOWLISTS.games, ...GAME_OWNER_ONLY_FIELDS] : ALLOWLISTS.games;
-      return allowlistItem(item.snap, fields, ctx.uid, roleOf(item.matchedBy), true);
+      return allowlistItem(item.snap, fields, ctx.refKey, roleOf(item.matchedBy), true);
     });
   },
 
@@ -899,7 +903,7 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
     }
     const output = listOutput(collector, (item) => {
       const data = item.snap.data() ?? {};
-      const projected = allowlistItem(item.snap, ALLOWLISTS.cashbox, ctx.uid, roleOf(item.matchedBy));
+      const projected = allowlistItem(item.snap, ALLOWLISTS.cashbox, ctx.refKey, roleOf(item.matchedBy));
       // A descrição livre pode repetir o nome do pagador ("Pagamento de X").
       // Quando o pagador é outra pessoa, o nome dela sai do texto.
       const playerName = data[CASHBOX.playerNameField];
@@ -972,8 +976,8 @@ const RUNNERS: Readonly<Record<string, SourceRunner>> = {
     }
     return listOutput(collector, (item) =>
       // O id do chat de DM costuma ser formado pelos uids dos participantes.
-      allowlistItem(item.snap, ALLOWLISTS.messages, ctx.uid,
-        {chat_ref: opaqueRef(ctx.uid, `chat:${item.snap.ref.path.split("/")[1]}`)}));
+      allowlistItem(item.snap, ALLOWLISTS.messages, ctx.refKey,
+        {chat_ref: opaqueRef(ctx.refKey, `chat:${item.snap.ref.path.split("/")[1]}`)}));
   },
 
   storage_files: async (ctx) => {
@@ -1096,6 +1100,8 @@ export interface BuildExportOptions {
   listStorageFiles?: (prefix: string) => Promise<StorageFileInfo[]>;
   now?: Date;
   maxBytes?: number;
+  /** Chave fixa das referências opacas (só testes). */
+  refKey?: Buffer;
 }
 
 /**
@@ -1114,6 +1120,7 @@ export async function buildExport(
   const ctx: ExportContext = {
     firestore,
     uid,
+    refKey: options.refKey ?? randomBytes(32),
     listStorageFiles: options.listStorageFiles ?? listStorageFilesDefault,
     groups: null,
   };

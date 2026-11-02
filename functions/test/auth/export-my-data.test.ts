@@ -14,6 +14,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import {createHash} from "crypto";
 
 type Data = Record<string, unknown>;
 
@@ -490,10 +491,13 @@ const storageFiles = async (prefix: string) =>
     [{name: `users/${UID}/profile.jpg`, contentType: "image/jpeg", size: 1234}] :
     [];
 
-async function exportFor(uid = UID): Promise<ExportPayload> {
+const REF_KEY = Buffer.from("chave-fixa-de-teste");
+
+async function exportFor(uid = UID, refKey: Buffer | null = REF_KEY): Promise<ExportPayload> {
   const {payload} = await buildExport(fakeDb as never, uid, {
     listStorageFiles: storageFiles,
     now: new Date(ISO),
+    refKey: refKey ?? undefined,
   });
   return payload;
 }
@@ -557,11 +561,19 @@ describe("exportMyData — conteúdo", () => {
     const {data} = await exportFor();
     // O id do voto embute o uid de quem votou: só sai a referência opaca.
     expect(data.mvp_votes_received).toEqual([
-      {game_id: "game1", category: "MVP", document_ref: opaqueRef(UID, "mvp_votes/game1_terceiro_MVP")},
+      {game_id: "game1", category: "MVP", document_ref: opaqueRef(REF_KEY, "mvp_votes/game1_terceiro_MVP")},
     ]);
     expect(JSON.stringify(data.mvp_votes_received)).not.toContain(OTHER);
     expect(JSON.stringify(data.mvp_votes_received)).not.toContain("terceiro");
-    expect(opaqueRef(UID, "x")).not.toEqual(opaqueRef("outro-titular", "x"));
+    // Sem a chave (aleatória e nunca devolvida) não dá para recalcular a
+    // referência a partir de candidatos: duas exportações divergem.
+    const semChaveFixa1 = await exportFor(UID, null);
+    const semChaveFixa2 = await exportFor(UID, null);
+    const ref = (p: ExportPayload) => ((p.data.mvp_votes_received as Data[])[0]).document_ref;
+    expect(ref(semChaveFixa1)).toMatch(/^[0-9a-f]{16}$/);
+    expect(ref(semChaveFixa1)).not.toEqual(ref(semChaveFixa2));
+    expect(ref(semChaveFixa1)).not.toEqual(
+      createHash("sha256").update(`${UID}:mvp_votes/game1_terceiro_MVP`).digest("hex").slice(0, 16));
     expect((data.mvp_votes_cast as Data[])[0]).not.toHaveProperty("voted_player_id");
     const received = (data.reputation_received as Data[])[0];
     expect(received).toEqual(expect.objectContaining({overall: 3}));
@@ -587,8 +599,8 @@ describe("exportMyData — conteúdo", () => {
   test("caixa: os dois papéis e o nome do outro pagador apagado da descrição", async () => {
     const {data} = await exportFor();
     const entries = data.cashbox_entries as Data[];
-    const launched = entries.find((entry) => entry.document_ref === opaqueRef(UID, "groups/g1/cashbox/c1"));
-    const paid = entries.find((entry) => entry.document_ref === opaqueRef(UID, "groups/g1/cashbox/c2"));
+    const launched = entries.find((entry) => entry.document_ref === opaqueRef(REF_KEY, "groups/g1/cashbox/c1"));
+    const paid = entries.find((entry) => entry.document_ref === opaqueRef(REF_KEY, "groups/g1/cashbox/c2"));
     expect(launched).toEqual(expect.objectContaining({
       matched_by: ["created_by"],
       description: `Pagamento de ${OTHER_PERSON_PLACEHOLDER}`,
@@ -612,7 +624,7 @@ describe("exportMyData — conteúdo", () => {
     expect((data.notifications as Data[])[0]).not.toHaveProperty("sender_name");
     expect((data.game_summons as Data[])[0]).not.toHaveProperty("summoned_by_name");
     expect(data.direct_messages_sent).toEqual([
-      expect.objectContaining({text: "Bora jogar?", chat_ref: opaqueRef(UID, "chat:chat1"), created_at: ISO}),
+      expect.objectContaining({text: "Bora jogar?", chat_ref: opaqueRef(REF_KEY, "chat:chat1"), created_at: ISO}),
     ]);
     expect(data.direct_messages_sent as Data[]).not.toContainEqual(expect.objectContaining({chat_id: expect.anything()}));
   });
