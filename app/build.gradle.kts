@@ -266,7 +266,7 @@ dependencies {
     implementation("io.insert-koin:koin-compose-viewmodel-navigation:$koinVersion")
     implementation("io.insert-koin:koin-androidx-workmanager:$koinVersion")
     // Firebase - usando BoM para gerenciar versoes
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-auth")
@@ -301,9 +301,9 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.5.1")
 
     // Charts (Vico/Compose; MPAndroidChart removido em 31/10/2026, sem uso)
-    implementation("com.patrykandpatrick.vico:compose:1.14.0")
-    implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
-    implementation("com.patrykandpatrick.vico:core:1.14.0")
+    implementation("com.patrykandpatrick.vico:compose:3.3.1")
+    implementation("com.patrykandpatrick.vico:compose-m3:3.3.1")
+    implementation("com.patrykandpatrick.vico:core:3.3.1")
 
     // Date/Time
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0") // For shared module interop
@@ -385,8 +385,8 @@ dependencies {
     "baselineProfile"(project(":baselineprofile"))
 
     // Networking
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.1")
 }
 
