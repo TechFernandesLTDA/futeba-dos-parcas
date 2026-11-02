@@ -305,12 +305,23 @@ export const POST_GAME_REPUTATION = {
  * location-management.ts), `performed_by` (maintenance/soft-delete.ts:168/337),
  * `manager_uid` (confirm-player-as-manager.ts:280) e `source_user_id`
  * (account-merge.ts ACCOUNT_MERGE_*). O cleanup só lia os dois primeiros.
+ *
+ * #4487: `userId` é o uid cru gravado pelo audit do `secureCallable`
+ * (middleware/secure-callable-wrapper.ts, logAudit, junto do IP). Fica em
+ * `otherUidFields` para a exclusão varrer o campo (igualdade simples, índice
+ * single-field automático). A exportação (auth/export-my-data.ts) lê o mesmo
+ * campo; o teste de paridade garante que exportar ⊆ apagar.
  */
 export const AUDIT_LOGS = {
   collection: "audit_logs",
   targetField: "target_user_id",
   actorField: "actor_user_id",
-  otherUidFields: ["performed_by", "manager_uid", "source_user_id"] as readonly string[],
+  otherUidFields: [
+    "performed_by",
+    "manager_uid",
+    "source_user_id",
+    "userId",
+  ] as readonly string[],
 } as const;
 
 /**

@@ -160,7 +160,7 @@ jest.mock("../../src/auth/anti-abuse", () => ({
   rateLimitForRequest: jest.fn(),
 }));
 
-import {UID_OWNED_COLLECTIONS} from "../../src/auth/uid-owned-collections";
+import {AUDIT_LOGS, UID_OWNED_COLLECTIONS} from "../../src/auth/uid-owned-collections";
 import {
   EXPORT_EXCLUSIONS,
   EXPORT_RATE_LIMIT,
@@ -305,6 +305,20 @@ describe("exportMyData — cobertura (irmãos não podem divergir)", () => {
     expect(fieldsOf("audit_logs")).toEqual(expect.arrayContaining([
       "target_user_id", "actor_user_id", "performed_by", "manager_uid", "source_user_id", "userId",
     ]));
+  });
+
+  test("paridade (#4487): todo campo de uid de audit_logs exportado também é apagado na exclusão", () => {
+    const cleanupFields = new Set<string>([
+      AUDIT_LOGS.targetField, AUDIT_LOGS.actorField, ...AUDIT_LOGS.otherUidFields,
+    ]);
+    const exportFields = EXPORT_SOURCES
+      .filter((spec) => spec.collection === AUDIT_LOGS.collection)
+      .flatMap((spec) => [...spec.uidFields]);
+    expect(exportFields.length).toBeGreaterThan(0);
+    expect(exportFields.filter((field) => !cleanupFields.has(field))).toEqual([]);
+    // O campo do wrapper (secureCallable/logAudit) tem de estar nos dois lados.
+    expect(exportFields).toContain("userId");
+    expect(cleanupFields.has("userId")).toBe(true);
   });
 
   test("toda exclusão tem motivo e não é exportada ao mesmo tempo", () => {

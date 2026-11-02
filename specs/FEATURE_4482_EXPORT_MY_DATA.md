@@ -227,4 +227,4 @@ Log `[EXPORT_MY_DATA]` com `uidHash`, contagens por fonte, `incomplete_sources`,
 
 ## 6. Lacunas da exclusão encontradas (não corrigidas aqui)
 
-- `audit_logs.userId`: o `secureCallable` grava o uid cru (e IP) nesse campo; o `onUserDeleted` não consulta `userId`. A exportação lê esse campo; a exclusão continua sem apagá-lo. Merece issue própria.
+- `audit_logs.userId`: o `secureCallable` grava o uid cru (e IP) nesse campo; o `onUserDeleted` não consultava `userId`. Corrigido no #4487 (o campo entrou em `AUDIT_LOGS.otherUidFields`).
