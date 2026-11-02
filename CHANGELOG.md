@@ -402,6 +402,16 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.61.1][web-1.61.1] - 2026-11-02
+
+#### Mudado
+- `react-router-dom` 7.18.4 → 7.18.5, `@tanstack/react-query` 5.104.1 → 5.105.0 e `@tanstack/react-virtual` 3.14.13 → 3.14.24 (#4497).
+
+#### Corrigido
+- `PublicGameScreen`: o chip de modo de entrada e o texto de vagas só aparecem quando o jogo aceita confirmações (`SCHEDULED`/`CONFIRMED`), com teste de regressão (#4493).
+
+_Issues: #4492 · PRs: #4493, #4497_
+
 ### [1.61.0][web-1.61.0] - 2026-11-01
 
 #### Adicionado
@@ -2410,6 +2420,14 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.15.1][functions-1.15.1] - 2026-11-02
+
+#### Mudado
+- `@google-cloud/logging` 12.1.0 → 12.3.0 (#4457).
+- `eslint` 10.13.0 e `@typescript-eslint` 8.72.1, só em desenvolvimento (#4458).
+
+_PRs: #4457, #4458_
+
 ### [1.15.0][functions-1.15.0] - 2026-11-01
 
 #### Adicionado
@@ -3328,6 +3346,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.61.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.1.md
 [web-1.61.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.0.md
 [web-1.60.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.60.0.md
 [web-1.59.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.59.0.md
@@ -3515,6 +3534,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.15.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.1.md
 [functions-1.15.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.0.md
 [functions-1.14.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.14.0.md
 [functions-1.13.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.13.0.md

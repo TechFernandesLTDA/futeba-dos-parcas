@@ -1,7 +1,25 @@
 {
   "platform": "web",
-  "generatedAt": "2026-11-02T01:14:15.315Z",
+  "generatedAt": "2026-11-02T13:13:10.376Z",
   "notes": [
+    {
+      "version": "1.61.1",
+      "buildNumber": null,
+      "releaseDate": "2026-11-02",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O link de um jogo cancelado ou encerrado não mostra mais vagas abertas.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Quem abre o link de um jogo cancelado ou encerrado vê só o status e a contagem de confirmados, sem \"vagas abertas\" nem o modo de entrada."
+      ],
+      "issueRefs": [
+        4492
+      ]
+    },
     {
       "version": "1.61.0",
       "buildNumber": null,
