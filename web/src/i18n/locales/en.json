@@ -3503,7 +3503,15 @@
     "deleteReauthGoogleAria": "Confirm identity with your Google account",
     "deleteReauthTitle": "Confirm your identity",
     "deleteReauthUnavailable": "We could not confirm your identity here. Sign out, sign in again and repeat the deletion.",
-    "deleteRecentLoginStillRequired": "We could not validate your recent sign-in. Sign out, sign in again and repeat the deletion within 10 minutes."
+    "deleteRecentLoginStillRequired": "We could not validate your recent sign-in. Sign out, sign in again and repeat the deletion within 10 minutes.",
+    "exportMyData": "Download my data",
+    "exportMyDataDesc": "Creates a JSON file with your personal data, games, statistics and what you posted in the app.",
+    "exportMyDataError": "We could not create the file with your data. Try again in a moment.",
+    "exportMyDataLoading": "Creating file...",
+    "exportMyDataPartial": "File downloaded, but some parts could not be included. Try again later to get the complete copy.",
+    "exportMyDataRateLimited": "You reached the limit of 3 exports per day. Try again tomorrow.",
+    "exportMyDataSuccess": "File with your data downloaded.",
+    "exportMyDataTooLarge": "Your data is larger than the maximum size for direct download. Contact support to receive the copy."
   },
   "shortcuts": {
     "closeOrBack": "Close modal or return to previous focus",

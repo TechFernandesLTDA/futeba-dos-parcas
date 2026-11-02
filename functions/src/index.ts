@@ -2721,6 +2721,11 @@ export {onUserDeleted} from "./auth/account-cleanup";
 // cascata LGPD para o onUserDeleted acima.
 export {deleteAccount} from "./auth/delete-account";
 
+// #4482: exportação dos dados do titular (LGPD art. 18, V — portabilidade).
+// Enumera as mesmas coleções e formas de campo que o onUserDeleted e o
+// account-merge (teste de cobertura em test/auth/export-my-data.test.ts).
+export {exportMyData} from "./auth/export-my-data";
+
 // SECFIX #433: PII denormalization users -> users_private
 // Triggers + callable migration (ADMIN one-shot) + Stage 3 callables
 export {

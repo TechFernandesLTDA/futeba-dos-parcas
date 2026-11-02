@@ -3503,7 +3503,15 @@
     "deleteReauthGoogleAria": "Confirmar la identidad con tu cuenta de Google",
     "deleteReauthTitle": "Confirma tu identidad",
     "deleteReauthUnavailable": "No pudimos confirmar tu identidad aquí. Cierra sesión, entra de nuevo y repite la eliminación.",
-    "deleteRecentLoginStillRequired": "No pudimos validar el inicio de sesión reciente. Cierra sesión, entra de nuevo y repite la eliminación en 10 minutos."
+    "deleteRecentLoginStillRequired": "No pudimos validar el inicio de sesión reciente. Cierra sesión, entra de nuevo y repite la eliminación en 10 minutos.",
+    "exportMyData": "Descargar mis datos",
+    "exportMyDataDesc": "Genera un archivo JSON con tus datos personales, partidos, estadísticas y lo que publicaste en la app.",
+    "exportMyDataError": "No pudimos generar el archivo con tus datos. Inténtalo de nuevo en unos instantes.",
+    "exportMyDataLoading": "Generando archivo...",
+    "exportMyDataPartial": "Archivo descargado, pero algunas partes no se pudieron incluir. Inténtalo más tarde para obtener la copia completa.",
+    "exportMyDataRateLimited": "Alcanzaste el límite de 3 exportaciones por día. Inténtalo de nuevo mañana.",
+    "exportMyDataSuccess": "Archivo con tus datos descargado.",
+    "exportMyDataTooLarge": "Tus datos superan el tamaño máximo para descarga directa. Contacta al soporte para recibir la copia."
   },
   "shortcuts": {
     "closeOrBack": "Cerrar modal o volver al foco anterior",
