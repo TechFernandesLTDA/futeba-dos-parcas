@@ -105,6 +105,17 @@ describe('PublicGameScreen (#4408)', () => {
     expect(screen.getByText(/não recebe mais confirmações/)).toBeInTheDocument();
   });
 
+  it('jogo cancelado não mostra modo de entrada nem vagas abertas (#4492)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, {
+      game: { ...GAME, status: 'CANCELLED', joinMode: 'OPEN', playersCount: 1, spotsLeft: 13 },
+    }));
+    renderScreen();
+    expect(await screen.findByText('Cancelado')).toBeInTheDocument();
+    expect(screen.queryByText('Aberto para novos jogadores')).not.toBeInTheDocument();
+    expect(screen.queryByText(/vagas? abertas?/)).not.toBeInTheDocument();
+    expect(screen.getByText('1 de 14 confirmados')).toBeInTheDocument();
+  });
+
   it('lista cheia e sem limite de vagas', async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { game: { ...GAME, playersCount: 14, spotsLeft: 0 } }));
     const { unmount } = renderScreen();
