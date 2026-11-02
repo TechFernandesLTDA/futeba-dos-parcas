@@ -98,9 +98,10 @@ export const deleteAccount = secureCallable<unknown, {success: true}>(
       windowMs: 60 * 60 * 1000,
       keyPrefix: "delete_account",
     },
-    // O audit do wrapper grava uid cru e IP em audit_logs (campo `userId`,
-    // fora do alcance do onUserDeleted) e DEPOIS do handler, ou seja, depois
-    // da varredura. Esta callable grava o próprio registro, sem PII.
+    // O audit do wrapper grava uid cru e IP em audit_logs (campo `userId`) e
+    // DEPOIS do handler, ou seja, depois da varredura do onUserDeleted (que
+    // apaga `userId` desde o #4487, mas não alcançaria este registro tardio).
+    // Esta callable grava o próprio registro, sem PII.
     enableAuditLog: false,
     // App Check continua exigido (default do wrapper em produção). Sem
     // consumir o token: o cliente pode repetir a chamada depois de

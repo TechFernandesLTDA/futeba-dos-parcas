@@ -4,6 +4,7 @@
  */
 import {
   ANONYMIZED_USER_NAME,
+  AUDIT_LOGS,
   CASHBOX,
   MONTHLY_PAYERS,
   POST_GAME_REPUTATION,
@@ -171,5 +172,16 @@ describe("redactNameInText (#4113 — descrição do caixa)", () => {
   test("sem ocorrência devolve o texto original intacto", () => {
     const text = "Mensalidade agosto";
     expect(redactNameInText(text, "Fulano da Silva")).toBe(text);
+  });
+});
+
+describe("AUDIT_LOGS (#4487)", () => {
+  test("a exclusão varre `userId`, o uid cru gravado pelo secureCallable", () => {
+    expect(AUDIT_LOGS.otherUidFields).toContain("userId");
+  });
+
+  test("não repete campo de uid", () => {
+    const all = [AUDIT_LOGS.targetField, AUDIT_LOGS.actorField, ...AUDIT_LOGS.otherUidFields];
+    expect(new Set(all).size).toBe(all.length);
   });
 });

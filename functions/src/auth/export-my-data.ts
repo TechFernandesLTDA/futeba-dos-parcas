@@ -269,9 +269,9 @@ export const EXPORT_SOURCES: readonly ExportSourceSpec[] = [
   {
     key: "audit_logs",
     collection: AUDIT_LOGS.collection,
-    // `userId`: gravado pelo secureCallable (logAudit). O onUserDeleted NÃO
-    // consulta esse campo — lacuna da exclusão registrada na spec §6.
-    uidFields: [AUDIT_LOGS.targetField, AUDIT_LOGS.actorField, ...AUDIT_LOGS.otherUidFields, "userId"],
+    // `userId` (gravado pelo secureCallable/logAudit) vem de otherUidFields,
+    // o mesmo mapa que o onUserDeleted varre (#4487).
+    uidFields: [AUDIT_LOGS.targetField, AUDIT_LOGS.actorField, ...AUDIT_LOGS.otherUidFields],
     projection: "allowlist",
   },
   {
@@ -1153,8 +1153,8 @@ function uidHash(uid: string): string {
 export const exportMyData = secureCallable<unknown, ExportPayload>(
   {
     rateLimit: {...EXPORT_RATE_LIMIT},
-    // O audit do wrapper grava o uid cru e o IP em audit_logs.userId, campo
-    // que o onUserDeleted não apaga. Esta callable grava o próprio registro.
+    // O audit do wrapper grava o uid cru e o IP em audit_logs.userId. Esta
+    // callable grava o próprio registro, sem PII.
     enableAuditLog: false,
     // Leitura: o cliente pode repetir a chamada (timeout, rede) e o token
     // reaproveitado seria rejeitado como replay. App Check segue exigido.

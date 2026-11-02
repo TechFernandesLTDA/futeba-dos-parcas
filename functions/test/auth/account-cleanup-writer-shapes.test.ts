@@ -1014,6 +1014,28 @@ describe("onUserDeleted — #4113 anonimização com payload real do escritor", 
     },
   );
 
+  test(
+    "audit_logs: apaga `userId` (uid cru do audit do secureCallable) e " +
+    "preserva logs de outros usuários (#4487)",
+    async () => {
+      // middleware/secure-callable-wrapper.ts logAudit: {userId, ip, ...}
+      state.set("audit_logs/wrapper-1", {
+        userId: UID,
+        ip: "203.0.113.7",
+        action: "CALLABLE",
+      });
+      state.set("audit_logs/wrapper-2", {userId: UID, ip: "203.0.113.7"});
+      state.set("audit_logs/wrapper-other", {userId: OTHER, ip: "198.51.100.1"});
+
+      await runCleanup();
+
+      const remaining = [...state.keys()].filter((path) =>
+        path.startsWith("audit_logs/"));
+      expect(remaining).toEqual(["audit_logs/wrapper-other"]);
+      expect(finalCounts()).toMatchObject({audit_logs_other: 2});
+    },
+  );
+
   test("user_streaks: apaga o doc {uid} e docs legados localizados por user_id", async () => {
     // index.ts:1252 grava em {uid}; leitores buscam por user_id.
     state.set(`user_streaks/${UID}`, {user_id: UID, current_streak: 3});

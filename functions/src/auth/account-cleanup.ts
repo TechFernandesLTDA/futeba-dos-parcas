@@ -433,6 +433,7 @@ export const onUserDeleted = runWith({
         // 4b'. #4113: demais campos de uid gravados pelos escritores de
         // audit_logs (performed_by, manager_uid, source_user_id) — mesma
         // política de apagamento do #2081 para logs em que o usuário é ator.
+        // #4487: inclui `userId` (uid cru + IP do audit do secureCallable).
         let auditOtherLogsTotal = 0;
         for (const field of AUDIT_LOGS.otherUidFields) {
           auditOtherLogsTotal += await deleteAllByField(
