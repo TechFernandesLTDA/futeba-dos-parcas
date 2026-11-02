@@ -85,6 +85,7 @@ const SocialFeedScreen = lazy(() => import('./pages/feed/SocialFeedScreen').then
 
 const GameDetailScreen = lazy(() => import('./pages/game/GameDetailScreen').then(m => ({ default: m.GameDetailScreen })));
 const CreateGameScreen = lazy(() => import('./pages/game/CreateGameScreen').then(m => ({ default: m.CreateGameScreen })));
+const PublicGameScreen = lazy(() => import('./pages/game/PublicGameScreen').then(m => ({ default: m.PublicGameScreen })));
 const LiveGameScreen = lazy(() => import('./pages/game/LiveGameScreen').then(m => ({ default: m.LiveGameScreen })));
 const MVPVoteScreen = lazy(() => import('./pages/game/MVPVoteScreen').then(m => ({ default: m.MVPVoteScreen })));
 const VoteResultScreen = lazy(() => import('./pages/game/VoteResultScreen').then(m => ({ default: m.VoteResultScreen })));
@@ -278,6 +279,35 @@ function RootRoute() {
 
   if (!activeUser) {
     return <Suspense fallback={<RouteFallback />}><LaunchPage /></Suspense>;
+  }
+
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<RouteFallback />}><AppLayout /></Suspense>
+    </ProtectedRoute>
+  );
+}
+
+/**
+ * #4408: `/game/:gameId` é o link que circula no WhatsApp. Visitante sem login
+ * vê a visão pública (só campos liberados pela function `publicGamePage`);
+ * usuário logado segue exatamente o fluxo anterior (ProtectedRoute + AppLayout
+ * + GameDetailScreen). Mesmo atraso de 300 ms do ProtectedRoute antes de
+ * decidir que não há sessão, para não piscar a página pública durante a
+ * restauração do Auth.
+ */
+function GameDetailRoute() {
+  const { firebaseUser, loading } = useAuth();
+  const activeUser = firebaseUser ?? auth.currentUser;
+  const anonymousReady = useLoginRedirectReady(activeUser, loading);
+
+  if (loading) {
+    return <SplashLoadingFallback />;
+  }
+
+  if (!activeUser) {
+    if (!anonymousReady) return <SplashLoadingFallback />;
+    return <Suspense fallback={<RouteFallback />}><PublicGameScreen /></Suspense>;
   }
 
   return (
@@ -508,6 +538,11 @@ function AppRoutes() {
 
       {/* Games — redireciona para tab=1 (HomeScreen) para manter o menu de navegação */}
       <Route path="/games" element={<Navigate to="/?tab=1" replace />} />
+      {/* #4408: detalhe do jogo é público para visitante (prévia de link compartilhado);
+          logado continua no GameDetailScreen dentro do AppLayout. */}
+      <Route path="/game/:gameId" element={<GameDetailRoute />}>
+        <Route index element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
+      </Route>
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
       <Route element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppLayout /></Suspense></ProtectedRoute>}>
         {/* #3730: redirects de parents de rotas dinâmicas — breadcrumbs e links
@@ -520,7 +555,7 @@ function AppRoutes() {
         {/* Games */}
         {/* GAP #7 (#1080): VerifiedRoute redireciona unverified pra onboarding em vez de deixar submit falhar silencioso no rules */}
         <Route path="/game/create" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense></VerifiedRoute>} />
-        <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
+        {/* /game/:gameId saiu daqui (#4408): ver GameDetailRoute acima. */}
         {/* Groups */}
         {/* Rotas estáticas precedem parâmetros para deixar a resolução inequívoca. */}
         {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}

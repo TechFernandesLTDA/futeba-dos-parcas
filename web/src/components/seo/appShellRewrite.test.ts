@@ -6,7 +6,9 @@ import { resolve } from 'node:path';
 // se declarar indexável nem apontar o canonical para a home (soft 404 / duplicata da raiz).
 const repoRoot = resolve(process.cwd(), '..');
 const firebase = JSON.parse(readFileSync(resolve(repoRoot, 'firebase.json'), 'utf8')) as {
-  hosting: { rewrites: Array<{ source: string; destination: string }> };
+  hosting: {
+    rewrites: Array<{ source: string; destination?: string; function?: { functionId: string; region: string } }>;
+  };
 };
 const rewrites = firebase.hosting.rewrites;
 const prerenderScript = readFileSync(resolve(process.cwd(), 'scripts/prerender-public-pages.mjs'), 'utf8');
@@ -25,6 +27,19 @@ describe('shell SPA das rotas desconhecidas (#4327)', () => {
     expect(launchIdx).toBeGreaterThanOrEqual(0);
     expect(launchIdx).toBeLessThan(catchAllIdx);
     expect(rewrites[launchIdx].destination).toBe('/index.html');
+  });
+
+  it('#4408: /game/* e /api/public-game/* vão para publicGamePage, com /game/create antes do glob', () => {
+    const idx = (source: string) => rewrites.findIndex((r) => r.source === source);
+    const catchAllIdx = idx('**');
+    expect(idx('/game/create')).toBeGreaterThanOrEqual(0);
+    expect(rewrites[idx('/game/create')].destination).toBe('/app-shell.html');
+    expect(idx('/game/create')).toBeLessThan(idx('/game/*'));
+    for (const source of ['/game/*', '/api/public-game/*']) {
+      const rule = rewrites[idx(source)];
+      expect(rule?.function).toEqual({ functionId: 'publicGamePage', region: 'southamerica-east1' });
+      expect(idx(source)).toBeLessThan(catchAllIdx);
+    }
   });
 
   it('o prerender gera dist/app-shell.html com robots noindex e sem canonical', () => {

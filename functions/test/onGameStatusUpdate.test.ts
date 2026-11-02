@@ -114,6 +114,7 @@ jest.mock("firebase-functions/v2/firestore", () => ({
 
 jest.mock("firebase-functions/v2/https", () => ({
   onCall: jest.fn((config: any, handler: any) => handler || config),
+  onRequest: jest.fn((config: any, handler: any) => handler || config),
   HttpsError: class HttpsError extends Error {
     code: string;
     constructor(code: string, message: string) {

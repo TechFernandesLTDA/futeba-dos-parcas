@@ -2914,6 +2914,8 @@ export {
 } from "./games/join-public-game";
 export {confirmPlayerAsManager} from "./games/confirm-player-as-manager";
 export {getFieldAvailability} from "./games/field-availability";
+// #4408: prévia Open Graph + JSON público do jogo (rewrite do Hosting).
+export {publicGamePage} from "./games/public-game-page";
 
 // ==========================================
 // ADMIN CRM
