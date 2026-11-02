@@ -4,7 +4,7 @@
 > **Severidade:** `HIGH` (LGPD Art. 18 VI: dado pessoal sobrevive à exclusão)
 > **Autor:** Renan Locatiz Fernandes (via Claude Code)
 > **Data:** 2026-11-01
-> **PR:** a preencher (Closes #4487)
+> **PR:** #4488
 
 ---
 
