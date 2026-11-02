@@ -1,7 +1,30 @@
 {
   "platform": "web",
-  "generatedAt": "2026-11-01T01:54:55.166Z",
+  "generatedAt": "2026-11-02T01:14:15.315Z",
   "notes": [
+    {
+      "version": "1.61.0",
+      "buildNumber": null,
+      "releaseDate": "2026-11-01",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O link de um jogo agora mostra os detalhes no WhatsApp e abre mesmo para quem ainda não tem conta, e você pode baixar todos os seus dados.",
+      "highlights": [],
+      "added": [
+        "Ao compartilhar um jogo aberto, a prévia mostra o dia, o horário, o local, o grupo e as vagas. Quem recebe o link vê o jogo e pode entrar ou criar a conta para confirmar presença.",
+        "Em Configurações, o botão \"Baixar meus dados\" gera um arquivo com tudo que é seu no Futeba dos Parças."
+      ],
+      "improved": [],
+      "fixed": [
+        "Excluir um vídeo de jogo não trava mais quando a miniatura dele já não existe."
+      ],
+      "issueRefs": [
+        4408,
+        4480,
+        4482
+      ]
+    },
     {
       "version": "1.60.0",
       "buildNumber": null,

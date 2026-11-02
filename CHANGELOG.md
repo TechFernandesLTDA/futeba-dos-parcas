@@ -402,6 +402,18 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 
 ## Web
 
+### [1.61.0][web-1.61.0] - 2026-11-01
+
+#### Adicionado
+- `PublicGameScreen` e `publicGameService` para `/game/:gameId` sem login; a rota saiu do bloco protegido e virou `GameDetailRoute` (logado continua na tela completa) (#4485).
+- Rewrites do Hosting de `/game/*` e `/api/public-game/*` para a function `publicGamePage`, com `/game/create` mantido no `app-shell.html` (#4485).
+- `useExportMyData` e botão "Baixar meus dados" em `SettingsScreen`, com mensagens para limite diário, arquivo grande demais e exportação parcial (#4486).
+
+#### Corrigido
+- `GameVideosTab`: falha ao apagar a miniatura vira aviso e não impede a exclusão do vídeo e do documento, como no Android (#4484).
+
+_Issues: #4408, #4480, #4482 · PRs: #4484, #4485, #4486_
+
 ### [1.60.0][web-1.60.0] - 2026-10-31
 
 #### Adicionado
@@ -2398,6 +2410,22 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.15.0][functions-1.15.0] - 2026-11-01
+
+#### Adicionado
+- Callable `exportMyData` (LGPD art. 18, V): JSON único na própria resposta, teto de 8 MiB com cortes marcados, 3 exportações por 24 h, mesmas coleções e formas de campo da exclusão de conta (#4486).
+- Function HTTP `publicGamePage` (`southamerica-east1`, CPU 1, concorrência 80, até 3 instâncias): injeta metas Open Graph no `app-shell.html` em `/game/{id}` e serve `/api/public-game/{id}` só para jogos `PUBLIC_OPEN`/`PUBLIC_CLOSED`, com whitelist de campos (#4485).
+- Alertas do Crashlytics (regressão, novo fatal, velocidade) e logs estruturados dos alertas críticos do `systemHealthCheck` (#4476).
+
+#### Corrigido
+- `cleanupOldAlerts` falhava com `FAILED_PRECONDITION`: índice composto `alerts (acknowledged, created_at)` (#4481).
+- Exclusão de conta apaga também `audit_logs.userId`, o uid cru com IP gravado pelo `secureCallable` (#4488).
+
+#### Segurança
+- Exportação: documentos compartilhados levam `document_ref` por HMAC com chave aleatória por exportação, em vez de ids que embutiam o uid de quem votou ou avaliou (#4490).
+
+_Issues: #4408, #4417, #4479, #4482, #4487, #4489 · PRs: #4476, #4481, #4485, #4486, #4488, #4490_
+
 ### [1.14.0][functions-1.14.0] - 2026-10-31
 
 #### Adicionado
@@ -3300,6 +3328,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.61.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.0.md
 [web-1.60.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.60.0.md
 [web-1.59.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.59.0.md
 [web-1.58.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.58.1.md
@@ -3486,6 +3515,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.15.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.0.md
 [functions-1.14.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.14.0.md
 [functions-1.13.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.13.0.md
 [functions-1.12.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.12.6.md

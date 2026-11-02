@@ -2090,3 +2090,50 @@ Nenhum teste ou gate foi desabilitado.
   `NotificationSettings`. Não mexer em `isMinifyEnabled`/full mode às vésperas da revisão da Play.
 - Guarda: `FirestoreReflectionKeepRulesTest` exige keep completo para toda classe passada a `toObject`/`toObjects`.
 - Spec: BUGFIX_2026-11-01_R8_KEEP_DOMAIN_MODEL_4410.md.
+
+## 2026-11-01: Visão pública do jogo (#4408)
+
+- A prévia Open Graph e os dados da página pública de `/game/{id}` vêm da Cloud Function HTTP `publicGamePage`, via rewrite
+  do Hosting, e não de leitura anônima no Firestore (rules inalteradas).
+- Só jogos `PUBLIC_OPEN`/`PUBLIC_CLOSED` sem `deleted_at` são expostos, com whitelist de campos (data, horário, local,
+  grupo, contagem de vagas). Nomes, ids, Pix, coordenadas e endereço nunca saem. Privado, inexistente e excluído respondem
+  igual.
+- A function roda com CPU inteira e concorrência 80 (com 256MiB a concorrência seria 1 e 3 instâncias dariam 429 para
+  usuários logados, que também passam por ela em `/game/{id}`). `og:image` fica a padrão do site; página `noindex`.
+- Spec: feat-2026-11-01-web-public-game-4408.md.
+
+## 2026-11-01: Exportação dos dados do titular (#4482, #4489)
+
+- A exportação LGPD (art. 18, V) é entregue na própria resposta da callable, e não em Storage com URL assinada: o
+  `signBlob` saiu no #4083 e o download token do Firebase não expira. Teto de 8 MiB, com corte marcado em
+  `truncated_sources`; 3 exportações por 24 h.
+- A exportação enumera as mesmas coleções e formas de campo da exclusão (`uid-owned-collections.ts`, teste de cobertura e
+  de paridade). Documentos compartilhados saem por allowlist, sem dados de terceiros.
+- Ids e caminhos de documentos compartilhados podem embutir uid de terceiros (`mvp_votes/{gameId}_{voterId}_{categoria}`).
+  Esses itens levam `document_ref` por HMAC com chave aleatória gerada a cada exportação e nunca devolvida; um hash sem
+  segredo seria reversível por dicionário. Só jogos e grupos do titular mantêm o id real.
+- A exclusão de conta passou a apagar `audit_logs.userId` (#4487), campo que a exportação já lia.
+- Paridade Android/iOS do botão fica na #4483.
+
+## 2026-11-01: Exclusão de mídia e índices de limpeza (#4480, #4479)
+
+- Apagar a miniatura de um vídeo é só limpeza, no web e no Android: a falha não impede a exclusão do vídeo nem do
+  documento. Só o vídeo principal (exceto `object-not-found`) e o documento interrompem o fluxo.
+- Queries de limpeza com igualdade, range e `orderBy` exigem índice composto declarado em `firestore.indexes.json`; a guarda
+  fica no teste de `alerting`.
+
+## 2026-11-01: Riscos de lançamento ainda abertos (#4398)
+
+Itens da lista "também antes do lançamento" do #4398 que não foram resolvidos no código. Ficam registrados como risco
+conhecido, **pendentes de aceite do dono**:
+
+- **App Check em UNENFORCED** no Firestore, Storage e Auth (Play Integrity aceita `NO_INTEGRITY`). Ligar o enforcement
+  exige medir antes a taxa de tokens válidos de web, Android e iOS no console; ligar às cegas bloqueia usuários reais.
+  As callables sensíveis já exigem App Check pelo `secureCallable`.
+- **`maxInstances: 10` global** em `functions/src/index.ts`: teto contra custo descontrolado, decidido no #2152. Com a
+  base atual não satura; revisar se surgirem 429 nos logs. `publicGamePage` tem teto próprio.
+- **5 chaves gerenciadas por usuário** na service account `firebase-adminsdk-fbsvc`: rotação de credenciais adiada por
+  decisão do dono (junto do #4343).
+
+Resolvidos no código: `exportMyData` (#4482), índices COLLECTION_GROUP de `members.user_id`, `reviews.user_id` e
+`cashbox.created_by` (READY em produção), link de jogo sem login e prévia nas redes (#4408).
