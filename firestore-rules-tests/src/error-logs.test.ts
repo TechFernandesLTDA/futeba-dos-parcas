@@ -140,9 +140,8 @@ describe("error_logs — criação", () => {
     await assertFails(db.doc("error_logs/err-sem-created").set(semCreatedAt));
   });
 
-  it("HOJE NEGA (ver DIAGNOSTICO): cliente que envia createdAt = new Date() é negado; a rule exige request.time", async () => {
-    // HOJE NEGA (ver DIAGNOSTICO): um logger de erro do cliente naturalmente mandaria
-    // uma data local; a rule só aceita o timestamp do servidor.
+  it("nega createdAt de cliente (new Date()); a rule exige request.time", async () => {
+    // Esperado: o padrão do repo é serverTimestamp() em createdAt (CLAUDE.md, Web App).
     const db = asPlayerA(testEnv);
     await assertFails(
       db.doc("error_logs/err-client-date").set({
