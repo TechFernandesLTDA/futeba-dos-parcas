@@ -31,4 +31,16 @@ allprojects {
     dependencies {
         detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.8")
     }
+
+    // A6: os módulos KMP guardam fontes em src/<sourceSet>/kotlin (commonMain, iosMain, ...),
+    // e o default do detekt só lê src/main/kotlin, por isso eles saíam NO-SOURCE.
+    // Baselines desses módulos ficam em config/detekt/ para não mexer nos existentes.
+    if (name == "shared" || name == "composeApp") {
+        extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+            source.setFrom(fileTree(projectDir) {
+                include("src/*/kotlin/**/*.kt", "src/*/java/**/*.kt")
+            })
+            baseline = file("$rootDir/config/detekt/baseline-$name.xml")
+        }
+    }
 }

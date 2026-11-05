@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>NewLineAtEndOfFile:GamesViewModel.kt$com.futebadosparcas.ui.core.GamesViewModel.kt</ID>
+    <ID>NewLineAtEndOfFile:InviteViewModel.kt$com.futebadosparcas.ui.core.InviteViewModel.kt</ID>
+    <ID>NewLineAtEndOfFile:LoginViewModel.kt$com.futebadosparcas.ui.core.LoginViewModel.kt</ID>
+    <ID>NewLineAtEndOfFile:PermissionOnboardingViewModel.kt$com.futebadosparcas.ui.core.PermissionOnboardingViewModel.kt</ID>
+    <ID>NewLineAtEndOfFile:RegisterViewModel.kt$com.futebadosparcas.ui.auth.RegisterViewModel.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>
