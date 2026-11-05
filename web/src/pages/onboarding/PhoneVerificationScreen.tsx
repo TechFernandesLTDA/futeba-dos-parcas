@@ -352,6 +352,8 @@ export const PhoneVerificationScreen: React.FC = () => {
           setResendCooldown(retryAfter);
           return;
         }
+        // Falha na pré-checagem é contornada de propósito: o fluxo segue para o Firebase Phone Auth (R2 não se aplica).
+        // eslint-disable-next-line no-restricted-syntax
       } catch (preflightErr) {
         logger.error('SMS preflight failed; continuing with Firebase Phone Auth:', preflightErr);
       }
