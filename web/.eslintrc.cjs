@@ -47,24 +47,11 @@ module.exports = {
       },
     ],
   },
-  overrides: [
-    {
-      // Regras de sizing para telas (src/pages/) — #2581
-      // TODO: re-enable after fixing remaining violations (~65 warn in 05/2026)
-      files: ['src/pages/**/*.tsx'],
-      rules: {
-        'no-restricted-syntax': [
-          'off',
-          {
-            selector: "JSXOpeningElement[name.name='Container'] JSXAttribute[name.name='maxWidth']",
-            message: 'Use `<PageContainer maxWidth="tier">` com tokens de pageTokens.ts. Tiers: focused(xs) | form(md) | list(lg) | detail(lg) | dashboard(xl).',
-          },
-          {
-            selector: "Property[key.name='maxWidth'] > Literal[raw=/^[0-9]+$/]",
-            message: 'Use tokens semanticos de pageTokens.ts em vez de larguras numericas hardcoded.',
-          },
-        ],
-      },
-    },
-  ],
+  // A7: o override de src/pages/ desligava no-restricted-syntax inteiro (incluindo R1 e R2).
+  // Agora as páginas herdam R1 e R2 como aviso, como no resto do projeto.
+  // Regras de sizing (#2581, Rules 3 e 4) ficaram de fora porque já estavam desligadas nas páginas
+  // (TODO: ~65 warn em 05/2026). Para religar, adicionar de volta um override com:
+  //   JSXOpeningElement[name.name='Container'] JSXAttribute[name.name='maxWidth']
+  //   Property[key.name='maxWidth'] > Literal[raw=/^[0-9]+$/]
+  overrides: [],
 };
