@@ -1,11 +1,12 @@
 ---
-name: Rate limiter fail-open on Firestore error
-description: When Firestore transaction fails, checkRateLimit() returns allowed:true — deliberate availability tradeoff, exploitable under DDoS
-type: project
+name: rate-limiter-failclosed
+description: Rate limiter fails CLOSED (blocks) on Firestore error since fix #931 — NOT fail-open
+metadata:
+  type: project
 ---
 
-In `functions/src/middleware/rate-limiter.ts` lines 167-179 and 415-426, the catch block returns `{ allowed: true }` when the Firestore transaction fails.
+Rate limiter now fails **closed** (blocks request) on Firestore error since fix #931. Both `checkRateLimit` and `checkRateLimitByIp` catch blocks return `{allowed: false, remaining: 0, resetAt: ...}` with `[ALERT]` log tag.
 
-This is documented as "fail-open para disponibilidade" — a deliberate tradeoff. Under DDoS scenarios where an attacker saturates Firestore quota to trigger errors, rate limiting is bypassed.
+**Why:** Original fail-open was changed — on Firestore outage, blocking is safer than creating an abuse window.
 
-**How to apply:** For critical admin-only operations (setUserRole, migrate), consider whether fail-closed is more appropriate. For regular user operations, current tradeoff is acceptable.
+**How to apply:** Do NOT flag as a security bug. The fail-closed behavior is intentional and correct as of 2026-05-25. Old memory entry was stale.

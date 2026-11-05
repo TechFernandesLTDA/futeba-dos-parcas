@@ -1,4 +1,5 @@
 - [Callable wrapper coverage gaps](project_callable_coverage.md) — soft-delete.ts uses raw onCall without secureCallable; known issues #435 #437
-- [Rate limiter fail-open pattern](project_rate_limiter_failopen.md) — On Firestore error, rate limiter returns allowed:true (deliberate availability tradeoff)
+- [Rate limiter fail-CLOSED (fix #931)](project_rate_limiter_failopen.md) — Since #931: fail-closed on Firestore error; NOT fail-open. Old memory was stale.
 - [App Check configuration matrix](project_appcheck_config.md) — secureCallable default: NODE_ENV===production; setUserRole/migrate: false (admin-only OK); soft-delete: MISSING
 - [HttpsError originalError leak](project_httperror_leak.md) — details field in HttpsError IS sent to clients; originalError in secure-callable-wrapper.ts:396 is info disclosure
+- [Audit 2026-05-25: group-league bugs + LGPD gap](project_audit_2026_05_25.md) — #1839 WriteBatch const reuse; #1840 no idempotency; #1841 user_streaks LGPD; #1842 streak limit(5000)
