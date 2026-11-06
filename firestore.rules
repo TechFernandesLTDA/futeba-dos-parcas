@@ -4080,28 +4080,19 @@ service cloud.firestore {
     // ============================================
     // COLECAO: challenge_progress (progresso dos desafios)
     // ============================================
-    // SECURITY FIX: Corrigido regras duplicadas de create/update que causavam
-    // comportamento ambiguo. Agora usa OR logico em uma unica regra.
+    // SECURITY FIX (B10 / #2627): Escrita fechada para clientes comuns — progresso
+    // de desafios e gerenciado exclusivamente via servidor (Admin SDK / Cloud Functions)
+    // ou administradores. Leitura suporta tanto `userId` quanto `user_id` para
+    // compatibilidade com FirebaseDataSource.kt.
     match /challenge_progress/{progressId} {
       allow read: if isAuthenticated() && (
-        resource.data.userId == userId() || isAdmin()
+        resource.data.get('userId', '') == userId() ||
+        resource.data.get('user_id', '') == userId() ||
+        isAdmin()
       );
 
-      // Usuario pode criar/atualizar seu proprio progresso OU admin pode gerenciar qualquer
-      // FIX #576: era `firestore.exists()` (sintaxe invalida) + `(default)` literal → colecao
-      // permanentemente unwritable. Correto: bare `exists()` + `$(database)` placeholder.
-      // FIXME #2627: progresso ainda e client-writable — a escrita deve migrar para
-      // Cloud Function (trigger em game_events) com validacao server-side de incrementos.
-      // Mitigacao imediata: bounds nos campos (progress >= 0, completed somente via server).
-      allow create, update: if isAuthenticated() && (
-        request.resource.data.userId == userId() || isAdmin()
-      ) && exists(/databases/$(database)/documents/challenges/$(request.resource.data.challengeId)) &&
-        (!('progress' in request.resource.data) || request.resource.data.progress is number) &&
-        request.resource.data.progress >= 0 &&
-        (!('completed' in request.resource.data) || request.resource.data.completed == false || isAdmin());
-
-      // Apenas admin pode deletar progresso
-      allow delete: if isAdmin();
+      // Escrita restrita a administradores / Admin SDK (B10 / #2627)
+      allow create, update, delete: if isAdmin();
     }
 
     // ============================================
