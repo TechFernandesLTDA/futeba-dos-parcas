@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { createTestWrapper } from '../test/renderWithProviders';
 
 const mockGetDocs = vi.fn();
@@ -136,12 +136,22 @@ describe('useSeasons', () => {
     });
 
   it('loga e propaga erro quando getDocs falha (com retry configurado no hook)', async () => {
-    mockGetDocs.mockRejectedValue(new Error('unavailable'));
-    const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+    // retry: 2 com backoff exponencial (~1 s + ~2 s reais). Fake timers avançam
+    // o backoff sem esperar de verdade; as asserções são as mesmas.
+    vi.useFakeTimers();
+    try {
+      mockGetDocs.mockRejectedValue(new Error('unavailable'));
+      const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
 
-    await waitFor(() => expect(result.current.error).toBeInstanceOf(Error), { timeout: 15000 });
-    expect((result.current.error as Error).message).toBe('unavailable');
-    expect(mockLoggerError).toHaveBeenCalledWith('Error fetching seasons:', expect.any(Error));
-    expect(result.current.seasons).toEqual([]);
-  }, 30000);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(result.current.error).toBeInstanceOf(Error);
+      expect((result.current.error as Error).message).toBe('unavailable');
+      expect(mockLoggerError).toHaveBeenCalledWith('Error fetching seasons:', expect.any(Error));
+      expect(result.current.seasons).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

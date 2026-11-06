@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -140,9 +140,11 @@ describe('LiveEventsScreen realtime pagination', () => {
 
     const { unmount } = renderScreen();
     expect(eventSubscriptions).toHaveLength(1);
-    act(() => eventSubscriptions[0].next(snapshot(initialDocs)));
+    await act(async () => {
+      eventSubscriptions[0].next(snapshot(initialDocs));
+    });
 
-    const eventList = await screen.findByRole('list', { name: /eventos do jogo/i });
+    const eventList = screen.getByRole('list', { name: /eventos do jogo/i });
     const initialNames = within(eventList).getAllByText(/Jogador live-/);
     expect(initialNames).toHaveLength(50);
     expect(initialNames[0]).toHaveTextContent('Jogador live-50');
@@ -151,8 +153,11 @@ describe('LiveEventsScreen realtime pagination', () => {
     expect(mockOrderBy).toHaveBeenCalledWith('created_at', 'desc');
     expect(mockOrderBy).toHaveBeenCalledWith('__name__', 'desc');
 
-    fireEvent.click(screen.getByRole('button', { name: /carregar mais/i }));
-    await screen.findByText('Jogador old-1');
+    const loadMoreButton = screen.getByRole('button', { name: /carregar mais/i });
+    await act(async () => {
+      fireEvent.click(loadMoreButton);
+    });
+    expect(screen.getByText('Jogador old-1')).toBeInTheDocument();
     expect(mockStartAfter).toHaveBeenNthCalledWith(1, initialDocs[initialDocs.length - 1]);
 
     const shiftedDoc = eventDoc('live-1');
@@ -168,19 +173,23 @@ describe('LiveEventsScreen realtime pagination', () => {
       ...Array.from({ length: 23 }, (_, index) => eventDoc(`live-${24 - index}`)),
       olderDocs[0],
     ];
-    act(() => eventSubscriptions[0].next(snapshot(nextLiveDocs, [
-      { type: 'removed', doc: shiftedDoc },
-      { type: 'removed', doc: deletedDoc },
-    ])));
+    await act(async () => {
+      eventSubscriptions[0].next(snapshot(nextLiveDocs, [
+        { type: 'removed', doc: shiftedDoc },
+        { type: 'removed', doc: deletedDoc },
+      ]));
+    });
 
-    await screen.findByText('Jogador live-51');
-    await screen.findByText('Jogador live-30 atualizado');
-    await waitFor(() => expect(screen.queryByText('Jogador live-25')).not.toBeInTheDocument());
+    expect(screen.getByText('Jogador live-51')).toBeInTheDocument();
+    expect(screen.getByText('Jogador live-30 atualizado')).toBeInTheDocument();
+    expect(screen.queryByText('Jogador live-25')).not.toBeInTheDocument();
     expect(screen.getByText('Jogador live-1')).toBeInTheDocument();
     expect(screen.getAllByText('Jogador old-50')).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole('button', { name: /carregar mais/i }));
-    await waitFor(() => expect(mockStartAfter).toHaveBeenNthCalledWith(2, olderDocs[olderDocs.length - 1]));
+    await act(async () => {
+      fireEvent.click(loadMoreButton);
+    });
+    expect(mockStartAfter).toHaveBeenNthCalledWith(2, olderDocs[olderDocs.length - 1]);
     expect(screen.queryByRole('button', { name: /carregar mais/i })).not.toBeInTheDocument();
 
     unmount();
@@ -190,15 +199,21 @@ describe('LiveEventsScreen realtime pagination', () => {
   it('exibe erro, reconecta por retry e limpa os dois listeners', async () => {
     const { unmount } = renderScreen();
     const firstSubscription = eventSubscriptions[0];
-    act(() => firstSubscription.error(new Error('offline')));
+    await act(async () => {
+      firstSubscription.error(new Error('offline'));
+    });
 
-    expect(await screen.findByText('offline')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
-    await waitFor(() => expect(eventSubscriptions).toHaveLength(2));
+    expect(screen.getByText('offline')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+    });
+    expect(eventSubscriptions).toHaveLength(2);
     expect(firstSubscription.unsubscribe).toHaveBeenCalledOnce();
 
-    act(() => eventSubscriptions[1].next(snapshot([eventDoc('reconnected')])));
-    expect(await screen.findByText('Jogador reconnected')).toBeInTheDocument();
+    await act(async () => {
+      eventSubscriptions[1].next(snapshot([eventDoc('reconnected')]));
+    });
+    expect(screen.getByText('Jogador reconnected')).toBeInTheDocument();
     expect(screen.queryByText('offline')).not.toBeInTheDocument();
 
     unmount();
@@ -247,19 +262,27 @@ describe('LiveEventsScreen realtime pagination', () => {
       .mockRejectedValueOnce(new Error('resposta perdida'))
       .mockResolvedValueOnce({ success: true } as never);
 
-    renderScreen();
-    const [openButton] = await screen.findAllByRole('button', { name: /adicionar evento/i });
-    fireEvent.click(openButton);
-    const dialog = await screen.findByRole('dialog');
+    await act(async () => {
+      renderScreen();
+    });
+    const [openButton] = screen.getAllByRole('button', { name: /adicionar evento/i });
+    await act(async () => {
+      fireEvent.click(openButton);
+    });
+    const dialog = screen.getByRole('dialog');
     fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Jogador confirmado' }));
     fireEvent.click(await screen.findByRole('option', { name: /Jogador Um/ }));
     const submit = within(dialog).getByRole('button', { name: /^adicionar$/i });
 
-    fireEvent.click(submit);
-    await waitFor(() => expect(submitLiveGameEvent).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(submit).toBeEnabled());
-    fireEvent.click(submit);
-    await waitFor(() => expect(submitLiveGameEvent).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      fireEvent.click(submit);
+    });
+    expect(submitLiveGameEvent).toHaveBeenCalledTimes(1);
+    expect(submit).toBeEnabled();
+    await act(async () => {
+      fireEvent.click(submit);
+    });
+    expect(submitLiveGameEvent).toHaveBeenCalledTimes(2);
 
     const firstId = vi.mocked(submitLiveGameEvent).mock.calls[0]?.[0]?.requestId;
     const retryId = vi.mocked(submitLiveGameEvent).mock.calls[1]?.[0]?.requestId;

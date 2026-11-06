@@ -151,27 +151,40 @@ describe('useTeams', () => {
 
   it('gate de 800ms: query só habilita depois do delay (timers reais)', async () => {
     setTimeoutSpy.mockRestore(); // comportamento nativo do setTimeout
-    const { result } = renderHook(() => useTeams(), { wrapper: wrapperFor(makeQueryClient()) });
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useTeams(), { wrapper: wrapperFor(makeQueryClient()) });
 
-    await act(async () => {});
-    expect(mockGetDocs).not.toHaveBeenCalled(); // antes dos 800ms
+      await act(async () => {});
+      expect(mockGetDocs).not.toHaveBeenCalled(); // antes dos 800ms
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 900));
-    });
-    await waitFor(() => expect(mockGetDocs).toHaveBeenCalledTimes(1));
-    expect(result.current.loading).toBe(false);
-  }, 5000);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(900);
+      });
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      expect(mockGetDocs).toHaveBeenCalledTimes(1);
+      expect(result.current.loading).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it('unmount antes dos 800ms cancela o timer e nunca consulta', async () => {
     setTimeoutSpy.mockRestore();
-    const { unmount } = renderHook(() => useTeams(), { wrapper: wrapperFor(makeQueryClient()) });
-    unmount();
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 900));
-    });
-    expect(mockGetDocs).not.toHaveBeenCalled();
-  }, 5000);
+    vi.useFakeTimers();
+    try {
+      const { unmount } = renderHook(() => useTeams(), { wrapper: wrapperFor(makeQueryClient()) });
+      unmount();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(900);
+      });
+      expect(mockGetDocs).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it('usuário desloga após carregar: query é desabilitada mas teams permanecem (cache)', async () => {
     const { result, rerender } = renderHook(() => useTeams(), { wrapper: wrapperFor(makeQueryClient()) });
