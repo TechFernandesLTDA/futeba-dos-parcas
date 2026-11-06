@@ -8,7 +8,7 @@ export const mockAddDoc = vi.fn();
 export const mockUpdateDoc = vi.fn();
 export const mockDeleteDoc = vi.fn();
 export const mockSetDoc = vi.fn();
-export const mockWriteBatch = vi.fn(() => ({
+export const mockWriteBatch = vi.fn((..._args: unknown[]) => ({
   set: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),

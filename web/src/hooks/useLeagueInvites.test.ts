@@ -86,7 +86,7 @@ vi.mock('../utils/firebaseErrors', () => ({
   getFirestoreErrorMessage: (err: any) => `fb:${err?.code ?? err?.message ?? 'unknown'}`,
 }));
 
-import { useLeagueInvites, type LeagueInviteTarget } from './useLeagueInvites';
+import { useLeagueInvites, type LeagueInviteOption, type LeagueInviteTarget } from './useLeagueInvites';
 
 function makeDocRef(...segments: unknown[]) {
   const path = segments.filter((s) => typeof s === 'string').join('/');
@@ -173,12 +173,12 @@ describe('useLeagueInvites — opções de convite', () => {
 });
 
 describe('useLeagueInvites — sendInvite', () => {
-  function optionFor(group = makeGroup()) {
+  function optionFor(group = makeGroup()): LeagueInviteOption {
     return {
       id: `group:${group.id}`,
       label: group.name,
       helper: `${group.memberCount || 0} membros`,
-      group,
+      group: group as unknown as LeagueInviteOption['group'],
     };
   }
 

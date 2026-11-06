@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
 const mockSaveDraft = vi.fn();
-const mockLoadDraft = vi.fn(() => null);
+const mockLoadDraft = vi.fn((..._args: unknown[]) => null);
 const mockClearDraft = vi.fn();
 
 vi.mock('../utils/gameDraft', () => ({
@@ -25,7 +25,7 @@ describe('useGameDraft', () => {
 
   it('persiste a última edição pendente ao desmontar antes do debounce', () => {
     const { result, unmount } = renderHook(() =>
-      useGameDraft({
+      useGameDraft<{ title: string; field?: string }>({
         key: 'create_game',
         initialData: { title: '' },
         debounceMs: 2000,

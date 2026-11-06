@@ -87,6 +87,10 @@ jobs:
         if: matrix.run_quality
         run: npm run lint
 
+      - name: Typecheck tests
+        if: matrix.run_quality
+        run: npm run typecheck:test
+
       - name: TypeScript and production build
         if: matrix.run_quality
         run: npm run build

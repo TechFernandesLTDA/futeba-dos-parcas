@@ -11,7 +11,7 @@ import { Timestamp } from 'firebase/firestore';
 const mockGetDocs = vi.fn();
 const mockGetDoc = vi.fn();
 const mockDoc = vi.fn();
-const mockQuery = vi.fn((base: unknown, ...constraints: unknown[]) => ({ base, constraints }));
+const mockQuery = vi.fn((base?: unknown, ...constraints: unknown[]) => ({ base, constraints }));
 
 vi.mock('firebase/firestore', () => {
   // MockTimestamp com classe real: toGame converte date_time via toDate().

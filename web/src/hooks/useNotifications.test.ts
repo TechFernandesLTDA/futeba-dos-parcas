@@ -15,7 +15,7 @@ const mockLimit = vi.fn();
 const mockBatchUpdate = vi.fn();
 const mockBatchDelete = vi.fn();
 const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
-const mockWriteBatch = vi.fn(() => ({
+const mockWriteBatch = vi.fn((..._args: unknown[]) => ({
   update: mockBatchUpdate,
   delete: mockBatchDelete,
   set: vi.fn(),
@@ -62,7 +62,7 @@ vi.mock('../utils/logger', () => ({
 
 vi.mock('../contexts/ToastContext', () => ({
   useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
-  ToastProvider: ({ children }) => children,
+  ToastProvider: ({ children }: { children: unknown }) => children,
 }));
 import { useNotifications, useUnreadNotificationCount } from './useNotifications';
 

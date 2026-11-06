@@ -25,7 +25,10 @@ function defineNavigatorProperty(key: keyof Navigator, value: unknown) {
 }
 
 describe('useAppPermissions', () => {
-  const permissionStatus = { state: 'prompt', onchange: null } as unknown as PermissionStatus;
+  const permissionStatus: { state: PermissionState; onchange: ((this: PermissionStatus, ev: Event) => unknown) | null } = {
+    state: 'prompt',
+    onchange: null,
+  };
   const getCurrentPosition = vi.fn();
 
   beforeEach(() => {

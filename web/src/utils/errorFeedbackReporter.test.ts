@@ -75,7 +75,7 @@ describe('errorFeedbackReporter', () => {
     expect(result).toEqual({ ok: true, feedbackId: 'fb-9' });
     expect(collectionMock).toHaveBeenCalledWith(firebaseMock.db, 'user_feedback');
 
-    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown>;
+    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown> & { context: Record<string, unknown> };
     expect(doc.user_id).toBe('u-1');
     expect(doc.user_email).toBe('u@x.com');
     expect(doc.type).toBe('bug');
@@ -110,7 +110,7 @@ describe('errorFeedbackReporter', () => {
 
     await submitErrorFeedbackReport({ errorId: null, error: null, errorInfo: null, logEntry: null });
 
-    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown>;
+    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown> & { context: Record<string, unknown> };
     expect(doc.title).toContain('sem-codigo');
     expect(doc.description).toContain('Mensagem: Erro inesperado');
     expect(doc.context.error).toMatchObject({ name: 'Error', message: 'Erro inesperado' });
@@ -126,12 +126,12 @@ describe('errorFeedbackReporter', () => {
       message: 'do log',
       name: 'TypeError',
       stack: 'st-do-log',
-      context: { kind: 'render', componentStack: 'cs-do-log' },
+      context: { kind: 'render' as const, componentStack: 'cs-do-log' },
     };
 
     await submitErrorFeedbackReport({ errorId: null, error: null, errorInfo: null, logEntry });
 
-    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown>;
+    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown> & { context: Record<string, unknown> };
     expect(doc.title).toContain('log99999');
     expect(doc.description).toContain('Mensagem: do log');
     expect(doc.context.error).toMatchObject({ name: 'TypeError', message: 'do log', stack: 'st-do-log' });
@@ -142,13 +142,13 @@ describe('errorFeedbackReporter', () => {
     firebaseMock.auth.currentUser = { uid: 'u-1', email: '' };
     const logEntry = {
       errorId: 'x',
-      context: { kind: 'render', componentStack: 'cs-do-log' },
+      context: { kind: 'render' as const, componentStack: 'cs-do-log' },
     };
     const errorInfo = { componentStack: 'cs-react' } as unknown as ErrorInfo;
 
     await submitErrorFeedbackReport({ errorId: 'x', error: null, errorInfo, logEntry });
 
-    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown>;
+    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown> & { context: Record<string, unknown> };
     expect(doc.context.componentStack).toBe('cs-react');
   });
 
@@ -162,7 +162,7 @@ describe('errorFeedbackReporter', () => {
       makeInput({ errorId: 'x'.repeat(120), error: err, errorInfo }),
     );
 
-    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown>;
+    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown> & { context: Record<string, unknown> };
     expect((doc.title as string).length).toBeLessThanOrEqual(80);
     expect((doc.description as string).length).toBeLessThanOrEqual(2000);
     expect((doc.context.error as Record<string, unknown>).stack).toHaveLength(5999);
@@ -177,7 +177,7 @@ describe('errorFeedbackReporter', () => {
 
     await submitErrorFeedbackReport(makeInput());
 
-    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown>;
+    const doc = addDocMock.mock.calls[0][1] as Record<string, unknown> & { context: Record<string, unknown> };
     const breadcrumbs = doc.context.breadcrumbs as Array<{ message: string }>;
     expect(breadcrumbs).toHaveLength(10);
     expect(breadcrumbs[0].message).toBe('acao-4');

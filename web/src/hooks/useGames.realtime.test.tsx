@@ -56,7 +56,7 @@ function wrapperFor(client: QueryClient) {
   };
 }
 
-function gameDoc(id: string, status: string) {
+function gameDoc(id: string, status: string): { id: string; data: () => Record<string, unknown> } {
   return {
     id,
     data: () => ({ id, status, owner_id: 'owner', dateTime: new Date('2026-08-10T19:00:00Z') }),

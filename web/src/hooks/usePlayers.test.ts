@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetDoc = vi.fn();
 const mockGetDocs = vi.fn();
-const mockDoc = vi.fn((_db: unknown, ...parts: string[]) => parts.join('/'));
+const mockDoc = vi.fn((_db?: unknown, ...parts: string[]) => parts.join('/'));
 
 vi.mock('firebase/firestore', () => {
   class MockTimestamp {

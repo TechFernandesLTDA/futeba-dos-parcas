@@ -213,8 +213,8 @@ describe('useGroupChallenges — carga', () => {
     const { result } = renderHook(() => useGroupChallenges('g-1'), { wrapper: wrapperFor(makeQueryClient()) });
     await waitFor(() => expect(result.current.challenges).toHaveLength(3));
 
-    expect(result.current.challenges.map((c) => c.id)).toEqual(['ch-3', 'ch-1', 'ch-2']);
-    const first = result.current.challenges[0];
+    expect(result.current.challenges!.map((c) => c.id)).toEqual(['ch-3', 'ch-1', 'ch-2']);
+    const first = result.current.challenges![0];
     expect(first.challengerGroupId).toBe('g-1');
     expect(first.targetCount).toBe(1); // default quando ausente
     expect(first.currentProgress).toBe(0);
@@ -238,7 +238,7 @@ describe('useGroupChallenges — carga', () => {
     const { result } = renderHook(() => useGroupChallenges('g-1'), { wrapper: wrapperFor(makeQueryClient()) });
     await waitFor(() => expect(result.current.challenges).toHaveLength(1));
 
-    const c = result.current.challenges[0];
+    const c = result.current.challenges![0];
     expect(c).toMatchObject({
       id: 'ch-full',
       challengerGroupId: 'g-other',
@@ -263,8 +263,8 @@ describe('useGroupChallenges — carga', () => {
     dispatchByDirection([challengeDoc('ch-epoch', { status: 'PENDING' })], []);
     const { result } = renderHook(() => useGroupChallenges('g-1'), { wrapper: wrapperFor(makeQueryClient()) });
     await waitFor(() => expect(result.current.challenges).toHaveLength(1));
-    expect(result.current.challenges[0].createdAt.getTime()).toBe(0);
-    expect(result.current.challenges[0].completedAt).toBeUndefined();
+    expect(result.current.challenges![0].createdAt.getTime()).toBe(0);
+    expect(result.current.challenges![0].completedAt).toBeUndefined();
   });
 
   it('sem groupId ou sem usuário: [] sem consultar Firestore', async () => {

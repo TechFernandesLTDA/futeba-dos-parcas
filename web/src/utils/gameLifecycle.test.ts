@@ -88,15 +88,15 @@ describe('gameLifecycle', () => {
     });
 
     it('retorna null quando date está ausente', () => {
-      expect(getGameStartDate({ dateTime: undefined, date: undefined, time: '15:30' })).toBeNull();
+      expect(getGameStartDate({ dateTime: undefined, date: undefined as unknown as string, time: '15:30' })).toBeNull();
     });
 
     it('retorna null quando time está ausente', () => {
-      expect(getGameStartDate({ dateTime: undefined, date: '2026-10-10', time: undefined })).toBeNull();
+      expect(getGameStartDate({ dateTime: undefined, date: '2026-10-10', time: undefined as unknown as string })).toBeNull();
     });
 
     it('retorna null quando ambos date e time estão ausentes', () => {
-      expect(getGameStartDate({ dateTime: undefined, date: undefined, time: undefined })).toBeNull();
+      expect(getGameStartDate({ dateTime: undefined, date: undefined as unknown as string, time: undefined as unknown as string })).toBeNull();
     });
 
     it('retorna null para strings que produzem data inválida', () => {
@@ -106,7 +106,7 @@ describe('gameLifecycle', () => {
 
     it('não trata dateTime como Date se não for instância de Date (ex.: string)', () => {
       // dateTime string ISO cai no caminho date+time; aqui date/time ausentes => null
-      const result = getGameStartDate({ dateTime: '2026-10-10T15:00:00Z' as never, date: undefined, time: undefined });
+      const result = getGameStartDate({ dateTime: '2026-10-10T15:00:00Z' as never, date: undefined as unknown as string, time: undefined as unknown as string });
       expect(result).toBeNull();
     });
   });
@@ -125,22 +125,22 @@ describe('gameLifecycle', () => {
 
     it('retorna true quando o início é exatamente igual a now (>=)', () => {
       const now = new Date('2026-10-06T12:00:00');
-      expect(isFutureGame({ dateTime: now, date: undefined, time: undefined }, now)).toBe(true);
+      expect(isFutureGame({ dateTime: now, date: undefined as unknown as string, time: undefined as unknown as string }, now)).toBe(true);
     });
 
     it('usa dateTime Date diretamente', () => {
       expect(
-        isFutureGame({ dateTime: new Date('2026-12-31T00:00:00'), date: undefined, time: undefined }, NOW),
+        isFutureGame({ dateTime: new Date('2026-12-31T00:00:00'), date: undefined as unknown as string, time: undefined as unknown as string }, NOW),
       ).toBe(true);
     });
 
     it('retorna false quando não é possível derivar a data de início', () => {
-      expect(isFutureGame({ dateTime: undefined, date: undefined, time: undefined }, NOW)).toBe(false);
+      expect(isFutureGame({ dateTime: undefined, date: undefined as unknown as string, time: undefined as unknown as string }, NOW)).toBe(false);
     });
 
     it('usa o horário atual por padrão quando now não é informado', () => {
-      expect(isFutureGame({ dateTime: new Date(Date.now() + 60_000), date: undefined, time: undefined })).toBe(true);
-      expect(isFutureGame({ dateTime: new Date(Date.now() - 60_000), date: undefined, time: undefined })).toBe(false);
+      expect(isFutureGame({ dateTime: new Date(Date.now() + 60_000), date: undefined as unknown as string, time: undefined as unknown as string })).toBe(true);
+      expect(isFutureGame({ dateTime: new Date(Date.now() - 60_000), date: undefined as unknown as string, time: undefined as unknown as string })).toBe(false);
     });
   });
 
@@ -167,7 +167,7 @@ describe('gameLifecycle', () => {
     });
 
     it('retorna false quando a data de início não pode ser derivada', () => {
-      expect(isUpcomingGame({ status: 'SCHEDULED', date: undefined, time: undefined }, NOW)).toBe(false);
+      expect(isUpcomingGame({ status: 'SCHEDULED', date: undefined as unknown as string, time: undefined as unknown as string }, NOW)).toBe(false);
     });
   });
 });

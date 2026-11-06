@@ -215,6 +215,7 @@ const gameFixture = {
   waitlistAutoPromoteMinutes: 10,
   votingConcluded: false,
   xpProcessed: false,
+  postGameReportGenerated: false,
 } as Game;
 
 const otherPlayer: GameConfirmation = {

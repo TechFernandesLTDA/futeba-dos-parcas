@@ -9,7 +9,7 @@ const mockCreateUserWithEmailAndPassword = vi.fn();
 const mockSignInWithPopup = vi.fn();
 const mockSignInWithRedirect = vi.fn();
 const mockGetRedirectResult = vi.fn();
-const mockGetAdditionalUserInfo = vi.fn(() => ({ isNewUser: false }));
+const mockGetAdditionalUserInfo = vi.fn((..._args: unknown[]) => ({ isNewUser: false }));
 const mockSignOut = vi.fn();
 const mockSendPasswordResetEmail = vi.fn();
 const mockUpdateProfile = vi.fn();

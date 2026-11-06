@@ -150,6 +150,7 @@ test('Web CI uses two sharded PR lanes with exactly two installs and a stable ga
   assert.equal(countMatches(shards, /^\s+shard_total: 2$/gm), 2);
   assert.equal(countMatches(shards, /^\s+run_quality: (?:true|false)$/gm), 2);
   assert.match(shards, /name: Run ESLint\n\s+if: matrix\.run_quality\n\s+run: npm run lint/);
+  assert.match(shards, /name: Typecheck tests\n\s+if: matrix\.run_quality\n\s+run: npm run typecheck:test/);
   assert.match(shards, /name: TypeScript and production build\n\s+if: matrix\.run_quality\n\s+run: npm run build/);
   assert.match(
     shards,

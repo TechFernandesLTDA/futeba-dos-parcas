@@ -4,7 +4,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 const mockGetToken = vi.fn();
 const mockOnMessage = vi.fn();
 const mockRegisterBrowserFcmToken = vi.fn();
-const mockShouldShowForegroundNotification = vi.fn(() => true);
+const mockShouldShowForegroundNotification = vi.fn((..._args: unknown[]) => true);
 const mockShowError = vi.fn();
 
 vi.mock('firebase/messaging', () => ({

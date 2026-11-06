@@ -5,10 +5,15 @@ import { useKeyboardInset } from './useKeyboardInset';
 describe('useKeyboardInset', () => {
   const originalVisualViewport = window.visualViewport;
   let handlers: Record<string, () => void>;
+  let mockVv: {
+    height: number;
+    addEventListener: ReturnType<typeof vi.fn>;
+    removeEventListener: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     handlers = {};
-    const mockVv = {
+    mockVv = {
       height: 800,
       addEventListener: vi.fn((event: string, handler: () => void) => {
         handlers[event] = handler;
@@ -37,26 +42,26 @@ describe('useKeyboardInset', () => {
 
   it('retorna 0 quando teclado está fechado', () => {
     window.innerHeight = 900;
-    window.visualViewport!.height = 900;
+    mockVv.height = 900;
     const { result } = renderHook(() => useKeyboardInset());
     expect(result.current).toBe(0);
   });
 
   it('retorna altura correta quando teclado está visível', () => {
     window.innerHeight = 900;
-    window.visualViewport!.height = 600;
+    mockVv.height = 600;
     const { result } = renderHook(() => useKeyboardInset());
     expect(result.current).toBe(300);
   });
 
   it('atualiza altura no evento resize', () => {
     window.innerHeight = 900;
-    window.visualViewport!.height = 900;
+    mockVv.height = 900;
     const { result } = renderHook(() => useKeyboardInset());
     expect(result.current).toBe(0);
 
     act(() => {
-      window.visualViewport!.height = 500;
+      mockVv.height = 500;
       handlers.resize();
     });
 
@@ -72,7 +77,7 @@ describe('useKeyboardInset', () => {
 
   it('usa Math.max para evitar valores negativos', () => {
     window.innerHeight = 800;
-    window.visualViewport!.height = 900;
+    mockVv.height = 900;
     const { result } = renderHook(() => useKeyboardInset());
     expect(result.current).toBe(0);
   });
