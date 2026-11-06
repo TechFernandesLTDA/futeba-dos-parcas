@@ -54,8 +54,21 @@ interface TeamBalancer {
 }
 
 /**
- * Implementacao padrao usando algoritmo greedy.
- * Alterna jogadores entre times ordenados por rating.
+ * Implementação padrão KMP ([TeamBalancer]) para divisão equilibrada em 2 times (`Time A` e `Time B`).
+ *
+ * ### Algoritmo: Snake Draft (Serpentina) Estratificado por Posição
+ * (Nota: apesar do nome histórico `GreedyTeamBalancer`, a distribuição de linha usa **Snake Draft**).
+ * 1. **Separação por Posição**:
+ *    - Goleiros (`GOALKEEPER`) ordenados por `goalkeeperSkill` decrescente.
+ *    - Jogadores de linha (`LINE`) ordenados por `overallRating` decrescente
+ *      (`(attackSkill + midfieldSkill + defenseSkill) / 3`).
+ * 2. **Distribuição de Goleiros**:
+ *    Alterna goleiros entre `Time A` (índices pares) e `Time B` (índices ímpares) até
+ *    `goalkeepersPerTeam` por time; excedentes vão para `Time A`.
+ * 3. **Distribuição de Linha (Snake Draft)**:
+ *    Em rodadas de 2 escolhas (`roundNumber = index / 2`, `pickInRound = index % 2`),
+ *    rodadas pares alocam `A -> B` e rodadas ímpares alocam `B -> A`
+ *    (sequência `A, B, B, A, A, B, B, A...`).
  */
 object GreedyTeamBalancer : TeamBalancer {
 

@@ -2,6 +2,7 @@
  * Testes do sistema de League Rating e Promotion/Relegation
  */
 
+import xpConstants from "../../shared/xp-constants.json";
 import {
   PROMOTION_GAMES_REQUIRED,
   RELEGATION_GAMES_REQUIRED,
@@ -400,6 +401,22 @@ describe("League System", () => {
 
     test("100 rating is DIAMANTE", () => {
       expect(getDivisionForRating(100)).toBe("DIAMANTE");
+    });
+
+    test("alinhado com leagueThresholds de shared/xp-constants.json", () => {
+      const { BRONZE_MAX, PRATA_MAX, OURO_MAX, DIAMANTE_MAX } =
+        xpConstants.leagueThresholds;
+      expect(getNextDivisionThreshold("BRONZE")).toBe(BRONZE_MAX);
+      expect(getNextDivisionThreshold("PRATA")).toBe(PRATA_MAX);
+      expect(getNextDivisionThreshold("OURO")).toBe(OURO_MAX);
+      expect(getNextDivisionThreshold("DIAMANTE")).toBe(DIAMANTE_MAX);
+
+      expect(getDivisionForRating(BRONZE_MAX - 1)).toBe("BRONZE");
+      expect(getDivisionForRating(BRONZE_MAX)).toBe("PRATA");
+      expect(getDivisionForRating(PRATA_MAX - 1)).toBe("PRATA");
+      expect(getDivisionForRating(PRATA_MAX)).toBe("OURO");
+      expect(getDivisionForRating(OURO_MAX - 1)).toBe("OURO");
+      expect(getDivisionForRating(OURO_MAX)).toBe("DIAMANTE");
     });
   });
 });

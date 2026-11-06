@@ -323,8 +323,8 @@ export function calculateLeagueRating(
 export function getDivisionForRating(
   rating: number
 ): string {
-  if (rating >= 70) return "DIAMANTE";
-  if (rating >= 50) return "OURO";
-  if (rating >= 30) return "PRATA";
+  if (rating >= LEAGUE_THRESHOLDS.OURO_MAX) return "DIAMANTE";
+  if (rating >= LEAGUE_THRESHOLDS.PRATA_MAX) return "OURO";
+  if (rating >= LEAGUE_THRESHOLDS.BRONZE_MAX) return "PRATA";
   return "BRONZE";
 }

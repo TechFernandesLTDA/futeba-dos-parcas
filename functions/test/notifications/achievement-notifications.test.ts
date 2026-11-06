@@ -153,19 +153,63 @@ describe("Achievement Notifications", () => {
       );
     });
 
-    it("usa 'Nivel N' para levels alem do array", async () => {
+    it("inclui nome oficial dos niveis 10, 11 e 20 da tabela xp-constants.json", async () => {
       await onLevelUp({
-        id: "evt-level-up-4",
+        id: "evt-level-up-10",
         data: {
-          before: { data: () => ({ level: 10 }) },
-          after: { data: () => ({ level: 15 }) },
+          before: { data: () => ({ level: 9 }) },
+          after: { data: () => ({ level: 10 }) },
         },
         params: { userId: "user1" },
       });
 
       expect(mockSendNotificationToUser).toHaveBeenCalledWith(
         "user1",
-        expect.objectContaining({ body: expect.stringContaining("Nivel 15") }),
+        expect.objectContaining({ body: expect.stringContaining("Imortal") }),
+      );
+
+      await onLevelUp({
+        id: "evt-level-up-11",
+        data: {
+          before: { data: () => ({ level: 10 }) },
+          after: { data: () => ({ level: 11 }) },
+        },
+        params: { userId: "user1" },
+      });
+
+      expect(mockSendNotificationToUser).toHaveBeenCalledWith(
+        "user1",
+        expect.objectContaining({ body: expect.stringContaining("Garrincha") }),
+      );
+
+      await onLevelUp({
+        id: "evt-level-up-20",
+        data: {
+          before: { data: () => ({ level: 19 }) },
+          after: { data: () => ({ level: 20 }) },
+        },
+        params: { userId: "user1" },
+      });
+
+      expect(mockSendNotificationToUser).toHaveBeenCalledWith(
+        "user1",
+        expect.objectContaining({ body: expect.stringContaining("Pelé") }),
+      );
+    });
+
+    it("usa 'Nivel N' apenas para levels fora da LEVEL_TABLE (> 20)", async () => {
+      await onLevelUp({
+        id: "evt-level-up-4",
+        data: {
+          before: { data: () => ({ level: 20 }) },
+          after: { data: () => ({ level: 25 }) },
+        },
+        params: { userId: "user1" },
+      });
+
+      expect(mockSendNotificationToUser).toHaveBeenCalledWith(
+        "user1",
+        expect.objectContaining({ body: expect.stringContaining("Nivel 25") }),
       );
     });
 

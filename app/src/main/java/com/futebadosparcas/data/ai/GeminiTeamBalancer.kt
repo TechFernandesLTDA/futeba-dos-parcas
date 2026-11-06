@@ -8,6 +8,27 @@ import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger
 import kotlin.math.ceil
 
+/**
+ * Implementação de [AiTeamBalancer] para sorteio e balanceamento de N times no Android.
+ *
+ * IMPORTANTE: Apesar do nome histórico `GeminiTeamBalancer`, esta classe **NÃO chama a API
+ * Gemini nem qualquer modelo de IA externo**. O balanceamento é 100% **heurístico local**
+ * (executado no dispositivo, sem requisição de rede de IA).
+ *
+ * ### Algoritmo: Greedy Balanceado por Tamanho e Score Acumulado (Local Heuristic)
+ * 1. **Cálculo de Score Individual**:
+ *    `score = (effectiveRating * 10) + level`, onde:
+ *    - `effectiveRating` (0.0 a 5.0): para `GOALKEEPER`, usa o rating de goleiro;
+ *      para linha, usa `max(STRIKER, MID, DEFENDER)`. Jogadores sem avaliação recebem
+ *      `DEFAULT_RATING = 3.0`.
+ *    - `level` (0 a 20): nível atual de XP do jogador.
+ * 2. **Ordenação**: Jogadores ordenados do maior para o menor `score`.
+ * 3. **Separação por Posição**: Goleiros (`GOALKEEPER`) são distribuídos primeiro;
+ *    jogadores de linha em seguida.
+ * 4. **Alocação Gulosa (Greedy)**: Cada jogador é alocado ao time com **menor quantidade
+ *    de jogadores** e, em caso de empate no tamanho, ao time com **menor score total
+ *    acumulado** (`compareBy { size }.thenBy { teamScore }`).
+ */
 class GeminiTeamBalancer constructor(
     private val userRepository: UserRepository
 ) : AiTeamBalancer {

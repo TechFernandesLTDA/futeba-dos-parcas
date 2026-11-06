@@ -4,8 +4,12 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
 
 /**
- * Interface para balanceamento de times usando AI (Gemini).
- * Diferente do TeamBalancer KMP no shared module.
+ * Interface para balanceamento de N times no módulo Android (`:app`).
+ *
+ * Nota: Apesar do pacote `domain.ai` e da implementação `GeminiTeamBalancer`,
+ * o balanceamento atual usa algoritmo heurístico local (Greedy por tamanho e score
+ * `rating * 10 + level`), sem chamadas à API Gemini/IA.
+ * Diferente de [TeamBalancer] KMP no módulo `:shared` (focado em 2 times via Snake Draft).
  */
 interface AiTeamBalancer {
     /**

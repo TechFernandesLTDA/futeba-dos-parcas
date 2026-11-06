@@ -163,6 +163,7 @@ async function awardBadgeWithXp(
 
 /**
  * Verifica se usuario tem streak >= 7 jogos consecutivos
+ * na colecao canonica `user_streaks` (com fallback legado para `users.current_streak`).
  * @param {string} userId - UID do usuario
  * @param {admin.firestore.DocumentSnapshot} [userDoc] - Documento do usuario pre-carregado (opcional)
  * @return {Promise<boolean>} true se atingiu o threshold
@@ -171,8 +172,21 @@ async function checkBadgeStreak7(
   userId: string,
   userDoc?: admin.firestore.DocumentSnapshot
 ): Promise<boolean> {
-  const doc = userDoc || await db().collection("users").doc(userId).get();
-  const streak = (doc.data()?.current_streak as number) || 0;
+  const streakDoc = await db().collection("user_streaks").doc(userId).get();
+  let streakData = streakDoc.exists ? streakDoc.data() : undefined;
+  if (!streakData) {
+    const streakSnap = await db()
+      .collection("user_streaks")
+      .where("user_id", "==", userId)
+      .limit(1)
+      .get();
+    streakData = streakSnap.docs[0]?.data();
+  }
+  const streak = streakData ?
+    ((streakData.current_streak as number) ??
+      (streakData.currentStreak as number) ??
+      0) :
+    ((userDoc?.data()?.current_streak as number) || 0);
   return streak >= 7;
 }
 
