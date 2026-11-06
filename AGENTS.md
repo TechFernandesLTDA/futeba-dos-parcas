@@ -11,6 +11,8 @@
 - **Branch protection**: PR + 4 CI gates required; human/CODEOWNERS review is advisory (0 approvals required); no force-push or deletions.
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bump PRs get closed — deps handled in batch via `npm audit fix`.
 - **Node 22** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
+- **Current versions** (`versions.json` is source of truth): Web `1.61.1`, Android `1.42.0` (build `83`), iOS `1.8.0` (build `24`), Functions `1.15.1`.
+- **XP constants** (`shared/xp-constants.json` is source of truth): Participation `+10`, Goal `+25`, Assist `+20`, Save `+15`, Clean Sheet `+15`, Win `+30`, Draw `+10`, MVP `+50`, Bola Murcha `-10`, max per game `500`.
 - **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`).
 - **Release discipline is mandatory**: any user-visible deploy must keep platform versioning, About/Sobre metadata, release notes, `CHANGELOG.md`, GitHub tag/release, and relevant README/docs in sync.
 
@@ -27,12 +29,13 @@ npm run lint           # ESLint
 npx firebase deploy --only hosting --project futebadosparcas
 ```
 
-### Android (root)
+### Android & KMP / iOS (root)
 ```bash
-./gradlew :app:assembleDebug                # Full build
+./gradlew :app:assembleDebug                # Full Android build
 ./gradlew :app:compileDebugKotlin           # Fast syntax check (use for quick iterations)
 ./gradlew :app:testDebugUnitTest            # All unit tests
 ./gradlew :app:testDebugUnitTest --tests "*.ClassName.methodName"  # Single test
+./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64          # iOS framework (Apple Silicon)
 ./gradlew lint                              # Android lint
 ./gradlew detekt                            # Static analysis
 ```
@@ -68,13 +71,13 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 
 ## Architecture: what lives where
 
-| Layer | Android | Web |
-|-------|---------|-----|
-| UI | `app/.../ui/<feature>/` (Compose) | `web/src/pages/<feature>/` (React) |
-| State | `app/.../ui/<feature>/<Feature>ViewModel.kt` | `web/src/hooks/use<Feature>.ts` + TanStack Query |
-| Domain | `shared/commonMain/` (KMP) | N/A (Firestore-only) |
-| Data | `shared/androidMain/` (Firebase Android SDK) | `web/src/services/firebase.ts` |
-| DI | Koin modules at `app/.../di/koin/` | React Context at `web/src/contexts/` |
+| Layer | Android (`:app`) | iOS (`:composeApp` + `iosApp/`) | Web (`web/`) |
+|-------|------------------|---------------------------------|--------------|
+| UI | `app/.../ui/<feature>/` (Compose) | `composeApp/src/commonMain/.../compose/` (Compose Multiplatform + SwiftUI shell in `iosApp/`) | `web/src/pages/<feature>/` (React) |
+| State | `app/.../ui/<feature>/<Feature>ViewModel.kt` | `composeApp/src/commonMain/.../` | `web/src/hooks/use<Feature>.ts` + TanStack Query |
+| Domain | `shared/src/commonMain/` (KMP) | `shared/src/commonMain/` (KMP) | N/A (Firestore-only) |
+| Data | `shared/src/androidMain/` + `nativeAndAndroidMain/` | `shared/src/iosMain/` + `nativeAndAndroidMain/` | `web/src/services/firebase.ts` |
+| DI | Koin modules at `app/.../di/koin/` | Koin / `SharedModuleFactory` | React Context at `web/src/contexts/` |
 
 **Key boundaries**:
 - Web app does NOT use the KMP `:shared` module. All Firebase queries are via `web/src/hooks/` → `web/src/services/firebase.ts`.
@@ -133,8 +136,6 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 ## Common gotchas
 
 - **Stale `.tsbuildinfo`**: If TSC reports errors in files that don't exist, delete `web/tsconfig.tsbuildinfo` and `web/dist/`.
-- **PowerShell**: `ls -la` doesn't work. Use `Get-ChildItem` or `dir`.
-- **`git add -A &&`**: `&&` fails on PowerShell. Use `;` or separate commands.
 - **Firestore `whereIn`**: Limited to 10 items. Batch in chunks.
 - **`ListItemSecondaryAction`**: Deprecated in MUI v5. Use `secondaryAction` prop on `ListItem`.
 - **`Divider`**: Deprecated. Use `HorizontalDivider` (Compose) or `<Divider />` (MUI — still valid).
@@ -152,6 +153,8 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 | Agent usage | `docs/AGENT_OPERATING_MODEL.md` |
 | QA smoke matrix | `docs/QA_SMOKE_MATRIX.md` |
 | Android entry | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
+| Android navigation | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` |
+| iOS CMP entry | `composeApp/src/commonMain/kotlin/com/futebadosparcas/compose/App.kt` |
 | Web entry | `web/src/main.tsx` |
 | Web routes | `web/src/App.tsx` (55+ lazy routes) |
 | Web theme | `web/src/theme/index.ts` |

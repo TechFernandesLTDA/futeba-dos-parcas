@@ -2137,3 +2137,14 @@ conhecido, **pendentes de aceite do dono**:
 
 Resolvidos no código: `exportMyData` (#4482), índices COLLECTION_GROUP de `members.user_id`, `reviews.user_id` e
 `cashbox.created_by` (READY em produção), link de jogo sem login e prévia nas redes (#4408).
+
+## 2026-11-05: Modernização sem mudar a essência, aprovação da Onda A
+
+- O dono aprovou o `PLANO.md` **só na Onda A** (rede de segurança: testes de caracterização, estabilidade dos testes
+  da web, typecheck dos testes, detekt em `shared`/`composeApp`, ESLint em `src/pages`). Nenhum comportamento do app
+  muda nesta onda.
+- O Passo 0 (stack), as decisões D1 a D18 e as Ondas B em diante **continuam pendentes** de aprovação.
+- O desenvolvimento é feito por agentes Haiku 5.5, um passo por branch e PR; a sessão principal revisa cada diff
+  (só arquivos de teste ou config) antes do push.
+- Base: `docs/modernizacao/ESSENCIA.md`, `docs/modernizacao/DIAGNOSTICO.md`, `docs/modernizacao/PLANO.md` e `docs/modernizacao/PENDENCIAS-EXTERNAS.md`.
+

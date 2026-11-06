@@ -143,7 +143,6 @@ android {
 
         unitTests.all {
             it.useJUnitPlatform()
-            // Contratos de recursos nao podem depender do diretorio temporario do Windows.
             it.systemProperty("futeba.repoRoot", rootProject.projectDir.absolutePath)
             it.maxHeapSize = "2g"
             // Fix encoding issues for paths with special characters (ç, etc.)
@@ -155,13 +154,6 @@ android {
                 "-Dstdout.encoding=UTF-8",
                 "-Dstderr.encoding=UTF-8"
             )
-            // Set working directory to temp to avoid path issues with special chars on Windows
-            if (System.getProperty("os.name").lowercase().contains("win")) {
-                val tempDir = file("C:/TEMP")
-                if (tempDir.exists()) {
-                    it.workingDir = tempDir
-                }
-            }
         }
     }
 

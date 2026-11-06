@@ -55,41 +55,41 @@ Cada jogador ganha XP de múltiplas fontes durante um jogo:
 
 | Componente | Valor | Condição | Código |
 |------------|-------|----------|--------|
-| **Presença Básica** | +10 XP | Sempre (por comparecer) | `functions/src/index.ts:calculateXP()` |
-| **Gol** | +10 XP | Por gol marcado | `calculateXP()` |
-| **Assistência** | +7 XP | Por assist registrado | `calculateXP()` |
-| **Defesa/Bloqueio** | +8 XP | Por save (goleiro) | `calculateXP()` |
-| **Clean Sheet** | +15 XP | Goleiro não leva gol | `calculateXP()` |
-| **MVP** | +30 XP | Votado como melhor jogador | `calculateXP()` |
-| **Bola Murcha** | −10 XP | Votado como pior jogador | `calculateXP()` |
-| **Vitória do Time** | +20 XP | Se o time ganhou | `calculateXP()` |
-| **Empate** | +10 XP | Resultado empatado | `calculateXP()` |
-| **Streak 3** | +20 XP | Exatos 3 jogos consecutivos | `calculateXP()` |
-| **Streak 5** | +35 XP | Exatos 5 jogos consecutivos | `calculateXP()` |
-| **Streak 7** | +50 XP | Exatos 7 jogos consecutivos | `calculateXP()` |
-| **Streak 10** | +100 XP | 10+ jogos consecutivos | `calculateXP()` |
+| **Presença Básica** | +10 XP | Sempre (por comparecer) | `functions/src/index.ts` (`onGameStatusUpdate`) |
+| **Gol** | +25 XP | Por gol marcado (máx 15/jogo) | `shared/xp-constants.json` (`GOAL`) |
+| **Assistência** | +20 XP | Por assist registrado (máx 10/jogo) | `shared/xp-constants.json` (`ASSIST`) |
+| **Defesa/Bloqueio** | +15 XP | Por save de goleiro (máx 30/jogo) | `shared/xp-constants.json` (`SAVE`) |
+| **Clean Sheet** | +15 XP | Goleiro não leva gol (adversário = 0) | `shared/xp-constants.json` (`CLEAN_SHEET`) |
+| **MVP** | +50 XP | Eleito melhor jogador | `shared/xp-constants.json` (`MVP`) |
+| **Bola Murcha** | −10 XP | Eleito pior jogador (`worst_player_id`) | `shared/xp-constants.json` (`WORST_PLAYER`) |
+| **Vitória do Time** | +30 XP | Se o time ganhou | `shared/xp-constants.json` (`WIN`) |
+| **Empate** | +10 XP | Resultado empatado | `shared/xp-constants.json` (`DRAW`) |
+| **Streak 3** | +20 XP | 3–4 jogos consecutivos | `shared/xp-constants.json` (`STREAK_3`) |
+| **Streak 5** | +35 XP | 5–6 jogos consecutivos | `shared/xp-constants.json` (`STREAK_5`) |
+| **Streak 7** | +50 XP | 7–9 jogos consecutivos | `shared/xp-constants.json` (`STREAK_7`) |
+| **Streak 10** | +100 XP | 10+ jogos consecutivos | `shared/xp-constants.json` (`STREAK_10`) |
 | **Apadrinhamento** | +50 XP | Novo membro aceita convite e conclui cadastro | `functions/src/auth/invite-code.ts:onUserCreatedProcessInvite` |
 
-> **Anti-cheat caps por jogo:** Gols ≤ 15, Assists ≤ 10, Saves ≤ 30, XP total máx +500 / mín −100. Apenas o tier de streak mais alto é aplicado. Fonte canônica: `shared/xp-constants.json`.
+> **Anti-cheat caps por jogo:** Gols ≤ 15, Assists ≤ 10, Saves ≤ 30, XP total máx +500 / mín −100 (mínimo de 6 jogadores elegíveis no jogo para processar XP). Apenas o tier de streak mais alto é aplicado. Fonte canônica: `shared/xp-constants.json` (sincronizado com `functions/src/_constants/xp-constants.json`).
 
 ### 2. Exemplo Completo de Cálculo
 
-**Cenário:** João Silva joga futsal em segundo lugar, marca 2 gols, faz 1 assist, seu time ganha 5-3, e ele é votado MVP. É seu 8º jogo consecutivo.
+**Cenário:** João Silva joga futsal, marca 2 gols, faz 1 assist, seu time ganha 5-3, e ele é votado MVP. É seu 8º jogo consecutivo.
 
 ```
 Base:           +10 XP  (presença)
-2 gols:         +20 XP  (2 × 10)
-1 assist:       +7  XP  (1 × 7)
-MVP:            +30 XP  (votação)
-Vitória:        +20 XP  (time ganhou)
+2 gols:         +50 XP  (2 × 25)
+1 assist:       +20 XP  (1 × 20)
+MVP:            +50 XP  (votação)
+Vitória:        +30 XP  (time ganhou)
 Streak 7:       +50 XP  (tier de 7 consecutivos; é o mais alto aplicável)
 ────────────────────
-TOTAL:          +137 XP
+TOTAL:          +210 XP
 ```
 
 **Referência de Código:**
-- `functions/src/index.ts:calculateXP()` - Implementação da função
-- `functions/FUNCTIONS.md:Cálculo de XP` - Documentação detalhada
+- `functions/src/index.ts` (`onGameStatusUpdate`) e `functions/src/xp/pipeline.ts` - Pipeline canônico de XP
+- `shared/xp-constants.json` - Tabela compartilhada de constantes de XP e níveis
 
 ### 3. Regras de Streak
 
@@ -234,62 +234,41 @@ O sistema mantém 3 tipos de ranking simultaneamente:
 
 ### 2. Cálculo de Nível
 
-O level é calculado baseado no XP total acumulado (global):
+O nível (0 a 20) é determinado pela tabela canônica de XP acumulado (`shared/xp-constants.json`, `levelTable`):
 
 ```
-Level = f(XP Total)
-
-Nível 1: 0 - 1.000 XP       (1.000 XP needed)
-Nível 2: 1.000 - 3.000 XP   (2.000 XP needed)
-Nível 3: 3.000 - 6.000 XP   (3.000 XP needed)
-Nível 4: 6.000 - 10.000 XP  (4.000 XP needed)
-Nível 5: 10.000 - 15.000 XP (5.000 XP needed)
+Nível 0  (Novato):              0 XP
+Nível 1  (Iniciante):         100 XP
+Nível 2  (Amador):            350 XP
+Nível 3  (Regular):           850 XP
+Nível 4  (Experiente):      1.850 XP
+Nível 5  (Habilidoso):      3.850 XP
+Nível 6  (Profissional):    7.350 XP
+Nível 7  (Expert):         12.850 XP
+Nível 8  (Mestre):         20.850 XP
+Nível 9  (Lenda):          32.850 XP
+Nível 10 (Imortal):        52.850 XP
 ...
-Padrão: nível N requer (N × 1.000 XP) acumulativo
-
-Fórmula: Cada nível requer +1000 XP a mais que o anterior
+Nível 20 (Pelé):          528.500 XP (nível máximo)
 ```
 
-**Exemplo:**
-```
-João tem 8.500 XP total
-├─ Level 1: precisa 1.000    (restante: 7.500)
-├─ Level 2: precisa 2.000    (restante: 5.500)
-├─ Level 3: precisa 3.000    (restante: 2.500)
-└─ Level atual: 3 (com 2.500/4.000 XP para o próximo)
-```
+O nível de um jogador é o maior nível em que `xp >= xpRequired` (`functions/src/xp/pipeline.ts:111-116`, `web/src/types/gamification.ts`, `LevelTable.kt`).
 
-**Referência:** `functions/FUNCTIONS.md:Atualizar Ranking` - função `calculateLevel()`
+### 3. Season e Liga Mensal
 
-### 3. Season e Ranking Reset
+**Rating e Divisões (`functions/src/league.ts`):**
+- Calculado sobre os últimos 10 jogos `FINISHED` (pesos em `shared/xp-constants.json`): `40% PPJ (XP médio / 500) + 30% Win Rate + 20% Saldo de Gols + 10% MVP Rate`.
+- Divisões: Bronze (`0–29`), Prata (`30–49`), Ouro (`50–69`), Diamante (`70–100`).
+- Promoção/rebaixamento exige **3 jogos consecutivos** acima/abaixo do limite e concede **5 jogos de proteção**.
 
-Uma **Season** dura exatamente um mês calendário:
+**Fechamento Mensal (`functions/src/season/index.ts`):**
 
 | Propriedade | Valor | Detalhes |
 |------------|-------|----------|
-| **Duração** | 1 mês | De 1º a último dia do mês |
-| **Frequência** | Mensal | Reseta no 1º de cada mês |
-| **Timezone** | America/Sao_Paulo | Midnight TZ |
-| **Horário Exato** | 00:00 (meia-noite) | 1º do mês |
-| **Dados Resetados** | Season XP + Ranking | Global XP mantém |
-| **Recompensas** | Top 10 | Distribuem-se automaticamente |
-
-**Ciclo Automático (Cloud Function Scheduled):**
-
-```
-todo 1º de cada mês às 00:00 (America/Sao_Paulo)
-    ↓
-[onSeasonEnd function dispara]
-    ↓
-1. Buscar top 10 jogadores da season anterior
-2. Distribuir recompensas (1º-10º lugar)
-3. Criar novo documento Season
-4. Resetar seasonal_xp para todos os jogadores
-5. Notificar Top 10 dos prêmios
-6. Log em analytics
-```
-
-**Referência:** `functions/src/index.ts:onSeasonEnd` - Implementação
+| **Duração** | 1 mês (`monthly_YYYY_MM`) | Ciclo mensal |
+| **Timezone** | America/Sao_Paulo | Job diário às 03:00 BRT |
+| **Congelamento** | `season_final_standings` | Classificação final arquivada e nova temporada iniciada em Bronze (rating 0) |
+| **Dados Preservados** | XP global, estatísticas, streaks e milestones | Nunca zeram |
 
 ---
 
@@ -297,86 +276,66 @@ todo 1º de cada mês às 00:00 (America/Sao_Paulo)
 
 ### Estados do Jogo
 
-Um jogo passa pelos seguintes estados até a finalização:
+Um jogo passa pelos seguintes estados:
 
 ```
 SCHEDULED → CONFIRMED → LIVE → FINISHED
+SCHEDULED / CONFIRMED → CANCELLED
 ```
 
 | Estado | Descrição |
 |--------|-----------|
 | **SCHEDULED** | Jogo criado, aguardando confirmações de presença |
-| **CONFIRMED** | Lista fechada, times gerados e balanceados |
-| **LIVE** | Jogo em andamento; eventos registrados (gols, assists, saves, cards) |
-| **FINISHED** | Placar final registrado, votação de MVP concluída, XP processado |
+| **CONFIRMED** | Lista de confirmação fechada e times definidos |
+| **LIVE** | Jogo em andamento (transição exclusiva via Cloud Function `startGameLifecycle`, exige `CONFIRMED` e ≥ 2 times) |
+| **FINISHED** | Jogo encerrado (transição exclusiva via Cloud Function `finishGameLifecycle`), votação aberta e XP processado por `onGameStatusUpdate` |
+| **CANCELLED** | Jogo cancelado pelo gestor/admin ou expirado automaticamente após > 2 dias de atraso (`auto-close-past-games.ts`) |
 
-> **Nota:** O processamento de XP, badges e rankings ocorre automaticamente (via Cloud Function `onGameFinished`) quando o jogo entra em `FINISHED`. Não há estado `PROCESSED` separado no modelo canônico.
+> **Nota sobre transições (`firestore.rules:636-650`):** Pelo cliente, apenas `SCHEDULED → CONFIRMED` e `SCHEDULED/CONFIRMED → CANCELLED` são permitidas. As transições `CONFIRMED → LIVE` e `LIVE → FINISHED` são **exclusivas do servidor** (Cloud Functions). O processamento de XP ocorre em `onGameStatusUpdate` (`functions/src/index.ts`) quando o jogo entra em `FINISHED` (ou sai de `HELD_FOR_REVIEW` com decisão `APPROVED`) e exige mínimo de **6 jogadores elegíveis**.
 
-### Transições de Estado Detalhadas
+### Transições de Estado e Sorteio de Times
 
 ```
-┌─ SCHEDULED ───────────────────────────┐
-│ trigger:                               │
-│  - user.createGame(gameData)           │
-│ validations:                           │
-│  - date >= now + 2 hours?              │
-│  - location exists?                    │
-│  - max_players > current_players?      │
-└──────────────┬──────────────────────────┘
+┌─ SCHEDULED ──────────────────────────────────────────────┐
+│ Criação (firestore.rules:1172-1212):                     │
+│  - Perfil completo, grupo ativo com >= 5 membros         │
+│  - Data futura (tolera até 1h no passado)                │
+│  - max_players: 2–50, max_goalkeepers: 0–10              │
+│  - number_of_teams: 2–4, recorrência: 2–52, preço: 0–10k │
+│  - Local e quadra ativos/verificados (TRIAL ou ACTIVE)   │
+└──────────────┬───────────────────────────────────────────┘
                │
                ↓
-    [Times gerados via IA]
+   [Formação de times (sem IA: balancedDraw por nível de XP na web ou embaralhamento no Android)]
                ↓
-┌─ CONFIRMED ───────────────────────────┐
-│ trigger:                               │
-│  - organizer calls generateTeams()     │
-│ data updated:                          │
-│  - teams[]: [Team A, Team B]           │
-│  - field_assignment: "Society #3"      │
-└──────────────┬──────────────────────────┘
+┌─ CONFIRMED ──────────────────────────────────────────────┐
+│  - Lista fechada e times salvos em `teams`               │
+└──────────────┬───────────────────────────────────────────┘
                │
                ↓
-   [Jogo começa no horário agendado]
+   [Gestor inicia partida via callable startGameLifecycle]
                ↓
-┌─ LIVE ────────────────────────────────┐
-│ trigger:                               │
-│  - organizer calls startGame()         │
-│ eventos registrados:                   │
-│  - goals, assists, saves, red cards    │
-│  - real-time score updates             │
-│  - scorekeeper entries                 │
-└──────────────┬──────────────────────────┘
+┌─ LIVE ───────────────────────────────────────────────────┐
+│  - Cria placar inicial zerado (`live_scores`)            │
+│  - Eventos (`game_events`): GOAL (com assisted_by_id),   │
+│    SAVE, YELLOW_CARD, RED_CARD (0–300 min, máx 500)      │
+└──────────────┬───────────────────────────────────────────┘
                │
                ↓
-    [Jogo termina, MVP votado]
+   [Gestor finaliza partida via callable finishGameLifecycle]
                ↓
-┌─ FINISHED ────────────────────────────┐
-│ trigger:                               │
-│  - organizer calls finalizeGame()      │
-│ data required:                         │
-│  - final_score: {team_a: X, team_b: Y}│
-│  - stats[]: full game statistics       │
-│  - mvp_votes: voting results           │
-│ precondition:                          │
-│  - status == LIVE                      │
-│  - score is valid                      │
-│  - all players confirmed present       │
-│ auto-triggered:                        │
-│  - onGameFinished() Cloud Function     │
-│  - calculateXP() for each player       │
-│  - checkBadges() for unlocks           │
-│  - updateRanking() for leaderboard     │
-│ result:                                │
-│  - XP distributed ✓                    │
-│  - Badges notified ✓                   │
-│  - Stats finalized ✓                   │
-│  - Ranking updated ✓                   │
-└───────────────────────────────────────┘
+┌─ FINISHED ───────────────────────────────────────────────┐
+│  - Agrega eventos e abre janela de votação MVP (24h)     │
+│  - Trigger `onGameStatusUpdate` valida anti-cheat e      │
+│    calcula XP (se >= 6 jogadores elegíveis), streaks,    │
+│    bônus, milestones, badges e rating da liga            │
+└──────────────────────────────────────────────────────────┘
 ```
 
 **Referência de Código:**
-- `functions/src/index.ts:onGameFinished` - processamento automático pós-jogo
-- `app/MODULES.md:Games Module` - UI para cada estado
+- `functions/src/games/lifecycle.ts` (`startGameLifecycle`, `finishGameLifecycle`)
+- `functions/src/index.ts` (`onGameStatusUpdate`)
+- `docs/modernizacao/ESSENCIA.md` (seção 3.7 e 3.8)
 
 ### Regras de Validação por Estado
 
@@ -550,35 +509,36 @@ User Data:
 
 ### 2. Validações de Jogo
 
-Antes de permitir qualquer transição, validar:
+Regras aplicadas no Firestore (`firestore.rules:1172-1212`) e nas Cloud Functions (`functions/src/games/lifecycle.ts`):
 
 ```javascript
-// Ao criar jogo
+// Ao criar jogo (firestore.rules:1172-1212)
 validate: {
-  date: date >= now + 2 hours,          // Mínimo 2h de antecedência
-  location_id: exists in locations,     // Local válido
-  field_id: exists in location.fields,  // Campo existe
-  max_players: > 4 && < 100,            // Limite sensato
-  price_per_player: >= 0,               // Não pode ser negativo
+  group: active && members_count >= 5,  // Grupo próprio ativo com >= 5 membros
+  date: date >= now - 1 hour,           // Data futura (tolera até 1h no passado)
+  location_id: active && verified,      // Local e quadra ativos/verificados (TRIAL ou ACTIVE)
+  max_players: >= 2 && <= 50,           // Entre 2 e 50 jogadores
+  max_goalkeepers: >= 0 && <= 10,       // Entre 0 e 10 goleiros
+  number_of_teams: >= 2 && <= 4,        // Entre 2 e 4 times
+  price_per_player: >= 0 && <= 10000,   // Entre 0 e R$ 10.000
 }
 
-// Ao gerar times
+// Ao iniciar jogo (startGameLifecycle)
 validate: {
-  confirmed_count: >= min_players,      // Mínimo 5 para futsal
-  all_present: marked as checked-in,    // Todos confirmaram
-  levels_exist: all players have nivel  // Dados de nível
+  status: 'CONFIRMED',
+  teams_count: >= 2,                    // Mínimo 2 times formados
 }
 
-// Ao finalizar jogo
+// Ao finalizar jogo e calcular XP (finishGameLifecycle + onGameStatusUpdate)
 validate: {
-  final_score: {
-    team_a: number >= 0,
-    team_b: number >= 0,
-    either: >= 0 goals               // Ambos válidos
-  },
-  stats_complete: all players have stats,
-  mvp_voted: votes received,
-  time_limit: <= 4 hours since LIVE,    // Não pode finalizar depois
+  status: 'LIVE',
+  eligible_players: >= 6,               // Mínimo de 6 jogadores elegíveis para pagar XP
+  anti_cheat_caps: {
+    goals: <= 15,
+    assists: <= 10,
+    saves: <= 30,
+    xp_per_game: [-100, 500]
+  }
 }
 ```
 
@@ -645,49 +605,49 @@ Renata - 0 goals         | Nina - 0 goals
 MVP Votado: Ana (2 gols, jogou bem)
 ```
 
-**Cálculo de XP:**
+**Cálculo de XP (valores de `shared/xp-constants.json`):**
 
 ```
 JOÃO (GK, Time A vencedor, Streak=15)
   Base:       +10  (presença)
-  Saves:      +24  (3 saves × 8)
+  Saves:      +45  (3 saves × 15)
   Defesa:     +0   (não clean sheet — levou 2)
-  Vitória:    +20  (time ganhou)
+  Vitória:    +30  (time ganhou)
   Streak 10+: +100 (tier mais alto: streak >= 10)
   ──────
-  TOTAL:      +154 XP
+  TOTAL:      +185 XP
 
 ANA (Atacante, MVP, Time A, Streak=5)
   Base:       +10  (presença)
-  Gols:       +20  (2 gols × 10)
+  Gols:       +50  (2 gols × 25)
   Assists:    +0
-  MVP:        +30  (votado)
-  Vitória:    +20  (time ganhou)
+  MVP:        +50  (votado)
+  Vitória:    +30  (time ganhou)
   Streak 5:   +35  (tier de 5 consecutivos)
   Badges:     +0   HAT_TRICK (não — só 2 gols; requer 3)
   ──────
-  TOTAL:      +115 XP
+  TOTAL:      +175 XP
 
 CARLOS (Atacante, Time B, Streak=2)
   Base:       +10  (presença)
-  Gols:       +10  (1 gol × 10)
-  Assists:    +7   (1 assist × 7)
+  Gols:       +25  (1 gol × 25)
+  Assists:    +20  (1 assist × 20)
   MVP:        +0   (não votado)
   Vitória:    +0   (perdeu)
   Streak 2:   +0   (sem bônus)
   ──────
-  TOTAL:      +27 XP
+  TOTAL:      +55 XP
 
 PEDRO (GK, Time B, Streak=1)
   Base:       +10  (presença)
-  Saves:      +24  (3 saves × 8)
+  Saves:      +45  (3 saves × 15)
   Defesa:     +0   (não clean sheet — levou 4)
   Vitória:    +0   (perdeu)
   Streak 1:   +0
   ──────
-  TOTAL:      +34 XP
+  TOTAL:      +55 XP
 
-[Outros 6 jogadores: média +20-35 XP cada]
+[Outros 6 jogadores: média +10 a +85 XP cada]
 ```
 
 **Badges Desbloqueadas:**
@@ -791,5 +751,5 @@ JOÃO SANTOS (2º lugar):
 
 ---
 
-**Última atualização:** Junho 2026
-**Versão:** 2.1 (XP canônico corrigido: Gol +10, Assist +7, Save +8, MVP +30; streaks 3/5/7/10; 4 estados de jogo)
+**Última atualização:** Novembro 2026
+**Versão:** 2.2 (Alinhado a `shared/xp-constants.json` e `docs/modernizacao/ESSENCIA.md`: Gol +25, Assist +20, Save +15, Clean Sheet +15, Vitória +30, Empate +10, MVP +50, Bola Murcha −10, máx 500/jogo; streaks 3/5/7/10; ciclo de vida e validações reais)
