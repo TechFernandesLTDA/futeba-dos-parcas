@@ -56,7 +56,10 @@ function GlobalWrapper({ children }: { children: React.ReactNode }) {
 
 // configure({ wrapper }) funciona para `render` mas NÃO para `renderHook` no RTL v16.
 // Deixamos para consistência com render (afeta testes de componente).
-configure({ wrapper: GlobalWrapper } as unknown as Parameters<typeof configure>[0]);
+// asyncUtilTimeout padrão do RTL é 1 s, curto demais com a máquina carregada
+// (waitFor/findBy estouravam sem o componente estar travado). 3 s dá folga;
+// travamentos reais continuam falhando.
+configure({ wrapper: GlobalWrapper, asyncUtilTimeout: 3_000 } as unknown as Parameters<typeof configure>[0]);
 
 // Polyfill de window.matchMedia para jsdom — não implementado nativamente.
 // useReducedMotion e media queries de tema (prefers-reduced-motion,

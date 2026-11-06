@@ -104,13 +104,22 @@ describe('useActiveSeason', () => {
     camelSnapshot = Promise.reject(failure);
     snakeSnapshot = Promise.reject(failure);
 
-    const { result } = renderHook(() => useActiveSeason(), { wrapper: wrapperFor(makeQueryClient()) });
-    // retry: 2 no hook — aguarda as 3 tentativas (~3s de backoff)
-    await waitFor(() => expect(result.current.error).toBeTruthy(), { timeout: 8000 });
-    expect(result.current.seasonId).toBeNull();
-    expect(result.current.error?.message).toBe('permission-denied');
-    // 2 queries por tentativa × 3 tentativas (retry: 2)
-    expect(mockGetDocs).toHaveBeenCalledTimes(6);
+    // retry: 2 no hook — as 3 tentativas têm ~3 s de backoff real. Fake timers
+    // avançam o backoff sem esperar de verdade; as asserções são as mesmas.
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useActiveSeason(), { wrapper: wrapperFor(makeQueryClient()) });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(result.current.error).toBeTruthy();
+      expect(result.current.seasonId).toBeNull();
+      expect(result.current.error?.message).toBe('permission-denied');
+      // 2 queries por tentativa × 3 tentativas (retry: 2)
+      expect(mockGetDocs).toHaveBeenCalledTimes(6);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('enabled:false: não consulta nada e loading=false', () => {
