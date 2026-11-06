@@ -1,8 +1,7 @@
 # CI: runners, workflows e como reativar
 
-> Atualizado em 31/10/2026 (#4394). Este documento é a fonte de verdade da topologia de CI.
-> `scripts/SELF_HOSTED_RUNNER.md` e `docs/ci/wsl2-self-hosted-runner.md` descrevem a instalação
-> de runners; a tabela de workflows de `SELF_HOSTED_RUNNER.md` está desatualizada.
+> Atualizado em 06/11/2026 (Onda H). Este documento é a fonte de verdade da topologia de CI.
+> Guias históricos de instalação de runners (`SELF_HOSTED_RUNNER.md` e `wsl2-self-hosted-runner.md`) foram arquivados em `docs/archive/`.
 
 ## Estado atual (importante)
 
@@ -14,15 +13,13 @@
 
 ## Topologia de runners
 
-> Desde 31/10/2026 o CI roda no Mac do Renan e na VM `tf-atendimento-prod-01` (OCI, E5.Flex).
-> Os runners WSL do PC (`tf-wsl-*`) não existem mais.
+> Desde 31/10/2026 o CI roda no Mac (`mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2`) e na VM `tf-atendimento-prod-01` (OCI, E5.Flex — `oci-prod01-futeba`).
 
 | Runner (repo) | Labels | Papel | Variável |
 | --- | --- | --- | --- |
 | `mac-futeba-1` (`~/actions-runner-2`) | `futeba`, `futeba-general`, `futeba-emulators`, `futeba-linux` | Único runner pesado: Gradle (Android, KMP), emuladores Firebase, Lighthouse, docker (Colima), deploys com segredo, iOS | `RUNNER_LABELS_HEAVY`, `RUNNER_LABELS_EMULATORS` e parte do pool leve |
 | `oci-prod01-futeba` (prod-01, usuário `gha-futeba`) | `Linux`, `X64`, `futeba-linux` | Pool leve: Functions (build, lint, testes), Web (shards e gate), Semgrep, gitleaks, padrões, automações | `RUNNER_LABELS_LINUX` (junto com o Mac) |
-| `mac-futeba-poller-1/2` | `futeba-poller` | Polling do E2E Gate, issue pós-merge, classificação de escopo | `RUNNER_LABELS_POLLER` |
-| `futeba-windows-local`, `tf-desktop-runner` | `self-hosted, Windows, X64` | Standby, offline; nenhum workflow usa | — |
+| `mac-futeba-poller-1`, `mac-futeba-poller-2` | `futeba-poller` | Polling do E2E Gate, issue pós-merge, classificação de escopo | `RUNNER_LABELS_POLLER` |
 
 Valores das variáveis do repositório:
 
@@ -125,69 +122,24 @@ Regras para novos workflows neste repo:
   cobrança, mas os jobs **hospedados** param ao estourar os minutos incluídos.
 - Minutos de runner **self-hosted não contam**. Hosted Linux (`ubuntu-24.04`) conta 1x;
   **macOS hospedado conta 10x** — por isso todo job macOS usa o Mac self-hosted (`futeba`).
-- Hosted hoje (só o que exige Linux): `firestore-rules-ci`, `web-lighthouse-ci`, `web-e2e-ci`,
-  `pr-check` (job `android`), `functions-ci` (`test`, `firestore-query-perf`,
-  `media-runtime-linux`), `ios-build` (`ios_app_scope`, `kmp-shared-tests`) e `secret-scan`
-  (~1 min por execução). Os 2 runners Windows ociosos podem absorver jobs leves se faltar
-  minuto (ver "Failover para Windows").
+- Hosted hoje (apenas fallback ou eventos de fora): PRs de fork, Dependabot e eventos sem escrita no repo caem em `ubuntu-24.04` ou `macos-15`. Todos os eventos confiáveis rodam nos runners self-hosted (`mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2` e `oci-prod01-futeba`).
 
-## Operação do runner `tf-desktop-runner` (Windows, sem admin)
+## Operação e verificação dos runners atuais
 
-Decisão (07/10/2026): manter o runner e torná-lo persistente, em vez de remover o registro.
-Motivos: o host (16 threads, 32 GB de RAM, ~9 GB livres no momento da decisão) tem folga para
-um listener extra (~36 MB ocioso, como os outros 12 listeners do host); as credenciais
-(`.runner`, `.credentials`) continuavam válidas; e ele dá um 2º slot Windows em paralelo.
-
-- Persistência: atalho `futeba-tf-desktop-runner.lnk` em
-  `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`, apontando para
-  `C:\Users\renan\actions-runner\run.cmd` com janela minimizada. Sobe a cada login do usuário
-  `renan` (não é serviço: não sobrevive a logoff nem a reboot sem login).
-- Iniciar agora (sem reiniciar o PC):
-  ```powershell
-  Start-Process -FilePath 'C:\Users\renan\actions-runner\run.cmd' -WorkingDirectory 'C:\Users\renan\actions-runner' -WindowStyle Minimized
+- Conferir status via GitHub CLI:
+  ```bash
+  gh api repos/TechFernandesLTDA/futeba-dos-parcas/actions/runners --jq '.runners[]|"\(.name) \(.status) busy=\(.busy)"'
   ```
-- Conferir: `gh api repos/TechFernandesLTDA/futeba-dos-parcas/actions/runners --jq '.runners[]|"\(.name) \(.status) busy=\(.busy)"'`
-- Parar: encerre a janela do `run.cmd` (ou o processo `Runner.Listener` que roda de
-  `C:\Users\renan\actions-runner`). Nunca mate processos `node`/`java` do host.
-- Remover de vez (se o host ficar sem folga):
-  `gh api -X DELETE repos/TechFernandesLTDA/futeba-dos-parcas/actions/runners/31`,
-  apague o atalho da pasta Startup e, opcionalmente, `C:\Users\renan\actions-runner`.
-- Se virar necessário serviço (sobreviver a logoff): rode `config.cmd remove` com token de
-  remoção e reinstale com `config.cmd --runasservice` **em prompt de admin** (requer o dono).
-
-### Re-registro (se `.runner`/credenciais forem perdidos)
-
-```bash
-# token de registro (expira em 1 h; não commite nem cole em chats)
-gh api -X POST repos/TechFernandesLTDA/futeba-dos-parcas/actions/runners/registration-token --jq .token
-```
-```powershell
-cd C:\Users\renan\actions-runner
-.\config.cmd --url https://github.com/TechFernandesLTDA/futeba-dos-parcas --token <TOKEN> --name tf-desktop-runner --labels self-hosted,Windows,X64 --unattended --replace
-```
-
-## Reativar Actions após o billing lock
-
-1. Dono resolve o billing (issue #4203). Verifique com um `workflow_dispatch` simples.
-2. Confirme os 3 runners `online` (`gh api repos/.../actions/runners`).
-3. Rode `Web CI`, `Functions CI`, `Android CI` e `E2E` em uma branch e confira que nenhum job
-   do escopo errado executa.
-4. Só então merge de PRs que dependem de CI.
+- No Mac (`mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2`):
+  - Serviços gerenciados via `launchd` (`~/actions-runner-2/svc.sh status|start|stop` e diretórios equivalentes dos pollers).
+  - O runner pesado (`mac-futeba-1`) usa `GRADLE_USER_HOME=~/.gradle-ci` com `-Xmx4g` e 4 workers para isolar daemons de sessões locais.
+- Na OCI (`oci-prod01-futeba`):
+  - Serviço systemd `actions.runner.TechFernandesLTDA-futeba-dos-parcas.oci-prod01-futeba.service` rodando sob o usuário isolado `gha-futeba`.
 
 ## Runner dedicado a emuladores (futeba-emulators)
 
-Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load) usam `vars.RUNNER_LABELS_EMULATORS = ["self-hosted","futeba-emulators"]`. Só o `mac-futeba-1` tem essa label (antes era o `tf-wsl-1`). Os runners de um mesmo host compartilham 127.0.0.1 (9099/8085/5001), então um único runner serializa esses jobs pela fila nativa do GitHub, sem cancelar nada. O grupo de concurrency global antigo (`firebase-emulator-integration`) cancelava runs pendentes de outros refs, porque o GitHub guarda só 1 pendente por grupo. Para adicionar capacidade, use portas dinâmicas por job antes de pôr a label em outro runner.
+Os jobs que sobem emuladores Firebase (Web E2E, Functions Integration, Test Harness, Realtime Load) usam `vars.RUNNER_LABELS_EMULATORS = ["self-hosted","futeba-emulators"]`. Só o `mac-futeba-1` tem essa label. Os runners de um mesmo host compartilham 127.0.0.1 (9099/8085/5001), então um único runner serializa esses jobs pela fila nativa do GitHub, sem cancelar nada. Para adicionar capacidade, use portas dinâmicas por job antes de pôr a label em outro runner.
 
 ## Runners do E2E Gate (futeba-poller)
 
-O job `E2E Gate` só faz polling por até 45 min. Ele roda em `vars.RUNNER_LABELS_POLLER = ["futeba-poller"]`, nos runners leves `mac-futeba-poller-1/2` (sem labels de trabalho pesado). Assim o runner pesado fica livre para Android, emuladores e Lighthouse.
-
-## Memória e Gradle nos runners WSL (histórico, 09/10/2026)
-
-> Os runners WSL foram desligados. No Mac, o runner pesado usa `GRADLE_USER_HOME=~/.gradle-ci` com o mesmo ajuste (`-Xmx4g`, 4 workers).
-
-- `.wslconfig` do host: `memory=8GB`, `processors=8`, `swap=8GB`, `autoMemoryReclaim=dropCache` (devolve o cache ao Windows). Com 12 GB a VM tomava a RAM do PC e, com 3 builds Gradle de 6 GB em paralelo, caía inteira.
-- `tf-wsl-4` está desligado: com 8 GB cabem 2 jobs Gradle + emuladores + gates.
-- Cada runner tem o próprio `GRADLE_USER_HOME` (`/home/ghrunner/.gradle-tf-wsl-N`, definido em `/opt/ar-tf-wsl-N/.env`). O post-step do `setup-gradle` para todos os daemons do user home, e com um home compartilhado derrubava builds de outros runners ("Gradle build daemon has been stopped: stop command received").
-- `gradle.properties` de cada user home (tem precedência sobre o do projeto): `org.gradle.jvmargs=-Xmx3g`, `kotlin.compiler.execution.strategy=in-process`, `org.gradle.workers.max=2`, `org.gradle.daemon=false`. Com o daemon Kotlin separado em 1 GB, o `compileReleaseKotlin` estourava com GC overhead.
-- Validação: `deploy-production` com `dry_run=true` no Linux (run 38010351597): AAB assinado em 7m50s; o PC ficou com no mínimo 8,4 GB livres.
+O job `E2E Gate` só faz polling por até 45 min. Ele roda em `vars.RUNNER_LABELS_POLLER = ["self-hosted","futeba-poller"]`, nos runners leves `mac-futeba-poller-1` e `mac-futeba-poller-2` (sem labels de trabalho pesado). Assim o runner pesado fica livre para Android, emuladores e Lighthouse.

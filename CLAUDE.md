@@ -57,7 +57,7 @@ sealed class UiState {
 
 ### Build & Test Commands
 
-**Note:** Commands work on Windows (Git Bash/PowerShell), macOS, and Linux. Use `./gradlew` on Unix-like systems or `gradlew.bat` on Windows CMD.
+**Note:** Commands run on macOS and Linux (`./gradlew`).
 
 ```bash
 # Build (Android)
@@ -117,9 +117,9 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 | Purpose | Location |
 |---------|----------|
-| App entry point | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
-| Navigation graph | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` |
-| Nav destinations | `app/src/main/java/com/futebadosparcas/ui/navigation/NavDestinations.kt` + `routes/AppRoutes.kt` |
+| App entry point (Android) | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
+| Navigation graph & routes (Android) | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` |
+| App entry & navigation (iOS / CMP) | `composeApp/src/commonMain/kotlin/com/futebadosparcas/compose/App.kt` |
 | Koin DI modules | `app/src/main/java/com/futebadosparcas/di/koin/` (14 Koin modules) |
 | Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
@@ -150,14 +150,14 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
 - **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`)
-- **Runners self-hosted Linux (WSL)**: sem Mac desde 09/10/2026. Topologia em `docs/CI_RUNNERS.md`; iOS só com `vars.IOS_MAC_RUNNER=true`
+- **Runners self-hosted (macOS + OCI Linux)**: `mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2` e `oci-prod01-futeba`. Topologia em `docs/CI_RUNNERS.md`
 - **Workflow shell injection**: NUNCA `echo '${{ secrets.X }}'` direto — use env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documents the pattern
 
 ---
 
 ## Project Overview
 
-**Futeba dos Parças** is a multi-platform app (Android + Web) for managing amateur soccer groups ("peladas") with gamification.
+**Futeba dos Parças** is a multi-platform app (Android + iOS + Web) for managing amateur soccer groups ("peladas") with gamification.
 
 ### Domain Terminology
 
@@ -175,7 +175,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 ### Tech Stack
 
-- **Kotlin 2.4.20** with **Jetpack Compose** (all new screens)
+- **Kotlin 2.4.21** with **Jetpack Compose** (Android) and **Compose Multiplatform 1.10.3** (`:composeApp` / iOS)
 - **MVVM + Clean Architecture**
 - **Koin 4.1.1** for DI (migrated from Hilt in CMP Phase 1)
 - **Firebase** (Firestore, Auth, Storage, Cloud Functions v2, FCM, **App Check**)
@@ -186,12 +186,12 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 ### Version
 
-- **Current versions**: Web 1.53.0, Android 1.37.0 (build 72), iOS 1.6.1 (build 18), Functions 1.9.0. Source of truth: `versions.json`.
-- **SDK**: compileSdk 37, minSdk 24, targetSdk 35, JDK 21
-- **Kotlin**: 2.4.20
-- **AGP**: 9.0.1
-- **Compose BOM**: 2024.09.00
-- **Compose Multiplatform**: 1.10.0
+- **Current versions**: Web 1.61.1, Android 1.42.0 (build 83), iOS 1.8.0 (build 24), Functions 1.15.1. Source of truth: `versions.json`.
+- **SDK**: compileSdk 37, minSdk 24, targetSdk 36, JDK 21
+- **Kotlin**: 2.4.21
+- **AGP**: 9.4.1
+- **Compose BOM**: 2025.09.01
+- **Compose Multiplatform**: 1.10.3
 - **KSP**: 2.3.12 (KSP2; Room 2.8.5)
 - **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
@@ -253,12 +253,11 @@ Data (Repositories → Firebase/Room)
 
 ### Navigation
 
-The app uses a single-activity architecture with Compose Navigation:
-- `MainActivityCompose.kt` hosts the nav graph
-- **Route definitions**: `NavDestinations.kt` (sealed class, core routes) + `routes/AppRoutes.kt` (extended metadata: `isRootDestination`, `showsTopBar`, `titleResId`)
-- **Nav graph**: `AppNavGraph.kt` (NOT `AppNavigation.kt`)
-- Each screen receives its ViewModel via Koin (`koinViewModel()`)
-- Use `onNavigate: (destination: String) -> Unit` callbacks for navigation
+- **Android (`:app`)**: single-activity architecture (`MainActivityCompose.kt`) with Compose Navigation.
+  - **Nav graph & routes**: `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` (`sealed class Screen` + `AppNavGraph`)
+  - Each screen receives its ViewModel via Koin (`koinViewModel()`)
+  - Use `onNavigate: (destination: String) -> Unit` callbacks for navigation
+- **iOS (`:composeApp` + `iosApp/`)**: Compose Multiplatform UI embedded via SwiftUI host (`composeApp/src/commonMain/kotlin/com/futebadosparcas/compose/App.kt`).
 
 ---
 
@@ -389,20 +388,20 @@ export const setUserRole = onCall({
 | Action | XP |
 |--------|-----|
 | Participation | +10 |
-| Goal | +10 |
-| Assist | +7 |
-| Save (GK) | +8 |
+| Goal | +25 |
+| Assist | +20 |
+| Save (GK) | +15 |
 | Clean Sheet | +15 |
-| Win | +20 |
+| Win | +30 |
 | Draw | +10 |
-| MVP | +30 |
+| MVP | +50 |
 | Bola Murcha (worst) | -10 |
 | Streak 3 | +20 |
 | Streak 5 | +35 |
 | Streak 7 | +50 |
 | Streak 10 | +100 |
 
-**Anti-cheat caps**: GOALS=15, ASSISTS=10, SAVES=30 por jogo.
+**Anti-cheat caps**: GOALS=15, ASSISTS=10, SAVES=30, MAX_XP_PER_GAME=500, MIN_XP_PER_GAME=-100 por jogo.
 **Season Reset**: Monthly on the 1st. Global XP never resets.
 
 ---
@@ -485,13 +484,13 @@ The web app lives in `web/` and was fully rewritten in React + TypeScript (PR #1
 
 | Library | Version | Purpose |
 |---------|---------|---------|
-| React | 18.2.0 | UI framework |
-| TypeScript | 5.3.3 | Type safety |
-| Vite | 5.0.12 | Build tool & dev server |
-| MUI (Material UI) | 5.15.6 | Component library |
-| TanStack React Query | 5.17.9 | Server state management |
-| React Router DOM | 6.21.3 | Routing |
-| Firebase | 10.7.1 | Backend services |
+| React | 18.3 (declared ^18.2.0) | UI framework |
+| TypeScript | 5.9 | Type safety |
+| Vite | 8.3 | Build tool & dev server |
+| MUI (Material UI) | 5.18 (declared ^5.15.6) | Component library |
+| TanStack React Query | 5.105.0 | Server state management |
+| React Router DOM | 7.18.5 | Routing |
+| Firebase | 12.19 (declared ^12.12.1) | Backend services |
 | Playwright | - | E2E testing |
 | Vitest | - | Unit testing |
 
@@ -598,8 +597,8 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 - **KMP Framework build**: falha em Linux runners (requer macOS) — **ignorar** ou rodar em self-hosted ARM
 - **Notify Build Status**: depende do KMP Framework, falha em cascata em Linux — **ignorar**
 - **CodeQL removido (07/10/2026)**: exige GitHub Advanced Security (pago) em repo privado. SAST = Semgrep (falha em ERROR), segredos = gitleaks CLI, Kotlin = Detekt. Sem upload de SARIF (artifact). Ver `docs/CI_RUNNERS.md`
-- **Build iOS App**: `skipping` em PRs que não tocam `:shared` — esperado
-- **Runner WSL offline**: o WSL parou → a tarefa `WSL-Runners-Keepalive` religa em até 5 min (ver `docs/CI_RUNNERS.md`)
+- **Build iOS App**: `skipping` em PRs que não tocam `:shared` / `:composeApp` / `iosApp` — esperado
+- **Runners self-hosted**: `mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2` (macOS) e `oci-prod01-futeba` (Linux OCI) — ver `docs/CI_RUNNERS.md`
 
 ### CI/CD Workflows (`.github/workflows/`)
 
