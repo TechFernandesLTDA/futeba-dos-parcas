@@ -97,7 +97,7 @@ describe('useReactions', () => {
     const initial = initialReactions();
     const { result, rerender } = renderHook(
       ({ reactions }: { reactions: ReactionsMap | null }) => useReactions(TARGET_PATH, reactions),
-      { initialProps: initial as ReactionsMap | null, wrapper: createTestWrapper() },
+      { initialProps: { reactions: initial as ReactionsMap | null }, wrapper: createTestWrapper() },
     );
     const next: ReactionsMap = { '👏': ['other-9'] };
     rerender({ reactions: next });

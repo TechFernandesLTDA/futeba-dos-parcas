@@ -22,7 +22,7 @@ describe('useReducedMotion', () => {
         listeners.push(handler);
       },
       removeEventListener: vi.fn(),
-    })) as typeof window.matchMedia;
+    })) as unknown as typeof window.matchMedia;
   }
 
   it('retorna true quando preferência é reduce', () => {
@@ -55,7 +55,7 @@ describe('useReducedMotion', () => {
       matches: false,
       addEventListener: vi.fn(),
       removeEventListener: removeSpy,
-    })) as typeof window.matchMedia;
+    })) as unknown as typeof window.matchMedia;
 
     const { unmount } = renderHook(() => useReducedMotion());
     unmount();

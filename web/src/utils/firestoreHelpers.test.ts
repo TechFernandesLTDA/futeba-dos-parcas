@@ -51,7 +51,7 @@ describe('snakeToCamel', () => {
 
   it('converte arrays no nível raiz', () => {
     const input = [{ snake_key: 'value' }];
-    const result = snakeToCamel(input);
+    const result = snakeToCamel(input as unknown as Record<string, unknown>);
     expect(result).toEqual([{ snakeKey: 'value' }]);
   });
 

@@ -23,9 +23,9 @@ interface EventSubscription {
 const mockOnSnapshot = vi.fn();
 const mockGetDoc = vi.fn();
 const mockGetDocs = vi.fn();
-const mockOrderBy = vi.fn((field: unknown, direction?: string) => ({ field, direction }));
-const mockLimit = vi.fn((value: number) => ({ limit: value }));
-const mockStartAfter = vi.fn((cursor: unknown) => ({ cursor }));
+const mockOrderBy = vi.fn((field?: unknown, direction?: string) => ({ field, direction }));
+const mockLimit = vi.fn((value?: unknown) => ({ limit: value }));
+const mockStartAfter = vi.fn((cursor?: unknown) => ({ cursor }));
 const eventSubscriptions: EventSubscription[] = [];
 
 vi.mock('firebase/firestore', () => ({
@@ -261,8 +261,8 @@ describe('LiveEventsScreen realtime pagination', () => {
     fireEvent.click(submit);
     await waitFor(() => expect(submitLiveGameEvent).toHaveBeenCalledTimes(2));
 
-    const firstId = vi.mocked(submitLiveGameEvent).mock.calls[0][0].requestId;
-    const retryId = vi.mocked(submitLiveGameEvent).mock.calls[1][0].requestId;
+    const firstId = vi.mocked(submitLiveGameEvent).mock.calls[0]?.[0]?.requestId;
+    const retryId = vi.mocked(submitLiveGameEvent).mock.calls[1]?.[0]?.requestId;
     expect(firstId).toBeTruthy();
     expect(retryId).toBe(firstId);
   });

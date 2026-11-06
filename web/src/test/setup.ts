@@ -56,7 +56,7 @@ function GlobalWrapper({ children }: { children: React.ReactNode }) {
 
 // configure({ wrapper }) funciona para `render` mas NÃO para `renderHook` no RTL v16.
 // Deixamos para consistência com render (afeta testes de componente).
-configure({ wrapper: GlobalWrapper });
+configure({ wrapper: GlobalWrapper } as unknown as Parameters<typeof configure>[0]);
 
 // Polyfill de window.matchMedia para jsdom — não implementado nativamente.
 // useReducedMotion e media queries de tema (prefers-reduced-motion,

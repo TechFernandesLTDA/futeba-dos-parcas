@@ -145,7 +145,7 @@ describe('useDuplicateGameCopy', () => {
   it('não autenticado: retorna null, mostra erro de auth e não consulta Firestore', async () => {
     mockAuthReturn = { firebaseUser: null, user: null, loading: false, error: null };
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });
@@ -163,7 +163,7 @@ describe('useDuplicateGameCopy', () => {
       loading: false, error: null,
     };
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });
@@ -176,7 +176,7 @@ describe('useDuplicateGameCopy', () => {
   it('jogo inexistente: retorna null, mostra notFound e não cria documento', async () => {
     mockGetDoc.mockResolvedValue({ exists: () => false, id: 'game-1', data: () => ({}) });
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });
@@ -188,7 +188,7 @@ describe('useDuplicateGameCopy', () => {
 
   it('fluxo feliz: cria a cópia, invalida queries e retorna o novo id', async () => {
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });
@@ -326,7 +326,7 @@ describe('useDuplicateGameCopy', () => {
       data: () => rawGame({ date: undefined }),
     });
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });
@@ -404,7 +404,7 @@ describe('useDuplicateGameCopy', () => {
   it('erro no addDoc: expõe message, mostra toast, retorna null e desliga loading', async () => {
     mockAddDoc.mockRejectedValue(new Error('Quota exceeded'));
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });
@@ -418,7 +418,7 @@ describe('useDuplicateGameCopy', () => {
   it('não invalida queries quando falha antes de criar', async () => {
     mockGetDoc.mockRejectedValue(new Error('network down'));
     const { result } = renderHook(() => useDuplicateGameCopy());
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.duplicateGame('game-1');
     });

@@ -12,7 +12,7 @@ const mockUpdateUserPii = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ data: { success: true, updated: ['gender'] } }))
 );
 const mockUploadProfileAvatar = vi.hoisted(() =>
-  vi.fn(() => Promise.resolve('https://example.com/photo.jpg?v=1'))
+  vi.fn((..._args: unknown[]) => Promise.resolve('https://example.com/photo.jpg?v=1'))
 );
 
 vi.mock('firebase/firestore', () => ({
@@ -141,8 +141,8 @@ describe('EditProfileScreen', () => {
     mockUploadProfileAvatar.mockResolvedValue('https://example.com/photo.jpg?v=1');
     mockGetDoc.mockImplementation((path: string) => Promise.resolve(
       path.includes('users_private')
-        ? { exists: () => false }
-        : { exists: () => true, data: () => publicProfileDoc }
+        ? { exists: (): boolean => false }
+        : { exists: (): boolean => true, data: () => publicProfileDoc }
     ));
   });
 

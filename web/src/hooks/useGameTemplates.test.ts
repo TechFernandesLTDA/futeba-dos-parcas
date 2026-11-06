@@ -258,7 +258,7 @@ describe('useGameTemplates — saveTemplate', () => {
     const { result } = renderHook(() => useGameTemplates());
     await waitFor(() => expect(result.current.loading).toBe(false));
     mockAddDoc.mockClear();
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.saveTemplate(validInput as any);
     });
@@ -293,7 +293,7 @@ describe('useGameTemplates — saveTemplate', () => {
   it('grava payload snake_case com null nos opcionais ausentes e retorna o id', async () => {
     const { result } = renderHook(() => useGameTemplates());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    let returned: string | null;
+    let returned!: string | null;
     await act(async () => {
       returned = await result.current.saveTemplate(validInput as any);
     });

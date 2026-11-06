@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockStorageRef = vi.hoisted(() => vi.fn(() => 'profile-ref'));
+const mockStorageRef = vi.hoisted(() => vi.fn((..._args: unknown[]) => 'profile-ref'));
 const mockGetDownloadURL = vi.hoisted(() =>
-  vi.fn(() => Promise.resolve('https://storage.example/profile.jpg?token=abc'))
+  vi.fn((..._args: unknown[]) => Promise.resolve('https://storage.example/profile.jpg?token=abc'))
 );
-const mockUploadWithRetry = vi.hoisted(() => vi.fn(() => Promise.resolve({})));
-const mockRefreshCredentials = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+const mockUploadWithRetry = vi.hoisted(() => vi.fn((..._args: unknown[]) => Promise.resolve({})));
+const mockRefreshCredentials = vi.hoisted(() => vi.fn((..._args: unknown[]) => Promise.resolve()));
 
 vi.mock('firebase/storage', () => ({
   ref: (...args: unknown[]) => mockStorageRef(...args),

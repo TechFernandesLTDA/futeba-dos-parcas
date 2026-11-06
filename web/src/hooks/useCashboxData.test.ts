@@ -6,9 +6,9 @@ const mockGetDocs = vi.fn();
 const mockLimit = vi.fn((value: number) => ({ type: 'limit', value }));
 const mockStartAfter = vi.fn((value: unknown) => ({ type: 'startAfter', value }));
 const mockQuery = vi.fn((...parts: unknown[]) => ({ type: 'query', parts }));
-const mockCollection = vi.fn(() => ({ type: 'collection' }));
-const mockDoc = vi.fn(() => ({ type: 'summary' }));
-const mockOrderBy = vi.fn(() => ({ type: 'orderBy' }));
+const mockCollection = vi.fn((..._args: unknown[]) => ({ type: 'collection' }));
+const mockDoc = vi.fn((..._args: unknown[]) => ({ type: 'summary' }));
+const mockOrderBy = vi.fn((..._args: unknown[]) => ({ type: 'orderBy' }));
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: unknown[]) => mockCollection(...args),

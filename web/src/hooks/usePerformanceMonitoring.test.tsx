@@ -6,6 +6,10 @@ const mockDisconnect = vi.fn();
 const mockGetEntriesByType = vi.fn();
 
 class MockPerformanceObserver {
+  observe: typeof mockObserve;
+  disconnect: typeof mockDisconnect;
+  takeRecords: ReturnType<typeof vi.fn>;
+
   constructor() {
     this.observe = mockObserve;
     this.disconnect = mockDisconnect;

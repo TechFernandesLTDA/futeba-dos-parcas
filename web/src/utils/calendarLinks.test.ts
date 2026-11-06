@@ -178,7 +178,7 @@ describe('downloadIcsFile', () => {
     downloadIcsFile(makeEvent());
     expect(clickSpy).toHaveBeenCalledTimes(1);
     const link = appendChildSpy.mock.calls.find(
-      (call) => call[0] instanceof HTMLAnchorElement,
+      (call: unknown[]) => call[0] instanceof HTMLAnchorElement,
     )?.[0] as HTMLAnchorElement;
     expect(link).toBeDefined();
     expect(link.download).toBe('pelada_de_quinta.ics');
@@ -194,7 +194,7 @@ describe('downloadIcsFile', () => {
   it('nome do arquivo remove espaços e normaliza para lowercase', () => {
     downloadIcsFile(makeEvent({ title: 'Pelada   DE SÁBADO   Especial' }));
     const link = appendChildSpy.mock.calls.find(
-      (call) => call[0] instanceof HTMLAnchorElement,
+      (call: unknown[]) => call[0] instanceof HTMLAnchorElement,
     )?.[0] as HTMLAnchorElement;
     expect(link.download).toBe('pelada_de_sábado_especial.ics');
   });

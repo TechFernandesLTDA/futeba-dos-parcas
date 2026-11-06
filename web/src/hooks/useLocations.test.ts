@@ -32,7 +32,7 @@ vi.mock('../services/firebase', () => ({
 
 vi.mock('../contexts/ToastContext', () => ({
   useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() }),
-  ToastProvider: ({ children }) => children,
+  ToastProvider: ({ children }: { children: unknown }) => children,
 }));
 import { useLocations, useLocationDetail, useLocationsByIds } from './useLocations';
 

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockOnSnapshot = vi.fn();
 const mockGetDocs = vi.fn();
-const mockStartAfter = vi.fn((cursor: unknown) => ({ cursor }));
+const mockStartAfter = vi.fn((cursor?: unknown) => ({ cursor }));
 const mockUpdateDoc = vi.fn();
 
 vi.mock('firebase/firestore', () => ({

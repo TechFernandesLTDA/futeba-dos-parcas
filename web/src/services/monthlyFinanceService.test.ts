@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { httpsCallableMock, functionsMock } = vi.hoisted(() => ({
-  httpsCallableMock: vi.fn(() => vi.fn()),
+  httpsCallableMock: vi.fn((..._args: unknown[]) => vi.fn()),
   functionsMock: { region: 'southamerica-east1' },
 }));
 

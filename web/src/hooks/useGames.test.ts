@@ -74,10 +74,10 @@ vi.mock('../utils/analytics', () => ({
 }));
 
 const mockUseAuth = vi.fn(() => ({
-  user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
-  firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
+  user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 } as { id: string; name: string; photoUrl: string | null; level: number } | null,
+  firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null } as { uid: string; displayName: string; photoURL: string | null } | null,
   loading: false,
-  error: null,
+  error: null as string | null,
   signIn: vi.fn(),
   signOut: vi.fn(),
   signUp: vi.fn(),
@@ -86,7 +86,7 @@ const mockUseAuth = vi.fn(() => ({
   resetPassword: vi.fn(),
   updateUserProfile: vi.fn(),
   refreshUser: vi.fn(),
-  currentUser: { uid: 'test-user-id' },
+  currentUser: { uid: 'test-user-id' } as { uid: string } | null,
 }));
 
 vi.mock('../contexts/AuthContext', () => ({

@@ -238,10 +238,10 @@ describe('usePlayedAgainst', () => {
     await waitFor(() => expect(result.current.players).toHaveLength(2));
 
     expect(mockGetUsersByIds).toHaveBeenCalledWith(['op-1', 'op-2']);
-    expect(result.current.players[0]).toEqual({
+    expect(result.current.players?.[0]).toEqual({
       id: 'op-1', name: 'Op Um', photoUrl: undefined, autoStrikerRating: 0,
     });
-    expect(result.current.players[1]).toEqual({
+    expect(result.current.players?.[1]).toEqual({
       id: 'op-2', name: 'Op Dois', photoUrl: 'p.png', autoStrikerRating: 3.5,
     });
 
@@ -265,7 +265,7 @@ describe('usePlayedAgainst', () => {
 
     const { result } = renderHook(() => usePlayedAgainst(), { wrapper: wrapperFor(makeQueryClient()) });
     await waitFor(() => expect(result.current.players).toHaveLength(1));
-    expect(result.current.players[0]).toEqual({
+    expect(result.current.players?.[0]).toEqual({
       id: 'op-1', name: 'Jogador', photoUrl: undefined, autoStrikerRating: 0,
     });
   });

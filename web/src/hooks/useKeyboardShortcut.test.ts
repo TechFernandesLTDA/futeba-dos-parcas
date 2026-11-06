@@ -116,11 +116,12 @@ describe('useKeyboardShortcut', () => {
     const removeSpy = vi.spyOn(window, 'removeEventListener');
 
     const { rerender } = renderHook(
-      ({ modifiers }) => useKeyboardShortcut({ key: 's', modifiers }, callback),
-      { initialProps: { modifiers: ['shift', 'alt'] as const } },
+      ({ modifiers }: { modifiers: Array<'shift' | 'alt'> }) =>
+        useKeyboardShortcut({ key: 's', modifiers }, callback),
+      { initialProps: { modifiers: ['shift', 'alt'] } },
     );
 
-    rerender({ modifiers: ['alt', 'shift'] as const });
+    rerender({ modifiers: ['alt', 'shift'] });
 
     expect(addSpy).toHaveBeenCalledTimes(1);
     expect(removeSpy).not.toHaveBeenCalled();

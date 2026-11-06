@@ -222,6 +222,7 @@ describe('Growth pages: copy verificável e CTAs', () => {
   ] as Array<[string, () => JSX.Element]>)(
     '%s: hero do prerender (scripts/prerender-routes.mjs) coincide com a página React',
     async (path, Page) => {
+      // @ts-expect-error -- prerender-routes.mjs é um script ESM sem arquivo de declaração .d.ts
       const { routes } = (await import('../../../scripts/prerender-routes.mjs')) as {
         routes: Array<{ path: string; contentHeading: string; contentLead: string; chip: string; leadStrong?: string }>;
       };
