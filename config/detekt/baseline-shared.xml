@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:FirebaseDataSource.kt$private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameConfirmationOrNull(): GameConfirmation?</ID>
+    <ID>CyclomaticComplexMethod:FirebaseDataSource.kt$private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Game?</ID>
+    <ID>CyclomaticComplexMethod:FirebaseDataSource.kt$private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toRankingStatisticsOrNull(): Statistics?</ID>
+    <ID>CyclomaticComplexMethod:FirebaseDataSource.kt$private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(): Statistics?</ID>
+    <ID>CyclomaticComplexMethod:FirebaseDataSource.kt$private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?</ID>
+    <ID>CyclomaticComplexMethod:FirebaseDataSource.kt$private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): XpLog?</ID>
+    <ID>CyclomaticComplexMethod:LocationFirebaseOperations.kt$internal fun DocumentSnapshot.toLocationOrNull(): Location?</ID>
+    <ID>LargeClass:FirebaseDataSource.kt$FirebaseDataSource</ID>
+    <ID>LongParameterList:SeasonRepository.kt$SeasonRepository$( seasonId: String, userId: String, goals: Int, assists: Int, saves: Int, won: Boolean, drew: Boolean, wasMvp: Boolean, wasBestGk: Boolean, wasWorstPlayer: Boolean, xpEarned: Long )</ID>
+    <ID>NestedBlockDepth:FirebaseDataSource.kt$FirebaseDataSource$actual suspend fun deduplicateLocations(): Result&lt;Int&gt;</ID>
+    <ID>NestedBlockDepth:StatisticsRepositoryImpl.kt$StatisticsRepositoryImpl$override suspend fun getGoalsHistory(userId: String): Result&lt;Map&lt;String, Int&gt;&gt;</ID>
+    <ID>PrintStackTrace:PlatformShare.android.kt$AndroidPlatformShare$e</ID>
+    <ID>ThrowsCount:GeocoderService.ios.kt$GeocoderService$actual suspend fun geocode(fullAddress: String): Result&lt;LatLngResult&gt;</ID>
+    <ID>TooManyFunctions:FirebaseDataSource.kt$FirebaseDataSource</ID>
+    <ID>TooManyFunctions:GameRepository.kt$GameRepository</ID>
+    <ID>TooManyFunctions:GroupRepository.kt$GroupRepository</ID>
+    <ID>TooManyFunctions:LocationRepository.kt$LocationRepository</ID>
+    <ID>UseCheckOrError:HapticFeedback.android.kt$HapticFeedbackFactory$throw IllegalStateException("HapticFeedbackFactory não foi inicializado. Chame initialize() no Application.onCreate()")</ID>
+    <ID>UseCheckOrError:ImagePicker.android.kt$ImagePickerFactory$throw IllegalStateException("ImagePickerFactory não foi inicializado")</ID>
+    <ID>UseCheckOrError:PlatformShare.android.kt$PlatformShareFactory$throw IllegalStateException("PlatformShareFactory não foi inicializado. Chame initialize() no Application.onCreate()")</ID>
+    <ID>UseCheckOrError:SecureStorage.kt$SecureStorage.Companion$throw IllegalStateException( "SecureStorage nao inicializado. Chame SecureStorage.init(context) primeiro." )</ID>
+    <ID>WildcardImport:DateTimeUtils.kt$import kotlinx.datetime.*</ID>
+    <ID>WildcardImport:SecureStorage.kt$import platform.Security.*</ID>
+    <ID>WildcardImport:ViaCepClient.kt$import io.ktor.client.*</ID>
+    <ID>WildcardImport:ViaCepClient.kt$import io.ktor.client.call.*</ID>
+    <ID>WildcardImport:ViaCepClient.kt$import io.ktor.client.plugins.contentnegotiation.*</ID>
+    <ID>WildcardImport:ViaCepClient.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:ViaCepClient.kt$import io.ktor.serialization.kotlinx.json.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
