@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -82,8 +83,21 @@ import com.futebadosparcas.compose.resources.group_detail_title
 import com.futebadosparcas.compose.resources.logout_confirm_action
 import com.futebadosparcas.compose.resources.logout_confirm_body
 import com.futebadosparcas.compose.resources.logout_confirm_title
+import com.futebadosparcas.compose.resources.ok
+import com.futebadosparcas.compose.resources.export_my_data_error_generic
+import com.futebadosparcas.compose.resources.export_my_data_error_rate_limited
+import com.futebadosparcas.compose.resources.export_my_data_error_title
+import com.futebadosparcas.compose.resources.export_my_data_error_too_large
+import com.futebadosparcas.compose.resources.export_my_data_loading
+import com.futebadosparcas.compose.resources.export_my_data_partial_body
+import com.futebadosparcas.compose.resources.export_my_data_partial_title
+import com.futebadosparcas.compose.resources.export_my_data_success_body
+import com.futebadosparcas.compose.resources.export_my_data_success_title
+import com.futebadosparcas.compose.resources.export_my_data_unavailable_env
 import com.futebadosparcas.compose.resources.profile_hub_action_delete_account
 import com.futebadosparcas.compose.resources.profile_hub_action_delete_account_body
+import com.futebadosparcas.compose.resources.profile_hub_action_export_data
+import com.futebadosparcas.compose.resources.profile_hub_action_export_data_body
 import com.futebadosparcas.compose.resources.profile_hub_action_logout
 import com.futebadosparcas.compose.resources.profile_hub_action_logout_body
 import com.futebadosparcas.compose.resources.route_confirmations_load_error
@@ -147,6 +161,9 @@ import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.ui.HomeScreen
 import com.futebadosparcas.ui.account.DeleteAccountScreen
 import com.futebadosparcas.ui.account.DeleteAccountViewModel
+import com.futebadosparcas.ui.account.ExportMyDataError
+import com.futebadosparcas.ui.account.ExportMyDataUiState
+import com.futebadosparcas.ui.account.ExportMyDataViewModel
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import com.futebadosparcas.ui.auth.RegisterScreen
 import com.futebadosparcas.ui.auth.RegisterViewModel
@@ -176,6 +193,7 @@ import com.futebadosparcas.ui.theme.MotionSpring
 import com.futebadosparcas.ui.theme.rememberReduceMotion
 import com.futebadosparcas.ui.whatsnew.WhatsNewPopupHost
 import com.futebadosparcas.ui.whatsnew.WhatsNewScreen
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.koin.compose.KoinApplication
@@ -630,7 +648,12 @@ fun AppNavigation(
         // Profile
         composable(AppRoutes.PROFILE) {
             var showLogoutDialog by remember { mutableStateOf(false) }
+            var showExportUnavailableDialog by remember { mutableStateOf(false) }
             val logoutScope = rememberCoroutineScope()
+            val exportVm = koinViewModelOrNull<ExportMyDataViewModel>()
+            val exportState by (exportVm?.uiState ?: remember { MutableStateFlow<ExportMyDataUiState>(ExportMyDataUiState.Idle) })
+                .collectAsStateWithLifecycle()
+
             if (showLogoutDialog) {
                 LogoutConfirmationDialog(
                     onDismiss = { showLogoutDialog = false },
@@ -643,6 +666,22 @@ fun AppNavigation(
                     }
                 )
             }
+            if (showExportUnavailableDialog) {
+                AlertDialog(
+                    onDismissRequest = { showExportUnavailableDialog = false },
+                    title = { Text(stringResource(Res.string.export_my_data_error_title)) },
+                    text = { Text(stringResource(Res.string.export_my_data_unavailable_env)) },
+                    confirmButton = {
+                        TextButton(onClick = { showExportUnavailableDialog = false }) {
+                            Text(stringResource(Res.string.ok))
+                        }
+                    }
+                )
+            }
+            ExportMyDataStatusDialog(
+                state = exportState,
+                onDismiss = { exportVm?.dismissResult() }
+            )
             FeatureHubScreen(
                 title = stringResource(Res.string.profile_hub_title),
                 body = stringResource(Res.string.profile_hub_body),
@@ -676,7 +715,23 @@ fun AppNavigation(
                         icon = Icons.Filled.Palette,
                         onClick = { navController.navigate(AppRoutes.THEME_SETTINGS) }
                     ),
-                    // Conta (#4401): sair e excluir ficam no fim do hub, como em Ajustes do iOS.
+                    // Conta (#4401 / #4483): exportar dados (LGPD), sair e excluir ficam no fim do hub.
+                    FeatureHubAction(
+                        label = if (exportState is ExportMyDataUiState.Loading) {
+                            stringResource(Res.string.export_my_data_loading)
+                        } else {
+                            stringResource(Res.string.profile_hub_action_export_data)
+                        },
+                        description = stringResource(Res.string.profile_hub_action_export_data_body),
+                        icon = Icons.Filled.Download,
+                        onClick = {
+                            if (exportVm != null) {
+                                exportVm.startExport()
+                            } else {
+                                showExportUnavailableDialog = true
+                            }
+                        }
+                    ),
                     FeatureHubAction(
                         label = stringResource(Res.string.profile_hub_action_logout),
                         description = stringResource(Res.string.profile_hub_action_logout_body),
@@ -1390,6 +1445,38 @@ private fun LogoutConfirmationDialog(onDismiss: () -> Unit, onConfirm: () -> Uni
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+        }
+    )
+}
+
+@Composable
+private fun ExportMyDataStatusDialog(
+    state: ExportMyDataUiState,
+    onDismiss: () -> Unit
+) {
+    val (title, body) = when (state) {
+        ExportMyDataUiState.Idle, ExportMyDataUiState.Loading -> return
+        is ExportMyDataUiState.Success -> if (state.partial) {
+            stringResource(Res.string.export_my_data_partial_title) to
+                stringResource(Res.string.export_my_data_partial_body)
+        } else {
+            stringResource(Res.string.export_my_data_success_title) to
+                stringResource(Res.string.export_my_data_success_body)
+        }
+        is ExportMyDataUiState.Error -> stringResource(Res.string.export_my_data_error_title) to when (state.reason) {
+            ExportMyDataError.RATE_LIMITED -> stringResource(Res.string.export_my_data_error_rate_limited)
+            ExportMyDataError.TOO_LARGE -> stringResource(Res.string.export_my_data_error_too_large)
+            ExportMyDataError.GENERIC -> stringResource(Res.string.export_my_data_error_generic)
+        }
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(body) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.ok))
+            }
         }
     )
 }

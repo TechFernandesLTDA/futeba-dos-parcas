@@ -1,5 +1,9 @@
 package com.futebadosparcas.ui.preferences
 
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,10 +16,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.ThemeMode
+import com.futebadosparcas.ui.about.ExportMyDataResultDialog
+import com.futebadosparcas.ui.about.ExportMyDataUiState
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import com.futebadosparcas.util.PreferencesManager
 import com.futebadosparcas.R
@@ -42,12 +50,26 @@ fun PreferencesScreen(
     themeViewModel: ThemeViewModel,
     preferencesManager: PreferencesManager,
     onNavigateToThemeSettings: () -> Unit = {},
-    onNavigateToDeveloper: () -> Unit = {}
+    onNavigateToDeveloper: () -> Unit = {},
+    exportState: ExportMyDataUiState = ExportMyDataUiState.Idle,
+    exportSuggestedFileName: () -> String = { "" },
+    onExportFileChosen: (Uri?) -> Unit = {},
+    onExportPickerUnavailable: () -> Unit = {},
+    onDismissExportResult: () -> Unit = {}
 ) {
     val isSearchable by preferencesViewModel.isSearchable.collectAsStateWithLifecycle()
     val themeConfig by themeViewModel.themeConfig.collectAsStateWithLifecycle()
 
     val isDevModeEnabled = preferencesManager.isDevModeEnabled()
+    val isExporting = exportState is ExportMyDataUiState.Loading
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> onExportFileChosen(uri) }
+
+    ExportMyDataResultDialog(
+        state = exportState,
+        onDismiss = onDismissExportResult
+    )
 
     Column(
         modifier = Modifier
@@ -201,6 +223,71 @@ fun PreferencesScreen(
                             checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
+                }
+            }
+
+            // Export My Data Card (LGPD art. 18, V - #4483)
+            val loadingText = stringResource(R.string.about_export_my_data_loading)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = !isExporting) {
+                        try {
+                            exportLauncher.launch(exportSuggestedFileName())
+                        } catch (e: ActivityNotFoundException) {
+                            onExportPickerUnavailable()
+                        }
+                    },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FileDownload,
+                            contentDescription = stringResource(R.string.about_export_my_data),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Column {
+                            Text(
+                                text = stringResource(R.string.about_export_my_data),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = if (isExporting) loadingText else stringResource(R.string.about_export_my_data_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
+                    if (isExporting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .semantics { contentDescription = loadingText },
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 

@@ -567,12 +567,14 @@ fun KmpStatistics.toDataModel(userId: String): AndroidUserStatistics {
         totalRedCards = redCards,
         bestPlayerCount = mvpCount,
         worstPlayerCount = worstPlayerCount,
-        bestGoalCount = 0, // Campo não existe no KMP Statistics
+        // NOTA: bestGoalCount e gamesInvited não existem no schema do Firestore (functions/src/models/index.ts),
+        // portanto permanecem 0 até que o servidor passe a persistir essas métricas.
+        bestGoalCount = bestGoalCount,
         gamesWon = totalWins,
         gamesLost = totalLosses,
         gamesDraw = totalDraws,
         currentMvpStreak = currentStreak,
-        gamesInvited = 0, // Campo não existe no KMP Statistics
+        gamesInvited = 0,
         gamesAttended = totalGames, // Aproximação: totalGames = jogos que compareceu
         lastCalculatedAt = updatedAt?.let { java.util.Date(it) },
         updatedAt = updatedAt?.let { java.util.Date(it) }

@@ -609,7 +609,7 @@ private fun ExportMyDataMenuItem(
 
 /** Resultado da exportação (#4483): sucesso, parcial ou erro. Idle/Loading não mostram nada. */
 @Composable
-private fun ExportMyDataResultDialog(
+fun ExportMyDataResultDialog(
     state: ExportMyDataUiState,
     onDismiss: () -> Unit
 ) {

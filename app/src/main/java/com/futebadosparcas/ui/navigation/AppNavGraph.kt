@@ -956,6 +956,8 @@ fun AppNavHost(
         composable(Screen.Preferences.route) {
             val preferencesViewModel: com.futebadosparcas.ui.preferences.PreferencesViewModel = koinViewModel()
             val themeViewModel: com.futebadosparcas.ui.theme.ThemeViewModel = koinViewModel()
+            val exportViewModel: com.futebadosparcas.ui.about.ExportMyDataViewModel = koinViewModel()
+            val exportState by exportViewModel.uiState.collectAsStateWithLifecycle()
             SecondaryScreenWrapper(
                 titleResId = Screen.Preferences.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -969,7 +971,12 @@ fun AppNavHost(
                     },
                     onNavigateToDeveloper = {
                         navController.navigate(Screen.Developer.route)
-                    }
+                    },
+                    exportState = exportState,
+                    exportSuggestedFileName = exportViewModel::suggestedFileName,
+                    onExportFileChosen = exportViewModel::onFileChosen,
+                    onExportPickerUnavailable = exportViewModel::onPickerUnavailable,
+                    onDismissExportResult = exportViewModel::dismissResult
                 )
             }
         }

@@ -29,12 +29,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.io.IOException
 
 /**
- * Testes de CARACTERIZAÇÃO para CachedGamesPagingSource (A3 do plano).
+ * Testes para CachedGamesPagingSource (A3 / B5 do plano).
  *
- * Descrevem o comportamento de HOJE. Pontos observados, congelados aqui:
+ * Pontos cobertos:
  * - Primeira página com cache não vazio AGUARDA a rede (apesar do comentário
  *   "em background"). Se a rede falhar, o resultado é Error mesmo com cache.
- * - confirmedCount e isUserConfirmed são sempre 0/false (TODO no código).
+ * - confirmedCount reflete `playersCount` (ou `players.size` como fallback) tanto
+ *   no cache quanto na rede; isUserConfirmed permanece false.
  * - Na página do cache, nextKey é sempre null (TODO no código).
  * - getRefreshKey devolve sempre null.
  */
@@ -77,10 +78,14 @@ class CachedGamesPagingSourceTest {
         pageSize = pageSize
     )
 
-    private fun doc(id: String): DocumentSnapshot {
+    private fun doc(id: String, playersCount: Int = 0): DocumentSnapshot {
         val d = mockk<DocumentSnapshot>()
         every { d.id } returns id
-        every { d.toObject(Game::class.java) } returns Game(id = id, status = "SCHEDULED")
+        every { d.toObject(Game::class.java) } returns Game(
+            id = id,
+            status = "SCHEDULED",
+            playersCount = playersCount
+        )
         return d
     }
 
@@ -98,7 +103,11 @@ class CachedGamesPagingSourceTest {
         every { collection.get() } returns Tasks.forException(e)
     }
 
-    private fun entity(id: String) = GameEntity(
+    private fun entity(
+        id: String,
+        playersCount: Int = 0,
+        players: List<String> = emptyList()
+    ) = GameEntity(
         id = id,
         scheduleId = "",
         date = "2026-11-10",
@@ -107,7 +116,8 @@ class CachedGamesPagingSourceTest {
         status = "SCHEDULED",
         maxPlayers = 14,
         maxGoalkeepers = 2,
-        players = emptyList(),
+        playersCount = playersCount,
+        players = players,
         dailyPrice = 0.0,
         confirmationClosesAt = null,
         numberOfTeams = 2,
@@ -148,17 +158,38 @@ class CachedGamesPagingSourceTest {
     // ---------------------------------------------------------------
 
     @Test
-    fun load_primeiraPaginaComCache_retornaCacheSemConfirmacoesENextKeyNulo() = runTest {
-        coEvery { gameDao.getUpcomingGamesSnapshot() } returns listOf(entity("c1"), entity("c2"))
-        stubNetwork(snapshot(doc("n1")))
+    fun load_primeiraPaginaComCache_retornaCacheMapeandoConfirmedCountENextKeyNulo() = runTest {
+        coEvery { gameDao.getUpcomingGamesSnapshot() } returns listOf(
+            entity("c1", playersCount = 8),
+            entity("c2", playersCount = 0, players = listOf("u1", "u2", "u3"))
+        )
+        stubNetwork(snapshot(doc("n1", playersCount = 10)))
 
         val result = source().load(refreshParams())
 
         val page = asPage(result)
         assertEquals(listOf("c1", "c2"), page.data.map { it.game.id })
-        assertTrue(page.data.all { it.confirmedCount == 0 && !it.isUserConfirmed })
+        assertEquals(listOf(8, 3), page.data.map { it.confirmedCount })
+        assertTrue(page.data.all { !it.isUserConfirmed })
         assertNull(page.prevKey)
         assertNull(page.nextKey)
+    }
+
+    @Test
+    fun load_primeiraPaginaCacheVazio_mapeiaConfirmedCountDaRedeEPersisteNoCache() = runTest {
+        coEvery { gameDao.getUpcomingGamesSnapshot() } returns emptyList()
+        stubNetwork(snapshot(doc("n1", playersCount = 12), doc("n2", playersCount = 5)))
+
+        val result = source().load(refreshParams())
+
+        val page = asPage(result)
+        assertEquals(listOf("n1", "n2"), page.data.map { it.game.id })
+        assertEquals(listOf(12, 5), page.data.map { it.confirmedCount })
+        coVerify(exactly = 1) {
+            gameDao.insertGames(match { entities ->
+                entities.map { it.id to it.playersCount } == listOf("n1" to 12, "n2" to 5)
+            })
+        }
     }
 
     @Test

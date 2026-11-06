@@ -34,8 +34,10 @@ class RankingViewModel(
     private val gamificationRepository: com.futebadosparcas.domain.repository.GamificationRepository,
     private val auth: FirebaseAuth,
     private val memoryCache: MemoryCache,
-    private val context: Context
+    context: Context
 ) : ViewModel() {
+
+    private val appContext: Context = context.applicationContext
 
     companion object {
         private const val TAG = "RankingViewModel"
@@ -190,7 +192,7 @@ class RankingViewModel(
 
             try {
                 val uid = currentUserId ?: run {
-                    _evolutionState.value = EvolutionUiState.Error(context.getString(R.string.ranking_error_not_authenticated))
+                    _evolutionState.value = EvolutionUiState.Error(appContext.getString(R.string.ranking_error_not_authenticated))
                     return@launch
                 }
 
@@ -203,7 +205,7 @@ class RankingViewModel(
 
                 // Aguardar usuario (critico - falha se nao encontrar)
                 val user = userDeferred.await().getOrElse {
-                    _evolutionState.value = EvolutionUiState.Error(context.getString(R.string.ranking_error_load_user))
+                    _evolutionState.value = EvolutionUiState.Error(appContext.getString(R.string.ranking_error_load_user))
                     return@launch
                 }
 

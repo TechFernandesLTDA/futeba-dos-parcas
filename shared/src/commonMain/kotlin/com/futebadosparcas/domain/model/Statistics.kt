@@ -122,24 +122,28 @@ data class Statistics(
 
     /**
      * Taxa de presenca (jogos jogados / total de convocacoes).
-     * Como nao temos convocacoes aqui, retorna 0.0 como fallback.
+     * Calculada como 1.0 (100%) quando o jogador possui jogos registrados (`totalGames > 0`),
+     * ou 0.0 caso contrario, espelhando `UserStatistics.presenceRate` do Android (`data/model/Statistics.kt`).
+     * Os contadores `games_invited` e `games_attended` ainda nao sao persistidos pelo backend
+     * (`functions/src/models/index.ts`).
      */
     val presenceRate: Double
-        get() = 0.0 // TODO: Implementar quando tivermos dados de convocacoes
+        get() = if (totalGames > 0) 1.0 else 0.0
 
     /**
      * Sequencia atual de MVPs consecutivos.
-     * Como nao temos historico aqui, retorna 0 como fallback.
+     * Espelha `currentStreak` (hidratado a partir de `currentMvpStreak` / `current_streak` no Firestore).
      */
     val currentMvpStreak: Int
-        get() = 0 // TODO: Implementar quando tivermos historico de jogos
+        get() = currentStreak
 
     /**
      * Melhor quantidade de gols em um unico jogo.
-     * Como nao temos historico aqui, retorna 0 como fallback.
+     * NOTA: O backend (`functions/src/models/index.ts`) nao persiste `bestGoalCount` / `best_goal_count`
+     * no documento `statistics/{uid}`, portanto permanece 0 ate que o pipeline server-side passe a calcula-lo.
      */
     val bestGoalCount: Int
-        get() = 0 // TODO: Implementar quando tivermos historico de jogos
+        get() = 0
 
     // Nota: Metodos get*() removidos para evitar clash com computed properties.
     // Use as computed properties ou extension functions diretas.

@@ -51,9 +51,15 @@ class CachedGamesPagingSource(
 
                     // Retorna cache imediatamente
                     val gamesWithConfirmations = cachedGames.map { entity ->
+                        val domainGame = entity.toDomain()
+                        val confirmed = if (entity.playersCount > 0) {
+                            entity.playersCount
+                        } else {
+                            entity.players.size
+                        }
                         GameWithConfirmations(
-                            game = entity.toDomain(),
-                            confirmedCount = 0, // TODO: Cache confirmations count
+                            game = domainGame,
+                            confirmedCount = confirmed,
                             isUserConfirmed = false
                         )
                     }
@@ -80,7 +86,7 @@ class CachedGamesPagingSource(
                     game?.let {
                         GameWithConfirmations(
                             game = it,
-                            confirmedCount = 0, // TODO: Buscar confirmations count
+                            confirmedCount = it.playersCount,
                             isUserConfirmed = false
                         )
                     }

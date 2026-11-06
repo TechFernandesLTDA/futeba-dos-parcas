@@ -29,12 +29,16 @@ class CallableException(
         const val NOT_FOUND = "not-found"
         const val UNAUTHENTICATED = "unauthenticated"
         const val FAILED_PRECONDITION = "failed-precondition"
+        const val RESOURCE_EXHAUSTED = "resource-exhausted"
         const val UNAVAILABLE = "unavailable"
         const val UNKNOWN = "unknown"
 
         /** `details.reason` da callable `deleteAccount` (functions/src/auth/delete-account.ts). */
         const val REASON_REQUIRES_RECENT_LOGIN = "requires-recent-login"
         const val REASON_SOLE_OWNER_GROUPS = "sole-owner-groups"
+
+        /** `details.reason` da callable `exportMyData` (functions/src/auth/export-my-data.ts). */
+        const val REASON_EXPORT_TOO_LARGE = "export-too-large"
 
         /** Lê `details.reason` de um `details` bruto do SDK (Map no Android e no iOS). */
         fun reasonFromDetails(details: Any?): String? =

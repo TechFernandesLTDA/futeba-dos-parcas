@@ -166,9 +166,10 @@ O JSON tem no máximo 8 MiB. A conversão e a gravação rodam em `Dispatchers.I
 - [x] T1: spec (este arquivo)
 - [x] T2: `MyDataExportRepository` + impl + funções puras (conversão JSON, erro, nome do arquivo)
 - [x] T3: `ExportMyDataViewModel` + registro no Koin (`RepositoryKoinModule`, `ViewModelKoinModule`)
-- [x] T4: item na `AboutScreen`, launcher `CreateDocument`, diálogo de resultado, ligação no `AppNavGraph`
+- [x] T4: item na `AboutScreen` e na `PreferencesScreen` (seção Privacidade), launcher `CreateDocument`, diálogo de resultado, ligação no `AppNavGraph`
 - [x] T5: strings pt-BR, en, es
 - [x] T6: testes unitários (ViewModel e funções puras)
+- [x] T7: paridade iOS (`composeApp`): `FirebaseDataSource.exportMyData()`, `ExportMyDataViewModel`, `shareExportedJsonFile` (`UIActivityViewController`), item "Baixar meus dados" no hub de Perfil (`AppRoutes.PROFILE`) e testes unitários em `composeApp/src/commonTest`
 
 ---
 
