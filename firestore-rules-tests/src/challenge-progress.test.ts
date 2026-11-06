@@ -1,16 +1,8 @@
 /**
- * Caracterização das Firestore Security Rules — Coleção: challenge_progress
+ * Testes das Firestore Security Rules — Coleção: challenge_progress
  *
- * Estes testes descrevem o comportamento ATUAL das rules (ver firestore.rules,
- * `match /challenge_progress/{progressId}`), inclusive o que parece indevido.
- * Casos marcados com "HOJE PERMITE (ver DIAGNOSTICO)" afirmam que a rule
- * permite hoje algo que não deveria; quando a rule for corrigida, o teste
- * correspondente deve passar a falhar e ser invertido.
- *
- * Cobre, para get / list / create / update / delete:
- * - não autenticado, dono (userId == uid), outro usuário autenticado e admin
- *
- * Nenhuma rule é alterada aqui.
+ * Passo B10 (#2627): Escrita direta pelo cliente foi fechada (`allow create, update, delete: if isAdmin()`).
+ * Leitura continua permitida ao dono (`userId == uid` ou `user_id == uid`) e a admin.
  */
 
 import { describe, it, beforeAll, beforeEach, afterAll } from "vitest";
@@ -130,8 +122,8 @@ describe("challenge_progress — create", () => {
     );
   });
 
-  it("dono cria progresso próprio com challenge existente", async () => {
-    await assertSucceeds(
+  it("dono NÃO cria progresso diretamente pelo cliente (B10: escrita restrita a admin/server)", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc("challenge_progress/cp-new-a").set(progressOf(UID_PLAYER_A))
     );
   });
@@ -176,32 +168,21 @@ describe("challenge_progress — create", () => {
     );
   });
 
-  // HOJE PERMITE (ver DIAGNOSTICO): não há teto superior para `progress`.
-  // O FIXME #2627 diz que a escrita deveria migrar para Cloud Function com
-  // validação server-side; hoje o cliente pode gravar progresso arbitrariamente alto.
-  it("HOJE PERMITE (ver DIAGNOSTICO): dono cria progress absurdamente alto (sem teto)", async () => {
-    await assertSucceeds(
+  it("dono NÃO cria progress arbitrariamente alto pelo cliente (B10: escrita fechada)", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc("challenge_progress/cp-new-huge").set(progressOf(UID_PLAYER_A, { progress: 999999 }))
     );
   });
 
-  it("outro usuário autenticado cria o PRÓPRIO progresso (userId == uid)", async () => {
-    await assertSucceeds(
+  it("outro usuário autenticado NÃO cria progresso pelo cliente (B10: escrita fechada)", async () => {
+    await assertFails(
       asPlayerB(testEnv).doc("challenge_progress/cp-new-b").set(progressOf(UID_PLAYER_B))
     );
   });
 
-  it("admin cria progresso de outro usuário", async () => {
+  it("admin cria progresso de qualquer usuário", async () => {
     await assertSucceeds(
       asAdmin(testEnv).doc("challenge_progress/cp-new-admin").set(progressOf(UID_PLAYER_B, { completed: true }))
-    );
-  });
-
-  it("admin NÃO cria progresso com challenge inexistente", async () => {
-    await assertFails(
-      asAdmin(testEnv)
-        .doc("challenge_progress/cp-new-admin-missing")
-        .set(progressOf(UID_PLAYER_B, { challengeId: CHALLENGE_MISSING }))
     );
   });
 });
@@ -216,8 +197,8 @@ describe("challenge_progress — update", () => {
     );
   });
 
-  it("dono atualiza o próprio progresso (progress)", async () => {
-    await assertSucceeds(
+  it("dono NÃO atualiza o próprio progresso pelo cliente (B10: escrita restrita a admin/server)", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc(`challenge_progress/${DOC_A}`).update({ progress: 3 })
     );
   });
@@ -246,17 +227,14 @@ describe("challenge_progress — update", () => {
     );
   });
 
-  // HOJE PERMITE (ver DIAGNOSTICO): a rule de update valida só
-  // request.resource.data.userId, nunca resource.data.userId. Um usuário
-  // consegue "roubar" o documento de outro regravando o userId com o próprio uid.
-  it("HOJE PERMITE (ver DIAGNOSTICO): outro usuário assume progresso alheio regravando userId", async () => {
-    await assertSucceeds(
+  it("outro usuário NÃO assume progresso alheio regravando userId (B10)", async () => {
+    await assertFails(
       asPlayerB(testEnv).doc(`challenge_progress/${DOC_A}`).update({ userId: UID_PLAYER_B })
     );
   });
 
-  it("HOJE PERMITE (ver DIAGNOSTICO): dono 'puxa' progresso de outro usuário para si", async () => {
-    await assertSucceeds(
+  it("dono NÃO 'puxa' progresso de outro usuário para si (B10)", async () => {
+    await assertFails(
       asPlayerA(testEnv).doc(`challenge_progress/${DOC_B}`).update({ userId: UID_PLAYER_A })
     );
   });
