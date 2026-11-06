@@ -210,9 +210,9 @@ export const DIVISION_CONFIG: Record<LeagueDivision, {
   minRating: number;
 }> = {
   BRONZE: { label: 'Bronze', labelKey: 'league.bronze', color: gamificationColors.bronze, minRating: 0 },
-  PRATA: { label: 'Prata', labelKey: 'league.silver', color: gamificationColors.silver, minRating: 30 },
-  OURO: { label: 'Ouro', labelKey: 'league.gold', color: gamificationColors.gold, minRating: 50 },
-  DIAMANTE: { label: 'Diamante', labelKey: 'league.diamond', color: gamificationColors.level, minRating: 70 },
+  PRATA: { label: 'Prata', labelKey: 'league.silver', color: gamificationColors.silver, minRating: xpConstants.leagueThresholds.BRONZE_MAX },
+  OURO: { label: 'Ouro', labelKey: 'league.gold', color: gamificationColors.gold, minRating: xpConstants.leagueThresholds.PRATA_MAX },
+  DIAMANTE: { label: 'Diamante', labelKey: 'league.diamond', color: gamificationColors.level, minRating: xpConstants.leagueThresholds.OURO_MAX },
 };
 
 export function getDivisionLabel(
@@ -408,9 +408,9 @@ export const XP_VALUES = {
 };
 
 export function getDivisionFromRating(rating: number): LeagueDivision {
-  if (rating >= 70) return 'DIAMANTE';
-  if (rating >= 50) return 'OURO';
-  if (rating >= 30) return 'PRATA';
+  if (rating >= xpConstants.leagueThresholds.OURO_MAX) return 'DIAMANTE';
+  if (rating >= xpConstants.leagueThresholds.PRATA_MAX) return 'OURO';
+  if (rating >= xpConstants.leagueThresholds.BRONZE_MAX) return 'PRATA';
   return 'BRONZE';
 }
 

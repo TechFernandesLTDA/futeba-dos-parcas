@@ -12,6 +12,7 @@ import {
 } from "firebase-functions/v2/firestore";
 import {
   FUNCTION_REGION,
+  LEVEL_TABLE,
 } from "../constants";
 import {
   NotificationType,
@@ -97,15 +98,12 @@ export const onLevelUp = onDocumentUpdated(
 
     try {
       if (afterLevel > beforeLevel) {
-        const levelNames = [
-          "Novato", "Iniciante", "Amador",
-          "Regular", "Experiente", "Habilidoso",
-          "Profissional", "Expert", "Mestre",
-          "Lenda", "Imortal",
-        ];
+        const levelEntry = LEVEL_TABLE.levels.find(
+          (entry) => entry.level === afterLevel
+        );
         const levelName =
-        levelNames[afterLevel] ||
-        "Nivel " + afterLevel;
+          levelEntry?.name ||
+          "Nivel " + afterLevel;
 
         const imgBase =
         "https://firebasestorage.googleapis.com";

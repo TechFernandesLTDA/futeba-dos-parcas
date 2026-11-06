@@ -46,13 +46,19 @@ describe('league division contract', () => {
     expect(normalizeLeagueDivision(input)).toBe(expected);
   });
 
-  it('uses the canonical 0–100 rating thresholds', () => {
+  it('uses the canonical 0–100 rating thresholds from shared/xp-constants.json', () => {
+    const { BRONZE_MAX, PRATA_MAX, OURO_MAX, DIAMANTE_MAX } = xpConstants.leagueThresholds;
+    expect(DIVISION_CONFIG.BRONZE.minRating).toBe(0);
+    expect(DIVISION_CONFIG.PRATA.minRating).toBe(BRONZE_MAX);
+    expect(DIVISION_CONFIG.OURO.minRating).toBe(PRATA_MAX);
+    expect(DIVISION_CONFIG.DIAMANTE.minRating).toBe(OURO_MAX);
+
     expect(getDivisionFromRating(0)).toBe('BRONZE');
-    expect(getDivisionFromRating(29.99)).toBe('BRONZE');
-    expect(getDivisionFromRating(30)).toBe('PRATA');
-    expect(getDivisionFromRating(50)).toBe('OURO');
-    expect(getDivisionFromRating(70)).toBe('DIAMANTE');
-    expect(getDivisionFromRating(100)).toBe('DIAMANTE');
+    expect(getDivisionFromRating(BRONZE_MAX - 0.01)).toBe('BRONZE');
+    expect(getDivisionFromRating(BRONZE_MAX)).toBe('PRATA');
+    expect(getDivisionFromRating(PRATA_MAX)).toBe('OURO');
+    expect(getDivisionFromRating(OURO_MAX)).toBe('DIAMANTE');
+    expect(getDivisionFromRating(DIAMANTE_MAX)).toBe('DIAMANTE');
   });
 
   it('resolves labels through the centralized i18n key', () => {

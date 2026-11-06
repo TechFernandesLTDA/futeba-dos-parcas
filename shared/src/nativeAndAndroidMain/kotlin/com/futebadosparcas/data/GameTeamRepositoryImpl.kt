@@ -25,6 +25,15 @@ class GameTeamRepositoryImpl(
     private val teamsCollection = firestore.collection("teams")
     private val gamesCollection = firestore.collection("games")
 
+    /**
+     * Gera e persiste `numberOfTeams` times para um jogo no Firestore.
+     *
+     * ### Algoritmo: Sorteio Aleatório Estratificado por Posição (Round-Robin)
+     * 1. Goleiros (`position == "GOALKEEPER"`) são distribuídos em round-robin
+     *    (`index % numberOfTeams`) para garantir no máximo 1 goleiro de diferença entre times.
+     * 2. Jogadores de linha (`position != "GOALKEEPER"`) são embaralhados aleatoriamente
+     *    (`shuffled()`) e distribuídos em round-robin (`index % numberOfTeams`).
+     */
     override suspend fun generateTeams(
         gameId: String,
         numberOfTeams: Int,

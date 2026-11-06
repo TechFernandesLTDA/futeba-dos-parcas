@@ -34,11 +34,26 @@ data class SwapSuggestion(
 )
 
 /**
- * Balanceador de times avancado com suporte a:
- * - Balanceamento por posicao (garantir goleiro em cada time)
- * - Manter pares juntos (amigos, casais, etc)
- * - Sugestoes de rotacao
- * - Calculo de forca do time
+ * Balanceador avançado de 2 times (`Time A` e `Time B`) usado na tela de Formação de Times.
+ *
+ * ### Algoritmo: Snake Draft com Restrição de Pares + Otimização Local por Trocas (Pairwise Swap)
+ * 1. **Distribuição de Goleiros (`distributeGoalkeepers`)**:
+ *    Goleiros ordenados por `goalkeeperSkill` decrescente são alternados entre `Time A` e `Time B`
+ *    até atingir `goalkeepersPerTeam`; goleiros extras vão para o time com menos jogadores.
+ * 2. **Alocação de Pares (`distributePairs`)**:
+ *    Pares configurados pelo organizador ([PlayerPair] — amigos/vínculos que devem jogar juntos)
+ *    são alocados antes do draft individual no time com menor rating médio e menor/igual tamanho.
+ * 3. **Jogadores de Linha via Snake Draft (`distributeLinePlayers`)**:
+ *    Jogadores restantes ordenados por `overallRating` decrescente seguem ordem serpentina
+ *    (`A, B, B, A, A, B, B, A...`), priorizando equilíbrio de tamanho caso os pares tenham
+ *    desbalanceado a contagem.
+ * 4. **Otimização Local por Trocas (`optimizeBalance`)**:
+ *    Até `MAX_ITERATIONS` (100) iterações de hill-climbing trocando pares de jogadores de mesma
+ *    posição (que não façam parte de [PlayerPair]) entre os dois times sempre que a troca reduzir
+ *    a diferença de rating médio (`diff < 0.1f` encerra).
+ * 5. **Critério de Equilíbrio**:
+ *    Times são considerados equilibrados (`isBalanced = true`) quando a diferença percentual de
+ *    força entre `Time A` e `Time B` é inferior a `BALANCE_THRESHOLD` (5%).
  */
 class EnhancedTeamBalancer {
 

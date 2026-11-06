@@ -355,6 +355,62 @@ describe("badges/game-badges", () => {
     expect(notificationCalls).toHaveLength(1);
   });
 
+  it("concede streak_7 lendo current_streak da colecao user_streaks", async () => {
+    store.set("users/user1", {
+      name: "Jogador Streak",
+      experience_points: 50,
+      level: 0,
+    });
+    store.set("user_streaks/user1", {
+      user_id: "user1",
+      current_streak: 7,
+      longest_streak: 7,
+    });
+    store.set("confirmations/conf1", {
+      game_id: "game-streak",
+      user_id: "user1",
+      was_present: true,
+    });
+
+    await runGameFinishedEvent("game-streak");
+
+    expect(store.get("users/user1/badges/streak_7")).toMatchObject({
+      badge_id: "streak_7",
+      xp_reward: 100,
+      earned: true,
+    });
+    expect(store.get("user_badges/user1_streak_7")).toMatchObject({
+      user_id: "user1",
+      badge_id: "streak_7",
+      xp_reward: 100,
+      earned: true,
+    });
+  });
+
+  it("nao concede streak_7 quando current_streak em user_streaks e menor que 7", async () => {
+    store.set("users/user1", {
+      name: "Jogador Streak",
+      experience_points: 50,
+      level: 0,
+      current_streak: 10, // valor legado obsoleto no user doc nao deve sobrepor user_streaks
+    });
+    store.set("user_streaks/user1", {
+      user_id: "user1",
+      current_streak: 6,
+      longest_streak: 10,
+    });
+    store.set("confirmations/conf1", {
+      game_id: "game-streak-6",
+      user_id: "user1",
+      was_present: true,
+    });
+
+    await runGameFinishedEvent("game-streak-6");
+
+    expect(store.get("users/user1/badges/streak_7")).toBeUndefined();
+    expect(store.get("user_badges/user1_streak_7")).toBeUndefined();
+  });
+
   it("concede Carrasco na 5a vitoria contra o mesmo adversario", async () => {
     store.set("users/user1", {
       name: "Jogador 1",

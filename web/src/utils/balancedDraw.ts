@@ -1,3 +1,20 @@
+/**
+ * Sorteio equilibrado de times na Web (`SNAKE_DRAFT` ou `GREEDY` + Otimização por Trocas).
+ *
+ * ### Regras e Algoritmos:
+ * 1. **Goleiros (`distributeGoalkeepers`)**: Ordenados por `level` decrescente e alocados
+ *    em round-robin respeitando `goalkeepersPerTeam`; goleiros excedentes vão para o time
+ *    com menos jogadores.
+ * 2. **Jogadores de Linha** (ordenados por `level` decrescente):
+ *    - `SNAKE_DRAFT` (padrão): distribuição em serpentina (`0..N-1` nas rodadas pares,
+ *      `N-1..0` nas rodadas ímpares).
+ *    - `GREEDY`: cada jogador é alocado ao time com menor soma total de `level` no momento.
+ * 3. **Refinamento Local (`optimizeBalance`)**: Até `MAX_OPTIMIZE_ITERATIONS` (100) trocas
+ *    1-para-1 de jogadores de linha entre o time de maior média e o de menor média enquanto
+ *    houver troca que reduza a diferença de média (`diff >= 0.1`).
+ * 4. **Critério de Equilíbrio (`balanceScore`)**: Coeficiente de variação (`stdDev / mean * 100`)
+ *    das médias dos times; considerado equilibrado quando `balanceScore < 5`.
+ */
 export type DrawStrategy = 'SNAKE_DRAFT' | 'GREEDY';
 
 export interface PlayerForDraw {
