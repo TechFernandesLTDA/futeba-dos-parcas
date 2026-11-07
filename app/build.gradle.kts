@@ -106,6 +106,7 @@ android {
     sourceSets {
         getByName("release").java.srcDir("src/nonDebug/java")
         getByName("benchmark").java.srcDir("src/nonDebug/java")
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 
     compileOptions {
@@ -382,4 +383,6 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.1")
 }
 
-// KSP não precisa de configuração adicional como o Kapt precisava
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
