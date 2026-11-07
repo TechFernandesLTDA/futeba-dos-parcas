@@ -113,6 +113,7 @@ fun CreateGameScreen(
     var showRecurrenceEndDatePicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val editingGame = (uiState as? CreateGameUiState.Editing)?.game
     val createdGameId = (uiState as? CreateGameUiState.Success)?.game?.id
     val hasCreateError = uiState is CreateGameUiState.Error
@@ -270,7 +271,7 @@ fun CreateGameScreen(
                 var hasError = false
 
                 if (ownerName.trim().length < 3) {
-                    ownerNameError = context.getString(R.string.create_game_error_owner_name)
+                    ownerNameError = resources.getString(R.string.create_game_error_owner_name)
                     hasError = true
                 }
 
@@ -279,13 +280,13 @@ fun CreateGameScreen(
                 // ambos os formatos antes de validar.
                 val priceValue = price.trim().replace(',', '.').toDoubleOrNull()
                 if (priceValue == null || priceValue < 0) {
-                    priceError = context.getString(R.string.create_game_error_price)
+                    priceError = resources.getString(R.string.create_game_error_price)
                     hasError = true
                 }
 
                 val maxPlayersValue = maxPlayers.toIntOrNull()
                 if (maxPlayersValue == null || maxPlayersValue < 2 || maxPlayersValue > 50) {
-                    maxPlayersError = context.getString(R.string.create_game_error_max_players)
+                    maxPlayersError = resources.getString(R.string.create_game_error_max_players)
                     hasError = true
                 }
 
@@ -296,7 +297,7 @@ fun CreateGameScreen(
                 ) {
                     android.widget.Toast.makeText(
                         context,
-                        context.getString(R.string.create_game_recurrence_until_required),
+                        resources.getString(R.string.create_game_recurrence_until_required),
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                     hasError = true
@@ -534,7 +535,11 @@ private fun CreateGameContent(
                             // (metadados de doc privado de outro grupo); mostra
                             // apenas o horário ocupado, igual ao web.
                             Text(
-                                text = "Horário ocupado (${conflict.conflictingTime} - ${conflict.conflictingEndTime})",
+                                text = stringResource(
+                                    R.string.create_game_time_conflict_format,
+                                    conflict.conflictingTime,
+                                    conflict.conflictingEndTime
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )

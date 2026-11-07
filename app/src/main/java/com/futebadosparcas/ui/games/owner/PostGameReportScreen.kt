@@ -687,7 +687,7 @@ private fun ReportPlayerRow(
 
         if (player.goals > 0) {
             Text(
-                text = "${player.goals} gols",
+                text = stringResource(R.string.post_game_report_goals_count, player.goals),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )

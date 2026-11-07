@@ -58,8 +58,10 @@ fun PhoneVerificationScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val defaultCountryCode = stringResource(R.string.phone_verification_country_code)
+    val connectionErrorMsg = stringResource(R.string.phone_error_connection)
 
-    var phone by rememberSaveable { mutableStateOf(context.getString(R.string.phone_verification_country_code)) }
+    var phone by rememberSaveable { mutableStateOf(defaultCountryCode) }
     var otp by rememberSaveable { mutableStateOf("") }
     var step by rememberSaveable { mutableStateOf("phone") } // phone | otp
 
@@ -169,7 +171,7 @@ fun PhoneVerificationScreen(
                                 val activity = context.findActivity()
                                 if (activity == null) {
                                     viewModel.reportRecoverableError(
-                                        context.getString(R.string.phone_error_connection),
+                                        connectionErrorMsg,
                                     )
                                     return@Button
                                 }

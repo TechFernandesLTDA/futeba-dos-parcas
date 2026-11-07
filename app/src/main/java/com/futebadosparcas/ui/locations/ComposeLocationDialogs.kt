@@ -70,6 +70,7 @@ fun FieldEditDialog(
     var showPhotoOptions by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val cameraErrorMsg = stringResource(R.string.location_dialog_camera_error)
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
     var expandedType by remember { mutableStateOf(false) }
 
@@ -106,7 +107,7 @@ fun FieldEditDialog(
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao abrir câmera para foto da quadra", e)
-                                Toast.makeText(context, context.getString(R.string.location_dialog_camera_error), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, cameraErrorMsg, Toast.LENGTH_SHORT).show()
                             }
                             showPhotoOptions = false
                         }

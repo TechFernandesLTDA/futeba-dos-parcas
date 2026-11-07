@@ -309,7 +309,7 @@ private fun GameCardFooter(game: Game, vacancyColor: Color) {
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = "${game.playersCount}/${game.maxPlayers} jogadores",
+            text = stringResource(R.string.games_players_count_format, game.playersCount, game.maxPlayers),
             style = MaterialTheme.typography.bodySmall,
             color = vacancyColor,
             fontWeight = FontWeight.Medium,

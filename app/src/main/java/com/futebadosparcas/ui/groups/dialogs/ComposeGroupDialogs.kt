@@ -66,6 +66,7 @@ fun EditGroupDialog(
     var selectedDefaultGender by remember { mutableStateOf(group.defaultGender) }
 
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     // Photo Logic
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
@@ -88,20 +89,20 @@ fun EditGroupDialog(
     }
 
     // Validação de nome
-    val nameValidationError = remember(name) {
+    val nameValidationError = remember(name, resources) {
         when {
-            name.trim().isEmpty() -> context.getString(R.string.validation_name_required)
-            name.trim().length < 3 -> context.getString(R.string.validation_name_min_chars)
-            name.trim().length > 50 -> context.getString(R.string.validation_name_max_chars)
-            !name.trim().matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) -> context.getString(R.string.validation_name_invalid)
+            name.trim().isEmpty() -> resources.getString(R.string.validation_name_required)
+            name.trim().length < 3 -> resources.getString(R.string.validation_name_min_chars)
+            name.trim().length > 50 -> resources.getString(R.string.validation_name_max_chars)
+            !name.trim().matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) -> resources.getString(R.string.validation_name_invalid)
             else -> null
         }
     }
 
     // Validação de descrição
-    val descriptionValidationError = remember(description) {
+    val descriptionValidationError = remember(description, resources) {
         when {
-            description.trim().length > 200 -> context.getString(R.string.validation_description_max_chars)
+            description.trim().length > 200 -> resources.getString(R.string.validation_description_max_chars)
             else -> null
         }
     }
@@ -135,7 +136,7 @@ fun EditGroupDialog(
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao abrir câmera para foto do grupo", e)
-                                Toast.makeText(context, context.getString(R.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, resources.getString(R.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
                             }
                             showPhotoOptions = false
                         }
@@ -470,6 +471,7 @@ fun AddCashboxEntryDialog(
 
     // Receipt Pickers
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
     var showPhotoOptions by remember { mutableStateOf(false) }
 
@@ -499,7 +501,7 @@ fun AddCashboxEntryDialog(
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao abrir câmera para comprovante", e)
-                                Toast.makeText(context, context.getString(R.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, resources.getString(R.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
                             }
                             showPhotoOptions = false
                         }

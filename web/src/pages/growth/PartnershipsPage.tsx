@@ -50,17 +50,17 @@ const faqs: FaqItem[] = [
 
 const benefits = [
   {
-    icon: <EventSeat sx={{ fontSize: 40, color: '#00852A' }} />,
+    icon: <EventSeat sx={{ fontSize: 40, color: 'primary.main' }} />,
     title: 'Ocupação de Horários Ociosos',
     desc: 'Apresente sua arena a organizadores que procuram local para jogar, inclusive em horários de menor movimento.',
   },
   {
-    icon: <TrendingUp sx={{ fontSize: 40, color: '#00852A' }} />,
+    icon: <TrendingUp sx={{ fontSize: 40, color: 'primary.main' }} />,
     title: 'Novos Grupos Mensalistas',
     desc: 'Grupos do app jogam com regularidade e podem escolher uma quadra para seus jogos.',
   },
   {
-    icon: <Stadium sx={{ fontSize: 40, color: '#00852A' }} />,
+    icon: <Stadium sx={{ fontSize: 40, color: 'primary.main' }} />,
     title: 'Vitrine Esportiva Local',
     desc: 'Sua arena aparece na lista e no mapa de locais do app para quem organiza peladas na região.',
   },
@@ -84,7 +84,7 @@ export function PartnershipsPage() {
       <GrowthBreadcrumbs items={[{ label: 'Parcerias com Arenas e Quadras' }]} />
 
       {/* Hero Section */}
-      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: alpha('#00852A', 0.03) }}>
+      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.03) }}>
         <Container maxWidth="lg">
           <Grid container spacing={5} alignItems="center">
             <Grid item xs={12} md={7}>
@@ -94,8 +94,8 @@ export function PartnershipsPage() {
                     label="PROGRAMA DE PARCERIAS PARA ARENAS"
                     size="small"
                     sx={{
-                      bgcolor: alpha('#00852A', 0.1),
-                      color: '#00852A',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
                       fontWeight: 800,
                       letterSpacing: 0.5,
                       mb: 1.5,
@@ -135,8 +135,8 @@ export function PartnershipsPage() {
                       px: 3.5,
                       fontWeight: 800,
                       borderRadius: '999px',
-                      bgcolor: '#00852A',
-                      '&:hover': { bgcolor: '#006B22' },
+                      bgcolor: 'primary.main',
+                      '&:hover': { bgcolor: 'primary.dark' },
                       textTransform: 'none',
                     }}
                   >
@@ -151,30 +151,30 @@ export function PartnershipsPage() {
                   borderRadius: 4,
                   border: 1,
                   borderColor: 'divider',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.06)',
+                  boxShadow: (theme) => `0 12px 32px ${alpha(theme.palette.common.black, 0.06)}`,
                   bgcolor: 'background.paper',
                   p: 3,
                 }}
               >
                 <CardContent>
                   <Typography variant="h6" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Handshake sx={{ color: '#00852A' }} /> Vantagens da Parceria
+                    <Handshake sx={{ color: 'primary.main' }} /> Vantagens da Parceria
                   </Typography>
                   <Stack spacing={2} sx={{ mt: 2 }}>
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                      <CheckCircle sx={{ color: '#00852A', fontSize: 20, mt: 0.3 }} />
+                      <CheckCircle sx={{ color: 'primary.main', fontSize: 20, mt: 0.3 }} />
                       <Typography variant="body2" color="text.secondary">
                         Listagem no app com endereço, comodidades (churrasqueira, bar, vestiário) e tipos de quadra.
                       </Typography>
                     </Stack>
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                      <CheckCircle sx={{ color: '#00852A', fontSize: 20, mt: 0.3 }} />
+                      <CheckCircle sx={{ color: 'primary.main', fontSize: 20, mt: 0.3 }} />
                       <Typography variant="body2" color="text.secondary">
                         Contato direto com a equipe da Tech Fernandes para alinhar os dados da arena.
                       </Typography>
                     </Stack>
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                      <CheckCircle sx={{ color: '#00852A', fontSize: 20, mt: 0.3 }} />
+                      <CheckCircle sx={{ color: 'primary.main', fontSize: 20, mt: 0.3 }} />
                       <Typography variant="body2" color="text.secondary">
                         Selo de local verificado após confirmação dos dados com a arena.
                       </Typography>
@@ -200,7 +200,7 @@ export function PartnershipsPage() {
                     border: 1,
                     borderColor: 'divider',
                     p: 2,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
+                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.common.black, 0.04)}`,
                   }}
                 >
                   <CardContent>
@@ -222,9 +222,9 @@ export function PartnershipsPage() {
             sx={{
               p: { xs: 4, md: 6 },
               borderRadius: 4,
-              bgcolor: alpha('#00852A', 0.04),
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
               border: 1,
-              borderColor: alpha('#00852A', 0.2),
+              borderColor: (theme) => alpha(theme.palette.primary.main, 0.2),
               textAlign: 'center',
             }}
           >
@@ -247,9 +247,9 @@ export function PartnershipsPage() {
                     minHeight: 48,
                     px: 3,
                     borderRadius: '999px',
-                    bgcolor: '#00852A',
+                    bgcolor: 'primary.main',
                     fontWeight: 700,
-                    '&:hover': { bgcolor: '#006B22' },
+                    '&:hover': { bgcolor: 'primary.dark' },
                   }}
                 >
                   techfernandesltda@gmail.com

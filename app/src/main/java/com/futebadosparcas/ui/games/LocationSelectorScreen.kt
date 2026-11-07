@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -708,11 +709,11 @@ private fun LocationCard(
                                 Icon(
                                     imageVector = Icons.Default.Star,
                                     contentDescription = null,
-                                    tint = Color(0xFFFFC107),
+                                    tint = com.futebadosparcas.ui.theme.GamificationColors.Gold,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = String.format(Locale.getDefault(), "%.1f", location.rating),
+                                    text = String.format(LocalConfiguration.current.locales[0], "%.1f", location.rating),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -938,12 +939,12 @@ private fun LocationDetailBottomSheet(
                                 Icon(
                                     imageVector = if (filled) Icons.Default.Star else Icons.Default.StarBorder,
                                     contentDescription = null,
-                                    tint = Color(0xFFFFC107),
+                                    tint = com.futebadosparcas.ui.theme.GamificationColors.Gold,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
                             Text(
-                                text = String.format(Locale.getDefault(), "%.1f", location.rating),
+                                text = String.format(LocalConfiguration.current.locales[0], "%.1f", location.rating),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
@@ -1241,7 +1242,7 @@ private fun ReviewCard(review: LocationReview) {
                             Icon(
                                 imageVector = if (index < review.rating.toInt()) Icons.Default.Star else Icons.Default.StarBorder,
                                 contentDescription = null,
-                                tint = Color(0xFFFFC107),
+                                tint = com.futebadosparcas.ui.theme.GamificationColors.Gold,
                                 modifier = Modifier.size(12.dp)
                             )
                         }

@@ -49,35 +49,13 @@ private fun glassTopBarInsets(): WindowInsets {
  */
 data class GlassConfig(
     val blurRadius: Dp = 20.dp,
-    val backgroundColor: Color = Color.White,
-    val contentColor: Color = Color.Black,
+    val backgroundColor: Color = Color.Unspecified,
+    val contentColor: Color = Color.Unspecified,
     val backgroundAlpha: Float = 0.7f,
     val borderAlpha: Float = 0.3f,
     val shadowElevation: Dp = 4.dp,
     val gradientOverlay: Boolean = true,
-    val gradientColor: Color = Color.White
-)
-
-/**
- * Configuração para tema escuro.
- */
-@Deprecated("Usar rememberGlassConfig() que respeita ThemeMode do usuário")
-val DarkGlassConfig = GlassConfig(
-    backgroundColor = Color.Black,
-    contentColor = Color.White,
-    backgroundAlpha = 0.6f,
-    borderAlpha = 0.2f
-)
-
-/**
- * Configuração para tema claro.
- */
-@Deprecated("Usar rememberGlassConfig() que respeita ThemeMode do usuário")
-val LightGlassConfig = GlassConfig(
-    backgroundColor = Color.White,
-    contentColor = Color.Black,
-    backgroundAlpha = 0.8f,
-    borderAlpha = 0.3f
+    val gradientColor: Color = Color.Unspecified
 )
 
 /**

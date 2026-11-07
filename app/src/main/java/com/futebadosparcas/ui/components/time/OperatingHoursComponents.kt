@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -147,7 +148,7 @@ fun OperatingHoursDisplay(
     compact: Boolean = false
 ) {
     val context = LocalContext.current
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
 
     val formattedTime = remember(openingTime, closingTime) {
         LocationTimeFormatter.formatTimeRange(openingTime, closingTime, context)

@@ -75,15 +75,15 @@ fun VerificationBanner(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Verifique seu telefone e CPF",
+                    text = stringResource(R.string.verification_banner_title),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
                 Text(
-                    text = if (daysLeft > 0) {
-                        "$daysLeft dia${if (daysLeft == 1) "" else "s"} restantes"
-                    } else {
-                        "Prazo expirado — verificação obrigatória"
+                    text = when {
+                        daysLeft == 1 -> stringResource(R.string.verification_banner_days_left_one)
+                        daysLeft > 1 -> stringResource(R.string.verification_banner_days_left_many, daysLeft)
+                        else -> stringResource(R.string.verification_banner_expired)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,

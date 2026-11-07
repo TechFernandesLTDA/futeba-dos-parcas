@@ -78,7 +78,7 @@ fun TeamFormationScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val draftAnimationState by viewModel.draftAnimationState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     // Carregar dados do jogo
     LaunchedEffect(gameId) {
@@ -90,7 +90,7 @@ fun TeamFormationScreen(
         val state = uiState
         if (state is TeamFormationUiState.Ready) {
             // Prefere resId i18n; cai para a string crua (legado)
-            val msg = state.userMessageResId?.let { context.getString(it) } ?: state.userMessage
+            val msg = state.userMessageResId?.let { resources.getString(it) } ?: state.userMessage
             if (msg != null) {
                 snackbarHostState.showSnackbar(msg)
                 viewModel.clearUserMessage()

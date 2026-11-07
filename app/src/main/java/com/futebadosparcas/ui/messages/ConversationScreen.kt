@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -189,6 +190,7 @@ private fun MessageBubble(
     onDelete: () -> Unit
 ) {
     val deleted = message.deletedAt != null
+    val currentLocale = LocalConfiguration.current.locales[0]
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isOwn) Arrangement.End else Arrangement.Start
@@ -209,7 +211,7 @@ private fun MessageBubble(
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = message.createdAt?.toDate()?.let {
-                            SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(it)
+                            SimpleDateFormat("dd/MM HH:mm", currentLocale).format(it)
                         }.orEmpty(),
                         style = MaterialTheme.typography.labelSmall
                     )

@@ -609,7 +609,7 @@ private fun PodiumPosition(
 
         // Votos e porcentagem
         Text(
-            text = "${result.voteCount} votos",
+            text = stringResource(R.string.vote_result_votes_count, result.voteCount),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -700,7 +700,7 @@ private fun VoteResultRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "${result.voteCount} votos",
+                text = stringResource(R.string.vote_result_votes_count, result.voteCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

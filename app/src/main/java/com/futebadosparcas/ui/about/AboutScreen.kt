@@ -55,6 +55,7 @@ fun AboutScreen(
     onDismissExportResult: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val feedbackSubject = stringResource(R.string.about_feedback_subject)
     // Seletor do sistema ANTES da callable: cancelar não gasta a cota diária.
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(EXPORT_MIME_TYPE)
@@ -201,7 +202,7 @@ fun AboutScreen(
                 onContactClick = {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = Uri.parse("mailto:techfernandesltda@gmail.com")
-                        putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.about_feedback_subject))
+                        putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
                     }
                     ExternalIntentHelper.startActivitySafely(context, intent)
                 },

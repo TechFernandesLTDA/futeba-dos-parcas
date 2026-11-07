@@ -102,6 +102,7 @@ fun PlayersScreen(
 
     // Context para compartilhamento
     val context = androidx.compose.ui.platform.LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val shareScope = androidx.compose.runtime.rememberCoroutineScope()
 
     // Estado para Snackbar
@@ -116,7 +117,7 @@ fun PlayersScreen(
             when (event) {
                 is InviteUiEvent.InviteSent -> {
                     snackbarHostState.showSnackbar(
-                        message = context.getString(R.string.invite_sent_success, event.userName)
+                        message = resources.getString(R.string.invite_sent_success, event.userName)
                     )
                 }
                 is InviteUiEvent.Error -> {
@@ -315,7 +316,7 @@ fun PlayersScreen(
                                 user = player,
                                 stats = selectedPlayerStats,
                                 scope = shareScope,
-                                generatedBy = context.getString(R.string.app_name)
+                                generatedBy = resources.getString(R.string.app_name)
                             )
                         },
                         modifier = Modifier.padding(bottom = AppDimensions.spacing_huge)

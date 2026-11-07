@@ -94,7 +94,7 @@ export function HowToOrganizePage() {
       <GrowthBreadcrumbs items={[{ label: 'Como Organizar Pelada' }]} />
 
       {/* Hero Section */}
-      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: alpha('#00852A', 0.03) }}>
+      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.03) }}>
         <Container maxWidth="lg">
           <Grid container spacing={5} alignItems="center">
             <Grid item xs={12} md={7}>
@@ -104,8 +104,8 @@ export function HowToOrganizePage() {
                     label="GUIA COMPLETO DE ORGANIZAÇÃO"
                     size="small"
                     sx={{
-                      bgcolor: alpha('#00852A', 0.1),
-                      color: '#00852A',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
                       fontWeight: 800,
                       letterSpacing: 0.5,
                       mb: 1.5,
@@ -145,8 +145,8 @@ export function HowToOrganizePage() {
                       px: 3.5,
                       fontWeight: 800,
                       borderRadius: '999px',
-                      bgcolor: '#00852A',
-                      '&:hover': { bgcolor: '#006B22' },
+                      bgcolor: 'primary.main',
+                      '&:hover': { bgcolor: 'primary.dark' },
                       textTransform: 'none',
                     }}
                   >
@@ -161,19 +161,19 @@ export function HowToOrganizePage() {
                   borderRadius: 4,
                   border: 1,
                   borderColor: 'divider',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.06)',
+                  boxShadow: (theme) => `0 12px 32px ${alpha(theme.palette.common.black, 0.06)}`,
                   bgcolor: 'background.paper',
                 }}
               >
                 <CardContent sx={{ p: 4 }}>
                   <Typography variant="h6" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EventAvailable sx={{ color: '#00852A' }} /> Checklist da Pelada Perfeita
+                    <EventAvailable sx={{ color: 'primary.main' }} /> Checklist da Pelada Perfeita
                   </Typography>
                   <List disablePadding>
                     {checklist.map((item, idx) => (
                       <ListItem key={idx} disableGutters sx={{ py: 1.25, alignItems: 'flex-start' }}>
                         <ListItemIcon sx={{ minWidth: 32, mt: 0.25 }}>
-                          <CheckCircle sx={{ color: '#00852A', fontSize: 20 }} />
+                          <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} />
                         </ListItemIcon>
                         <ListItemText
                           primary={item.stage}
@@ -208,7 +208,7 @@ export function HowToOrganizePage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <Groups sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <Groups sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Vagas Limitadas
                     </Typography>
@@ -221,7 +221,7 @@ export function HowToOrganizePage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <HourglassEmpty sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <HourglassEmpty sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Lista de Espera
                     </Typography>
@@ -234,7 +234,7 @@ export function HowToOrganizePage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <NotificationsActive sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <NotificationsActive sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Lembretes Automáticos
                     </Typography>
@@ -260,10 +260,18 @@ export function HowToOrganizePage() {
               No sorteio equilibrado do <strong>Futeba dos Parças</strong>, cada jogador tem um nível e o app divide os times
               por esse nível, tratando os goleiros à parte, e indica se os times ficaram equilibrados. O organizador também pode refazer o sorteio de forma aleatória.
             </Typography>
-            <Card sx={{ bgcolor: alpha('#00852A', 0.05), borderRadius: 3, border: 1, borderColor: alpha('#00852A', 0.2), p: 2 }}>
+            <Card
+              sx={{
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
+                borderRadius: 3,
+                border: 1,
+                borderColor: (theme) => alpha(theme.palette.primary.main, 0.2),
+                p: 2,
+              }}
+            >
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Balance sx={{ color: '#00852A' }} /> Dica de Ouro do Capitão:
+                  <Balance sx={{ color: 'primary.main' }} /> Dica de Ouro do Capitão:
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   Nunca altere a escalação gerada sem o consentimento do grupo. O sorteio transparente elimina acusações de favorecimento e fortalece a amizade no racha.
@@ -295,7 +303,7 @@ export function HowToOrganizePage() {
                       to="/ranking-futebol-amador"
                       variant="text"
                       endIcon={<ArrowForward />}
-                      sx={{ fontWeight: 700, color: '#00852A', minHeight: 44 }}
+                      sx={{ fontWeight: 700, color: 'primary.main', minHeight: 44 }}
                     >
                       Ler Guia de Ranking
                     </Button>
@@ -316,7 +324,7 @@ export function HowToOrganizePage() {
                       to="/gestao-de-pelada"
                       variant="text"
                       endIcon={<ArrowForward />}
-                      sx={{ fontWeight: 700, color: '#00852A', minHeight: 44 }}
+                      sx={{ fontWeight: 700, color: 'primary.main', minHeight: 44 }}
                     >
                       Ler Guia Financeiro
                     </Button>

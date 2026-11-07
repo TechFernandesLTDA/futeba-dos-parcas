@@ -124,7 +124,7 @@ fun TimeSuggestionBadge(
         onClick = onApply,
         label = {
             Text(
-                text = "${suggestion.time} ($percentage% adesao)",
+                text = stringResource(R.string.time_suggestion_adherence_format, suggestion.time, percentage),
                 style = MaterialTheme.typography.labelSmall
             )
         },

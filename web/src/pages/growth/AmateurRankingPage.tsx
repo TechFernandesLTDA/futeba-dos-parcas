@@ -51,22 +51,22 @@ const faqs: FaqItem[] = [
 
 const pillars = [
   {
-    icon: <SportsSoccer sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <SportsSoccer sx={{ fontSize: 36, color: 'primary.main' }} />,
     title: 'Gols & Assistências',
     desc: 'Gols e assistências registrados na partida rendem XP e entram nas estatísticas dos jogadores.',
   },
   {
-    icon: <Shield sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <Shield sx={{ fontSize: 36, color: 'primary.main' }} />,
     title: 'Defesa & Clean Sheets',
     desc: 'Defesas e jogos sem sofrer gol também rendem XP para quem protege a meta.',
   },
   {
-    icon: <EmojiEvents sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <EmojiEvents sx={{ fontSize: 36, color: 'primary.main' }} />,
     title: 'Craque da Rodada (MVP)',
     desc: 'Quem participou do jogo vota depois da partida, sem poder votar em si mesmo.',
   },
   {
-    icon: <AutoGraph sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <AutoGraph sx={{ fontSize: 36, color: 'primary.main' }} />,
     title: 'Evolução e Níveis XP',
     desc: 'O XP acumulado sobe seu nível, e conquistas rendem badges.',
   },
@@ -90,7 +90,7 @@ export function AmateurRankingPage() {
       <GrowthBreadcrumbs items={[{ label: 'Ranking de Futebol Amador' }]} />
 
       {/* Hero Section */}
-      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: alpha('#00852A', 0.03) }}>
+      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.03) }}>
         <Container maxWidth="lg">
           <Grid container spacing={5} alignItems="center">
             <Grid item xs={12} md={7}>
@@ -100,8 +100,8 @@ export function AmateurRankingPage() {
                     label="ESTATÍSTICAS & GAMIFICAÇÃO"
                     size="small"
                     sx={{
-                      bgcolor: alpha('#00852A', 0.1),
-                      color: '#00852A',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
                       fontWeight: 800,
                       letterSpacing: 0.5,
                       mb: 1.5,
@@ -141,8 +141,8 @@ export function AmateurRankingPage() {
                       px: 3.5,
                       fontWeight: 800,
                       borderRadius: '999px',
-                      bgcolor: '#00852A',
-                      '&:hover': { bgcolor: '#006B22' },
+                      bgcolor: 'primary.main',
+                      '&:hover': { bgcolor: 'primary.dark' },
                       textTransform: 'none',
                     }}
                   >
@@ -157,14 +157,14 @@ export function AmateurRankingPage() {
                   borderRadius: 4,
                   border: 1,
                   borderColor: 'divider',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.06)',
+                  boxShadow: (theme) => `0 12px 32px ${alpha(theme.palette.common.black, 0.06)}`,
                   bgcolor: 'background.paper',
                   p: 2,
                 }}
               >
                 <CardContent>
                   <Typography variant="h6" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MilitaryTech sx={{ color: '#00852A' }} /> O que o Ranking mede
+                    <MilitaryTech sx={{ color: 'primary.main' }} /> O que o Ranking mede
                   </Typography>
                   <Stack spacing={2} sx={{ mt: 2 }}>
                     {pillars.map((item, idx) => (
@@ -204,7 +204,7 @@ export function AmateurRankingPage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <Timeline sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <Timeline sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Histórico Inquestionável
                     </Typography>
@@ -217,7 +217,7 @@ export function AmateurRankingPage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <EmojiEvents sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <EmojiEvents sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Premiações de Fim de Ano
                     </Typography>
@@ -230,7 +230,7 @@ export function AmateurRankingPage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <MilitaryTech sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <MilitaryTech sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Engajamento e Resenha
                     </Typography>
@@ -263,7 +263,7 @@ export function AmateurRankingPage() {
                       to="/organizar-pelada"
                       variant="text"
                       endIcon={<ArrowForward />}
-                      sx={{ fontWeight: 700, color: '#00852A', minHeight: 44 }}
+                      sx={{ fontWeight: 700, color: 'primary.main', minHeight: 44 }}
                     >
                       Ver Guia de Organização
                     </Button>
@@ -284,7 +284,7 @@ export function AmateurRankingPage() {
                       to="/como-funciona"
                       variant="text"
                       endIcon={<ArrowForward />}
-                      sx={{ fontWeight: 700, color: '#00852A', minHeight: 44 }}
+                      sx={{ fontWeight: 700, color: 'primary.main', minHeight: 44 }}
                     >
                       Conhecer o Produto
                     </Button>

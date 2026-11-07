@@ -88,12 +88,12 @@ export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
                 width: 36,
                 height: 36,
                 borderRadius: '10px',
-                bgcolor: '#00852A',
-                color: '#FFFFFF',
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0, 133, 42, 0.25)',
+                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}`,
               }}
             >
               <SportsSoccer fontSize="small" />
@@ -135,7 +135,7 @@ export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
                     alignItems: 'center',
                     fontSize: '0.875rem',
                     fontWeight: isActive ? 800 : 600,
-                    color: isActive ? '#00852A' : 'text.secondary',
+                    color: isActive ? 'primary.main' : 'text.secondary',
                     borderRadius: 1,
                     '&:hover': {
                       color: 'text.primary',
@@ -177,10 +177,10 @@ export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
                 whiteSpace: 'nowrap',
                 fontWeight: 800,
                 borderRadius: '999px',
-                bgcolor: '#00852A',
-                '&:hover': { bgcolor: '#006B22' },
+                bgcolor: 'primary.main',
+                '&:hover': { bgcolor: 'primary.dark' },
                 textTransform: 'none',
-                boxShadow: '0 4px 12px rgba(0, 133, 42, 0.25)',
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
               }}
             >
               Criar Pelada
@@ -241,14 +241,14 @@ export function GrowthHeader({ currentPage }: GrowthHeaderProps) {
                 sx={{
                   minHeight: 44,
                   borderRadius: 1,
-                  bgcolor: currentPage === link.path ? alpha('#00852A', 0.1) : 'transparent',
+                  bgcolor: currentPage === link.path ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
                 }}
               >
                 <ListItemText
                   primary={link.label}
                   primaryTypographyProps={{
                     fontWeight: currentPage === link.path ? 800 : 600,
-                    color: currentPage === link.path ? '#00852A' : 'text.primary',
+                    color: currentPage === link.path ? 'primary.main' : 'text.primary',
                   }}
                 />
               </ListItemButton>

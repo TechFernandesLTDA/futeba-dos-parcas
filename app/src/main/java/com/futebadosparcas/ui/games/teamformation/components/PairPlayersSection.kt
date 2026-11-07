@@ -585,7 +585,7 @@ fun PairedPlayerIndicator(
         )
         Spacer(Modifier.width(4.dp))
         Text(
-            text = "com ${partnerName.split(" ").firstOrNull() ?: ""}",
+            text = stringResource(R.string.pair_players_with_partner_format, partnerName.split(" ").firstOrNull() ?: ""),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )

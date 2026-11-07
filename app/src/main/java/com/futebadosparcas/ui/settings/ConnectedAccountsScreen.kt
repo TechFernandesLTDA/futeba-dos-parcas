@@ -45,6 +45,7 @@ fun ConnectedAccountsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val credentialManager = remember { CredentialManager.create(context) }
@@ -53,8 +54,8 @@ fun ConnectedAccountsScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             val msg = when (event) {
-                is ConnectedAccountsEvent.ShowSuccess -> context.getString(event.messageRes)
-                is ConnectedAccountsEvent.ShowError -> context.getString(event.messageRes)
+                is ConnectedAccountsEvent.ShowSuccess -> resources.getString(event.messageRes)
+                is ConnectedAccountsEvent.ShowError -> resources.getString(event.messageRes)
             }
             snackbarHostState.showSnackbar(msg)
         }
@@ -74,7 +75,7 @@ fun ConnectedAccountsScreen(
             try {
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(context.getString(R.string.default_web_client_id))
+                    .setServerClientId(resources.getString(R.string.default_web_client_id))
                     .build()
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleIdOption)
@@ -89,18 +90,18 @@ fun ConnectedAccountsScreen(
                         viewModel.linkGoogleAccount(googleId.idToken)
                     } catch (e: GoogleIdTokenParsingException) {
                         AppLogger.e(TAG, "Invalid Google ID token", e)
-                        snackbarHostState.showSnackbar(context.getString(R.string.connected_accounts_link_error))
+                        snackbarHostState.showSnackbar(resources.getString(R.string.connected_accounts_link_error))
                     }
                 } else {
                     AppLogger.e(TAG, "Unexpected credential type: ${credential.type}")
-                    snackbarHostState.showSnackbar(context.getString(R.string.connected_accounts_link_error))
+                    snackbarHostState.showSnackbar(resources.getString(R.string.connected_accounts_link_error))
                 }
             } catch (e: GetCredentialException) {
                 // Usuário cancelou o seletor — não é erro (padrão do projeto)
                 AppLogger.d(TAG) { "Google link credential cancelled: ${e.message}" }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Google link credential failed", e)
-                snackbarHostState.showSnackbar(context.getString(R.string.connected_accounts_link_error))
+                snackbarHostState.showSnackbar(resources.getString(R.string.connected_accounts_link_error))
             }
         }
     }

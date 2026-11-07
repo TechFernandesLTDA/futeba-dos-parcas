@@ -37,6 +37,7 @@ import com.futebadosparcas.util.LevelBadgeHelper
 import java.text.SimpleDateFormat
 import java.util.*
 import com.futebadosparcas.R
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -354,7 +355,12 @@ private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonPartic
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "${leagueData.wins}V ${leagueData.draws}E ${leagueData.losses}D",
+                    text = stringResource(
+                        R.string.evolution_league_record_format,
+                        leagueData.wins,
+                        leagueData.draws,
+                        leagueData.losses
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
@@ -510,7 +516,8 @@ private fun XpHistoryCard(xpHistory: List<XpLog>) {
  */
 @Composable
 private fun XpHistoryItem(log: XpLog) {
-    val dateFormat = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
+    val currentLocale = LocalConfiguration.current.locales[0]
+    val dateFormat = SimpleDateFormat("dd/MM HH:mm", currentLocale)
 
     Row(
         modifier = Modifier

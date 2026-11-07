@@ -54,7 +54,7 @@ const faqs: FaqItem[] = [
 const flows = [
   {
     role: 'Para Organizadores',
-    icon: <AssignmentInd sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <AssignmentInd sx={{ fontSize: 36, color: 'primary.main' }} />,
     tag: 'CONTROLE TOTAL',
     steps: [
       'Crie seu grupo e gere um link de convite.',
@@ -65,7 +65,7 @@ const flows = [
   },
   {
     role: 'Para Jogadores',
-    icon: <SportsSoccer sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <SportsSoccer sx={{ fontSize: 36, color: 'primary.main' }} />,
     tag: 'EXPERIÊNCIA & GAMIFICAÇÃO',
     steps: [
       'Confirme presença com apenas um toque no celular.',
@@ -76,7 +76,7 @@ const flows = [
   },
   {
     role: 'Para Arenas & Quadras',
-    icon: <Stadium sx={{ fontSize: 36, color: '#00852A' }} />,
+    icon: <Stadium sx={{ fontSize: 36, color: 'primary.main' }} />,
     tag: 'OCUPAÇÃO & VISIBILIDADE',
     steps: [
       'Cadastre sua arena e as quadras (society, futsal, campo, areia).',
@@ -107,15 +107,15 @@ export function HowItWorksPage() {
       <GrowthBreadcrumbs items={[{ label: 'Como Funciona' }]} />
 
       {/* Hero Section */}
-      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: alpha('#00852A', 0.03) }}>
+      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: alpha(theme.palette.primary.main, 0.03) }}>
         <Container maxWidth="lg">
           <Stack spacing={2.5} alignItems="center" textAlign="center" sx={{ maxWidth: 840, mx: 'auto' }}>
             <Chip
               label="VISÃO GERAL DO PRODUTO"
               size="small"
               sx={{
-                bgcolor: alpha('#00852A', 0.1),
-                color: '#00852A',
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: 'primary.main',
                 fontWeight: 800,
                 letterSpacing: 0.5,
               }}
@@ -152,8 +152,8 @@ export function HowItWorksPage() {
                   px: 4,
                   fontWeight: 800,
                   borderRadius: '999px',
-                  bgcolor: '#00852A',
-                  '&:hover': { bgcolor: '#006B22' },
+                  bgcolor: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.dark' },
                   textTransform: 'none',
                 }}
               >
@@ -176,7 +176,7 @@ export function HowItWorksPage() {
                     borderRadius: 4,
                     border: 1,
                     borderColor: 'divider',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+                    boxShadow: `0 8px 24px ${alpha(theme.palette.common.black, 0.05)}`,
                     p: 2,
                     display: 'flex',
                     flexDirection: 'column',
@@ -190,8 +190,8 @@ export function HowItWorksPage() {
                       sx={{
                         fontSize: '0.75rem',
                         fontWeight: 800,
-                        bgcolor: alpha('#00852A', 0.1),
-                        color: '#00852A',
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        color: 'primary.main',
                         mb: 1.5,
                       }}
                     />
@@ -202,7 +202,7 @@ export function HowItWorksPage() {
                     <Stack spacing={1.5}>
                       {flow.steps.map((step, sIdx) => (
                         <Stack key={sIdx} direction="row" spacing={1.5} alignItems="flex-start">
-                          <CheckCircle sx={{ color: '#00852A', fontSize: 18, mt: 0.3 }} />
+                          <CheckCircle sx={{ color: 'primary.main', fontSize: 18, mt: 0.3 }} />
                           <Typography variant="body2" color="text.secondary">
                             {step}
                           </Typography>
@@ -239,14 +239,14 @@ export function HowItWorksPage() {
               </Grid>
               <Grid item xs={12} md={4}>
                 <Stack direction="row" spacing={2} justifyContent={{ xs: 'flex-start', md: 'center' }}>
-                  <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha('#00852A', 0.08) }}>
-                    <Smartphone sx={{ fontSize: 36, color: '#00852A' }} />
+                  <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                    <Smartphone sx={{ fontSize: 36, color: 'primary.main' }} />
                     <Typography variant="caption" display="block" fontWeight={800}>
                       Mobile PWA
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha('#00852A', 0.08) }}>
-                    <Devices sx={{ fontSize: 36, color: '#00852A' }} />
+                  <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                    <Devices sx={{ fontSize: 36, color: 'primary.main' }} />
                     <Typography variant="caption" display="block" fontWeight={800}>
                       Desktop Web
                     </Typography>

@@ -926,7 +926,12 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
 
             data.personalBests.forEach { best ->
                 Text(
-                    text = "${best.category}: ${best.value} (antes: ${best.previousBest})",
+                    text = stringResource(
+                        R.string.weekly_recap_personal_best_format,
+                        best.category,
+                        best.value.toString(),
+                        best.previousBest.toString()
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = RecapOverlayTextHigh
                 )

@@ -441,12 +441,13 @@ fun MainScreen(
     }
 
     // Exibe snackbar ao desbloquear badge
+    val resources = androidx.compose.ui.platform.LocalResources.current
     LaunchedEffect(Unit) {
         val vibrationHelper = com.futebadosparcas.util.VibrationHelper(context)
         badgeAwarder.newBadges.collectLatest { badge ->
             vibrationHelper.vibrateBadgeUnlocked()
             snackbarHostState.showSnackbar(
-                message = context.getString(R.string.badge_unlocked_toast, badge.badgeId),
+                message = resources.getString(R.string.badge_unlocked_toast, badge.badgeId),
                 duration = SnackbarDuration.Short
             )
         }

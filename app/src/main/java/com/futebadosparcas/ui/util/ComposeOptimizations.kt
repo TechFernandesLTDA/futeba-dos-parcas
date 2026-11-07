@@ -73,7 +73,7 @@ fun formatTimestampCached(timestamp: Long, pattern: String = "dd/MM/yyyy HH:mm")
 fun rememberFormattedDate(
     date: Date?,
     pattern: String = "dd/MM/yyyy",
-    locale: Locale = Locale.getDefault()
+    locale: Locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
 ): String {
     return remember(date, pattern, locale) {
         if (date == null) return@remember ""
@@ -147,10 +147,11 @@ fun rememberPercentage(current: Long, total: Long): Int {
  */
 @Composable
 fun rememberFormattedNumber(number: Long): String {
-    return remember(number) {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    return remember(number, locale) {
         when {
-            number >= 1_000_000 -> String.format(Locale.getDefault(), "%.1fM", number / 1_000_000.0)
-            number >= 1_000 -> String.format(Locale.getDefault(), "%.1fK", number / 1_000.0)
+            number >= 1_000_000 -> String.format(locale, "%.1fM", number / 1_000_000.0)
+            number >= 1_000 -> String.format(locale, "%.1fK", number / 1_000.0)
             else -> number.toString()
         }
     }

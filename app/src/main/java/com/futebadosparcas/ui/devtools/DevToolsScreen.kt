@@ -47,6 +47,7 @@ fun DevToolsScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val scope = rememberCoroutineScope()
 
     var isMockMode by remember { mutableStateOf(preferencesManager.isMockModeEnabled()) }
@@ -131,7 +132,7 @@ fun DevToolsScreen(
                             onCheckedChange = { checked ->
                                 isMockMode = checked
                                 preferencesManager.setMockModeEnabled(checked)
-                                showToast = context.getString(R.string.dev_tools_mode_changed)
+                                showToast = resources.getString(R.string.dev_tools_mode_changed)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MaterialTheme.colorScheme.primary,
@@ -179,9 +180,9 @@ fun DevToolsScreen(
                     scope.launch {
                         try {
                             gameDao.clearAll()
-                            showToast = context.getString(R.string.dev_tools_cache_cleared)
+                            showToast = resources.getString(R.string.dev_tools_cache_cleared)
                         } catch (e: Exception) {
-                            showToast = context.getString(R.string.dev_tools_error_prefix, e.message ?: "")
+                            showToast = resources.getString(R.string.dev_tools_error_prefix, e.message ?: "")
                         }
                     }
                 }
@@ -196,17 +197,17 @@ fun DevToolsScreen(
                 onClick = {
                     scope.launch {
                         isSeedingLocations = true
-                        showToast = context.getString(R.string.dev_tools_seeding_apollo)
+                        showToast = resources.getString(R.string.dev_tools_seeding_apollo)
 
                         val result = locationRepository.seedGinasioApollo()
 
                         isSeedingLocations = false
                         result.fold(
                             onSuccess = { location ->
-                                showToast = context.getString(R.string.dev_tools_seed_success, location.name)
+                                showToast = resources.getString(R.string.dev_tools_seed_success, location.name)
                             },
                             onFailure = { e ->
-                                showToast = context.getString(R.string.dev_tools_error_prefix, e.message ?: "")
+                                showToast = resources.getString(R.string.dev_tools_error_prefix, e.message ?: "")
                             }
                         )
                     }
@@ -223,7 +224,7 @@ fun DevToolsScreen(
                 onClick = {
                     preferencesManager.clearAll()
                     isMockMode = preferencesManager.isMockModeEnabled()
-                    showToast = context.getString(R.string.dev_tools_prefs_reset)
+                    showToast = resources.getString(R.string.dev_tools_prefs_reset)
                 }
             )
 
