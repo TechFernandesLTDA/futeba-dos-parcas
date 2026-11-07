@@ -94,6 +94,38 @@ describe('balancedDraw', () => {
     expect(result.teams[1].players.filter((p) => p.position === 'GOALKEEPER').length).toBe(1);
   });
 
+  it('paridade deterministica de 14 jogadores com desempate por id', () => {
+    const players: PlayerForDraw[] = [
+      createPlayer('gk1', 'GK1', 80, 'GOALKEEPER'),
+      createPlayer('gk2', 'GK2', 75, 'GOALKEEPER'),
+      createPlayer('p01', 'P01', 90),
+      createPlayer('p02', 'P02', 85),
+      createPlayer('p03', 'P03', 80),
+      createPlayer('p04', 'P04', 80),
+      createPlayer('p05', 'P05', 75),
+      createPlayer('p06', 'P06', 70),
+      createPlayer('p07', 'P07', 70),
+      createPlayer('p08', 'P08', 65),
+      createPlayer('p09', 'P09', 60),
+      createPlayer('p10', 'P10', 55),
+      createPlayer('p11', 'P11', 50),
+      createPlayer('p12', 'P12', 45),
+    ];
+
+    const result = balancedDraw(players, 2, 1, 'SNAKE_DRAFT');
+
+    expect(result.teams).toHaveLength(2);
+    expect(result.teams[0].averageRating).toBeCloseTo(70.71, 1);
+    expect(result.teams[1].averageRating).toBeCloseTo(69.29, 1);
+    expect(result.isBalanced).toBe(true);
+
+    const teamAPlayerIds = result.teams[0].players.map((p) => p.id);
+    const teamBPlayerIds = result.teams[1].players.map((p) => p.id);
+
+    expect(teamAPlayerIds).toEqual(['gk1', 'p01', 'p04', 'p05', 'p08', 'p09', 'p12']);
+    expect(teamBPlayerIds).toEqual(['gk2', 'p02', 'p03', 'p06', 'p07', 'p10', 'p11']);
+  });
+
   it('calculates balance score correctly', () => {
     const players = [
       createPlayer('1', 'P1', 70),

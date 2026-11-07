@@ -46,9 +46,15 @@ object BalancedDrawAlgorithm {
         }
 
         val goalkeepers = players.filter { it.position == PlayerPosition.GOALKEEPER }
-            .sortedByDescending { it.goalkeeperSkill }
+            .sortedWith(
+                compareByDescending<PlayerForBalancing> { it.goalkeeperSkill }
+                    .thenBy { it.id }
+            )
         val linePlayers = players.filter { it.position == PlayerPosition.LINE }
-            .sortedByDescending { it.overallRating }
+            .sortedWith(
+                compareByDescending<PlayerForBalancing> { it.overallRating }
+                    .thenBy { it.id }
+            )
 
         val teamSlots = Array(numberOfTeams) { mutableListOf<PlayerForBalancing>() }
 
@@ -155,8 +161,12 @@ object BalancedDrawAlgorithm {
                 if (slot.isEmpty()) 0f else slot.sumOf { p -> p.overallRating.toDouble() }.toFloat() / slot.size
             }
 
-            val maxIdx = ratings.indices.maxByOrNull { ratings[it] } ?: return@repeat
-            val minIdx = ratings.indices.minByOrNull { ratings[it] } ?: return@repeat
+            var maxIdx = 0
+            var minIdx = 0
+            for (i in 1 until ratings.size) {
+                if (ratings[i] > ratings[maxIdx]) maxIdx = i
+                if (ratings[i] < ratings[minIdx]) minIdx = i
+            }
 
             if (maxIdx == minIdx) return@repeat
 
@@ -167,10 +177,14 @@ object BalancedDrawAlgorithm {
 
             if (bestSwap != null) {
                 val (fromMax, fromMin) = bestSwap
-                teamSlots[maxIdx].remove(fromMax)
-                teamSlots[minIdx].remove(fromMin)
-                teamSlots[maxIdx].add(fromMin)
-                teamSlots[minIdx].add(fromMax)
+                val maxIdxInSlot = teamSlots[maxIdx].indexOf(fromMax)
+                val minIdxInSlot = teamSlots[minIdx].indexOf(fromMin)
+                if (maxIdxInSlot >= 0 && minIdxInSlot >= 0) {
+                    teamSlots[maxIdx][maxIdxInSlot] = fromMin
+                    teamSlots[minIdx][minIdxInSlot] = fromMax
+                } else {
+                    return@repeat
+                }
             } else {
                 return@repeat
             }
@@ -194,7 +208,15 @@ object BalancedDrawAlgorithm {
                 val ratingDiff = higher.overallRating - lower.overallRating
                 if (ratingDiff > 0 && ratingDiff < targetDiff) {
                     val improvement = targetDiff - abs(targetDiff - 2 * ratingDiff)
-                    if (improvement > bestImprovement) {
+                    val isBetter = when {
+                        improvement > bestImprovement -> true
+                        improvement == bestImprovement && bestSwap != null -> {
+                            val cmpHigher = higher.id.compareTo(bestSwap.first.id)
+                            if (cmpHigher != 0) cmpHigher < 0 else lower.id.compareTo(bestSwap.second.id) < 0
+                        }
+                        else -> false
+                    }
+                    if (isBetter) {
                         bestImprovement = improvement
                         bestSwap = higher to lower
                     }

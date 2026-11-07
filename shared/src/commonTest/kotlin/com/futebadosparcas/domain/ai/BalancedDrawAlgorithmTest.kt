@@ -231,4 +231,35 @@ class BalancedDrawAlgorithmTest {
 
         assertTrue(result.isBalanced)
     }
+
+    @Test
+    fun paridadeDeterministicaDe14JogadoresComDesempatePorId() {
+        val players = listOf(
+            createGoalkeeper("gk1", "GK1", 80f),
+            createGoalkeeper("gk2", "GK2", 75f),
+            createLinePlayer("p01", "P01", 90f, 90f, 90f),
+            createLinePlayer("p02", "P02", 85f, 85f, 85f),
+            createLinePlayer("p03", "P03", 80f, 80f, 80f),
+            createLinePlayer("p04", "P04", 80f, 80f, 80f),
+            createLinePlayer("p05", "P05", 75f, 75f, 75f),
+            createLinePlayer("p06", "P06", 70f, 70f, 70f),
+            createLinePlayer("p07", "P07", 70f, 70f, 70f),
+            createLinePlayer("p08", "P08", 65f, 65f, 65f),
+            createLinePlayer("p09", "P09", 60f, 60f, 60f),
+            createLinePlayer("p10", "P10", 55f, 55f, 55f),
+            createLinePlayer("p11", "P11", 50f, 50f, 50f),
+            createLinePlayer("p12", "P12", 45f, 45f, 45f)
+        )
+
+        val result = BalancedDrawAlgorithm.balance(players, 2, goalkeepersPerTeam = 1, strategy = DrawStrategy.SNAKE_DRAFT)
+
+        assertEquals(2, result.teams.size)
+        assertTrue(result.isBalanced)
+
+        val teamAPlayerIds = result.teams[0].players.map { it.id }
+        val teamBPlayerIds = result.teams[1].players.map { it.id }
+
+        assertEquals(listOf("gk1", "p01", "p04", "p05", "p08", "p09", "p12"), teamAPlayerIds)
+        assertEquals(listOf("gk2", "p02", "p03", "p06", "p07", "p10", "p11"), teamBPlayerIds)
+    }
 }

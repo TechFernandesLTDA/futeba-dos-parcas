@@ -61,10 +61,10 @@ export function balancedDraw(
 
   const goalkeepers = players
     .filter((p) => p.position === 'GOALKEEPER')
-    .sort((a, b) => b.level - a.level);
+    .sort((a, b) => b.level - a.level || a.id.localeCompare(b.id));
   const linePlayers = players
     .filter((p) => p.position !== 'GOALKEEPER')
-    .sort((a, b) => b.level - a.level);
+    .sort((a, b) => b.level - a.level || a.id.localeCompare(b.id));
 
   const teamSlots: PlayerForDraw[][] = Array.from({ length: numberOfTeams }, () => []);
 
@@ -195,10 +195,12 @@ function optimizeBalance(teamSlots: PlayerForDraw[][]): void {
       const maxRemoveIdx = teamSlots[maxIdx].findIndex((p) => p.id === fromMax.id);
       const minRemoveIdx = teamSlots[minIdx].findIndex((p) => p.id === fromMin.id);
 
-      teamSlots[maxIdx].splice(maxRemoveIdx, 1);
-      teamSlots[minIdx].splice(minRemoveIdx, 1);
-      teamSlots[maxIdx].push(fromMin);
-      teamSlots[minIdx].push(fromMax);
+      if (maxRemoveIdx >= 0 && minRemoveIdx >= 0) {
+        teamSlots[maxIdx][maxRemoveIdx] = fromMin;
+        teamSlots[minIdx][minRemoveIdx] = fromMax;
+      } else {
+        return;
+      }
     } else {
       return;
     }
@@ -221,7 +223,14 @@ function findBestSwap(
       const ratingDiff = higher.level - lower.level;
       if (ratingDiff > 0 && ratingDiff < targetDiff) {
         const improvement = targetDiff - Math.abs(targetDiff - 2 * ratingDiff);
-        if (improvement > bestImprovement) {
+        const isBetter =
+          improvement > bestImprovement ||
+          (improvement === bestImprovement &&
+            bestSwap !== null &&
+            (higher.id.localeCompare(bestSwap[0].id) < 0 ||
+              (higher.id === bestSwap[0].id && lower.id.localeCompare(bestSwap[1].id) < 0)));
+
+        if (isBetter) {
           bestImprovement = improvement;
           bestSwap = [higher, lower];
         }
