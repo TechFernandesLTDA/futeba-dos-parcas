@@ -127,11 +127,6 @@ sealed class Screen(
         fun createRoute(chatId: String) = "direct_conversation/${Uri.encode(chatId)}"
     }
     data object PublicGames : Screen("public_games", titleResId = R.string.public_games)
-    data object InviteFriend : Screen("invite_friend", titleResId = R.string.invite_friend)
-    data object DreamTeam : Screen("dream_team", titleResId = R.string.dream_team)
-    data object GroupChallenges : Screen("group_challenges/{groupId}", titleResId = R.string.group_challenges_title) {
-        fun createRoute(groupId: String) = "group_challenges/$groupId"
-    }
 
     // Game management
     data object GameDetail : Screen("game_detail/{gameId}", titleResId = R.string.game_detail) {
