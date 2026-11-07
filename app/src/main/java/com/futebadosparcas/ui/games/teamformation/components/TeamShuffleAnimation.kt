@@ -122,7 +122,7 @@ private fun ShufflingCards(
             text = stringResource(R.string.team_shuffle_shuffling),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.inverseOnSurface
         )
 
         Spacer(Modifier.height(32.dp))
@@ -199,7 +199,7 @@ private fun ShufflingCards(
                 .width(200.dp)
                 .height(4.dp),
             color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.White.copy(alpha = 0.2f)
+            trackColor = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.2f)
         )
     }
 }
@@ -266,7 +266,7 @@ private fun RevealingTeams(
             text = "VS",
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.inverseOnSurface,
             modifier = Modifier.align(Alignment.CenterVertically)
         )
 
@@ -364,7 +364,7 @@ private fun ShuffleCompleteMessage() {
             text = stringResource(R.string.team_shuffle_done),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.inverseOnSurface
         )
     }
 }

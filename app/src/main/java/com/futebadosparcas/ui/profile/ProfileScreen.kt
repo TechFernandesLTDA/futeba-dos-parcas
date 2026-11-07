@@ -47,6 +47,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.net.toUri
 import android.widget.Toast
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
@@ -790,7 +791,7 @@ private fun StaticRatingItem(
             }
 
             Text(
-                text = String.format(Locale.getDefault(), "%.1f", rating),
+                text = String.format(LocalConfiguration.current.locales[0], "%.1f", rating),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -861,7 +862,7 @@ private fun StatisticsCard(statistics: Statistics?) {
                         StatItem(label = stringResource(R.string.profile_stats_cards), value = statistics.totalCards.toString())
                         StatItem(
                             label = stringResource(R.string.profile_stats_avg_goals),
-                            value = String.format(Locale.getDefault(), "%.1f", statistics.avgGoalsPerGame ?: 0.0)
+                            value = String.format(LocalConfiguration.current.locales[0], "%.1f", statistics.avgGoalsPerGame ?: 0.0)
                         )
                     }
                 }
@@ -1116,6 +1117,7 @@ private fun SettingsSection(
 @Composable
 private fun FeedbackSection() {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1140,8 +1142,8 @@ private fun FeedbackSection() {
                     val androidVersion = Build.VERSION.RELEASE
                     val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
 
-                    val subject = context.getString(R.string.report_problem_email_subject, appVersion)
-                    val body = context.getString(
+                    val subject = resources.getString(R.string.report_problem_email_subject, appVersion)
+                    val body = resources.getString(
                         R.string.report_problem_email_body,
                         appVersion,
                         androidVersion,
@@ -1156,11 +1158,11 @@ private fun FeedbackSection() {
                     }
 
                     try {
-                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.report_problem)))
+                        context.startActivity(Intent.createChooser(intent, resources.getString(R.string.report_problem)))
                     } catch (e: Exception) {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.report_problem_no_email_app),
+                            resources.getString(R.string.report_problem_no_email_app),
                             Toast.LENGTH_SHORT
                         ).show()
                     }

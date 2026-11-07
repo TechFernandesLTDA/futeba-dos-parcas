@@ -149,7 +149,7 @@ fun StreakFlame(
                 text = "$streak",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = GamificationColors.FireCore
             )
         }
 

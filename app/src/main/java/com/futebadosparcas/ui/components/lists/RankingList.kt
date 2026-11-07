@@ -272,7 +272,7 @@ fun RankingItem(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${entry.participation.gamesPlayed} jogos",
+                        text = stringResource(R.string.ranking_games_played_format, entry.participation.gamesPlayed),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -283,7 +283,7 @@ fun RankingItem(
                     if (avgGoals > 0) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "• Média: %.1f".format(avgGoals),
+                            text = stringResource(R.string.ranking_average_format, avgGoals),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

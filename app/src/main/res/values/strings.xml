@@ -4811,4 +4811,27 @@ subir no ranking!</string>
     <string name="delete_account_blocked_group_item">• %1$s</string>
     <string name="delete_account_blocked_group_unnamed">Grupo sem nome</string>
     <string name="delete_account_blocked_ok">Entendi</string>
+
+    <!-- Onda I (I3): Literais movidos para strings.xml -->
+    <string name="verification_banner_title">Verifique seu telefone e CPF</string>
+    <string name="verification_banner_days_left_one">1 dia restante</string>
+    <string name="verification_banner_days_left_many">%1$d dias restantes</string>
+    <string name="verification_banner_expired">Prazo expirado — verificação obrigatória</string>
+    <string name="paging_error_load_more">Erro ao carregar mais itens</string>
+    <string name="paging_error_format">Erro: %1$s</string>
+    <string name="create_game_time_conflict_format">Horário ocupado (%1$s - %2$s)</string>
+    <string name="price_calculator_per_player_format">%1$s/jogador</string>
+    <string name="time_suggestion_adherence_format">%1$s (%2$d%% adesão)</string>
+    <string name="games_players_count_format">%1$d/%2$d jogadores</string>
+    <string name="ranking_games_played_format">%1$d jogos</string>
+    <string name="ranking_average_format">• Média: %1$.1f</string>
+    <string name="screen_under_development">Screen: %1$s\n(Em desenvolvimento)</string>
+    <string name="weekly_recap_personal_best_format">%1$s: %2$s (antes: %3$s)</string>
+    <string name="post_game_report_goals_count">%1$d gols</string>
+    <string name="head_to_head_win_streak_format">%1$s: %2$d vitórias seguidas!</string>
+    <string name="head_to_head_rivalry_balanced">Rivalidade Equilibrada!</string>
+    <string name="head_to_head_rivalry_dominant">%1$s lidera o confronto</string>
+    <string name="head_to_head_total_matches_format">%1$d jogos disputados</string>
+    <string name="pair_players_with_partner_format">com %1$s</string>
+    <string name="evolution_league_record_format">%1$dV %2$dE %3$dD</string>
 </resources>

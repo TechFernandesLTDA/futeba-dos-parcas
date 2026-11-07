@@ -67,6 +67,7 @@ fun EditProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     // Carregar dados do perfil se ainda não foram carregados
     LaunchedEffect(Unit) {
@@ -116,7 +117,7 @@ fun EditProfileScreen(
             is ProfileUiState.ProfileUpdateSuccess -> {
                 if (isSaving) {
                     isSaving = false
-                    Toast.makeText(context, context.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, resources.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
                     onProfileUpdated()
                 }
             }
@@ -205,7 +206,7 @@ fun EditProfileScreen(
                             preferencesManager.setDevModeEnabled(true)
                             Toast.makeText(
                                 context,
-                                context.getString(R.string.edit_profile_dev_mode_enabled),
+                                resources.getString(R.string.edit_profile_dev_mode_enabled),
                                 Toast.LENGTH_SHORT
                             ).show()
                             devModeClickCount = 0
@@ -264,6 +265,7 @@ private fun EditProfileContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val scrollState = rememberScrollState()
 
     // Form state
@@ -301,11 +303,11 @@ private fun EditProfileContent(
             // Validate image size (max 10MB)
             if (isImageSizeValid(context, it)) {
                 onImageSelected(it)
-                Toast.makeText(context, context.getString(R.string.edit_profile_image_selected), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, resources.getString(R.string.edit_profile_image_selected), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(
                     context,
-                    context.getString(R.string.edit_profile_image_too_large),
+                    resources.getString(R.string.edit_profile_image_too_large),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -410,7 +412,7 @@ private fun EditProfileContent(
                 if (name.isBlank() || preferredFieldTypes.isEmpty()) {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.edit_profile_validation_error),
+                        resources.getString(R.string.edit_profile_validation_error),
                         Toast.LENGTH_SHORT
                     ).show()
                     return@Button
@@ -683,6 +685,7 @@ private fun PhysicalInfoSection(
     onDominantFootChange: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val genderEntries = stringArrayResource(R.array.gender_entries)
     val genderValues = stringArrayResource(R.array.gender_values)
     val footEntries = stringArrayResource(R.array.dominant_foot_entries)

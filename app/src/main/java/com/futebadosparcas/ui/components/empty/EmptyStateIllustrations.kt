@@ -569,6 +569,7 @@ private fun RocketIllustration(
         label = "flameScale"
     )
 
+    val windowColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
     Canvas(modifier = modifier) {
         val centerX = size.width / 2
         val centerY = size.height / 2
@@ -586,9 +587,9 @@ private fun RocketIllustration(
         }
         drawPath(rocketPath, rocketColor)
 
-        // Janela do foguete — branco semi-transparente intencional na ilustração Canvas
+        // Janela do foguete
         drawCircle(
-            color = Color.White.copy(alpha = 0.5f),
+            color = windowColor,
             radius = 10f,
             center = Offset(centerX, centerY - 20)
         )

@@ -83,6 +83,7 @@ fun GameDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Launchers
@@ -101,7 +102,7 @@ fun GameDetailScreen(
 
     val successState = uiState as? GameDetailUiState.Success
     val schedulingEvent = successState?.schedulingEvent
-    val userMessage = successState?.userMessageResId?.let { context.getString(it) } ?: successState?.userMessage
+    val userMessage = successState?.userMessageResId?.let { stringResource(it) } ?: successState?.userMessage
     val canRetryLastMutation = successState?.canRetryLastMutation == true
     val isGameDeleted = uiState is GameDetailUiState.GameDeleted
     val gameDeletedMessage = stringResource(R.string.game_detail_deleted_success)
@@ -111,9 +112,9 @@ fun GameDetailScreen(
         if (successState != null) {
             schedulingEvent?.let { event ->
                 val message = when (event) {
-                    is SchedulingEvent.Success -> context.getString(R.string.next_game_scheduled, event.nextDate)
-                    is SchedulingEvent.Conflict -> context.getString(R.string.scheduling_conflict, event.date)
-                    is SchedulingEvent.Error -> context.getString(R.string.scheduling_error, event.message)
+                    is SchedulingEvent.Success -> resources.getString(R.string.next_game_scheduled, event.nextDate)
+                    is SchedulingEvent.Conflict -> resources.getString(R.string.scheduling_conflict, event.date)
+                    is SchedulingEvent.Error -> resources.getString(R.string.scheduling_error, event.message)
                 }
                 snackbarHostState.showSnackbar(message)
                 viewModel.clearSchedulingEvent()
@@ -121,7 +122,7 @@ fun GameDetailScreen(
             userMessage?.let { message ->
                 val result = snackbarHostState.showSnackbar(
                     message = message,
-                    actionLabel = if (canRetryLastMutation) context.getString(R.string.retry) else null,
+                    actionLabel = if (canRetryLastMutation) resources.getString(R.string.retry) else null,
                     duration = if (canRetryLastMutation) SnackbarDuration.Long else SnackbarDuration.Short
                 )
                 viewModel.clearUserMessage()
@@ -146,8 +147,8 @@ fun GameDetailScreen(
                     hasTeams = state.teams.isNotEmpty(),
                     hasVoted = state.hasVoted,
                     onBackClick = onNavigateBack,
-                    onInviteWhatsApp = { inviteToWhatsApp(context, state, context.getString(R.string.whatsapp_invite_title)) },
-                    onShare = { shareGameDetails(context, state, context.getString(R.string.game_at), context.getString(R.string.share)) },
+                    onInviteWhatsApp = { inviteToWhatsApp(context, state, resources.getString(R.string.whatsapp_invite_title)) },
+                    onShare = { shareGameDetails(context, state, resources.getString(R.string.game_at), resources.getString(R.string.share)) },
                     onVoteMvp = { onNavigateToMvpVote(gameId) },
                     onShareCard = { generateAndShareCard(context, state) },
                     onTacticalBoard = onNavigateToTacticalBoard

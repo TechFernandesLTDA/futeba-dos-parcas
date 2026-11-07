@@ -45,6 +45,7 @@ fun TacticalBoardScreen(
     onBackClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     var tacticalBoardView by remember { mutableStateOf<TacticalBoardView?>(null) }
 
     Scaffold(
@@ -112,16 +113,16 @@ fun TacticalBoardScreen(
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.tactical_share_tactic)))
+                            context.startActivity(Intent.createChooser(intent, resources.getString(R.string.tactical_share_tactic)))
                         } catch (e: Exception) {
                             Toast.makeText(
                                 context,
-                                context.getString(R.string.tactical_error_share, e.message ?: ""),
+                                resources.getString(R.string.tactical_error_share, e.message ?: ""),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
-                        Toast.makeText(context, context.getString(R.string.tactical_error_save), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, resources.getString(R.string.tactical_error_save), Toast.LENGTH_SHORT).show()
                     }
                 }
             )

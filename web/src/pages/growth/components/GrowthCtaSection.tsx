@@ -35,7 +35,7 @@ export function GrowthCtaSection({
     <Box
       sx={{
         py: { xs: 8, md: 10 },
-        bgcolor: alpha('#00852A', 0.04),
+        bgcolor: alpha(theme.palette.primary.main, 0.04),
         borderTop: 1,
         borderBottom: 1,
         borderColor: 'divider',
@@ -51,10 +51,10 @@ export function GrowthCtaSection({
           sx={{
             p: { xs: 4, sm: 6 },
             borderRadius: 4,
-            bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#FFFFFF',
+            bgcolor: 'background.paper',
             border: 1,
-            borderColor: alpha('#00852A', 0.2),
-            boxShadow: '0 8px 32px rgba(0, 133, 42, 0.08)',
+            borderColor: alpha(theme.palette.primary.main, 0.2),
+            boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.08)}`,
           }}
         >
           <Box
@@ -62,12 +62,12 @@ export function GrowthCtaSection({
               width: 56,
               height: 56,
               borderRadius: '16px',
-              bgcolor: '#00852A',
-              color: '#FFFFFF',
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(0, 133, 42, 0.3)',
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
             }}
           >
             <SportsSoccer fontSize="large" />
@@ -95,10 +95,10 @@ export function GrowthCtaSection({
                 fontWeight: 800,
                 fontSize: '1rem',
                 borderRadius: '999px',
-                bgcolor: '#00852A',
-                '&:hover': { bgcolor: '#006B22' },
+                bgcolor: 'primary.main',
+                '&:hover': { bgcolor: 'primary.dark' },
                 textTransform: 'none',
-                boxShadow: '0 4px 14px rgba(0, 133, 42, 0.3)',
+                boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
               }}
             >
               {buttonText}
@@ -112,19 +112,19 @@ export function GrowthCtaSection({
             sx={{ pt: 2, color: 'text.secondary', fontSize: '0.875rem' }}
           >
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <Check sx={{ color: '#00852A', fontSize: 18 }} />
+              <Check sx={{ color: 'primary.main', fontSize: 18 }} />
               <Typography variant="caption" fontWeight={600} color="text.primary">
                 Convide os parças por link
               </Typography>
             </Stack>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <Check sx={{ color: '#00852A', fontSize: 18 }} />
+              <Check sx={{ color: 'primary.main', fontSize: 18 }} />
               <Typography variant="caption" fontWeight={600} color="text.primary">
                 Sem necessidade de download
               </Typography>
             </Stack>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <Check sx={{ color: '#00852A', fontSize: 18 }} />
+              <Check sx={{ color: 'primary.main', fontSize: 18 }} />
               <Typography variant="caption" fontWeight={600} color="text.primary">
                 Web e Android
               </Typography>

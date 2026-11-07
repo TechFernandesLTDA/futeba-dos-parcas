@@ -70,6 +70,7 @@ fun CreateGroupScreen(
 ) {
     val createGroupState by viewModel.createGroupState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     // Estados locais da UI
     var groupName by remember { mutableStateOf("") }
@@ -84,10 +85,10 @@ fun CreateGroupScreen(
     LaunchedEffect(groupName) {
         nameError = when {
             groupName.isEmpty() -> null
-            groupName.length < 3 -> context.getString(R.string.create_group_error_name_min)
-            groupName.length > 50 -> context.getString(R.string.create_group_error_name_max)
+            groupName.length < 3 -> resources.getString(R.string.create_group_error_name_min)
+            groupName.length > 50 -> resources.getString(R.string.create_group_error_name_max)
             !groupName.matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) ->
-                context.getString(R.string.create_group_error_name_invalid)
+                resources.getString(R.string.create_group_error_name_invalid)
             else -> null
         }
     }
@@ -147,10 +148,11 @@ fun CreateGroupScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.create_group_title)) },
                 navigationIcon = {
+                    val closeCd = stringResource(R.string.create_group_cd_close)
                     IconButton(
                         onClick = attemptExit,
                         modifier = Modifier.semantics {
-                            contentDescription = context.getString(R.string.create_group_cd_close)
+                            contentDescription = closeCd
                         }
                     ) {
                         Icon(Icons.Default.Close, contentDescription = null)
@@ -403,7 +405,7 @@ private fun GroupPhotoSection(
     onPhotoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    val photoCd = stringResource(R.string.create_group_cd_photo)
     val hasPhoto = photoUri != null
 
     // Valores estáticos para otimização - sem animação
@@ -430,7 +432,7 @@ private fun GroupPhotoSection(
                 )
                 .clickable(onClick = onPhotoClick)
                 .semantics {
-                    contentDescription = context.getString(R.string.create_group_cd_photo)
+                    contentDescription = photoCd
                 },
             contentAlignment = Alignment.Center
         ) {

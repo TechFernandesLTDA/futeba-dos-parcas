@@ -142,7 +142,7 @@ fun PricePerPlayerBadge(
             .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
         Text(
-            text = "${currencyFormat.format(pricePerPlayer)}/jogador",
+            text = stringResource(R.string.price_calculator_per_player_format, currencyFormat.format(pricePerPlayer)),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )

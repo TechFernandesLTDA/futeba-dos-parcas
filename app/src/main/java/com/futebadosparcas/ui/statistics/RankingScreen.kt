@@ -608,6 +608,7 @@ private fun PlayerAvatar(
     size: androidx.compose.ui.unit.Dp
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     Box(
         modifier = Modifier
@@ -617,7 +618,11 @@ private fun PlayerAvatar(
         contentAlignment = Alignment.Center
     ) {
         if (!photoUrl.isNullOrBlank()) {
-            val placeholderImage = context.getDrawable(R.drawable.ic_person)?.asImage()
+            val placeholderImage = androidx.core.content.res.ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.ic_person,
+                context.theme
+            )?.asImage()
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(photoUrl)

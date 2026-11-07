@@ -239,6 +239,7 @@ fun MassMessageDialog(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     // Botao compartilhar generico
+                    val shareMessageTitle = stringResource(R.string.share_message)
                     FilledTonalButton(
                         onClick = {
                             val message = templateMessages[selectedTemplate]
@@ -246,7 +247,7 @@ fun MassMessageDialog(
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, message)
                             }
-                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_message)))
+                            context.startActivity(Intent.createChooser(intent, shareMessageTitle))
                             onDismiss()
                         },
                         enabled = recipients.isNotEmpty()

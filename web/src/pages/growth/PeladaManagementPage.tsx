@@ -85,7 +85,7 @@ export function PeladaManagementPage() {
       <GrowthBreadcrumbs items={[{ label: 'Gestão Financeira e Caixa' }]} />
 
       {/* Hero Section */}
-      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: alpha('#00852A', 0.03) }}>
+      <Box sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 6, md: 10 }, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.03) }}>
         <Container maxWidth="lg">
           <Grid container spacing={5} alignItems="center">
             <Grid item xs={12} md={7}>
@@ -95,8 +95,8 @@ export function PeladaManagementPage() {
                     label="FINANÇAS & CAIXA DA PELADA"
                     size="small"
                     sx={{
-                      bgcolor: alpha('#00852A', 0.1),
-                      color: '#00852A',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
                       fontWeight: 800,
                       letterSpacing: 0.5,
                       mb: 1.5,
@@ -135,8 +135,8 @@ export function PeladaManagementPage() {
                       px: 3.5,
                       fontWeight: 800,
                       borderRadius: '999px',
-                      bgcolor: '#00852A',
-                      '&:hover': { bgcolor: '#006B22' },
+                      bgcolor: 'primary.main',
+                      '&:hover': { bgcolor: 'primary.dark' },
                       textTransform: 'none',
                     }}
                   >
@@ -151,19 +151,19 @@ export function PeladaManagementPage() {
                   borderRadius: 4,
                   border: 1,
                   borderColor: 'divider',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.06)',
+                  boxShadow: (theme) => `0 12px 32px ${alpha(theme.palette.common.black, 0.06)}`,
                   bgcolor: 'background.paper',
                   p: 2,
                 }}
               >
                 <CardContent>
                   <Typography variant="h6" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AccountBalanceWallet sx={{ color: '#00852A' }} /> Pilares do Caixa Saudável
+                    <AccountBalanceWallet sx={{ color: 'primary.main' }} /> Pilares do Caixa Saudável
                   </Typography>
                   <Stack spacing={2} sx={{ mt: 2 }}>
                     {steps.map((item, idx) => (
                       <Stack key={idx} direction="row" spacing={2} alignItems="flex-start">
-                        <CheckCircle sx={{ color: '#00852A', fontSize: 22, mt: 0.25 }} />
+                        <CheckCircle sx={{ color: 'primary.main', fontSize: 22, mt: 0.25 }} />
                         <Box>
                           <Typography variant="subtitle2" fontWeight={800}>
                             {item.title}
@@ -198,7 +198,7 @@ export function PeladaManagementPage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <ReceiptLong sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <ReceiptLong sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Extrato Aberto
                     </Typography>
@@ -211,7 +211,7 @@ export function PeladaManagementPage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <CreditCard sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <CreditCard sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Status de Pagamento
                     </Typography>
@@ -224,7 +224,7 @@ export function PeladaManagementPage() {
               <Grid item xs={12} md={4}>
                 <Card sx={{ height: '100%', borderRadius: 3, border: 1, borderColor: 'divider', p: 1 }}>
                   <CardContent>
-                    <TrendingUp sx={{ color: '#00852A', fontSize: 36, mb: 1.5 }} />
+                    <TrendingUp sx={{ color: 'primary.main', fontSize: 36, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={800} gutterBottom>
                       Fundo para Eventos
                     </Typography>
@@ -257,7 +257,7 @@ export function PeladaManagementPage() {
                       to="/organizar-pelada"
                       variant="text"
                       endIcon={<ArrowForward />}
-                      sx={{ fontWeight: 700, color: '#00852A', minHeight: 44 }}
+                      sx={{ fontWeight: 700, color: 'primary.main', minHeight: 44 }}
                     >
                       Ver Guia de Organização
                     </Button>
@@ -278,7 +278,7 @@ export function PeladaManagementPage() {
                       to="/parcerias"
                       variant="text"
                       endIcon={<ArrowForward />}
-                      sx={{ fontWeight: 700, color: '#00852A', minHeight: 44 }}
+                      sx={{ fontWeight: 700, color: 'primary.main', minHeight: 44 }}
                     >
                       Página de Parcerias
                     </Button>

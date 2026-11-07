@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -133,8 +134,9 @@ private fun DirectChatRow(
     currentUserId: String?,
     onClick: () -> Unit
 ) {
+    val currentLocale = LocalConfiguration.current.locales[0]
     val peerId = chat.participants.firstOrNull { it != currentUserId } ?: chat.participants.firstOrNull().orEmpty()
-    val peerName = chat.participantNames[peerId] ?: "Jogador"
+    val peerName = chat.participantNames[peerId] ?: stringResource(R.string.default_player_name)
     val unread = currentUserId?.let { chat.unreadCount[it] } ?: 0
 
     Card(modifier = Modifier.clickable(onClick = onClick)) {
@@ -153,7 +155,7 @@ private fun DirectChatRow(
                 }
             ) {
                 Text(
-                    text = peerName.take(1).uppercase(Locale.getDefault()),
+                    text = peerName.take(1).uppercase(currentLocale),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -170,7 +172,7 @@ private fun DirectChatRow(
                     )
                     chat.lastMessageAt?.toDate()?.let {
                         Text(
-                            text = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(it),
+                            text = SimpleDateFormat("dd/MM HH:mm", currentLocale).format(it),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

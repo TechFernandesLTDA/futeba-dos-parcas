@@ -80,6 +80,7 @@ fun GameVideosSection(
     viewModel: GameVideosViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val uiState by viewModel.uiState.collectAsState()
     val uploading by viewModel.uploading.collectAsState()
     var caption by remember { mutableStateOf("") }
@@ -113,7 +114,7 @@ fun GameVideosSection(
             caption = caption.trim(),
             sizeBytes = (validation as VideoValidation.Valid).sizeBytes,
         ) { ok ->
-            feedback = context.getString(
+            feedback = resources.getString(
                 if (ok) R.string.game_videos_upload_success else R.string.game_videos_upload_error
             )
             if (ok) caption = ""
@@ -181,14 +182,14 @@ fun GameVideosSection(
                     canManage = canManage,
                     onDelete = { video ->
                         viewModel.delete(video) { ok ->
-                            feedback = context.getString(
+                            feedback = resources.getString(
                                 if (ok) R.string.game_videos_delete_success else R.string.game_videos_delete_error
                             )
                         }
                     },
                     onToggleReaction = { video, emoji ->
                         viewModel.toggleReaction(video, emoji) { ok ->
-                            if (!ok) feedback = context.getString(R.string.reactions_update_error)
+                            if (!ok) feedback = resources.getString(R.string.reactions_update_error)
                         }
                     }
                 )
@@ -398,6 +399,7 @@ private fun VideoStatusChip(status: String) {
 @Composable
 private fun VideoPlayer(url: String) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val player = remember(url) {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(url))

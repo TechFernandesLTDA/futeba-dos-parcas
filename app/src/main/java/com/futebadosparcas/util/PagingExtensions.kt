@@ -10,9 +10,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import com.futebadosparcas.R
 
 /**
  * Paging 3 - Extension Functions
@@ -58,7 +60,7 @@ fun <T : Any> LazyListScope.loadStateItems(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Erro ao carregar mais itens",
+                        text = stringResource(R.string.paging_error_load_more),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -80,7 +82,7 @@ fun <T : Any> LoadingState(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Erro: ${error.error.localizedMessage}",
+                text = stringResource(R.string.paging_error_format, error.error.localizedMessage ?: ""),
                 color = MaterialTheme.colorScheme.error
             )
         }

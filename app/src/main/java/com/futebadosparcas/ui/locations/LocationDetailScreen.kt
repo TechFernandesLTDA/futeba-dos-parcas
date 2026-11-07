@@ -55,6 +55,7 @@ fun LocationDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val fieldOwners by viewModel.fieldOwners.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     // Form States
     var name by remember { mutableStateOf("") }
@@ -164,7 +165,7 @@ fun LocationDetailScreen(
         if (uiState is LocationDetailUiState.Error) {
              val errorState = uiState as LocationDetailUiState.Error
              // Prefere resId i18n; cai para a string crua (legado)
-             val errorMsg = errorState.errorResId?.let { context.getString(it) } ?: errorState.message
+             val errorMsg = errorState.errorResId?.let { resources.getString(it) } ?: errorState.message
              Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
         }
     }

@@ -344,15 +344,15 @@ private fun LegendCard() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             LegendItem(
-                color = Color(0xFF4CAF50),
+                color = com.futebadosparcas.ui.theme.GameStatusColors.Scheduled,
                 label = stringResource(R.string.debug_legend_good)
             )
             LegendItem(
-                color = Color(0xFFFF9800),
+                color = com.futebadosparcas.ui.theme.GameStatusColors.Warning,
                 label = stringResource(R.string.debug_legend_slow)
             )
             LegendItem(
-                color = Color(0xFFF44336),
+                color = com.futebadosparcas.ui.theme.GameStatusColors.Cancelled,
                 label = stringResource(R.string.debug_legend_critical)
             )
         }
@@ -452,9 +452,9 @@ private fun MetricsRow(
     stats: QueryStats
 ) {
     val statusColor = when {
-        stats.p95Ms > LocationQueryMetrics.SLOW_QUERY_THRESHOLD_MS -> Color(0xFFF44336) // Vermelho
-        stats.p95Ms > 500 -> Color(0xFFFF9800) // Laranja
-        else -> Color(0xFF4CAF50) // Verde
+        stats.p95Ms > LocationQueryMetrics.SLOW_QUERY_THRESHOLD_MS -> com.futebadosparcas.ui.theme.GameStatusColors.Cancelled // Vermelho
+        stats.p95Ms > 500 -> com.futebadosparcas.ui.theme.GameStatusColors.Warning // Laranja
+        else -> com.futebadosparcas.ui.theme.GameStatusColors.Scheduled // Verde
     }
 
     Card(

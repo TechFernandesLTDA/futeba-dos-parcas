@@ -4,13 +4,78 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.ColorUtils
 import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ContrastLevel
-import com.google.android.material.color.utilities.TonalPalette
+import kotlin.math.pow
 
 object DynamicThemeEngine {
 
-    private fun TonalPalette.toneColor(toneValue: Int): Color = Color(tone(toneValue))
+    private class HslPalette(val hue: Float, val saturation: Float) {
+        fun toneColor(toneValue: Int): Color =
+            colorWithTargetTone(
+                hue = hue.coerceIn(0f, 360f),
+                saturation = saturation.coerceIn(0f, 1f),
+                tone = toneValue
+            )
+
+        companion object {
+            /**
+             * Gera uma cor com matiz e saturação preservadas cuja luminância relativa
+             * corresponde exatamente ao tom perceptual CIE L* (0..100) do Material 3,
+             * usando apenas APIs públicas.
+             */
+            private fun colorWithTargetTone(hue: Float, saturation: Float, tone: Int): Color {
+                val clamped = tone.coerceIn(0, 100)
+                if (clamped == 0) return Color.Black
+                if (clamped == 100) return Color.White
+                val targetY = yFromLStar(clamped.toDouble())
+                var low = 0f
+                var high = 1f
+                var best = Color.hsl(hue, saturation, clamped / 100f)
+                repeat(12) {
+                    val mid = (low + high) * 0.5f
+                    val candidate = Color.hsl(hue, saturation, mid)
+                    best = candidate
+                    if (relativeLuminance(candidate) < targetY) {
+                        low = mid
+                    } else {
+                        high = mid
+                    }
+                }
+                return best
+            }
+
+            private fun yFromLStar(lStar: Double): Double =
+                if (lStar > 8.0) {
+                    ((lStar + 16.0) / 116.0).pow(3.0)
+                } else {
+                    lStar / 903.2962962962963
+                }
+
+            private fun relativeLuminance(color: Color): Double {
+                fun linearize(channel: Float): Double {
+                    val c = channel.toDouble()
+                    return if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
+                }
+                return 0.2126 * linearize(color.red) +
+                    0.7152 * linearize(color.green) +
+                    0.0722 * linearize(color.blue)
+            }
+
+            fun fromInt(argb: Int): HslPalette {
+                val r = (argb ushr 16) and 0xFF
+                val g = (argb ushr 8) and 0xFF
+                val b = argb and 0xFF
+                val hsl = FloatArray(3)
+                ColorUtils.RGBToHSL(r, g, b, hsl)
+                return HslPalette(hue = hsl[0], saturation = hsl[1])
+            }
+
+            fun fromHueAndChroma(hue: Float, chroma: Float): HslPalette =
+                HslPalette(hue = hue, saturation = (chroma / 120f).coerceIn(0f, 1f))
+        }
+    }
 
     fun generateColorScheme(
         config: AppThemeConfig,
@@ -20,12 +85,12 @@ object DynamicThemeEngine {
             return if (isDark) HighContrastDarkColorScheme else HighContrastLightColorScheme
         }
 
-        val primaryPalette = TonalPalette.fromInt(config.seedColors.primary)
-        val secondaryPalette = TonalPalette.fromInt(config.seedColors.secondary)
-        val tertiaryPalette = TonalPalette.fromInt(config.seedColors.tertiary ?: config.seedColors.secondary)
-        val neutralPalette = TonalPalette.fromHueAndChroma(primaryPalette.hue, 6.0)
-        val neutralVariantPalette = TonalPalette.fromHueAndChroma(primaryPalette.hue, 8.0)
-        val errorPalette = TonalPalette.fromHueAndChroma(25.0, 84.0)
+        val primaryPalette = HslPalette.fromInt(config.seedColors.primary)
+        val secondaryPalette = HslPalette.fromInt(config.seedColors.secondary)
+        val tertiaryPalette = HslPalette.fromInt(config.seedColors.tertiary ?: config.seedColors.secondary)
+        val neutralPalette = HslPalette.fromHueAndChroma(primaryPalette.hue, 6f)
+        val neutralVariantPalette = HslPalette.fromHueAndChroma(primaryPalette.hue, 8f)
+        val errorPalette = HslPalette.fromHueAndChroma(25f, 84f)
 
         return if (isDark) {
             darkColorScheme(

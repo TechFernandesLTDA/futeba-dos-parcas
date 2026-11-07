@@ -382,7 +382,7 @@ fun WinStreakIndicator(
             Spacer(Modifier.width(8.dp))
 
             Text(
-                text = "$teamName: $streak vitorias seguidas!",
+                text = stringResource(R.string.head_to_head_win_streak_format, teamName, streak),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -434,16 +434,16 @@ fun RivalryCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (isBalanced) {
-                        "Rivalidade Equilibrada!"
+                        stringResource(R.string.head_to_head_rivalry_balanced)
                     } else {
-                        "$dominantTeam lidera o confronto"
+                        stringResource(R.string.head_to_head_rivalry_dominant, dominantTeam ?: "")
                     },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    text = "${headToHead.totalMatches} jogos disputados",
+                    text = stringResource(R.string.head_to_head_total_matches_format, headToHead.totalMatches),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

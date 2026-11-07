@@ -50,7 +50,7 @@ fun CreateScheduleDialog(
     var showNameError by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     val initialTime = remember(time) {
         try {
@@ -236,13 +236,13 @@ fun CreateScheduleDialog(
                                 val newSchedule = Schedule(
                                     ownerId = userId,
                                     ownerName = userName,
-                                    name = name.ifBlank { context.getString(R.string.schedules_unnamed_schedule) },
+                                    name = name.ifBlank { resources.getString(R.string.schedules_unnamed_schedule) },
                                     time = time,
                                     dayOfWeek = selectedDayOfWeek,
                                     recurrenceType = selectedRecurrenceType.toKmpRecurrenceType(),
                                     createdAt = Date().time
                                 )
-                                AppLogger.d(TAG) { context.getString(R.string.schedules_create_content, newSchedule.name) }
+                                AppLogger.d(TAG) { resources.getString(R.string.schedules_create_content, newSchedule.name) }
                                 onCreate(newSchedule)
                             }
                         },

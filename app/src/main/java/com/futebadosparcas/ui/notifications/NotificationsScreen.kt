@@ -106,6 +106,7 @@ fun NotificationsScreen(
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val scope = rememberCoroutineScope()
 
     // Melhoria 2: Filtro por tipo
@@ -150,13 +151,13 @@ fun NotificationsScreen(
             }
             is NotificationActionState.ErrorResource -> {
                 snackbarHostState.showSnackbar(
-                    context.getString((actionState as NotificationActionState.ErrorResource).messageResId)
+                    resources.getString((actionState as NotificationActionState.ErrorResource).messageResId)
                 )
                 viewModel.resetActionState()
             }
             is NotificationActionState.InfoResource -> {
                 snackbarHostState.showSnackbar(
-                    context.getString((actionState as NotificationActionState.InfoResource).messageResId)
+                    resources.getString((actionState as NotificationActionState.InfoResource).messageResId)
                 )
                 viewModel.resetActionState()
             }
@@ -176,8 +177,8 @@ fun NotificationsScreen(
     LaunchedEffect(lastDeletedNotification) {
         lastDeletedNotification?.let { notification ->
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.notifications_deleted),
-                actionLabel = context.getString(R.string.notifications_undo),
+                message = resources.getString(R.string.notifications_deleted),
+                actionLabel = resources.getString(R.string.notifications_undo),
                 duration = SnackbarDuration.Short
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -602,6 +603,7 @@ private fun NotificationsContent(
     onToggleRead: (AppNotification) -> Unit // Melhoria 3
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val listState = rememberLazyListState()
 
     // Agrupa notificações por data

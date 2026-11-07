@@ -78,6 +78,7 @@ fun CashboxScreen(
     var showAddEntryDialog by remember { mutableStateOf<KmpCashboxEntryType?>(null) }
 
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val canManage = userRole == GroupMemberRole.ADMIN || userRole == GroupMemberRole.OWNER
     // Alinha com as Firestore Rules que permitem OWNER ou ADMIN estornar entradas (#951)
     val canDelete = userRole == GroupMemberRole.OWNER || userRole == GroupMemberRole.ADMIN
@@ -98,13 +99,13 @@ fun CashboxScreen(
                 viewModel.resetActionState()
             }
             is CashboxActionState.TotalsByCategory -> {
-                totalsDialogTitle = context.getString(R.string.cashbox_totals_by_category)
+                totalsDialogTitle = resources.getString(R.string.cashbox_totals_by_category)
                 totalsDialogData = state.totals.mapKeys { it.key.displayName }
                 showTotalsDialog = true
                 viewModel.resetActionState()
             }
             is CashboxActionState.TotalsByPlayer -> {
-                totalsDialogTitle = context.getString(R.string.cashbox_totals_by_player)
+                totalsDialogTitle = resources.getString(R.string.cashbox_totals_by_player)
                 totalsDialogData = state.totals
                 showTotalsDialog = true
                 viewModel.resetActionState()

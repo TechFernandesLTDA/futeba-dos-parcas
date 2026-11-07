@@ -62,11 +62,12 @@ fun PaymentBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
+        val paymentCopiedLabel = stringResource(R.string.payment_copied)
         PaymentBottomSheetContent(
             uiState = uiState,
             amount = amount,
             onCopyClick = { pixCode ->
-                copyToClipboard(context, pixCode, context.getString(R.string.payment_copied))
+                copyToClipboard(context, pixCode, paymentCopiedLabel)
             },
             onConfirmClick = { paymentId ->
                 viewModel.confirmPayment(paymentId)

@@ -181,7 +181,7 @@ private fun CardFront(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.2f))
+                    .background(textColor.copy(alpha = 0.2f))
             ) {
                 CachedProfileImage(
                     photoUrl = reveal.playerPhoto,
@@ -207,7 +207,7 @@ private fun CardFront(
             // Nome do time
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White.copy(alpha = 0.2f)
+                color = textColor.copy(alpha = 0.2f)
             ) {
                 Text(
                     text = reveal.teamName,
@@ -343,7 +343,7 @@ fun DraftCountdown(
             Text(
                 text = stringResource(R.string.start_draft),
                 style = MaterialTheme.typography.headlineMedium,
-                color = Color.White
+                color = MaterialTheme.colorScheme.inverseOnSurface
             )
 
             Spacer(Modifier.height(32.dp))

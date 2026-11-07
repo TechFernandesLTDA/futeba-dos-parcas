@@ -1212,7 +1212,7 @@ private fun SecondaryScreenWrapper(
 @Composable
 private fun PlaceholderScreen(name: String) {
     androidx.compose.material3.Text(
-        text = "Screen: $name\n(Em desenvolvimento)",
+        text = stringResource(R.string.screen_under_development, name),
         style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
     )
 }

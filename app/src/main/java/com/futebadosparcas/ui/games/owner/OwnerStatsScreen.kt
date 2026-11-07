@@ -343,7 +343,7 @@ private fun HighlightGameCard(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "${game.playersCount}/${game.maxPlayers} jogadores",
+                text = stringResource(R.string.games_players_count_format, game.playersCount, game.maxPlayers),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

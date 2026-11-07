@@ -64,6 +64,7 @@ fun DeleteAccountReauthDialog(
 ) {
     val providers = state.reauthProviders ?: return
     val context = LocalContext.current
+    val defaultWebClientId = stringResource(R.string.default_web_client_id)
     val scope = rememberCoroutineScope()
     var password by remember { mutableStateOf("") }
     val busy = state.isReauthenticating || state.isDeleting
@@ -75,7 +76,7 @@ fun DeleteAccountReauthDialog(
             try {
                 val option = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(context.getString(R.string.default_web_client_id))
+                    .setServerClientId(defaultWebClientId)
                     .build()
                 val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
                 val credential = CredentialManager.create(context)
