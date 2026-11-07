@@ -44,4590 +44,635 @@ import kotlin.time.Duration.Companion.seconds
  * Migrado de Firebase Android SDK para GitLive SDK para suporte KMP (Android + iOS).
  * Sem chamadas .await() — todas as operações são suspend nativas do GitLive SDK.
  */
+
 actual class FirebaseDataSource actual constructor() {
 
     private val firestore = Firebase.firestore
     private val auth = Firebase.auth
     private val storage = Firebase.storage
 
+    internal val games = FirebaseGamesDataSource(firestore, auth)
+    internal val groups = FirebaseGroupsDataSource(firestore, auth, storage)
+    internal val users = FirebaseUsersDataSource(firestore, auth, storage)
+    internal val finance = FirebaseFinanceDataSource(firestore, auth)
+    internal val gamification = FirebaseGamificationDataSource(firestore, auth)
+    internal val locations = FirebaseLocationsDataSource(firestore, auth)
+
     companion object {
-        private const val FUNCTIONS_REGION = "southamerica-east1"
-        private const val EXPORT_MY_DATA_TIMEOUT_SECONDS = 180L
-        private val exportJson = Json { prettyPrint = true }
-
-        /**
-         * Converte o retorno da callable `exportMyData` em [ExportMyDataPayload].
-         * `complete` ausente conta como completo; só `false` explícito é parcial.
-         */
-        internal fun exportPayloadFromCallableData(data: Any?): ExportMyDataPayload {
-            val complete = when (data) {
-                is JsonObject -> (data["complete"] as? JsonPrimitive)?.content != "false"
-                is Map<*, *> -> data["complete"] != false
-                else -> true
-            }
-            val json = exportJson.encodeToString(JsonElement.serializer(), toExportJsonElement(data))
-            return ExportMyDataPayload(json = json, complete = complete)
-        }
-
-        private fun toExportJsonElement(value: Any?): JsonElement = when (value) {
-            null -> JsonNull
-            is JsonElement -> value
-            is String -> JsonPrimitive(value)
-            is Boolean -> JsonPrimitive(value)
-            is Number -> JsonPrimitive(value)
-            is Map<*, *> -> JsonObject(
-                value.entries.associate { (key, item) -> key.toString() to toExportJsonElement(item) }
-            )
-            is Iterable<*> -> JsonArray(value.map { toExportJsonElement(it) })
-            is Array<*> -> JsonArray(value.map { toExportJsonElement(it) })
-            else -> JsonPrimitive(value.toString())
-        }
-        private const val LOCATION_SCOPED_QUERY_LIMIT = 500
-        private const val COLLECTION_GAMES = "games"
-        private const val COLLECTION_CONFIRMATIONS = "confirmations"
-        private const val COLLECTION_TEAMS = "teams"
-        private const val COLLECTION_FAVORITE_TEAMS = "favorite_teams"
-        private const val COLLECTION_STATISTICS = "statistics"
-        private const val COLLECTION_USERS = "users"
-        private const val COLLECTION_GROUPS = "groups"
-        private const val COLLECTION_USER_GROUPS = "user_groups"
-        private const val COLLECTION_XP_LOGS = "xp_logs"
-        private const val COLLECTION_PAYMENTS = "payments"
-        private const val SUBCOLLECTION_CASHBOX = "cashbox"
-        private const val SUBCOLLECTION_CASHBOX_SUMMARY = "cashbox_summary"
+        internal fun exportPayloadFromCallableData(data: Any?): ExportMyDataPayload =
+            FirebaseUsersDataSource.exportPayloadFromCallableData(data)
     }
 
     // ========== GAMES ==========
+    actual suspend fun getUpcomingGames(limit: Int): Result<List<Game>> =
+        games.getUpcomingGames(limit)
 
-    actual suspend fun getUpcomingGames(limit: Int): Result<List<Game>> {
-        return try {
-            val nowMillis = Clock.System.now().toEpochMilliseconds()
-            val nowTs = Timestamp(nowMillis / 1000, ((nowMillis % 1000) * 1_000_000).toInt())
-            val snapshot = firestore.collection(COLLECTION_GAMES)
-                .where { "dateTime" greaterThanOrEqualTo nowTs }
-                .orderBy("dateTime", Direction.ASCENDING)
-                .limit(limit)
-                .get()
+    actual fun getUpcomingGamesFlow(limit: Int): Flow<Result<List<Game>>> =
+        games.getUpcomingGamesFlow(limit)
 
-            Result.success(snapshot.documents.mapNotNull { it.toGameOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getGameById(gameId: String): Result<Game> =
+        games.getGameById(gameId)
 
-    actual fun getUpcomingGamesFlow(limit: Int): Flow<Result<List<Game>>> {
-        val nowMillis = Clock.System.now().toEpochMilliseconds()
-        val nowTs = Timestamp(nowMillis / 1000, ((nowMillis % 1000) * 1_000_000).toInt())
-        return firestore.collection(COLLECTION_GAMES)
-            .where { "dateTime" greaterThanOrEqualTo nowTs }
-            .orderBy("dateTime", Direction.ASCENDING)
-            .limit(limit)
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toGameOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
+    actual fun getGameByIdFlow(gameId: String): Flow<Result<Game>> =
+        games.getGameByIdFlow(gameId)
 
-    actual suspend fun getGameById(gameId: String): Result<Game> {
-        return try {
-            val doc = firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
-                .get()
+    actual suspend fun getConfirmedGamesForUser(userId: String): Result<List<Game>> =
+        games.getConfirmedGamesForUser(userId)
 
-            val game = doc.toGameOrNull()
-                ?: return Result.failure(Exception("Jogo não encontrado"))
-            Result.success(game)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getGamesByGroup(groupId: String, limit: Int): Result<List<Game>> =
+        games.getGamesByGroup(groupId, limit)
 
-    actual fun getGameByIdFlow(gameId: String): Flow<Result<Game>> {
-        return firestore.collection(COLLECTION_GAMES)
-            .document(gameId)
-            .snapshots()
-            .map { snapshot ->
-                val game = snapshot.toGameOrNull()
-                if (game != null) Result.success(game)
-                else Result.failure(Exception("Jogo não encontrado"))
-            }
-            .catch { e -> emit(Result.failure(e)) }
-    }
+    actual suspend fun getPublicGames(limit: Int): Result<List<Game>> =
+        games.getPublicGames(limit)
 
-    actual suspend fun getConfirmedGamesForUser(userId: String): Result<List<Game>> {
-        return try {
-            // 1. Buscar confirmações do usuário
-            val confirmations = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .where { "user_id" equalTo userId }
-                .where { "status" equalTo "CONFIRMED" }
-                .get()
-                .documents.mapNotNull { it.toGameConfirmationOrNull() }
+    actual suspend fun createGame(game: Game): Result<Game> =
+        games.createGame(game)
 
-            // 2. Extrair IDs únicos de jogos
-            val gameIds = confirmations.map { it.gameId }.distinct()
-            if (gameIds.isEmpty()) {
-                return Result.success(emptyList())
-            }
+    actual suspend fun updateGame(gameId: String, updates: Map<String, Any>): Result<Unit> =
+        games.updateGame(gameId, updates)
 
-            // 3. Buscar jogos em chunks (whereIn limit = 10)
-            val games = mutableListOf<Game>()
-            gameIds.chunked(10).forEach { chunk ->
-                val snapshot = firestore.collection(COLLECTION_GAMES)
-                    .where { FieldPath.documentId inArray chunk }
-                    .get()
-                games.addAll(snapshot.documents.mapNotNull { it.toGameOrNull() })
-            }
+    actual suspend fun deleteGame(gameId: String): Result<Unit> =
+        games.deleteGame(gameId)
 
-            // 4. Ordenar por data do jogo
-            Result.success(games.sortedBy { "${it.date} ${it.time}" })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>> =
+        games.getGameConfirmations(gameId)
 
-    actual suspend fun getGamesByGroup(groupId: String, limit: Int): Result<List<Game>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_GAMES)
-                .where { "group_id" equalTo groupId }
-                .orderBy("dateTime", Direction.DESCENDING)
-                .limit(limit)
-                .get()
+    actual fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<GameConfirmation>>> =
+        games.getGameConfirmationsFlow(gameId)
 
-            Result.success(snapshot.documents.mapNotNull { it.toGameOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun confirmPresence(gameId: String, userId: String, userName: String, userPhoto: String?, position: String, isCasualPlayer: Boolean): Result<GameConfirmation> =
+        games.confirmPresence(gameId, userId, userName, userPhoto, position, isCasualPlayer)
 
-    actual suspend fun getPublicGames(limit: Int): Result<List<Game>> {
-        return try {
-            val nowMillis = Clock.System.now().toEpochMilliseconds()
-            val nowTs = Timestamp(nowMillis / 1000, ((nowMillis % 1000) * 1_000_000).toInt())
-            val snapshot = firestore.collection(COLLECTION_GAMES)
-                .where { "visibility" inArray listOf("PUBLIC_OPEN", "PUBLIC_CLOSED") }
-                .where { "dateTime" greaterThanOrEqualTo nowTs }
-                .orderBy("dateTime", Direction.ASCENDING)
-                .limit(limit)
-                .get()
+    actual suspend fun cancelConfirmation(gameId: String, userId: String): Result<Unit> =
+        games.cancelConfirmation(gameId, userId)
 
-            Result.success(snapshot.documents.mapNotNull { it.toGameOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
+        games.updatePaymentStatus(gameId, userId, isPaid)
 
-    actual suspend fun createGame(game: Game): Result<Game> {
-        return try {
-            val docRef = firestore.collection(COLLECTION_GAMES).document
-            val gameWithId = game.copy(id = docRef.id)
-            docRef.set(gameWithId)
+    actual suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> =
+        games.removePlayerFromGame(gameId, userId)
 
-            // Escreve campo "dateTime" como Firestore Timestamp para permitir
-            // consultas por data (ex: getUpcomingGames usa where { "dateTime" >= nowTs }).
-            // A classe Game tem dateTime como computed getter (String), não como campo
-            // armazenado, então é necessário escrever explicitamente (issue #877).
-            val dateTimeTs = runCatching {
-                val localDateTime = LocalDateTime.parse("${game.date}T${game.time}")
-                val epochSeconds = localDateTime.toInstant(kotlinx.datetime.TimeZone.currentSystemDefault()).epochSeconds
-                Timestamp(epochSeconds, 0)
-            }.getOrNull()
-            if (dateTimeTs != null) {
-                docRef.update(mapOf("dateTime" to dateTimeTs))
-            }
+    actual suspend fun summonPlayers(gameId: String, confirmations: List<GameConfirmation>): Result<Unit> =
+        games.summonPlayers(gameId, confirmations)
 
-            Result.success(gameWithId)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun acceptInvitation(gameId: String, userId: String, position: String): Result<GameConfirmation> =
+        games.acceptInvitation(gameId, userId, position)
 
-    actual suspend fun updateGame(gameId: String, updates: Map<String, Any>): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
-                .update(updates)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun updateConfirmationStatus(gameId: String, userId: String, status: String): Result<Unit> =
+        games.updateConfirmationStatus(gameId, userId, status)
 
-    actual suspend fun deleteGame(gameId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
-                .delete()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual fun getGameWaitlistFlow(gameId: String): Flow<Result<List<GameWaitlist>>> =
+        games.getGameWaitlistFlow(gameId)
 
-    // ========== CONFIRMATIONS ==========
+    actual suspend fun joinWaitlist(gameId: String, position: String): Result<GameWaitlist> =
+        games.joinWaitlist(gameId, position)
 
-    actual suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .where { "game_id" equalTo gameId }
-                .get()
+    actual suspend fun leaveWaitlist(gameId: String, userId: String): Result<Unit> =
+        games.leaveWaitlist(gameId, userId)
 
-            Result.success(snapshot.documents.mapNotNull { it.toGameConfirmationOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getGameTeams(gameId: String): Result<List<Team>> =
+        games.getGameTeams(gameId)
 
-    actual fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<GameConfirmation>>> {
-        return firestore.collection(COLLECTION_CONFIRMATIONS)
-            .where { "game_id" equalTo gameId }
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toGameConfirmationOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
+    actual fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> =
+        games.getGameTeamsFlow(gameId)
 
-    actual suspend fun confirmPresence(
-        gameId: String,
-        userId: String,
-        userName: String,
-        userPhoto: String?,
-        position: String,
-        isCasualPlayer: Boolean
-    ): Result<GameConfirmation> {
-        return try {
-            val docId = "${gameId}_${userId}"
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document(docId)
-            Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("confirmGamePresence")
-                .invoke(
-                    mapOf(
-                        "gameId" to gameId,
-                        "position" to if (position == "GOALKEEPER") "GOALKEEPER" else "FIELD",
-                        "isCasualPlayer" to isCasualPlayer
-                    )
-                )
+    actual suspend fun saveTeams(gameId: String, teams: List<Team>): Result<Unit> =
+        games.saveTeams(gameId, teams)
 
-            val confirmation = docRef.get().toGameConfirmationOrNull()
-                ?: return Result.failure(
-                    Exception("Confirmação não encontrada após callable: $docId")
-                )
-            Result.success(confirmation)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun clearGameTeams(gameId: String): Result<Unit> =
+        games.clearGameTeams(gameId)
 
-    actual suspend fun cancelConfirmation(gameId: String, userId: String): Result<Unit> {
-        return try {
-            // FIX #4144: marcar CANCELLED em vez de deletar. O trigger
-            // onGameVacancy depende de before=CONFIRMED -> after=CANCELLED
-            // (UPDATE); delete deixava a vaga sem promover a waitlist.
-            // Espelha app FirebaseDataSourceImpl.kt e web useGames.ts.
-            val batch = firestore.batch()
-            val docRef =
-                firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .document("${gameId}_${userId}")
-            val doc = docRef.get()
-            if (doc.exists) {
-                batch.update(
-                    docRef,
-                    mapOf(
-                        "status" to "CANCELLED",
-                        "updated_at" to FieldValue.serverTimestamp,
-                    ),
-                )
-            } else {
-                // Fallback: buscar por query
-                val query = firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .where { "game_id" equalTo gameId }
-                    .where { "user_id" equalTo userId }
-                    .get()
-                query.documents.forEach {
-                    batch.update(
-                        it.reference,
-                        mapOf(
-                            "status" to "CANCELLED",
-                            "updated_at" to FieldValue.serverTimestamp,
-                        ),
-                    )
-                }
-            }
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun createLiveGame(gameId: String): Result<Unit> =
+        games.createLiveGame(gameId)
 
-    actual suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .where { "game_id" equalTo gameId }
-                .where { "user_id" equalTo userId }
-                .get()
+    actual suspend fun updateLiveScore(gameId: String, team1Score: Int, team2Score: Int): Result<Unit> =
+        games.updateLiveScore(gameId, team1Score, team2Score)
 
-            if (snapshot.documents.isEmpty()) {
-                return Result.failure(NoSuchElementException("Confirmação não encontrada"))
-            }
+    actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> =
+        games.addGameEvent(gameId, event)
 
-            val status = if (isPaid) "PAID" else "PENDING"
-            val batch = firestore.batch()
-            snapshot.documents.forEach { doc ->
-                batch.update(doc.reference, mapOf("payment_status" to status))
-            }
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getGameEvents(gameId: String): Result<List<GameEvent>> =
+        games.getGameEvents(gameId)
 
-    actual suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> {
-        return try {
-            // FIX #4144: CANCELLED em vez de delete (mesmo motivo do
-            // cancelConfirmation — trigger onGameVacancy depende de UPDATE).
-            val batch = firestore.batch()
-            val docRef =
-                firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .document("${gameId}_${userId}")
-            val doc = docRef.get()
-            if (doc.exists) {
-                batch.update(
-                    docRef,
-                    mapOf(
-                        "status" to "CANCELLED",
-                        "updated_at" to FieldValue.serverTimestamp,
-                    ),
-                )
-            } else {
-                // Fallback: buscar por query
-                val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .where { "game_id" equalTo gameId }
-                    .where { "user_id" equalTo userId }
-                    .get()
-                snapshot.documents.forEach { d ->
-                    batch.update(
-                        d.reference,
-                        mapOf(
-                            "status" to "CANCELLED",
-                            "updated_at" to FieldValue.serverTimestamp,
-                        ),
-                    )
-                }
-            }
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun summonPlayers(
-        gameId: String,
-        confirmations: List<GameConfirmation>
-    ): Result<Unit> {
-        return try {
-            val batch = firestore.batch()
-            confirmations.forEach { confirmation ->
-                val docRef = firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .document("${gameId}_${confirmation.userId}")
-                // FIX #2296: removidas as chaves camelCase duplicadas. O
-                // parsing usa @SerialName(snake_case), então as duplicatas
-                // eram redundantes e infladas o payload de escrita.
-                val confirmationData = mapOf(
-                    "id" to docRef.id,
-                    "game_id" to gameId,
-                    "user_id" to confirmation.userId,
-                    "user_name" to confirmation.userName,
-                    "user_photo" to confirmation.userPhoto,
-                    "position" to confirmation.position,
-                    "status" to "PENDING",
-                    "is_casual_player" to confirmation.isCasualPlayer
-                )
-                batch.set(docRef, confirmationData)
-            }
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun acceptInvitation(
-        gameId: String,
-        userId: String,
-        position: String
-    ): Result<GameConfirmation> {
-        return try {
-            // O convite precisa existir, mas a promoção para CONFIRMED é
-            // exclusivamente server-authoritative. A callable revalida vagas e
-            // goleiros na mesma transação e é idempotente para retries.
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
-            val doc = docRef.get()
-            val invitation = if (doc.exists) {
-                doc
-            } else {
-                val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .where { "game_id" equalTo gameId }
-                    .where { "user_id" equalTo userId }
-                    .get()
-                if (snapshot.documents.isEmpty()) {
-                    return Result.failure(Exception("Convite não encontrado"))
-                }
-                snapshot.documents[0]
-            }
-
-            confirmPresence(
-                gameId = gameId,
-                userId = userId,
-                userName = invitation.get<String?>("user_name")
-                    ?: invitation.get<String?>("userName") ?: "",
-                userPhoto = invitation.get<String?>("user_photo")
-                    ?: invitation.get<String?>("userPhoto"),
-                position = position,
-                isCasualPlayer = invitation.get<Boolean?>("is_casual_player")
-                    ?: invitation.get<Boolean?>("isCasualPlayer") ?: false
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateConfirmationStatus(
-        gameId: String,
-        userId: String,
-        status: String
-    ): Result<Unit> {
-        return try {
-            // Tentar pelo ID determinístico primeiro
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
-            val doc = docRef.get()
-            if (doc.exists) {
-                docRef.update(mapOf("status" to status))
-            } else {
-                // Fallback: buscar por query
-                val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                    .where { "game_id" equalTo gameId }
-                    .where { "user_id" equalTo userId }
-                    .get()
-
-                if (snapshot.documents.isEmpty()) {
-                    return Result.failure(Exception("Confirmação não encontrada"))
-                }
-
-                val batch = firestore.batch()
-                snapshot.documents.forEach { d ->
-                    batch.update(d.reference, mapOf("status" to status))
-                }
-                batch.commit()
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== WAITLIST ==========
-
-    actual fun getGameWaitlistFlow(gameId: String): Flow<Result<List<GameWaitlist>>> {
-        return firestore.collection(COLLECTION_GAMES)
-            .document(gameId)
-            .collection("waitlist")
-            .snapshots()
-            .map { snapshot ->
-                val entries = snapshot.documents.mapNotNull { doc ->
-                    val status = doc.get<String?>("status") ?: WaitlistStatus.WAITING.name
-                    if (status != WaitlistStatus.WAITING.name && status != WaitlistStatus.NOTIFIED.name) {
-                        return@mapNotNull null
-                    }
-                    GameWaitlist(
-                        id = doc.id,
-                        gameId = doc.get<String?>("game_id") ?: gameId,
-                        userId = doc.get<String?>("user_id") ?: doc.id,
-                        userName = doc.get<String?>("user_name") ?: "",
-                        userPhoto = doc.get<String?>("user_photo"),
-                        position = doc.get<String?>("position") ?: "FIELD",
-                        queuePosition = doc.get<Long?>("queue_position")?.toInt() ?: 0,
-                        status = status,
-                        addedAt = doc.safeLong("added_at"),
-                        notifiedAt = doc.safeLong("notified_at"),
-                        responseDeadline = doc.safeLong("response_deadline")
-                    )
-                }.sortedBy { it.queuePosition }
-                Result.success(entries)
-            }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun joinWaitlist(gameId: String, position: String): Result<GameWaitlist> {
-        return try {
-            val uid = auth.currentUser?.uid
-                ?: return Result.failure(Exception("Usuário não autenticado"))
-            val normalizedPos = if (position == "GOALKEEPER") "GOALKEEPER" else "FIELD"
-            Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("joinGameWaitlist")
-                .invoke(
-                    mapOf(
-                        "gameId" to gameId,
-                        "position" to normalizedPos
-                    )
-                )
-            val doc = firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
-                .collection("waitlist")
-                .document(uid)
-                .get()
-            val entry = if (doc.exists) {
-                GameWaitlist(
-                    id = doc.id,
-                    gameId = doc.get<String?>("game_id") ?: gameId,
-                    userId = doc.get<String?>("user_id") ?: uid,
-                    userName = doc.get<String?>("user_name") ?: (auth.currentUser?.displayName ?: ""),
-                    userPhoto = doc.get<String?>("user_photo"),
-                    position = doc.get<String?>("position") ?: normalizedPos,
-                    queuePosition = doc.get<Long?>("queue_position")?.toInt() ?: 1,
-                    status = doc.get<String?>("status") ?: WaitlistStatus.WAITING.name
-                )
-            } else {
-                GameWaitlist(
-                    id = uid,
-                    gameId = gameId,
-                    userId = uid,
-                    userName = auth.currentUser?.displayName ?: "",
-                    position = normalizedPos,
-                    queuePosition = 1,
-                    status = WaitlistStatus.WAITING.name
-                )
-            }
-            Result.success(entry)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun leaveWaitlist(gameId: String, userId: String): Result<Unit> {
-        return try {
-            val waitlistCol = firestore.collection(COLLECTION_GAMES)
-                .document(gameId)
-                .collection("waitlist")
-            val docRef = waitlistCol.document(userId)
-            val doc = docRef.get()
-            if (doc.exists) {
-                docRef.delete()
-            } else {
-                val query = waitlistCol.where { "user_id" equalTo userId }.get()
-                val batch = firestore.batch()
-                query.documents.forEach { batch.delete(it.reference) }
-                batch.commit()
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== MODERATION (BLOCK & REPORT — #4423) ==========
-
-    actual suspend fun blockUserOnServer(
-        userId: String,
-        targetUserId: String,
-        userName: String,
-        reason: String
-    ): Result<Unit> {
-        return try {
-            if (userId.isBlank() || targetUserId.isBlank() || userId == targetUserId) {
-                return Result.failure(IllegalArgumentException("IDs inválidos para bloqueio"))
-            }
-            // Caminho canônico autorizado em firestore.rules: users/{userId}/blocked/{targetUserId}
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .collection("blocked")
-                .document(targetUserId)
-                .set(
-                    mapOf(
-                        "target_user_id" to targetUserId,
-                        "created_at" to FieldValue.serverTimestamp
-                    )
-                )
-            // Caminho espelho opcional users/{userId}/blocked_users/{targetUserId} (best-effort)
-            runCatching {
-                firestore.collection(COLLECTION_USERS)
-                    .document(userId)
-                    .collection("blocked_users")
-                    .document(targetUserId)
-                    .set(
-                        mapOf(
-                            "target_user_id" to targetUserId,
-                            "user_name" to userName,
-                            "reason" to reason,
-                            "created_at" to FieldValue.serverTimestamp
-                        )
-                    )
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit> {
-        return try {
-            if (userId.isBlank() || targetUserId.isBlank()) {
-                return Result.failure(IllegalArgumentException("IDs inválidos para desbloqueio"))
-            }
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .collection("blocked")
-                .document(targetUserId)
-                .delete()
-            runCatching {
-                firestore.collection(COLLECTION_USERS)
-                    .document(userId)
-                    .collection("blocked_users")
-                    .document(targetUserId)
-                    .delete()
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun submitPlayerReport(
-        reporterId: String,
-        targetUserId: String,
-        targetUserName: String,
-        reason: String,
-        gameId: String?,
-        groupId: String?
-    ): Result<Unit> {
-        return try {
-            val normalizedReason = when (reason.trim().lowercase()) {
-                "inappropriate_content", "abusive_language", "spam", "harassment", "other" -> reason.trim().lowercase()
-                else -> "harassment"
-            }
-            // 1. Gravação em reports (coleção de denúncias no Firestore)
-            val reportWrites = mutableListOf<Result<Unit>>()
-            reportWrites += runCatching {
-                val docRef = firestore.collection("reports").document
-                val payload = mutableMapOf<String, Any>(
-                    "reporter_id" to reporterId,
-                    "target_user_id" to targetUserId,
-                    "target_user_name" to targetUserName,
-                    "target_type" to "player",
-                    "reason" to normalizedReason,
-                    "details" to reason.trim(),
-                    "status" to "OPEN",
-                    "created_at" to FieldValue.serverTimestamp
-                )
-                if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
-                if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
-                docRef.set(payload)
-            }
-            // 2. Fallback via callable submitContentReport quando vinculado a jogo/grupo
-            if (reportWrites.none { it.isSuccess } && !gameId.isNullOrBlank()) {
-                reportWrites += runCatching {
-                    Firebase.functions(FUNCTIONS_REGION)
-                        .httpsCallable("submitContentReport")
-                        .invoke(
-                            mapOf(
-                                "targetType" to "game_comment",
-                                "gameId" to gameId,
-                                "targetId" to targetUserId,
-                                "reason" to normalizedReason
-                            )
-                        )
-                    Unit
-                }
-            }
-            // 3. Garante bloqueio preventivo no servidor (Guideline 1.2 App Store:
-            // denunciar jogador também pode isolar o contato imediatamente)
-            if (reporterId.isNotBlank() && targetUserId.isNotBlank() && reporterId != targetUserId) {
-                reportWrites += blockUserOnServer(
-                    userId = reporterId,
-                    targetUserId = targetUserId,
-                    userName = targetUserName,
-                    reason = reason
-                )
-            }
-            if (reportWrites.any { it.isSuccess }) {
-                Result.success(Unit)
-            } else {
-                reportWrites.firstOrNull() ?: Result.failure(Exception("Falha ao registrar denúncia"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== TEAMS ==========
-
-    actual suspend fun getGameTeams(gameId: String): Result<List<Team>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_TEAMS)
-                .where { "game_id" equalTo gameId }
-                .get()
-
-            Result.success(snapshot.documents.mapNotNull { it.toTeamOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> {
-        return firestore.collection(COLLECTION_TEAMS)
-            .where { "game_id" equalTo gameId }
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toTeamOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun saveTeams(gameId: String, teams: List<Team>): Result<Unit> {
-        return try {
-            val batch = firestore.batch()
-
-            teams.forEach { team ->
-                val docRef = firestore.collection(COLLECTION_TEAMS).document
-                val teamData = mapOf(
-                    "id" to docRef.id,
-                    "game_id" to gameId,
-                    "name" to team.name,
-                    "color" to team.color,
-                    "player_ids" to team.playerIds,
-                    "score" to team.score
-                )
-                batch.set(docRef, teamData)
-            }
-
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun clearGameTeams(gameId: String): Result<Unit> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_TEAMS)
-                .where { "game_id" equalTo gameId }
-                .get()
-
-            val batch = firestore.batch()
-            snapshot.documents.forEach { doc -> batch.delete(doc.reference) }
-            batch.commit()
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== ACTIVITIES ==========
-
-    /**
-     * Busca atividades recentes do feed público.
-     */
-    suspend fun getRecentActivities(limit: Int): Result<List<Activity>> {
-        return try {
-            val snapshot = firestore.collection("activities")
-                .where { "visibility" equalTo "PUBLIC" }
-                .orderBy("created_at", Direction.DESCENDING)
-                .limit(limit)
-                .get()
-
-            Result.success(snapshot.documents.mapNotNull { it.toActivityOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Flow de atividades recentes em tempo real.
-     */
-    fun getRecentActivitiesFlow(limit: Int): Flow<Result<List<Activity>>> {
-        return firestore.collection("activities")
-            .where { "visibility" equalTo "PUBLIC" }
-            .orderBy("created_at", Direction.DESCENDING)
-            .limit(limit)
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toActivityOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    /**
-     * Cria uma nova atividade.
-     */
-    suspend fun createActivity(activity: Activity): Result<Unit> {
-        return try {
-            firestore.collection("activities").add(activityToMap(activity))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Busca atividades de um usuário específico.
-     */
-    suspend fun getUserActivities(userId: String, limit: Int): Result<List<Activity>> {
-        return try {
-            val snapshot = firestore.collection("activities")
-                .where { "user_id" equalTo userId }
-                .orderBy("created_at", Direction.DESCENDING)
-                .limit(limit)
-                .get()
-
-            Result.success(snapshot.documents.mapNotNull { it.toActivityOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== STATISTICS ==========
-
-    actual suspend fun getUserStatistics(userId: String): Result<Statistics> {
-        return try {
-            val doc = firestore.collection(COLLECTION_STATISTICS)
-                .document(userId)
-                .get()
-
-            val stats = doc.toStatisticsOrNull() ?: Statistics(userId = userId)
-            Result.success(stats)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun getUserStatisticsFlow(userId: String): Flow<Result<Statistics>> {
-        return firestore.collection(COLLECTION_STATISTICS)
-            .document(userId)
-            .snapshots()
-            .map { snapshot ->
-                val stats = snapshot.toStatisticsOrNull() ?: Statistics(userId = userId)
-                Result.success(stats)
-            }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun updateUserStatistics(userId: String, updates: Map<String, Any>): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_STATISTICS)
-                .document(userId)
-                .update(updates)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            // Se o documento não existir, criar com as atualizações
-            try {
-                firestore.collection(COLLECTION_STATISTICS)
-                    .document(userId)
-                    .set(updates, merge = true)
-                Result.success(Unit)
-            } catch (innerE: Exception) {
-                Result.failure(innerE)
-            }
-        }
-    }
-
-    // ========== USERS ==========
-
-    actual suspend fun getUserById(userId: String): Result<User> {
-        return try {
-            val doc = firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .get()
-
-            val user = doc.toUserOrNull()
-                ?: return Result.failure(Exception("Usuário não encontrado"))
-
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getUsersByIds(userIds: List<String>): Result<List<User>> {
-        return try {
-            if (userIds.isEmpty()) return Result.success(emptyList())
-
-            val chunks = userIds.chunked(10)
-            val allUsers = mutableListOf<User>()
-
-            for (chunk in chunks) {
-                val snapshot = firestore.collection(COLLECTION_USERS)
-                    .where { FieldPath.documentId inArray chunk }
-                    .get()
-                allUsers.addAll(snapshot.documents.mapNotNull { doc -> doc.toUserOrNull() })
-            }
-
-            Result.success(allUsers)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getCurrentUser(): Result<User> {
-        val uid = auth.currentUser?.uid
-            ?: return Result.failure(Exception("Usuário não autenticado"))
-
-        println("FirebaseDataSource: getCurrentUser: buscando para uid=$uid")
-
-        // SECFIX #433 STAGE 2: merge PII de users_private quando próprio user.
-        // Stage 1 (PR #482) já popula users_private via triggers + backfill.
-        // Backward compat: se users_private vazio/inacessível, fallback pra
-        // PII em users (Stage 3 vai remover de users e isolar em users_private).
-        val publicResult = getUserById(uid)
-        val publicUser = publicResult.getOrNull() ?: return publicResult
-
-        return try {
-            val privateDoc = firestore.collection("users_private")
-                .document(uid)
-                .get()
-
-            val mergedUser = if (privateDoc.exists) {
-                publicUser.copy(
-                    email = privateDoc.get<String?>("email") ?: publicUser.email,
-                    fcmToken = privateDoc.get<String?>("fcm_token")
-                        ?: publicUser.fcmToken,
-                    birthDate = (privateDoc.get<Long?>("birth_date"))
-                        ?: publicUser.birthDate,
-                    heightCm = (privateDoc.get<Long?>("height_cm"))?.toInt()
-                        ?: publicUser.heightCm,
-                    weightKg = (privateDoc.get<Long?>("weight_kg"))?.toInt()
-                        ?: publicUser.weightKg,
-                    gender = privateDoc.get<String?>("gender")
-                        ?: publicUser.gender,
-                )
-            } else {
-                publicUser
-            }
-
-            println(
-                "FirebaseDataSource: getCurrentUser: carregado " +
-                    "${mergedUser.name}, Level=${mergedUser.level}, " +
-                    "PII source=${if (privateDoc.exists) "users_private" else "users (fallback)"}"
-            )
-            Result.success(mergedUser)
-        } catch (e: Exception) {
-            // Falha lendo users_private → fallback pra user de users (sem merge)
-            println(
-                "FirebaseDataSource: getCurrentUser: users_private read failed, " +
-                    "fallback to users PII: ${e.message}"
-            )
-            Result.success(publicUser)
-        }
-    }
-
-    actual fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
-    actual suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .update(updates)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * FIX #578 STAGE 2: chama callable Cloud Function `updateUserPii` (us-central1)
-     * pra escrever PII em users_private/{auth.uid}. Owner-only — Cloud Function
-     * deduz target user via auth context (não aceita userId no payload).
-     *
-     * Valida server-side: subset de PII fields (email, fcm_token, birth_date,
-     * height_cm, weight_kg, gender) com type checks.
-     */
-    actual suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit> {
-        return try {
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("updateUserPii")
-                .invoke(updates)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun deleteAccount(): Result<Unit> {
-        return try {
-            Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("deleteAccount")
-                .invoke()
-            Result.success(Unit)
-        } catch (e: FirebaseFunctionsException) {
-            // "NOT_FOUND" -> "not-found": mesmo formato do código no protocolo das callables.
-            Result.failure(
-                CallableException(
-                    code = e.code.name.lowercase().replace('_', '-'),
-                    message = e.message,
-                    cause = e,
-                    // #4440: details.reason/groups distinguem os dois failed-precondition.
-                    reason = CallableException.reasonFromDetails(e.details),
-                    groups = CallableException.groupsFromDetails(e.details)
-                )
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun exportMyData(): Result<ExportMyDataPayload> {
-        return try {
-            val response = Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("exportMyData", timeout = EXPORT_MY_DATA_TIMEOUT_SECONDS.seconds)
-                .invoke()
-                .data<JsonElement>()
-            Result.success(exportPayloadFromCallableData(response))
-        } catch (e: FirebaseFunctionsException) {
-            Result.failure(
-                CallableException(
-                    code = e.code.name.lowercase().replace('_', '-'),
-                    message = e.message,
-                    cause = e,
-                    reason = CallableException.reasonFromDetails(e.details),
-                    groups = CallableException.groupsFromDetails(e.details)
-                )
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit> {
-        return try {
-            Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("registerPushToken")
-                .invoke(registration.toPayload())
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun unregisterPushToken(
-        deviceId: String,
-        sequence: Long,
-        token: String?
-    ): Result<Unit> {
-        return try {
-            require(sequence > 0) { "Sequência da instalação inválida" }
-            val payload = mutableMapOf<String, Any>(
-                "deviceId" to deviceId.trim(),
-                "sequence" to sequence
-            )
-            token?.trim()?.takeIf { it.isNotEmpty() }?.let { payload["token"] = it }
-            Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("unregisterPushToken")
-                .invoke(payload)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit> {
-        return try {
-            if (vote.category == VoteCategory.CUSTOM) {
-                return Result.failure(Exception("Categoria de voto não suportada pelo servidor"))
-            }
-
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("submitMvpVote")
-                .invoke(
-                    mapOf(
-                        "gameId" to vote.gameId,
-                        "votedPlayerId" to vote.votedPlayerId,
-                        "category" to vote.category.name
-                    )
-                )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun concludeMvpVotingViaCallable(gameId: String): Result<Unit> {
-        return try {
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("concludeMvpVoting")
-                .invoke(mapOf("gameId" to gameId))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit> {
-        return try {
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("startGameLifecycle")
-                .invoke(mapOf("gameId" to gameId))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit> {
-        return try {
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("finishGameLifecycle")
-                .invoke(mapOf("gameId" to gameId))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> {
-        println("FirebaseDataSource: searchUsers called with query='$query', limit=$limit")
-        return try {
-            val collection = firestore.collection(COLLECTION_USERS)
-
-            val snapshot = if (query.isBlank()) {
-                collection
-                    .limit(limit)
-                    .get()
-            } else {
-                collection
-                    .orderBy("name")
-                    .startAt(query)
-                    .endAt(query + "\uf8ff")
-                    .limit(limit)
-                    .get()
-            }
-
-            println("FirebaseDataSource: searchUsers query success. Documents found: ${snapshot.documents.size}")
-
-            val users = snapshot.documents.mapNotNull {
-                val user = it.toUserOrNull()
-                if (user == null) {
-                    println("FirebaseDataSource: Falha ao mapear documento ${it.id} para User")
-                }
-                user
-            }
-
-            println("FirebaseDataSource: searchUsers mapeou ${users.size} usuários com sucesso")
-
-            Result.success(users)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: searchUsers falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getAllUsers(): Result<List<User>> {
-        return try {
-            // OTIMIZAÇÃO: Limitado a 100 usuários para evitar carregar toda a coleção
-            val snapshot = firestore.collection(COLLECTION_USERS)
-                .orderBy("name")
-                .limit(100)
-                .get()
-
-            val users = snapshot.documents.mapNotNull { it.toUserOrNull() }
-            Result.success(users)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: getAllUsers falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .update(mapOf("role" to newRole))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: updateUserRole falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateAutoRatings(
-        userId: String,
-        autoStrikerRating: Double,
-        autoMidRating: Double,
-        autoDefenderRating: Double,
-        autoGkRating: Double,
-        autoRatingSamples: Int
-    ): Result<Unit> {
-        return try {
-            val updates = mapOf(
-                "auto_striker_rating" to autoStrikerRating,
-                "auto_mid_rating" to autoMidRating,
-                "auto_defender_rating" to autoDefenderRating,
-                "auto_gk_rating" to autoGkRating,
-                "auto_rating_samples" to autoRatingSamples,
-                "auto_rating_updated_at" to FieldValue.serverTimestamp
-            )
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .update(updates)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: updateAutoRatings falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== PROFILE VISIBILITY ==========
-
-    actual suspend fun updateProfileVisibility(userId: String, isSearchable: Boolean): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .update(mapOf("is_searchable" to isSearchable))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: updateProfileVisibility falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== FIELD OWNERS ==========
-
-    actual suspend fun getFieldOwners(): Result<List<User>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_USERS)
-                .where { "role" equalTo "FIELD_OWNER" }
-                .orderBy("name")
-                .get()
-            val fieldOwners = snapshot.documents.mapNotNull { it.toUserOrNull() }
-            Result.success(fieldOwners)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: getFieldOwners falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== FCM TOKEN ==========
-
-    actual suspend fun updateFcmToken(token: String): Result<Unit> {
-        return try {
-            val uid = auth.currentUser?.uid
-                ?: return Result.failure(Exception("Usuario nao autenticado"))
-
-            firestore.collection(COLLECTION_USERS)
-                .document(uid)
-                .update(mapOf("fcm_token" to token))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: updateFcmToken falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== FAVORITE TEAMS ==========
-
-    actual suspend fun getAllFavoriteTeams(): Result<List<FavoriteTeam>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_FAVORITE_TEAMS)
-                .orderBy("name")
-                .get()
-
-            val teams = snapshot.documents.mapNotNull { doc ->
-                if (!doc.exists) return@mapNotNull null
-                FavoriteTeam(
-                    id = doc.id,
-                    name = doc.get<String?>("name") ?: "",
-                    badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
-                    shortName = doc.get<String?>("short_name") ?: doc.get<String?>("shortName"),
-                    category = doc.get<String?>("category"),
-                    state = doc.get<String?>("state")
-                )
-            }
-            Result.success(teams)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: getAllFavoriteTeams falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getFavoriteTeamById(teamId: String): Result<FavoriteTeam> {
-        return try {
-            val doc = firestore.collection(COLLECTION_FAVORITE_TEAMS)
-                .document(teamId)
-                .get()
-
-            if (!doc.exists) {
-                return Result.failure(Exception("Time nao encontrado: $teamId"))
-            }
-
-            val team = FavoriteTeam(
-                id = doc.id,
-                name = doc.get<String?>("name") ?: "",
-                badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
-                shortName = doc.get<String?>("short_name") ?: doc.get<String?>("shortName"),
-                category = doc.get<String?>("category"),
-                state = doc.get<String?>("state")
-            )
-            Result.success(team)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: getFavoriteTeamById falhou: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== AUTH ==========
-
-    actual fun getAuthStateFlow(): Flow<String?> {
-        return auth.authStateChanged
-            .map { user -> user?.uid }
-            .catch { emit(null) }
-    }
-
-    actual fun isLoggedIn(): Boolean {
-        return auth.currentUser != null
-    }
-
-    actual fun getCurrentAuthUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
-    actual suspend fun getCurrentAuthUser(): Result<User> {
-        println("FirebaseDataSource: === getCurrentAuthUser() START ===")
-        return try {
-            // Lógica de retry para confiabilidade do Google Sign-In
-            var uid: String? = null
-            var retries = 0
-            val maxRetries = 10
-            val baseDelay = 300L
-
-            println("FirebaseDataSource: Iniciando loop de retry (máx $maxRetries tentativas)")
-            while (uid == null && retries < maxRetries) {
-                uid = auth.currentUser?.uid
-                println("FirebaseDataSource: Retry $retries: uid = $uid")
-                if (uid == null) {
-                    val delay = baseDelay * (retries + 1)
-                    println("FirebaseDataSource: Aguardando ${delay}ms antes do próximo retry")
-                    kotlinx.coroutines.delay(delay)
-                    retries++
-                }
-            }
-
-            if (uid == null) {
-                println("FirebaseDataSource: FALHOU: Sem UID após $retries retries")
-                return Result.failure(Exception("Usuario nao autenticado"))
-            }
-
-            println("FirebaseDataSource: SUCESSO: UID = $uid")
-            kotlinx.coroutines.delay(100)
-
-            println("FirebaseDataSource: Consultando Firestore para user doc: $uid")
-            val doc = firestore.collection(COLLECTION_USERS).document(uid).get()
-
-            if (doc.exists) {
-                println("FirebaseDataSource: Documento do usuário EXISTE no Firestore")
-                var user = doc.toUserOrNull()
-                    ?: return Result.failure(Exception("Erro ao converter usuario"))
-
-                println("FirebaseDataSource: Usuário carregado: ${user.name} (${user.email})")
-
-                // Verifica se a foto do Google mudou e atualiza
-                val firebaseUser = auth.currentUser
-                val googlePhotoUrl = firebaseUser?.photoURL
-
-                if (googlePhotoUrl != null && googlePhotoUrl != user.photoUrl) {
-                    println("FirebaseDataSource: Atualizando URL da foto")
-                    firestore.collection(COLLECTION_USERS)
-                        .document(uid)
-                        .update(mapOf("photo_url" to googlePhotoUrl))
-                    user = user.copy(photoUrl = googlePhotoUrl)
-                }
-
-                println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO ===")
-                Result.success(user)
-            } else {
-                println("FirebaseDataSource: Documento do usuário NÃO EXISTE - criando novo usuário")
-                // Criar usuario automaticamente se nao existir
-                val firebaseUser = auth.currentUser
-                    ?: return Result.failure(Exception("Usuário não autenticado"))
-                val newUser = User(
-                    id = uid,
-                    email = firebaseUser.email ?: "",
-                    name = firebaseUser.displayName ?: "",
-                    photoUrl = firebaseUser.photoURL
-                )
-                println("FirebaseDataSource: Criando usuário: ${newUser.name} (${newUser.email})")
-
-                // Converter User para Map (serialização manual para compatibilidade)
-                val userData = mapOf(
-                    "id" to newUser.id,
-                    "email" to newUser.email,
-                    "name" to newUser.name,
-                    "photo_url" to newUser.photoUrl,
-                    "fcm_token" to newUser.fcmToken,
-                    "is_searchable" to newUser.isSearchable,
-                    "is_profile_public" to newUser.isProfilePublic,
-                    "role" to newUser.role,
-                    "created_at" to FieldValue.serverTimestamp,
-                    "updated_at" to FieldValue.serverTimestamp,
-                    "level" to newUser.level,
-                    "experience_points" to newUser.experiencePoints,
-                    "milestones_achieved" to newUser.milestonesAchieved,
-                    "striker_rating" to newUser.strikerRating,
-                    "mid_rating" to newUser.midRating,
-                    "defender_rating" to newUser.defenderRating,
-                    "gk_rating" to newUser.gkRating,
-                    "striker_rating_set" to newUser.strikerRatingSet,
-                    "mid_rating_set" to newUser.midRatingSet,
-                    "defender_rating_set" to newUser.defenderRatingSet,
-                    "gk_rating_set" to newUser.gkRatingSet,
-                    "auto_striker_rating" to newUser.autoStrikerRating,
-                    "auto_mid_rating" to newUser.autoMidRating,
-                    "auto_defender_rating" to newUser.autoDefenderRating,
-                    "auto_gk_rating" to newUser.autoGkRating,
-                    "auto_rating_samples" to newUser.autoRatingSamples
-                )
-
-                firestore.collection(COLLECTION_USERS)
-                    .document(uid)
-                    .set(userData)
-                println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO (novo usuário criado) ===")
-                Result.success(newUser)
-            }
-        } catch (e: Exception) {
-            println("FirebaseDataSource: === getCurrentAuthUser() EXCEÇÃO: ${e.message} ===")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun signInWithEmailPassword(email: String, password: String): Result<String> {
-        return try {
-            val result = auth.signInWithEmailAndPassword(email.trim(), password)
-            val uid = result.user?.uid
-                ?: return Result.failure(Exception("Falha ao autenticar: usuário nulo"))
-            Result.success(uid)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun signUpWithEmailPassword(email: String, password: String): Result<String> {
-        return try {
-            val result = auth.createUserWithEmailAndPassword(email.trim(), password)
-            val uid = result.user?.uid
-                ?: return Result.failure(Exception("Falha ao criar conta: usuário nulo"))
-            Result.success(uid)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
-        return try {
-            val trimmed = email.trim()
-            if (trimmed.isBlank()) {
-                return Result.failure(IllegalArgumentException("Informe um e-mail válido"))
-            }
-            auth.sendPasswordResetEmail(trimmed)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun logout() {
-        // No iOS, o AppDelegate persiste os identificadores nas mesmas chaves
-        // nativas. Assim o fluxo KMP real remove esta instalação enquanto a
-        // sessão ainda está autenticada. Falha de rede não bloqueia logout.
-        try {
-            PushTokenLifecycleStore.nextForUnregister()?.let { stored ->
-                withTimeoutOrNull(2_000) {
-                    unregisterPushToken(stored.deviceId, stored.sequence)
-                        .onSuccess { PushTokenLifecycleStore.clearToken() }
-                }
-            }
-        } finally {
-            auth.signOut()
-        }
-    }
-
-    // ========== GROUPS ==========
-
-    actual suspend fun getUserGroups(userId: String): Result<List<UserGroup>> {
-        return try {
-            val snapshot = firestore.collection("users")
-                .document(userId)
-                .collection("groups")
-                .orderBy("joined_at", Direction.DESCENDING)
-                .get()
-
-            val userGroups = snapshot.documents.mapNotNull { it.toUserGroupOrNull() }
-            Result.success(userGroups)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun getUserGroupsFlow(userId: String): Flow<Result<List<UserGroup>>> {
-        return firestore.collection("users")
-            .document(userId)
-            .collection("groups")
-            .orderBy("joined_at", Direction.DESCENDING)
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toUserGroupOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun getGroupById(groupId: String): Result<UserGroup> {
-        return try {
-            val doc = firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .get()
-
-            if (!doc.exists) {
-                return Result.failure(NoSuchElementException("Grupo não encontrado: $groupId"))
-            }
-
-            val group = doc.toUserGroupOrNull()
-                ?: return Result.failure(IllegalStateException("Erro ao converter grupo"))
-
-            Result.success(group)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== XP LOGS ==========
-
-    actual suspend fun getUserXpLogs(userId: String, limit: Int): Result<List<XpLog>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_XP_LOGS)
-                .where { "user_id" equalTo userId }
-                .orderBy("created_at", Direction.DESCENDING)
-                .limit(limit)
-                .get()
-
-            val logs = snapshot.documents.mapNotNull { it.toXpLogOrNull() }
-            Result.success(logs)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== XP/GAMIFICATION ==========
-
-    actual suspend fun createXpLog(xpLog: XpLog): Result<XpLog> {
-        return try {
-            val docRef = firestore.collection(COLLECTION_XP_LOGS).document
-            val xpLogData = mapOf(
-                "id" to docRef.id,
-                "user_id" to xpLog.userId,
-                "game_id" to xpLog.gameId,
-                "xp_earned" to xpLog.xpEarned,
-                "xp_before" to xpLog.xpBefore,
-                "xp_after" to xpLog.xpAfter,
-                "level_before" to xpLog.levelBefore,
-                "level_after" to xpLog.levelAfter,
-                "xp_participation" to xpLog.xpParticipation,
-                "xp_goals" to xpLog.xpGoals,
-                "xp_assists" to xpLog.xpAssists,
-                "xp_saves" to xpLog.xpSaves,
-                "xp_result" to xpLog.xpResult,
-                "xp_mvp" to xpLog.xpMvp,
-                "xp_milestones" to xpLog.xpMilestones,
-                "xp_streak" to xpLog.xpStreak,
-                "goals" to xpLog.goals,
-                "assists" to xpLog.assists,
-                "saves" to xpLog.saves,
-                "was_mvp" to xpLog.wasMvp,
-                "game_result" to xpLog.gameResult,
-                "milestones_unlocked" to xpLog.milestonesUnlocked,
-                "created_at" to FieldValue.serverTimestamp
-            )
-            docRef.set(xpLogData)
-            Result.success(xpLog.copy(id = docRef.id))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateUserLevel(userId: String, level: Int, xp: Long): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .update(mapOf(
-                    "level" to level,
-                    "experience_points" to xp
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun awardBadge(userId: String, badgeId: String): Result<Unit> {
-        return try {
-            val docRef = firestore.collection("user_badges").document
-            val badgeData = mapOf(
-                "id" to docRef.id,
-                "user_id" to userId,
-                "badge_id" to badgeId,
-                "unlocked_at" to FieldValue.serverTimestamp
-            )
-            docRef.set(badgeData)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // REMOVIDO #1283: actual updateStreak(Long) gravava epoch-ms violando contrato String "yyyy-MM-dd"
-    // de user_streaks.last_game_date. Sem caller vivo. Path vivo: GamificationRepositoryImpl.updateStreak(String).
-
-    actual suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_USERS)
-                .document(userId)
-                .update(mapOf(
-                    "milestones_achieved" to FieldValue.arrayUnion(milestoneId)
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== LIVE GAME ==========
-
-    actual suspend fun createLiveGame(gameId: String): Result<Unit> {
-        return try {
-            val liveScoreData = mapOf(
-                "game_id" to gameId,
-                "team1_score" to 0,
-                "team2_score" to 0,
-                "owner_id" to (auth.currentUser?.uid ?: ""),
-                "started_at" to FieldValue.serverTimestamp
-            )
-            firestore.collection("live_scores")
-                .document(gameId)
-                .set(liveScoreData)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateLiveScore(gameId: String, team1Score: Int, team2Score: Int): Result<Unit> {
-        return try {
-            firestore.collection("live_scores")
-                .document(gameId)
-                .update(mapOf(
-                    "team1_score" to team1Score,
-                    "team2_score" to team2Score
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> {
-        return try {
-            // A mesma chave acompanha todo retry interno do callable. O backend
-            // usa esse valor no ID determinístico do evento e devolve o evento
-            // existente quando a resposta anterior se perde na rede.
-            val requestId = event.id.ifBlank { UuidGenerator.generate() }
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("submitLiveGameEvent")
-                .invoke(
-                    mapOf(
-                        "requestId" to requestId,
-                        "gameId" to gameId,
-                        "eventType" to event.eventType,
-                        "playerId" to event.playerId,
-                        "playerName" to event.playerName,
-                        "teamId" to event.teamId,
-                        "assistedById" to event.assistedById,
-                        "assistedByName" to event.assistedByName,
-                        "minute" to event.minute,
-                    )
-                )
-            Result.success(event.copy(id = "${gameId}_${requestId}"))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getGameEvents(gameId: String): Result<List<GameEvent>> {
-        return try {
-            val snapshot = firestore.collection("game_events")
-                .where { "game_id" equalTo gameId }
-                .orderBy("minute", Direction.ASCENDING)
-                .get()
-            Result.success(snapshot.documents.mapNotNull { it.toGameEventOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> {
-        return firestore.collection("game_events")
-            .where { "game_id" equalTo gameId }
-            .orderBy("minute", Direction.ASCENDING)
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toGameEventOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
+    actual fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> =
+        games.getGameEventsFlow(gameId)
 
     actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore?>> =
-        firestore.collection("live_scores")
-            .document(gameId)
-            .snapshots()
-            .map { snapshot ->
-                Result.success(if (snapshot.exists) snapshot.toLiveScoreOrNull() else null)
-            }
-            .catch { e -> emit(Result.failure(e)) }
-
-    // ========== LIVE GAME (NOVOS MÉTODOS) ==========
-
-    actual suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveScore> {
-        return try {
-            val docRef = firestore.collection("live_scores").document(gameId)
-
-            val scoreData = mapOf(
-                "game_id" to gameId,
-                "team1_id" to team1Id,
-                "team1_score" to 0,
-                "team2_id" to team2Id,
-                "team2_score" to 0,
-                "started_at" to FieldValue.serverTimestamp
-            )
-
-            docRef.set(scoreData)
-
-            val score = LiveScore(
-                id = gameId,
-                gameId = gameId,
-                team1Id = team1Id,
-                team1Score = 0,
-                team2Id = team2Id,
-                team2Score = 0
-            )
-
-            Result.success(score)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun canManageGameEvents(gameId: String): Boolean {
-        val currentUserId = auth.currentUser?.uid
-        if (currentUserId == null) {
-            println("FirebaseDataSource: canManageGameEvents: Usuário não autenticado")
-            return false
-        }
-
-        return try {
-            // Verificar se é owner do jogo
-            val gameDoc = firestore.collection("games").document(gameId).get()
-            val ownerId = gameDoc.get<String?>("owner_id")
-            if (ownerId == currentUserId) {
-                println("FirebaseDataSource: canManageGameEvents: Usuário é owner")
-                return true
-            }
-
-            // Verificar se está confirmado no jogo
-            val confirmationId = "${gameId}_$currentUserId"
-            val confDoc = firestore.collection("confirmations").document(confirmationId).get()
-            if (confDoc.exists) {
-                val status = confDoc.get<String?>("status")
-                if (status == "CONFIRMED") {
-                    println("FirebaseDataSource: canManageGameEvents: Usuário confirmado")
-                    return true
-                }
-            }
-
-            println("FirebaseDataSource: canManageGameEvents: Permissão negada")
-            false
-        } catch (e: Exception) {
-            println("FirebaseDataSource: canManageGameEvents: Erro: ${e.message}")
-            false
-        }
-    }
-
-    actual suspend fun updateScoreForGoal(gameId: String, teamId: String): Result<Unit> {
-        return try {
-            val scoreDocRef = firestore.collection("live_scores").document(gameId)
-            val gameDocRef = firestore.collection("games").document(gameId)
-
-            // Garantir que o documento de placar existe
-            try {
-                val snapshot = scoreDocRef.get()
-                if (!snapshot.exists) {
-                    val teamsSnapshot = firestore.collection("teams")
-                        .where { "game_id" equalTo gameId }
-                        .get()
-
-                    val teams = teamsSnapshot.documents.mapNotNull { it.toTeamOrNull() }
-                    if (teams.size >= 2) {
-                        startLiveGame(gameId, teams[0].id, teams[1].id)
-                        println("FirebaseDataSource: Placar inicializado sob demanda")
-                    }
-                }
-            } catch (e: Exception) {
-                println("FirebaseDataSource: Erro ao inicializar placar: ${e.message}")
-            }
-
-            firestore.runTransaction<Unit> {
-                val snapshot = get(scoreDocRef)
-                val score = snapshot.toLiveScoreOrNull() ?: return@runTransaction
-
-                var newTeam1Score = score.team1Score
-                var newTeam2Score = score.team2Score
-
-                when {
-                    score.team1Id == teamId -> {
-                        newTeam1Score += 1
-                        update(scoreDocRef, mapOf("team1_score" to newTeam1Score))
-                    }
-                    score.team2Id == teamId -> {
-                        newTeam2Score += 1
-                        update(scoreDocRef, mapOf("team2_score" to newTeam2Score))
-                    }
-                    else -> {
-                        println("FirebaseDataSource: GOL para time desconhecido: $teamId")
-                    }
-                }
-
-                // Sincronizar com documento principal do jogo
-                update(gameDocRef, mapOf(
-                    "team1_score" to newTeam1Score,
-                    "team2_score" to newTeam2Score
-                ))
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updatePlayerStats(
-        gameId: String,
-        playerId: String,
-        teamId: String,
-        eventType: GameEventType,
-        assistedById: String?
-    ): Result<Unit> {
-        return try {
-            val statsId = "${gameId}_$playerId"
-            val statsDocRef = firestore.collection("live_player_stats").document(statsId)
-            val confirmationId = "${gameId}_$playerId"
-            val confDocRef = firestore.collection("confirmations").document(confirmationId)
-
-            firestore.runTransaction<Unit> {
-                // 1. Atualizar Live Player Stats
-                val snapshot = get(statsDocRef)
-
-                if (!snapshot.exists) {
-                    // Criar nova estatística
-                    val newStats = mapOf(
-                        "id" to statsId,
-                        "game_id" to gameId,
-                        "player_id" to playerId,
-                        "team_id" to teamId,
-                        "goals" to if (eventType == GameEventType.GOAL) 1 else 0,
-                        "assists" to 0,
-                        "saves" to if (eventType == GameEventType.SAVE) 1 else 0,
-                        "yellow_cards" to if (eventType == GameEventType.YELLOW_CARD) 1 else 0,
-                        "red_cards" to if (eventType == GameEventType.RED_CARD) 1 else 0
-                    )
-                    set(statsDocRef, newStats)
-                } else {
-                    // Atualizar estatística existente
-                    when (eventType) {
-                        GameEventType.GOAL -> update(statsDocRef, mapOf("goals" to snapshot.getGoals() + 1))
-                        GameEventType.SAVE -> update(statsDocRef, mapOf("saves" to snapshot.getSaves() + 1))
-                        GameEventType.YELLOW_CARD -> update(statsDocRef, mapOf("yellow_cards" to snapshot.getYellowCards() + 1))
-                        GameEventType.RED_CARD -> update(statsDocRef, mapOf("red_cards" to snapshot.getRedCards() + 1))
-                        else -> {}
-                    }
-                }
-
-                // 2. Sync com GameConfirmation
-                val confSnapshot = get(confDocRef)
-                if (confSnapshot.exists) {
-                    val currentGoals = confSnapshot.get<Long?>("goals") ?: 0
-                    val currentYellow = confSnapshot.get<Long?>("yellow_cards") ?: 0
-                    val currentRed = confSnapshot.get<Long?>("red_cards") ?: 0
-                    val currentSaves = confSnapshot.get<Long?>("saves") ?: 0
-
-                    when (eventType) {
-                        GameEventType.GOAL -> update(confDocRef, mapOf("goals" to currentGoals + 1))
-                        GameEventType.YELLOW_CARD -> update(confDocRef, mapOf("yellow_cards" to currentYellow + 1))
-                        GameEventType.RED_CARD -> update(confDocRef, mapOf("red_cards" to currentRed + 1))
-                        GameEventType.SAVE -> update(confDocRef, mapOf("saves" to currentSaves + 1))
-                        else -> {}
-                    }
-                }
-
-                // 3. Atualizar assistência se houver
-                if (eventType == GameEventType.GOAL && assistedById != null) {
-                    val assistStatsId = "${gameId}_$assistedById"
-                    val assistStatsDocRef = firestore.collection("live_player_stats").document(assistStatsId)
-                    val assistConfDocRef = firestore.collection("confirmations").document(assistStatsId)
-
-                    // Update Live Stats
-                    val assistSnapshot = get(assistStatsDocRef)
-                    if (assistSnapshot.exists) {
-                        update(assistStatsDocRef, mapOf("assists" to assistSnapshot.getAssists() + 1))
-                    } else {
-                        val newAssistStats = mapOf(
-                            "id" to assistStatsId,
-                            "game_id" to gameId,
-                            "player_id" to assistedById,
-                            "team_id" to teamId,
-                            "assists" to 1
-                        )
-                        set(assistStatsDocRef, newAssistStats)
-                    }
-
-                    // Update Confirmation
-                    val assistConfSnapshot = get(assistConfDocRef)
-                    if (assistConfSnapshot.exists) {
-                        val currentAssistCount = assistConfSnapshot.get<Long?>("assists") ?: 0
-                        update(assistConfDocRef, mapOf("assists" to currentAssistCount + 1))
-                    }
-                }
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> {
-        return try {
-            val functions = Firebase.functions(FUNCTIONS_REGION)
-            functions.httpsCallable("deleteLiveGameEvent")
-                .invoke(
-                    mapOf(
-                        "gameId" to gameId,
-                        "eventId" to eventId,
-                    )
-                )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== GROUPS MANAGEMENT ==========
-
-    actual suspend fun createGroup(group: Group): Result<Group> {
-        return try {
-            val docRef = firestore.collection(COLLECTION_GROUPS).document
-            val groupData = mapOf(
-                "id" to docRef.id,
-                "name" to group.name,
-                "description" to group.description,
-                "photo_url" to group.photoUrl,
-                "owner_id" to group.ownerId,
-                "is_active" to true,
-                "created_at" to FieldValue.serverTimestamp
-            )
-            docRef.set(groupData)
-            Result.success(group.copy(id = docRef.id))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateGroup(groupId: String, updates: Map<String, Any>): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .update(updates)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getGroupMembers(groupId: String): Result<List<GroupMember>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("members")
-                .get()
-            Result.success(snapshot.documents.mapNotNull { it.toGroupMemberOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun addGroupMember(groupId: String, userId: String, role: String): Result<Unit> {
-        return try {
-            val memberData = mapOf(
-                "user_id" to userId,
-                "role" to role,
-                "joined_at" to FieldValue.serverTimestamp
-            )
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("members")
-                .document(userId)
-                .set(memberData)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun removeGroupMember(groupId: String, userId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("members")
-                .document(userId)
-                .delete()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getGroupDetails(groupId: String): Result<Group> {
-        return try {
-            val doc = firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .get()
-
-            if (!doc.exists) {
-                return Result.failure(NoSuchElementException("Grupo não encontrado: $groupId"))
-            }
-
-            val group = doc.toGroupOrNull()
-                ?: return Result.failure(IllegalStateException("Erro ao converter grupo"))
-
-            Result.success(group)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun getGroupMembersFlow(groupId: String): Flow<Result<List<GroupMember>>> {
-        return firestore.collection(COLLECTION_GROUPS)
-            .document(groupId)
-            .collection("members")
-            .where { "status" equalTo "ACTIVE" }
-            .orderBy("joined_at", Direction.ASCENDING)
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toGroupMemberOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual fun getGroupDetailsFlow(groupId: String): Flow<Result<Group>> {
-        return firestore.collection(COLLECTION_GROUPS)
-            .document(groupId)
-            .snapshots()
-            .map { snapshot ->
-                if (snapshot.exists) {
-                    val group = snapshot.toGroupOrNull()
-                    if (group != null) Result.success(group)
-                    else Result.failure(Exception("Erro ao converter grupo"))
-                } else {
-                    Result.failure(Exception("Grupo não encontrado"))
-                }
-            }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    // ========== GROUPS ADVANCED ==========
-
-    actual suspend fun promoteGroupMemberToAdmin(groupId: String, memberId: String): Result<Unit> {
-        return try {
-            firestore.runTransaction<Unit> {
-                val memberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(memberId)
-                update(memberRef, mapOf("role" to "ADMIN"))
-
-                val userGroupRef = firestore.collection("users")
-                    .document(memberId)
-                    .collection("groups").document(groupId)
-                update(userGroupRef, mapOf("role" to "ADMIN"))
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun demoteGroupAdminToMember(groupId: String, memberId: String): Result<Unit> {
-        return try {
-            firestore.runTransaction<Unit> {
-                val memberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(memberId)
-                update(memberRef, mapOf("role" to "MEMBER"))
-
-                val userGroupRef = firestore.collection("users")
-                    .document(memberId)
-                    .collection("groups").document(groupId)
-                update(userGroupRef, mapOf("role" to "MEMBER"))
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun updateGroupMemberRole(groupId: String, userId: String, role: String): Result<Unit> {
-        return try {
-            firestore.runTransaction<Unit> {
-                val memberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(userId)
-                update(memberRef, mapOf("role" to role))
-
-                val userGroupRef = firestore.collection("users")
-                    .document(userId)
-                    .collection("groups").document(groupId)
-                update(userGroupRef, mapOf("role" to role))
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun leaveGroup(groupId: String, userId: String): Result<Unit> {
-        return try {
-            firestore.runTransaction<Unit> {
-                val memberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(userId)
-                update(memberRef, mapOf("status" to "INACTIVE"))
-
-                // member_count é server-authoritative. onMemberWritten observa
-                // ACTIVE -> INACTIVE e aplica o único delta idempotente.
-
-                val userGroupRef = firestore.collection("users")
-                    .document(userId)
-                    .collection("groups").document(groupId)
-                delete(userGroupRef)
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun archiveGroup(groupId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .update(mapOf(
-                    "status" to "ARCHIVED",
-                    "updated_at" to FieldValue.serverTimestamp
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun restoreGroup(groupId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .update(mapOf(
-                    "status" to "ACTIVE",
-                    "updated_at" to FieldValue.serverTimestamp
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun deleteGroup(groupId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .update(mapOf(
-                    "status" to "DELETED",
-                    "updated_at" to FieldValue.serverTimestamp
-                ))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun transferGroupOwnership(
-        groupId: String,
-        newOwnerId: String,
-        oldOwnerId: String,
-        newOwnerName: String
-    ): Result<Unit> {
-        return try {
-            firestore.runTransaction<Unit> {
-                val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                update(groupRef, mapOf(
-                    "owner_id" to newOwnerId,
-                    "owner_name" to newOwnerName,
-                    "updated_at" to FieldValue.serverTimestamp
-                ))
-
-                val oldOwnerMemberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(oldOwnerId)
-                update(oldOwnerMemberRef, mapOf("role" to "ADMIN"))
-
-                val newOwnerMemberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(newOwnerId)
-                update(newOwnerMemberRef, mapOf("role" to "OWNER"))
-
-                val oldOwnerGroupRef = firestore.collection("users")
-                    .document(oldOwnerId)
-                    .collection("groups").document(groupId)
-                update(oldOwnerGroupRef, mapOf("role" to "ADMIN"))
-
-                val newOwnerGroupRef = firestore.collection("users")
-                    .document(newOwnerId)
-                    .collection("groups").document(groupId)
-                update(newOwnerGroupRef, mapOf("role" to "OWNER"))
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun syncGroupMemberCount(groupId: String, userIds: List<String>): Result<Unit> {
-        return try {
-            val correctMemberCount = userIds.size
-            val batch = firestore.batch()
-
-            val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
-            batch.update(groupRef, mapOf("member_count" to correctMemberCount))
-
-            userIds.forEach { memberId ->
-                val userGroupRef = firestore.collection("users")
-                    .document(memberId)
-                    .collection("groups").document(groupId)
-                batch.update(userGroupRef, mapOf("member_count" to correctMemberCount))
-            }
-
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun joinGroupByInviteCode(
-        inviteCode: String,
-        userId: String,
-        userName: String,
-        userPhoto: String?
-    ): Result<String> {
-        return try {
-            // Sistema canonico: lookup primeiro em invites/ (codigos com TTL e tracking)
-            // Fallback: groups.invite_code (codes legados, sticky)
-            // SPEC: feat-2026-05-08-consolidate-shareable-invites.md
-            val normalized = inviteCode.uppercase()
-
-            // 1. Tenta resolver via collection invites/ (caminho CANÔNICO).
-            // #2351: doc-id == code — lookup por get(doc-id), nao where('code')
-            // (que era LIST e permitia enumerar todos os convites). A rule de
-            // `invites` agora bloqueia list p/ nao-admin.
-            val invDoc = firestore.collection("invites").document(normalized).get()
-            val isModernInvite = run {
-                if (!invDoc.exists) return@run false
-                if (invDoc.get<Boolean?>("used") == true) return@run false
-                val expiresAt = invDoc.get<Timestamp?>("expires_at")
-                val nowMs = Clock.System.now().toEpochMilliseconds()
-                if (expiresAt != null && expiresAt.seconds * 1000L < nowMs) return@run false
-                true
-            }
-
-            if (isModernInvite) {
-                // ===== CAMINHO CANÔNICO (invites/) — FIX #2516 / #2517 =====
-                // O cliente NÃO cria mais o member doc nem incrementa member_count.
-                // Apenas marca o convite como usado; o trigger server-side
-                // `onInviteRedeemed` (functions/src/groups/invite-redeemed.ts) cria
-                // a membership via admin SDK (bypassa rules), funcionando p/ grupo
-                // PRIVADO — espelha `onJoinRequestApproved`. O counter member_count
-                // é mantido por `onMemberWritten`.
-                //
-                // BUGFIX: o fluxo Android antigo NUNCA marcava o convite como usado
-                // (criava o member direto), deixando single-use furado. Agora o
-                // update é o gatilho do trigger.
-                val groupId = invDoc.get<String?>("group_id")
-                    ?: return Result.failure(Exception("Convite sem grupo associado"))
-
-                // A rule de update de invites exige
-                // hasOnly(['used','used_by','used_at']), used==true e used_by==self.
-                firestore.collection("invites").document(normalized).update(
-                    mapOf(
-                        "used" to true,
-                        "used_by" to userId,
-                        "used_at" to FieldValue.serverTimestamp
-                    )
-                )
-
-                // FIX #2517: a membership é criada de forma ASSÍNCRONA pelo trigger.
-                // Em grupo PRIVADO, voltar antes do member doc existir causaria
-                // PERMISSION_DENIED na leitura do grupo. Aguardamos o member doc
-                // aparecer (até ~8s, polling leve). Timeout não é erro: a
-                // membership já está garantida pelo trigger; só a propagação pode
-                // demorar (cold start).
-                val memberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(userId)
-                val deadlineMs = Clock.System.now().toEpochMilliseconds() + 8000L
-                while (Clock.System.now().toEpochMilliseconds() < deadlineMs) {
-                    if (memberRef.get().exists) break
-                    delay(500L)
-                }
-
-                return Result.success(groupId)
-            }
-
-            // ===== CAMINHO LEGADO (groups.invite_code) =====
-            // Codes legados, sticky, sem doc em invites/. Um joiner não pode criar
-            // um invites/{code} (a rule exige inviter_id==self + admin do grupo),
-            // logo o trigger NÃO tem como disparar aqui. Mantemos o member-create
-            // pelo cliente — porém ele só é permitido pela rule em grupo PÚBLICO
-            // (gate is_public==true, proteção de #2153). Limitação herdada e
-            // documentada: convite legado em grupo PRIVADO no Android não entra
-            // (a web não suporta legado). Não é regressão deste PR.
-            val legacySnap = firestore.collection(COLLECTION_GROUPS)
-                .where { "invite_code" equalTo normalized }
-                .where { "status" equalTo "ACTIVE" }
-                .limit(1)
-                .get()
-
-            if (legacySnap.documents.isEmpty()) {
-                return Result.failure(Exception("Código de convite inválido"))
-            }
-            val groupId = legacySnap.documents[0].id
-
-            val groupDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).get()
-            if (!groupDoc.exists) {
-                return Result.failure(Exception("Grupo não encontrado"))
-            }
-            val groupStatus = groupDoc.get<String?>("status") ?: "ACTIVE"
-            if (groupStatus != "ACTIVE") {
-                return Result.failure(Exception("Grupo não está mais ativo"))
-            }
-            val groupName = groupDoc.get<String?>("name") ?: ""
-            val groupPhoto = groupDoc.get<String?>("photo_url")
-
-            firestore.runTransaction<Unit> {
-                val memberRef = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members").document(userId)
-
-                val memberData = mapOf(
-                    "user_id" to userId,
-                    "user_name" to userName,
-                    "user_photo" to userPhoto,
-                    "role" to "MEMBER",
-                    "status" to "ACTIVE",
-                    "joined_at" to FieldValue.serverTimestamp
-                )
-                set(memberRef, memberData)
-
-                // FIX #2516: REMOVIDO o client-side increment de member_count.
-                // Era server-authoritative (rule exige fieldUnchanged('member_count'))
-                // e o cliente entrando não é owner/admin → a transação inteira era
-                // rejeitada. O trigger `onMemberWritten` faz o +1 via admin SDK ao
-                // detectar o set(memberRef) acima. (Paridade com web FIX #611/#626.)
-
-                val userGroupRef = firestore.collection("users")
-                    .document(userId)
-                    .collection("groups").document(groupId)
-
-                val userGroupData = mapOf(
-                    "group_id" to groupId,
-                    "group_name" to groupName,
-                    "group_photo" to groupPhoto,
-                    "role" to "MEMBER",
-                    "joined_at" to FieldValue.serverTimestamp
-                )
-                set(userGroupRef, userGroupData)
-            }
-
-            Result.success(groupId)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun generateGroupInviteCode(groupId: String): Result<String> {
-        return try {
-            val chars = ('A'..'Z') + ('0'..'9')
-            var code: String
-            var attempts = 0
-
-            do {
-                code = (1..8).map { chars.random() }.joinToString("")
-                val existing = firestore.collection(COLLECTION_GROUPS)
-                    .where { "invite_code" equalTo code }
-                    .limit(1)
-                    .get()
-                attempts++
-            } while (!existing.documents.isEmpty() && attempts < 5)
-
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .update(mapOf(
-                    "invite_code" to code,
-                    "updated_at" to FieldValue.serverTimestamp
-                ))
-
-            Result.success(code)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== DISCOVERY (Issue #517 Phase 1) ==========
-
-    actual suspend fun searchPublicGroups(query: String, limit: Int): Result<List<Group>> {
-        return try {
-            val normalized = query.trim().lowercase()
-            // Firestore não tem full-text search nativa. Estratégia:
-            // 1. Buscar TODOS public+ACTIVE
-            // 2. Filtrar in-memory por nome OU descrição contendo o query
-            // Aceitável até ~hundreds de grupos públicos. Para escalar, plugar Algolia/MeiliSearch.
-            val snap = firestore.collection(COLLECTION_GROUPS)
-                .where { "is_public" equalTo true }
-                .where { "status" equalTo "ACTIVE" }
-                .limit(200)
-                .get()
-
-            val all = snap.documents.mapNotNull { doc ->
-                try {
-                    Group(
-                        id = doc.id,
-                        name = doc.get<String?>("name") ?: "",
-                        description = doc.get<String?>("description") ?: "",
-                        photoUrl = doc.get<String?>("photo_url"),
-                        ownerId = doc.get<String?>("owner_id") ?: "",
-                        ownerName = doc.get<String?>("owner_name") ?: "",
-                        isPublic = doc.get<Boolean?>("is_public") ?: false,
-                        membersCount = doc.get<Long?>("members_count")?.toInt() ?: 0,
-                    )
-                } catch (_: Exception) {
-                    null
-                }
-            }
-
-            val filtered = if (normalized.isBlank()) {
-                all
-            } else {
-                all.filter { g ->
-                    g.name.lowercase().contains(normalized) ||
-                        g.description.lowercase().contains(normalized)
-                }
-            }
-
-            Result.success(filtered.take(limit))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== JOIN REQUESTS (Issue #517 Phase 2) ==========
-
-    actual suspend fun createGroupJoinRequest(
-        groupId: String,
-        userId: String,
-        userName: String,
-        userPhoto: String?,
-    ): Result<Unit> {
-        return try {
-            val data = mapOf(
-                "user_id" to userId,
-                "user_name" to userName,
-                "user_photo" to userPhoto,
-                "status" to "PENDING",
-                "requested_at" to FieldValue.serverTimestamp,
-            )
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("join_requests")
-                .document(userId)
-                .set(data)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun cancelGroupJoinRequest(groupId: String, userId: String): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("join_requests")
-                .document(userId)
-                .delete()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun approveGroupJoinRequest(
-        groupId: String,
-        requesterId: String,
-        approverId: String,
-    ): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("join_requests")
-                .document(requesterId)
-                .update(
-                    mapOf(
-                        "status" to "APPROVED",
-                        "responded_at" to FieldValue.serverTimestamp,
-                        "responded_by" to approverId,
-                    )
-                )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun rejectGroupJoinRequest(
-        groupId: String,
-        requesterId: String,
-        approverId: String,
-    ): Result<Unit> {
-        return try {
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("join_requests")
-                .document(requesterId)
-                .update(
-                    mapOf(
-                        "status" to "REJECTED",
-                        "responded_at" to FieldValue.serverTimestamp,
-                        "responded_by" to approverId,
-                    )
-                )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun observeMyGroupJoinRequest(
-        groupId: String,
-        userId: String,
-    ): Flow<GroupJoinRequest?> = flow {
-        firestore.collection(COLLECTION_GROUPS)
-            .document(groupId)
-            .collection("join_requests")
-            .document(userId)
-            .snapshots
-            .collect { snapshot ->
-                if (!snapshot.exists) {
-                    emit(null)
-                } else {
-                    emit(parseGroupJoinRequest(snapshot.id, snapshot::get))
-                }
-            }
-    }
-
-    actual fun observePendingGroupJoinRequests(groupId: String): Flow<List<GroupJoinRequest>> = flow {
-        firestore.collection(COLLECTION_GROUPS)
-            .document(groupId)
-            .collection("join_requests")
-            .where { "status" equalTo "PENDING" }
-            .orderBy("requested_at")
-            .snapshots
-            .collect { snap ->
-                val items = snap.documents.mapNotNull { doc ->
-                    parseGroupJoinRequest(doc.id, doc::get)
-                }
-                emit(items)
-            }
-    }
-
-    private fun parseGroupJoinRequest(
-        id: String,
-        getter: (String) -> Any?,
-    ): GroupJoinRequest? {
-        return try {
-            @Suppress("UNCHECKED_CAST")
-            val requestedAtTs = getter("requested_at") as? Timestamp
-            @Suppress("UNCHECKED_CAST")
-            val respondedAtTs = getter("responded_at") as? Timestamp
-            GroupJoinRequest(
-                id = id,
-                userId = (getter("user_id") as? String) ?: id,
-                userName = (getter("user_name") as? String) ?: "",
-                userPhoto = getter("user_photo") as? String,
-                status = GroupJoinRequestStatus.fromString(getter("status") as? String),
-                requestedAt = requestedAtTs?.let { it.seconds * 1000L + it.nanoseconds / 1_000_000L },
-                respondedAt = respondedAtTs?.let { it.seconds * 1000L + it.nanoseconds / 1_000_000L },
-                respondedBy = getter("responded_by") as? String,
-            )
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    // ========== MÉTODOS AUXILIARES DE GRUPO ==========
-
-    suspend fun getMyRoleInGroup(groupId: String, userId: String): Result<String?> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("members")
-                .document(userId)
-                .get()
-
-            val role = snapshot.get<String?>("role")
-            Result.success(role)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun isMemberOfGroup(groupId: String, userId: String): Result<Boolean> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("members")
-                .document(userId)
-                .get()
-
-            val isMember = snapshot.exists && snapshot.get<String?>("status") == "ACTIVE"
-            Result.success(isMember)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getMyAdminGroups(userId: String): Result<List<String>> {
-        return try {
-            val snapshot = firestore.collection("users")
-                .document(userId)
-                .collection("groups")
-                .where { "role" inArray listOf("OWNER", "ADMIN") }
-                .get()
-
-            val groupIds = snapshot.documents.map { it.id }
-            Result.success(groupIds)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getValidGroupsForGame(userId: String): Result<List<String>> {
-        return try {
-            val snapshot = firestore.collection("users")
-                .document(userId)
-                .collection("groups")
-                .where { "status" equalTo "ACTIVE" }
-                .where { "role" inArray listOf("OWNER", "ADMIN") }
-                .get()
-
-            val groupIds = snapshot.documents.map { it.id }
-            Result.success(groupIds)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun canCreateGames(userId: String): Result<Boolean> {
-        return try {
-            val snapshot = firestore.collection("users")
-                .document(userId)
-                .collection("groups")
-                .where { "status" equalTo "ACTIVE" }
-                .where { "role" inArray listOf("OWNER", "ADMIN") }
-                .limit(1)
-                .get()
-
-            Result.success(!snapshot.documents.isEmpty())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun countMyAdminGroups(userId: String): Result<Int> {
-        return try {
-            val snapshot = firestore.collection("users")
-                .document(userId)
-                .collection("groups")
-                .where { "role" inArray listOf("OWNER", "ADMIN") }
-                .get()
-
-            Result.success(snapshot.documents.size)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun syncAllMyGroupsMemberCount(userId: String): Result<Unit> {
-        return try {
-            val groupsSnapshot = firestore.collection("users")
-                .document(userId)
-                .collection("groups")
-                .get()
-
-            groupsSnapshot.documents.forEach { userGroupDoc ->
-                val groupId = userGroupDoc.id
-
-                val membersSnapshot = firestore.collection(COLLECTION_GROUPS)
-                    .document(groupId)
-                    .collection("members")
-                    .where { "status" equalTo "ACTIVE" }
-                    .get()
-
-                val memberCount = membersSnapshot.documents.size
-
-                firestore.runTransaction<Unit> {
-                    val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                    update(groupRef, mapOf("member_count" to memberCount))
-
-                    val userGroupRef = firestore.collection("users")
-                        .document(userId)
-                        .collection("groups").document(groupId)
-                    update(userGroupRef, mapOf("member_count" to memberCount))
-                }
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getGroupActiveMemberIds(groupId: String): Result<List<String>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("members")
-                .where { "status" equalTo "ACTIVE" }
-                .get()
-
-            val userIds = snapshot.documents.map { it.id }
-            Result.success(userIds)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String> {
-        return Result.failure(Exception("Upload de fotos requer URI Android — não disponível nesta plataforma"))
-    }
-
-    // ========== BATCH OPERATIONS ==========
-
-    actual suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit> {
-        return try {
-            val chunks = operations.chunked(450)
-
-            chunks.forEach { chunk ->
-                val batch = firestore.batch()
-
-                chunk.forEach { operation ->
-                    when (operation) {
-                        is BatchOperation.Set -> {
-                            val ref = firestore.collection(operation.collection).document(operation.documentId)
-                            batch.set(ref, operation.data)
-                        }
-                        is BatchOperation.Update -> {
-                            val ref = firestore.collection(operation.collection).document(operation.documentId)
-                            batch.update(ref, operation.updates)
-                        }
-                        is BatchOperation.Delete -> {
-                            val ref = firestore.collection(operation.collection).document(operation.documentId)
-                            batch.delete(ref)
-                        }
-                    }
-                }
-
-                batch.commit()
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getLivePlayerStats(gameId: String): Result<List<LivePlayerStats>> {
-        return try {
-            val snapshot = firestore.collection("live_player_stats")
-                .where { "game_id" equalTo gameId }
-                .get()
-
-            val stats = snapshot.documents.mapNotNull { doc ->
-                LivePlayerStats(
-                    id = doc.id,
-                    gameId = doc.get<String?>("game_id") ?: "",
-                    playerId = doc.get<String?>("player_id") ?: "",
-                    playerName = doc.get<String?>("player_name") ?: "",
-                    teamId = doc.get<String?>("team_id") ?: "",
-                    position = doc.get<String?>("position") ?: "LINE",
-                    goals = doc.get<Long?>("goals")?.toInt() ?: 0,
-                    assists = doc.get<Long?>("assists")?.toInt() ?: 0,
-                    saves = doc.get<Long?>("saves")?.toInt() ?: 0,
-                    yellowCards = doc.get<Long?>("yellow_cards")?.toInt() ?: 0,
-                    redCards = doc.get<Long?>("red_cards")?.toInt() ?: 0,
-                    isPlaying = doc.get<Boolean?>("is_playing") ?: true
-                )
-            }
-
-            Result.success(stats)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual fun getLivePlayerStatsFlow(gameId: String): Flow<Result<List<LivePlayerStats>>> {
-        return firestore.collection("live_player_stats")
-            .where { "game_id" equalTo gameId }
-            .snapshots()
-            .map { snapshot ->
-                val stats = snapshot.documents.mapNotNull { doc ->
-                    LivePlayerStats(
-                        id = doc.id,
-                        gameId = doc.get<String?>("game_id") ?: "",
-                        playerId = doc.get<String?>("player_id") ?: "",
-                        playerName = doc.get<String?>("player_name") ?: "",
-                        teamId = doc.get<String?>("team_id") ?: "",
-                        position = doc.get<String?>("position") ?: "LINE",
-                        goals = doc.get<Long?>("goals")?.toInt() ?: 0,
-                        assists = doc.get<Long?>("assists")?.toInt() ?: 0,
-                        saves = doc.get<Long?>("saves")?.toInt() ?: 0,
-                        yellowCards = doc.get<Long?>("yellow_cards")?.toInt() ?: 0,
-                        redCards = doc.get<Long?>("red_cards")?.toInt() ?: 0,
-                        isPlaying = doc.get<Boolean?>("is_playing") ?: true
-                    )
-                }
-                Result.success(stats)
-            }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun finishGame(gameId: String): Result<Unit> {
-        return try {
-            firestore.collection("live_scores")
-                .document(gameId)
-                .update(mapOf("finished_at" to FieldValue.serverTimestamp))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun clearAllLiveGameData(): Result<Unit> {
-        return try {
-            // Buscar documentos de cada coleção
-            val scoresSnapshot = firestore.collection("live_scores").limit(500).get()
-            val eventsSnapshot = firestore.collection("game_events").limit(500).get()
-            val liveStatsSnapshot = firestore.collection("live_player_stats").limit(500).get()
-
-            // Juntar todos os docs e processar em chunks de 450 (limite do batch é 500)
-            val allDocs = scoresSnapshot.documents + eventsSnapshot.documents + liveStatsSnapshot.documents
-            allDocs.chunked(450).forEach { chunk ->
-                val batch = firestore.batch()
-                chunk.forEach { doc -> batch.delete(doc.reference) }
-                batch.commit()
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // ========== PAYMENTS ==========
-
-    actual suspend fun createPayment(payment: Payment): Result<Payment> {
-        return try {
-            val paymentRef = if (payment.id.isEmpty()) firestore.collection(COLLECTION_PAYMENTS).document
-            else firestore.collection(COLLECTION_PAYMENTS).document(payment.id)
-            val paymentData = mapOf(
-                "id" to paymentRef.id, "user_id" to payment.userId, "game_id" to (payment.gameId ?: ""),
-                "schedule_id" to (payment.scheduleId ?: ""), "type" to payment.type.name,
-                "amount" to payment.amount, "status" to payment.status.name,
-                "payment_method" to (payment.paymentMethod?.name ?: ""), "due_date" to payment.dueDate,
-                // paid_at: usa serverTimestamp se já pago sem timestamp local; 0L se ainda não pago (issue #878)
-                "paid_at" to (payment.paidAt?.let { if (it == 0L) 0L else it } ?: 0L),
-                "pix_key" to (payment.pixKey ?: ""),
-                "pix_qrcode" to (payment.pixQrcode ?: ""), "pix_txid" to (payment.pixTxid ?: ""),
-                "receipt_url" to (payment.receiptUrl ?: ""), "notes" to (payment.notes ?: ""),
-                // created_at: usa serverTimestamp para evitar clock skew do cliente (issue #878)
-                "created_at" to FieldValue.serverTimestamp
-            )
-            paymentRef.set(paymentData)
-            Result.success(payment.copy(id = paymentRef.id))
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao criar pagamento: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun confirmPayment(paymentId: String): Result<Unit> {
-        return try {
-            // paid_at: usa serverTimestamp para evitar clock skew do cliente (issue #878)
-            firestore.collection(COLLECTION_PAYMENTS).document(paymentId)
-                .update(mapOf("status" to PaymentStatus.PAID.name, "paid_at" to FieldValue.serverTimestamp))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao confirmar pagamento: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getPaymentsByUser(userId: String): Result<List<Payment>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_PAYMENTS)
-                .where { "user_id" equalTo userId }.orderBy("created_at", Direction.DESCENDING).get()
-            Result.success(snapshot.documents.mapNotNull { it.toPaymentOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar pagamentos do usuário: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== CASHBOX ==========
-
-    actual suspend fun uploadCashboxReceipt(groupId: String, filePath: String): Result<String> {
-        return Result.failure(Exception("Upload de recibo requer URI Android — não disponível nesta plataforma"))
-    }
-
-    actual suspend fun addCashboxEntry(groupId: String, entry: CashboxEntry, receiptFilePath: String?): Result<String> {
-        return try {
-            val requestId = entry.id.trim()
-            if (!requestId.matches(Regex("^[A-Za-z0-9_-]{16,128}$"))) {
-                return Result.failure(Exception("requestId idempotente inválido"))
-            }
-            val finalEntry = if (receiptFilePath != null) {
-                val up = uploadCashboxReceipt(groupId, receiptFilePath)
-                if (up.isSuccess) entry.copy(receiptUrl = up.getOrNull()) else entry
-            } else entry
-            val response = Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("createCashboxEntry")
-                .invoke(
-                    mapOf(
-                        "groupId" to groupId,
-                        "type" to finalEntry.type,
-                        "amount" to finalEntry.amount,
-                        "description" to finalEntry.description,
-                        "receiptUrl" to finalEntry.receiptUrl,
-                        "requestId" to requestId,
-                        "category" to finalEntry.category,
-                        "customCategory" to finalEntry.customCategory,
-                        "referenceDate" to finalEntry.referenceDate,
-                        "playerId" to finalEntry.playerId,
-                        "playerName" to finalEntry.playerName,
-                        "gameId" to finalEntry.gameId
-                    )
-                )
-                .data<Map<String, Any?>>()
-            val entryId = response["entryId"] as? String
-                ?: return Result.failure(Exception("Resposta inválida ao criar entrada"))
-            Result.success(entryId)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao adicionar entrada no caixa: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getCashboxSummary(groupId: String): Result<CashboxSummary> {
-        return try {
-            val doc = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current").get()
-            Result.success(if (doc.exists) doc.toCashboxSummaryOrNull() ?: CashboxSummary() else CashboxSummary())
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar resumo do caixa: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual fun getCashboxSummaryFlow(groupId: String): Flow<Result<CashboxSummary>> {
-        return firestore.collection(COLLECTION_GROUPS).document(groupId)
-            .collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current").snapshots()
-            .map { s -> Result.success(if (s.exists) s.toCashboxSummaryOrNull() ?: CashboxSummary() else CashboxSummary()) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun getCashboxHistory(groupId: String, limit: Int): Result<List<CashboxEntry>> {
-        return try {
-            val snapshot = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }
-                .orderBy("created_at", Direction.DESCENDING).limit(limit).get()
-            Result.success(snapshot.documents.mapNotNull { it.toCashboxEntryOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar histórico do caixa: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual fun getCashboxHistoryFlow(groupId: String, limit: Int): Flow<Result<List<CashboxEntry>>> {
-        return firestore.collection(COLLECTION_GROUPS).document(groupId)
-            .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }
-            .orderBy("created_at", Direction.DESCENDING).limit(limit).snapshots()
-            .map { s -> Result.success(s.documents.mapNotNull { it.toCashboxEntryOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
-
-    actual suspend fun getCashboxHistoryFiltered(groupId: String, filter: CashboxFilter, limit: Int): Result<List<CashboxEntry>> {
-        return try {
-            var query: Query = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }
-            filter.type?.let { query = query.where { "type" equalTo it.name } }
-            filter.category?.let { query = query.where { "category" equalTo it.name } }
-            filter.playerId?.let { query = query.where { "player_id" equalTo it } }
-            filter.startDate?.let { query = query.where { "reference_date" greaterThanOrEqualTo it.toString() } }
-            filter.endDate?.let { query = query.where { "reference_date" lessThanOrEqualTo it.toString() } }
-            val orderField = if (filter.startDate != null || filter.endDate != null) "reference_date" else "created_at"
-            Result.success(query.orderBy(orderField, Direction.DESCENDING).limit(limit).get().documents.mapNotNull { it.toCashboxEntryOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar histórico filtrado do caixa: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getCashboxEntriesByMonth(groupId: String, year: Int, month: Int): Result<List<CashboxEntry>> {
-        return try {
-            val startMillis = kotlinx.datetime.LocalDateTime(year, month, 1, 0, 0, 0).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-            val ny = if (month == 12) year + 1 else year; val nm = if (month == 12) 1 else month + 1
-            val endMillis = kotlinx.datetime.LocalDateTime(ny, nm, 1, 0, 0, 0).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-            val snapshot = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }
-                .where { "reference_date" greaterThanOrEqualTo Timestamp(startMillis / 1000, 0) }
-                .where { "reference_date" lessThan Timestamp(endMillis / 1000, 0) }
-                .orderBy("reference_date", Direction.DESCENDING).get()
-            Result.success(snapshot.documents.mapNotNull { it.toCashboxEntryOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar entradas por mês: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getCashboxEntryById(groupId: String, entryId: String): Result<CashboxEntry> {
-        return try {
-            val doc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX).document(entryId).get()
-            if (doc.exists) Result.success(doc.toCashboxEntryOrNull() ?: return Result.failure(Exception("Erro ao converter entrada")))
-            else Result.failure(Exception("Entrada não encontrada"))
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar entrada por ID: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun deleteCashboxEntry(groupId: String, entryId: String): Result<Unit> {
-        return try {
-            Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("voidCashboxEntry")
-                .invoke(mapOf("groupId" to groupId, "entryId" to entryId))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao deletar entrada do caixa: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun recalculateCashboxBalance(groupId: String): Result<CashboxSummary> {
-        return try {
-            val response = Firebase.functions(FUNCTIONS_REGION)
-                .httpsCallable("reconcileCashboxSummary")
-                .invoke(mapOf("groupId" to groupId))
-                .data<Map<String, Any?>>()
-            val balance = (response["balance"] as? Number)?.toDouble() ?: 0.0
-            val totalIncome = (response["totalIncome"] as? Number)?.toDouble() ?: 0.0
-            val totalExpense = (response["totalExpense"] as? Number)?.toDouble() ?: 0.0
-            val entryCount = (response["entryCount"] as? Number)?.toInt() ?: 0
-            Result.success(
-                CashboxSummary(
-                    balance = balance,
-                    totalIncome = totalIncome,
-                    totalExpense = totalExpense,
-                    entryCount = entryCount
-                )
-            )
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao recalcular saldo do caixa: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== RANKINGS ==========
-
-    actual suspend fun getRankingByCategory(category: String, field: String, limit: Int): Result<List<Triple<String, Long, Int>>> {
-        return try {
-            val collection = if (category == "XP") COLLECTION_USERS else COLLECTION_STATISTICS
-            val snapshot = firestore.collection(collection).orderBy(field, Direction.DESCENDING).limit(limit).get()
-            Result.success(snapshot.documents.mapNotNull { doc ->
-                val value = if (category == "XP") doc.get<Long?>("experience_points") ?: 0L else doc.get<Long?>(field) ?: 0L
-                val games = if (category == "XP") 0 else doc.get<Long?>("totalGames")?.toInt() ?: doc.get<Long?>("total_games")?.toInt() ?: 0
-                Triple(doc.id, value, games)
-            })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar ranking $category: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getRankingDeltas(periodName: String, periodKey: String, deltaField: String, minGames: Int, limit: Int): Result<List<Triple<String, Long, Int>>> {
-        return try {
-            val snapshot = firestore.collection("ranking_deltas")
-                .where { "period" equalTo periodName }.where { "period_key" equalTo periodKey }
-                .orderBy(deltaField, Direction.DESCENDING).limit(limit).get()
-            Result.success(snapshot.documents.mapNotNull { doc ->
-                val userId = doc.get<String?>("user_id") ?: return@mapNotNull null
-                Triple(userId, doc.get<Long?>(deltaField) ?: 0L, doc.get<Long?>("games_added")?.toInt() ?: 0)
-            }.filter { (_, _, g) -> g >= minGames })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar ranking deltas: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getUsersStatistics(userIds: List<String>): Result<Map<String, Statistics>> {
-        return try {
-            if (userIds.isEmpty()) return Result.success(emptyMap())
-            val map = mutableMapOf<String, Statistics>()
-            userIds.chunked(10).forEach { chunk ->
-                firestore.collection(COLLECTION_STATISTICS).where { FieldPath.documentId inArray chunk }.get()
-                    .documents.forEach { doc -> doc.toRankingStatisticsOrNull()?.let { map[doc.id] = it } }
-            }
-            Result.success(map)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar estatísticas em batch: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>> {
-        return try {
-            Result.success(firestore.collection(COLLECTION_STATISTICS).orderBy(orderByField, Direction.DESCENDING).limit(limit).get()
-                .documents.mapNotNull { it.toRankingStatisticsOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar ranking de estatísticas: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    // ========== NOTIFICATIONS ==========
-
-    actual suspend fun getMyNotifications(limit: Int): Result<List<AppNotification>> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            Result.success(firestore.collection("notifications").where { "user_id" equalTo userId }
-                .orderBy("created_at", Direction.DESCENDING).limit(limit).get().documents.mapNotNull { it.toAppNotificationOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar notificações: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual fun getMyNotificationsFlow(limit: Int): Flow<List<AppNotification>> = flow {
-        val userId = auth.currentUser?.uid ?: run { emit(emptyList()); return@flow }
-        firestore.collection("notifications").where { "user_id" equalTo userId }
-            .orderBy("created_at", Direction.DESCENDING).limit(limit).snapshots()
-            .collect { emit(it.documents.mapNotNull { d -> d.toAppNotificationOrNull() }) }
-    }.catch { emit(emptyList()) }
-
-    actual suspend fun getUnreadNotifications(): Result<List<AppNotification>> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            Result.success(firestore.collection("notifications").where { "user_id" equalTo userId }
-                .where { "read" equalTo false }.get().documents.mapNotNull { it.toAppNotificationOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar notificações não lidas: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual fun getUnreadCountFlow(): Flow<Int> = flow {
-        val userId = auth.currentUser?.uid ?: run { emit(0); return@flow }
-        firestore.collection("notifications").where { "user_id" equalTo userId }.where { "read" equalTo false }
-            .snapshots().collect { emit(it.documents.size) }
-    }.catch { emit(0) }
-
-    actual suspend fun getUnreadCount(): Result<Int> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            Result.success(firestore.collection("notifications").where { "user_id" equalTo userId }.where { "read" equalTo false }.get().documents.size)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao contar notificações não lidas: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun markNotificationAsRead(notificationId: String): Result<Unit> {
-        return try {
-            firestore.collection("notifications").document(notificationId)
-                .update(mapOf("read" to true, "read_at" to FieldValue.serverTimestamp))
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun markNotificationAsUnread(notificationId: String): Result<Unit> {
-        return try {
-            firestore.collection("notifications").document(notificationId)
-                .update(mapOf("read" to false, "read_at" to FieldValue.delete))
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun markAllNotificationsAsRead(): Result<Unit> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val snapshot = firestore.collection("notifications").where { "user_id" equalTo userId }.where { "read" equalTo false }.get()
-            if (snapshot.documents.isEmpty()) return Result.success(Unit)
-            snapshot.documents.chunked(450).forEach { chunk ->
-                val batch = firestore.batch()
-                chunk.forEach { doc -> batch.update(doc.reference, mapOf("read" to true, "read_at" to FieldValue.serverTimestamp)) }
-                batch.commit()
-            }
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getNotificationById(notificationId: String): Result<AppNotification> {
-        return try {
-            val doc = firestore.collection("notifications").document(notificationId).get()
-            Result.success(doc.toAppNotificationOrNull() ?: return Result.failure(Exception("Notificação não encontrada")))
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun createNotification(notification: AppNotification): Result<String> {
-        return try {
-            val docRef = if (notification.id.isNotEmpty()) firestore.collection("notifications").document(notification.id)
-            else firestore.collection("notifications").document
-            docRef.set(notification.copy(id = docRef.id))
-            Result.success(docRef.id)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun batchCreateNotifications(notifications: List<AppNotification>): Result<Unit> {
-        return try {
-            if (notifications.isEmpty()) return Result.success(Unit)
-            val batch = firestore.batch()
-            notifications.forEach { notification ->
-                val docRef = if (notification.id.isNotEmpty()) firestore.collection("notifications").document(notification.id)
-                else firestore.collection("notifications").document
-                batch.set(docRef, notification.copy(id = docRef.id))
-            }
-            batch.commit()
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun deleteNotification(notificationId: String): Result<Unit> {
-        return try {
-            firestore.collection("notifications").document(notificationId).delete()
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun deleteOldNotifications(): Result<Int> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val thirtyDaysAgoTs = Timestamp((Clock.System.now().toEpochMilliseconds() - 30L * 24 * 60 * 60 * 1000) / 1000, 0)
-            val oldSnapshot = firestore.collection("notifications").where { "user_id" equalTo userId }.where { "created_at" lessThan thirtyDaysAgoTs }.get()
-            val allSnapshot = firestore.collection("notifications").where { "user_id" equalTo userId }.get()
-            val docsToDelete = mutableListOf<dev.gitlive.firebase.firestore.DocumentSnapshot>()
-            docsToDelete.addAll(oldSnapshot.documents)
-            allSnapshot.documents.forEach { doc ->
-                if (doc.get<Any?>("created_at") == null && !docsToDelete.any { it.id == doc.id }) docsToDelete.add(doc)
-            }
-            if (docsToDelete.isEmpty()) return Result.success(0)
-            docsToDelete.chunked(400).forEach { chunk ->
-                val batch = firestore.batch(); chunk.forEach { doc -> batch.delete(doc.reference) }; batch.commit()
-            }
-            Result.success(docsToDelete.size)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getNotificationsByType(type: NotificationType, limit: Int): Result<List<AppNotification>> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            Result.success(firestore.collection("notifications").where { "user_id" equalTo userId }
-                .where { "type" equalTo type.name }.orderBy("created_at", Direction.DESCENDING).limit(limit).get()
-                .documents.mapNotNull { it.toAppNotificationOrNull() })
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getPendingActionNotifications(): Result<List<AppNotification>> {
-        return try {
-            val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val snapshot = firestore.collection("notifications").where { "user_id" equalTo userId }.where { "read" equalTo false }.get()
-            val now = Clock.System.now().toEpochMilliseconds()
-            Result.success(snapshot.documents.mapNotNull { it.toAppNotificationOrNull() }
-                .filter { it.requiresResponse() && (it.expiresAt == null || it.expiresAt > now) })
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    // ========== GAMIFICATION - STREAKS ==========
-
-    actual suspend fun getUserStreak(userId: String): Result<UserStreak?> {
-        return try {
-            val snapshot = firestore.collection("user_streaks").where { "user_id" equalTo userId }.get()
-            Result.success(snapshot.documents.firstOrNull()?.toUserStreakOrNull())
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun saveUserStreak(streak: UserStreak): Result<Unit> {
-        return try {
-            val existing = firestore.collection("user_streaks").where { "user_id" equalTo streak.userId }.get()
-            val docId = existing.documents.firstOrNull()?.id ?: firestore.collection("user_streaks").document.id
-            firestore.collection("user_streaks").document(docId).set(streak)
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    // ========== GAMIFICATION - BADGES ==========
-
-    actual suspend fun getAvailableBadges(): Result<List<BadgeDefinition>> {
-        return try {
-            Result.success(firestore.collection("badges").get().documents.mapNotNull { it.toBadgeDefinitionOrNull() })
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getUserBadges(userId: String): Result<List<UserBadge>> {
-        return try {
-            Result.success(firestore.collection("user_badges").where { "user_id" equalTo userId }.get().documents.mapNotNull { it.toUserBadgeOrNull() })
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getRecentBadges(userId: String, limit: Int): Result<List<UserBadge>> {
-        return try {
-            Result.success(firestore.collection("user_badges").where { "user_id" equalTo userId }
-                .orderBy("unlocked_at", Direction.DESCENDING).limit(limit).get().documents.mapNotNull { it.toUserBadgeOrNull() })
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun createUserBadge(userBadge: UserBadge): Result<UserBadge> {
-        return try {
-            val docRef = firestore.collection("user_badges").document
-            val badgeWithId = userBadge.copy(id = docRef.id)
-            docRef.set(badgeWithId)
-            Result.success(badgeWithId)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun updateUserBadge(userBadge: UserBadge): Result<Unit> {
-        return try {
-            firestore.collection("user_badges").document(userBadge.id).set(userBadge)
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    // ========== GAMIFICATION - SEASONS ==========
-
-    actual suspend fun getActiveSeason(): Result<Season?> {
-        return try {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            val year = now.year; val month = now.monthNumber
-            val seasonId = "monthly_${year}_${month.toString().padStart(2, '0')}"
-            val doc = firestore.collection("seasons").document(seasonId).get()
-            val season = if (doc.exists) {
-                doc.toSeasonOrNull()
-            } else {
-                val startMillis = kotlinx.datetime.LocalDateTime(year, month, 1, 0, 0, 0).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-                val ny = if (month == 12) year + 1 else year; val nm = if (month == 12) 1 else month + 1
-                val endMillis = kotlinx.datetime.LocalDateTime(ny, nm, 1, 0, 0, 0).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds() - 1
-                val portugueseMonths = listOf("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
-                val seasonName = "${portugueseMonths[month - 1]} $year"
-                val newSeason = Season(id = seasonId, name = seasonName, startDate = startMillis, endDate = endMillis, isActive = true)
-                firestore.collection("seasons").document(seasonId).set(mapOf(
-                    "id" to newSeason.id, "name" to newSeason.name,
-                    "start_date" to Timestamp(startMillis / 1000, 0),
-                    "end_date" to Timestamp(endMillis / 1000, 0),
-                    "is_active" to true, "created_at" to FieldValue.serverTimestamp
-                ))
-                newSeason
-            }
-            Result.success(season)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getAllSeasons(): Result<List<Season>> {
-        return try {
-            val seasons = firestore.collection("seasons").get().documents.mapNotNull { it.toSeasonOrNull() }
-                .sortedWith(compareByDescending<Season> { it.endDate }.thenByDescending { it.startDate }.thenByDescending { it.id })
-            Result.success(seasons)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getSeasonRanking(seasonId: String, limit: Int): Result<List<SeasonParticipation>> {
-        return try {
-            Result.success(firestore.collection("season_participation").where { "season_id" equalTo seasonId }
-                .orderBy("points", Direction.DESCENDING).limit(limit).get().documents.mapNotNull { it.toSeasonParticipationOrNull() })
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual fun observeSeasonRanking(seasonId: String, limit: Int, gender: String?): Flow<List<SeasonParticipation>> {
-        // Fase 4b: segmentação por gênero. null/inválido = combinado (campos
-        // planos, comportamento histórico). MALE/FEMALE/MIXED = segmentado:
-        // ordena por `by_gender.{G}.points` (índices da Fase 4a) e sobrepõe as
-        // stats do sub-mapa. Docs sem aquele gênero não têm o campo → ficam
-        // naturalmente fora da query.
-        val genderKey = normalizeSeasonGenderKey(gender)
-        val orderField = if (genderKey != null) "by_gender.$genderKey.points" else "points"
-        return firestore.collection("season_participation").where { "season_id" equalTo seasonId }
-            .orderBy(orderField, Direction.DESCENDING).limit(limit).snapshots()
-            .map { it.documents.mapNotNull { d -> d.toSeasonParticipationOrNull(genderKey) } }
-            .catch { emit(emptyList()) }
-    }
-
-    actual suspend fun getSeasonParticipation(seasonId: String, userId: String): Result<SeasonParticipation?> {
-        return try {
-            val snapshot = firestore.collection("season_participation")
-                .where { "season_id" equalTo seasonId }.where { "user_id" equalTo userId }.get()
-            Result.success(snapshot.documents.firstOrNull()?.toSeasonParticipationOrNull())
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun saveSeasonParticipation(participation: SeasonParticipation): Result<Unit> {
-        return try {
-            val existing = firestore.collection("season_participation")
-                .where { "season_id" equalTo participation.seasonId }.where { "user_id" equalTo participation.userId }.get()
-            val docId = existing.documents.firstOrNull()?.id ?: firestore.collection("season_participation").document.id
-            firestore.collection("season_participation").document(docId).set(participation)
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    // ========== GAMIFICATION - CHALLENGES ==========
-
-    actual suspend fun getActiveChallenges(): Result<List<WeeklyChallenge>> {
-        return try {
-            val nowMillis = Clock.System.now().toEpochMilliseconds()
-            val nowTs = Timestamp(nowMillis / 1000, 0)
-            val snapshot = firestore.collection("challenges")
-                .where { "start_date" lessThanOrEqualTo nowTs }
-                .orderBy("start_date", Direction.DESCENDING).limit(20).get()
-            val nowDateStr = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).let {
-                "${it.year}-${it.monthNumber.toString().padStart(2,'0')}-${it.dayOfMonth.toString().padStart(2,'0')}"
-            }
-            val challenges = snapshot.documents.mapNotNull { it.toWeeklyChallengeOrNull() }.filter { challenge ->
-                if (challenge.endDate.isEmpty()) true
-                else try { challenge.endDate >= nowDateStr } catch (e: Exception) { true }
-            }
-            Result.success(challenges)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getChallengesProgress(userId: String, challengeIds: List<String>): Result<List<UserChallengeProgress>> {
-        return try {
-            if (challengeIds.isEmpty()) return Result.success(emptyList())
-            val allProgress = mutableListOf<UserChallengeProgress>()
-            challengeIds.chunked(10).forEach { chunk ->
-                allProgress.addAll(firestore.collection("challenge_progress")
-                    .where { "user_id" equalTo userId }.where { "challenge_id" inArray chunk }.get()
-                    .documents.mapNotNull { it.toUserChallengeProgressOrNull() })
-            }
-            Result.success(allProgress)
-        } catch (e: Exception) { Result.failure(e) }
-    }
+        games.getLiveScoreFlow(gameId)
+
+    actual suspend fun startLiveGame(gameId: String, team1Id: String, team2Id: String): Result<LiveScore> =
+        games.startLiveGame(gameId, team1Id, team2Id)
+
+    actual suspend fun canManageGameEvents(gameId: String): Boolean =
+        games.canManageGameEvents(gameId)
+
+    actual suspend fun updateScoreForGoal(gameId: String, teamId: String): Result<Unit> =
+        games.updateScoreForGoal(gameId, teamId)
+
+    actual suspend fun updatePlayerStats(gameId: String, playerId: String, teamId: String, eventType: GameEventType, assistedById: String?): Result<Unit> =
+        games.updatePlayerStats(gameId, playerId, teamId, eventType, assistedById)
+
+    actual suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> =
+        games.deleteGameEvent(gameId, eventId)
+
+    // ========== GROUPS ==========
+    actual suspend fun getUserGroups(userId: String): Result<List<UserGroup>> =
+        groups.getUserGroups(userId)
+
+    actual fun getUserGroupsFlow(userId: String): Flow<Result<List<UserGroup>>> =
+        groups.getUserGroupsFlow(userId)
+
+    actual suspend fun getGroupById(groupId: String): Result<UserGroup> =
+        groups.getGroupById(groupId)
+
+    actual suspend fun createGroup(group: Group): Result<Group> =
+        groups.createGroup(group)
+
+    actual suspend fun updateGroup(groupId: String, updates: Map<String, Any>): Result<Unit> =
+        groups.updateGroup(groupId, updates)
+
+    actual suspend fun getGroupMembers(groupId: String): Result<List<GroupMember>> =
+        groups.getGroupMembers(groupId)
+
+    actual suspend fun addGroupMember(groupId: String, userId: String, role: String): Result<Unit> =
+        groups.addGroupMember(groupId, userId, role)
+
+    actual suspend fun removeGroupMember(groupId: String, userId: String): Result<Unit> =
+        groups.removeGroupMember(groupId, userId)
+
+    actual suspend fun getGroupDetails(groupId: String): Result<Group> =
+        groups.getGroupDetails(groupId)
+
+    actual fun getGroupMembersFlow(groupId: String): Flow<Result<List<GroupMember>>> =
+        groups.getGroupMembersFlow(groupId)
+
+    actual fun getGroupDetailsFlow(groupId: String): Flow<Result<Group>> =
+        groups.getGroupDetailsFlow(groupId)
+
+    actual suspend fun promoteGroupMemberToAdmin(groupId: String, memberId: String): Result<Unit> =
+        groups.promoteGroupMemberToAdmin(groupId, memberId)
+
+    actual suspend fun demoteGroupAdminToMember(groupId: String, memberId: String): Result<Unit> =
+        groups.demoteGroupAdminToMember(groupId, memberId)
+
+    actual suspend fun updateGroupMemberRole(groupId: String, userId: String, role: String): Result<Unit> =
+        groups.updateGroupMemberRole(groupId, userId, role)
+
+    actual suspend fun leaveGroup(groupId: String, userId: String): Result<Unit> =
+        groups.leaveGroup(groupId, userId)
+
+    actual suspend fun archiveGroup(groupId: String): Result<Unit> =
+        groups.archiveGroup(groupId)
+
+    actual suspend fun restoreGroup(groupId: String): Result<Unit> =
+        groups.restoreGroup(groupId)
+
+    actual suspend fun deleteGroup(groupId: String): Result<Unit> =
+        groups.deleteGroup(groupId)
+
+    actual suspend fun transferGroupOwnership(groupId: String, newOwnerId: String, oldOwnerId: String, newOwnerName: String): Result<Unit> =
+        groups.transferGroupOwnership(groupId, newOwnerId, oldOwnerId, newOwnerName)
+
+    actual suspend fun syncGroupMemberCount(groupId: String, userIds: List<String>): Result<Unit> =
+        groups.syncGroupMemberCount(groupId, userIds)
+
+    actual suspend fun joinGroupByInviteCode(inviteCode: String, userId: String, userName: String, userPhoto: String?): Result<String> =
+        groups.joinGroupByInviteCode(inviteCode, userId, userName, userPhoto)
+
+    actual suspend fun generateGroupInviteCode(groupId: String): Result<String> =
+        groups.generateGroupInviteCode(groupId)
+
+    actual suspend fun searchPublicGroups(query: String, limit: Int): Result<List<Group>> =
+        groups.searchPublicGroups(query, limit)
+
+    actual suspend fun createGroupJoinRequest(groupId: String, userId: String, userName: String, userPhoto: String?,): Result<Unit> =
+        groups.createGroupJoinRequest(groupId, userId, userName, userPhoto)
+
+    actual suspend fun cancelGroupJoinRequest(groupId: String, userId: String): Result<Unit> =
+        groups.cancelGroupJoinRequest(groupId, userId)
+
+    actual suspend fun approveGroupJoinRequest(groupId: String, requesterId: String, approverId: String,): Result<Unit> =
+        groups.approveGroupJoinRequest(groupId, requesterId, approverId)
+
+    actual suspend fun rejectGroupJoinRequest(groupId: String, requesterId: String, approverId: String,): Result<Unit> =
+        groups.rejectGroupJoinRequest(groupId, requesterId, approverId)
+
+    actual fun observeMyGroupJoinRequest(groupId: String, userId: String,): Flow<GroupJoinRequest?> =
+        groups.observeMyGroupJoinRequest(groupId, userId)
+
+    actual fun observePendingGroupJoinRequests(groupId: String): Flow<List<GroupJoinRequest>> =
+        groups.observePendingGroupJoinRequests(groupId)
+
+    suspend fun getMyRoleInGroup(groupId: String, userId: String): Result<String?> =
+        groups.getMyRoleInGroup(groupId, userId)
+
+    suspend fun isMemberOfGroup(groupId: String, userId: String): Result<Boolean> =
+        groups.isMemberOfGroup(groupId, userId)
+
+    suspend fun getMyAdminGroups(userId: String): Result<List<String>> =
+        groups.getMyAdminGroups(userId)
+
+    suspend fun getValidGroupsForGame(userId: String): Result<List<String>> =
+        groups.getValidGroupsForGame(userId)
+
+    suspend fun canCreateGames(userId: String): Result<Boolean> =
+        groups.canCreateGames(userId)
+
+    suspend fun countMyAdminGroups(userId: String): Result<Int> =
+        groups.countMyAdminGroups(userId)
+
+    suspend fun syncAllMyGroupsMemberCount(userId: String): Result<Unit> =
+        groups.syncAllMyGroupsMemberCount(userId)
+
+    suspend fun getGroupActiveMemberIds(groupId: String): Result<List<String>> =
+        groups.getGroupActiveMemberIds(groupId)
+
+    suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String> =
+        groups.uploadGroupPhoto(groupId, photoPath)
+
+    // ========== USERS ==========
+    actual suspend fun blockUserOnServer(userId: String, targetUserId: String, userName: String, reason: String): Result<Unit> =
+        users.blockUserOnServer(userId, targetUserId, userName, reason)
+
+    actual suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit> =
+        users.unblockUserOnServer(userId, targetUserId)
+
+    actual suspend fun submitPlayerReport(reporterId: String, targetUserId: String, targetUserName: String, reason: String, gameId: String?, groupId: String?): Result<Unit> =
+        users.submitPlayerReport(reporterId, targetUserId, targetUserName, reason, gameId, groupId)
+
+    suspend fun getRecentActivities(limit: Int): Result<List<Activity>> =
+        users.getRecentActivities(limit)
+
+    fun getRecentActivitiesFlow(limit: Int): Flow<Result<List<Activity>>> =
+        users.getRecentActivitiesFlow(limit)
+
+    suspend fun createActivity(activity: Activity): Result<Unit> =
+        users.createActivity(activity)
+
+    suspend fun getUserActivities(userId: String, limit: Int): Result<List<Activity>> =
+        users.getUserActivities(userId, limit)
+
+    actual suspend fun getUserStatistics(userId: String): Result<Statistics> =
+        users.getUserStatistics(userId)
+
+    actual fun getUserStatisticsFlow(userId: String): Flow<Result<Statistics>> =
+        users.getUserStatisticsFlow(userId)
+
+    actual suspend fun updateUserStatistics(userId: String, updates: Map<String, Any>): Result<Unit> =
+        users.updateUserStatistics(userId, updates)
+
+    actual suspend fun getUserById(userId: String): Result<User> =
+        users.getUserById(userId)
+
+    actual suspend fun getUsersByIds(userIds: List<String>): Result<List<User>> =
+        users.getUsersByIds(userIds)
+
+    actual suspend fun getCurrentUser(): Result<User> =
+        users.getCurrentUser()
+
+    actual fun getCurrentUserId(): String? =
+        users.getCurrentUserId()
+
+    actual suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> =
+        users.updateUser(userId, updates)
+
+    actual suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit> =
+        users.updateUserPiiViaCallable(updates)
+
+    actual suspend fun deleteAccount(): Result<Unit> =
+        users.deleteAccount()
+
+    actual suspend fun exportMyData(): Result<ExportMyDataPayload> =
+        users.exportMyData()
+
+    actual suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit> =
+        users.registerPushToken(registration)
+
+    actual suspend fun unregisterPushToken(deviceId: String, sequence: Long, token: String?): Result<Unit> =
+        users.unregisterPushToken(deviceId, sequence, token)
+
+    actual suspend fun submitMvpVoteViaCallable(vote: MVPVote): Result<Unit> =
+        users.submitMvpVoteViaCallable(vote)
+
+    actual suspend fun concludeMvpVotingViaCallable(gameId: String): Result<Unit> =
+        users.concludeMvpVotingViaCallable(gameId)
+
+    actual suspend fun startGameLifecycleViaCallable(gameId: String): Result<Unit> =
+        users.startGameLifecycleViaCallable(gameId)
+
+    actual suspend fun finishGameLifecycleViaCallable(gameId: String): Result<Unit> =
+        users.finishGameLifecycleViaCallable(gameId)
+
+    actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> =
+        users.searchUsers(query, limit)
+
+    actual suspend fun getAllUsers(): Result<List<User>> =
+        users.getAllUsers()
+
+    actual suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> =
+        users.updateUserRole(userId, newRole)
+
+    actual suspend fun updateAutoRatings(userId: String, autoStrikerRating: Double, autoMidRating: Double, autoDefenderRating: Double, autoGkRating: Double, autoRatingSamples: Int): Result<Unit> =
+        users.updateAutoRatings(userId, autoStrikerRating, autoMidRating, autoDefenderRating, autoGkRating, autoRatingSamples)
+
+    actual suspend fun updateProfileVisibility(userId: String, isSearchable: Boolean): Result<Unit> =
+        users.updateProfileVisibility(userId, isSearchable)
+
+    actual suspend fun getFieldOwners(): Result<List<User>> =
+        users.getFieldOwners()
+
+    actual suspend fun updateFcmToken(token: String): Result<Unit> =
+        users.updateFcmToken(token)
+
+    actual suspend fun getAllFavoriteTeams(): Result<List<FavoriteTeam>> =
+        users.getAllFavoriteTeams()
+
+    actual suspend fun getFavoriteTeamById(teamId: String): Result<FavoriteTeam> =
+        users.getFavoriteTeamById(teamId)
+
+    actual fun getAuthStateFlow(): Flow<String?> =
+        users.getAuthStateFlow()
+
+    actual fun isLoggedIn(): Boolean =
+        users.isLoggedIn()
+
+    actual fun getCurrentAuthUserId(): String? =
+        users.getCurrentAuthUserId()
+
+    actual suspend fun getCurrentAuthUser(): Result<User> =
+        users.getCurrentAuthUser()
+
+    actual suspend fun signInWithEmailPassword(email: String, password: String): Result<String> =
+        users.signInWithEmailPassword(email, password)
+
+    actual suspend fun signUpWithEmailPassword(email: String, password: String): Result<String> =
+        users.signUpWithEmailPassword(email, password)
+
+    actual suspend fun sendPasswordResetEmail(email: String): Result<Unit> =
+        users.sendPasswordResetEmail(email)
+
+    actual suspend fun logout(): Unit =
+        users.logout()
+
+    actual suspend fun getMyNotifications(limit: Int): Result<List<AppNotification>> =
+        users.getMyNotifications(limit)
+
+    actual fun getMyNotificationsFlow(limit: Int): Flow<List<AppNotification>> =
+        users.getMyNotificationsFlow(limit)
+
+    actual suspend fun getUnreadNotifications(): Result<List<AppNotification>> =
+        users.getUnreadNotifications()
+
+    actual fun getUnreadCountFlow(): Flow<Int> =
+        users.getUnreadCountFlow()
+
+    actual suspend fun getUnreadCount(): Result<Int> =
+        users.getUnreadCount()
+
+    actual suspend fun markNotificationAsRead(notificationId: String): Result<Unit> =
+        users.markNotificationAsRead(notificationId)
+
+    actual suspend fun markNotificationAsUnread(notificationId: String): Result<Unit> =
+        users.markNotificationAsUnread(notificationId)
+
+    actual suspend fun markAllNotificationsAsRead(): Result<Unit> =
+        users.markAllNotificationsAsRead()
+
+    actual suspend fun getNotificationById(notificationId: String): Result<AppNotification> =
+        users.getNotificationById(notificationId)
+
+    actual suspend fun createNotification(notification: AppNotification): Result<String> =
+        users.createNotification(notification)
+
+    actual suspend fun batchCreateNotifications(notifications: List<AppNotification>): Result<Unit> =
+        users.batchCreateNotifications(notifications)
+
+    actual suspend fun deleteNotification(notificationId: String): Result<Unit> =
+        users.deleteNotification(notificationId)
+
+    actual suspend fun deleteOldNotifications(): Result<Int> =
+        users.deleteOldNotifications()
+
+    actual suspend fun getNotificationsByType(type: NotificationType, limit: Int): Result<List<AppNotification>> =
+        users.getNotificationsByType(type, limit)
+
+    actual suspend fun getPendingActionNotifications(): Result<List<AppNotification>> =
+        users.getPendingActionNotifications()
+
+    // ========== FINANCE ==========
+    actual suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit> =
+        finance.executeBatch(operations)
+
+    actual suspend fun getLivePlayerStats(gameId: String): Result<List<LivePlayerStats>> =
+        finance.getLivePlayerStats(gameId)
+
+    actual fun getLivePlayerStatsFlow(gameId: String): Flow<Result<List<LivePlayerStats>>> =
+        finance.getLivePlayerStatsFlow(gameId)
+
+    actual suspend fun finishGame(gameId: String): Result<Unit> =
+        finance.finishGame(gameId)
+
+    actual suspend fun clearAllLiveGameData(): Result<Unit> =
+        finance.clearAllLiveGameData()
+
+    actual suspend fun createPayment(payment: Payment): Result<Payment> =
+        finance.createPayment(payment)
+
+    actual suspend fun confirmPayment(paymentId: String): Result<Unit> =
+        finance.confirmPayment(paymentId)
+
+    actual suspend fun getPaymentsByUser(userId: String): Result<List<Payment>> =
+        finance.getPaymentsByUser(userId)
+
+    actual suspend fun uploadCashboxReceipt(groupId: String, filePath: String): Result<String> =
+        finance.uploadCashboxReceipt(groupId, filePath)
+
+    actual suspend fun addCashboxEntry(groupId: String, entry: CashboxEntry, receiptFilePath: String?): Result<String> =
+        finance.addCashboxEntry(groupId, entry, receiptFilePath)
+
+    actual suspend fun getCashboxSummary(groupId: String): Result<CashboxSummary> =
+        finance.getCashboxSummary(groupId)
+
+    actual fun getCashboxSummaryFlow(groupId: String): Flow<Result<CashboxSummary>> =
+        finance.getCashboxSummaryFlow(groupId)
+
+    actual suspend fun getCashboxHistory(groupId: String, limit: Int): Result<List<CashboxEntry>> =
+        finance.getCashboxHistory(groupId, limit)
+
+    actual fun getCashboxHistoryFlow(groupId: String, limit: Int): Flow<Result<List<CashboxEntry>>> =
+        finance.getCashboxHistoryFlow(groupId, limit)
+
+    actual suspend fun getCashboxHistoryFiltered(groupId: String, filter: CashboxFilter, limit: Int): Result<List<CashboxEntry>> =
+        finance.getCashboxHistoryFiltered(groupId, filter, limit)
+
+    actual suspend fun getCashboxEntriesByMonth(groupId: String, year: Int, month: Int): Result<List<CashboxEntry>> =
+        finance.getCashboxEntriesByMonth(groupId, year, month)
+
+    actual suspend fun getCashboxEntryById(groupId: String, entryId: String): Result<CashboxEntry> =
+        finance.getCashboxEntryById(groupId, entryId)
+
+    actual suspend fun deleteCashboxEntry(groupId: String, entryId: String): Result<Unit> =
+        finance.deleteCashboxEntry(groupId, entryId)
+
+    actual suspend fun recalculateCashboxBalance(groupId: String): Result<CashboxSummary> =
+        finance.recalculateCashboxBalance(groupId)
+
+    // ========== GAMIFICATION ==========
+    actual suspend fun getUserXpLogs(userId: String, limit: Int): Result<List<XpLog>> =
+        gamification.getUserXpLogs(userId, limit)
+
+    actual suspend fun createXpLog(xpLog: XpLog): Result<XpLog> =
+        gamification.createXpLog(xpLog)
+
+    actual suspend fun updateUserLevel(userId: String, level: Int, xp: Long): Result<Unit> =
+        gamification.updateUserLevel(userId, level, xp)
+
+    actual suspend fun awardBadge(userId: String, badgeId: String): Result<Unit> =
+        gamification.awardBadge(userId, badgeId)
+
+    actual suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit> =
+        gamification.unlockMilestone(userId, milestoneId)
+
+    actual suspend fun getRankingByCategory(category: String, field: String, limit: Int): Result<List<Triple<String, Long, Int>>> =
+        gamification.getRankingByCategory(category, field, limit)
+
+    actual suspend fun getRankingDeltas(periodName: String, periodKey: String, deltaField: String, minGames: Int, limit: Int): Result<List<Triple<String, Long, Int>>> =
+        gamification.getRankingDeltas(periodName, periodKey, deltaField, minGames, limit)
+
+    actual suspend fun getUsersStatistics(userIds: List<String>): Result<Map<String, Statistics>> =
+        gamification.getUsersStatistics(userIds)
+
+    actual suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>> =
+        gamification.getStatisticsRanking(orderByField, limit)
+
+    actual suspend fun getUserStreak(userId: String): Result<UserStreak?> =
+        gamification.getUserStreak(userId)
+
+    actual suspend fun saveUserStreak(streak: UserStreak): Result<Unit> =
+        gamification.saveUserStreak(streak)
+
+    actual suspend fun getAvailableBadges(): Result<List<BadgeDefinition>> =
+        gamification.getAvailableBadges()
+
+    actual suspend fun getUserBadges(userId: String): Result<List<UserBadge>> =
+        gamification.getUserBadges(userId)
+
+    actual suspend fun getRecentBadges(userId: String, limit: Int): Result<List<UserBadge>> =
+        gamification.getRecentBadges(userId, limit)
+
+    actual suspend fun createUserBadge(userBadge: UserBadge): Result<UserBadge> =
+        gamification.createUserBadge(userBadge)
+
+    actual suspend fun updateUserBadge(userBadge: UserBadge): Result<Unit> =
+        gamification.updateUserBadge(userBadge)
+
+    actual suspend fun getActiveSeason(): Result<Season?> =
+        gamification.getActiveSeason()
+
+    actual suspend fun getAllSeasons(): Result<List<Season>> =
+        gamification.getAllSeasons()
+
+    actual suspend fun getSeasonRanking(seasonId: String, limit: Int): Result<List<SeasonParticipation>> =
+        gamification.getSeasonRanking(seasonId, limit)
+
+    actual fun observeSeasonRanking(seasonId: String, limit: Int, gender: String?): Flow<List<SeasonParticipation>> =
+        gamification.observeSeasonRanking(seasonId, limit, gender)
+
+    actual suspend fun getSeasonParticipation(seasonId: String, userId: String): Result<SeasonParticipation?> =
+        gamification.getSeasonParticipation(seasonId, userId)
+
+    actual suspend fun saveSeasonParticipation(participation: SeasonParticipation): Result<Unit> =
+        gamification.saveSeasonParticipation(participation)
+
+    actual suspend fun getActiveChallenges(): Result<List<WeeklyChallenge>> =
+        gamification.getActiveChallenges()
+
+    actual suspend fun getChallengesProgress(userId: String, challengeIds: List<String>): Result<List<UserChallengeProgress>> =
+        gamification.getChallengesProgress(userId, challengeIds)
 
     // ========== LOCATIONS ==========
+    actual suspend fun getAllLocations(): Result<List<Location>> =
+        locations.getAllLocations()
 
-    actual suspend fun getAllLocations(): Result<List<Location>> {
-        return try {
-            Result.success(firestore.collection("locations").orderBy("name").limit(500).get().documents.mapNotNull { it.toLocationOrNull() })
-        } catch (e: Exception) {
-            logLocationQueryError("getAllLocations", e)
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getLocationsByCity(city: String, state: String?): Result<List<Location>> =
+        locations.getLocationsByCity(city, state)
 
-    actual suspend fun getLocationsByCity(city: String, state: String?): Result<List<Location>> {
-        return try {
-            var query = firestore.collection("locations").where { "city" equalTo city }
-            if (!state.isNullOrBlank()) query = query.where { "state" equalTo state }
-            Result.success(query.limit(LOCATION_SCOPED_QUERY_LIMIT).get().documents.mapNotNull { it.toLocationOrNull() })
-        } catch (e: Exception) {
-            logLocationQueryError("getLocationsByCity", e, mapOf("city" to city, "state" to (state ?: "")))
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getLocationsByStates(states: List<String>): Result<List<Location>> =
+        locations.getLocationsByStates(states)
 
-    actual suspend fun getLocationsByStates(states: List<String>): Result<List<Location>> {
-        return try {
-            val values = states.map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(10)
-            if (values.isEmpty()) return Result.success(emptyList())
-            val query = if (values.size == 1) {
-                firestore.collection("locations").where { "state" equalTo values.first() }
-            } else {
-                firestore.collection("locations").where { "state" inArray values }
-            }
-            Result.success(query.limit(LOCATION_SCOPED_QUERY_LIMIT).get().documents.mapNotNull { it.toLocationOrNull() })
-        } catch (e: Exception) {
-            logLocationQueryError("getLocationsByStates", e, mapOf("states" to states.joinToString(",")))
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getLocationsInLatitudeBand(minLatitude: Double, maxLatitude: Double): Result<List<Location>> =
+        locations.getLocationsInLatitudeBand(minLatitude, maxLatitude)
 
-    actual suspend fun getLocationsInLatitudeBand(minLatitude: Double, maxLatitude: Double): Result<List<Location>> {
-        return try {
-            val query = firestore.collection("locations")
-                .where { "latitude" greaterThanOrEqualTo minLatitude }
-                .where { "latitude" lessThanOrEqualTo maxLatitude }
-            Result.success(query.limit(LOCATION_SCOPED_QUERY_LIMIT).get().documents.mapNotNull { it.toLocationOrNull() })
-        } catch (e: Exception) {
-            logLocationQueryError("getLocationsInLatitudeBand", e, mapOf("min" to minLatitude.toString(), "max" to maxLatitude.toString()))
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getLocationsWithPagination(limit: Int, lastLocationName: String?): Result<List<Location>> =
+        locations.getLocationsWithPagination(limit, lastLocationName)
 
-    actual suspend fun getLocationsWithPagination(limit: Int, lastLocationName: String?): Result<List<Location>> {
-        return try {
-            var query = firestore.collection("locations").orderBy("name").limit(limit)
-            if (lastLocationName != null) query = query.startAfter(lastLocationName)
-            Result.success(query.get().documents.mapNotNull { it.toLocationOrNull() })
-        } catch (e: Exception) {
-            logLocationQueryError("getLocationsWithPagination", e, mapOf("limit" to limit.toString()))
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getLocationsPaginated(pageSize: Int, cursor: String?, sortBy: LocationSortField): Result<PaginatedResult<Location>> =
+        locations.getLocationsPaginated(pageSize, cursor, sortBy)
 
-    actual suspend fun getLocationsPaginated(pageSize: Int, cursor: String?, sortBy: LocationSortField): Result<PaginatedResult<Location>> {
-        return try {
-            val effectivePageSize = pageSize.coerceIn(1, 50)
-            var query = firestore.collection("locations").orderBy(sortBy.firestoreField, Direction.ASCENDING).limit(effectivePageSize + 1)
-            if (!cursor.isNullOrBlank()) {
-                val cursorData = decodeCursor(cursor) ?: return Result.failure(CursorDecodingException("Cursor inválido ou expirado"))
-                if (cursorData.sortField != sortBy) return Result.failure(CursorMismatchException("Campo de ordenação do cursor não corresponde ao solicitado"))
-                val anchorDoc = firestore.collection("locations").document(cursorData.documentId).get()
-                if (!anchorDoc.exists) return Result.failure(CursorDocumentNotFoundException("Documento do cursor não existe mais: ${cursorData.documentId}"))
-                query = query.startAfter(anchorDoc)
-            }
-            val allDocs = query.get().documents
-            val hasMore = allDocs.size > effectivePageSize
-            val docsToReturn = if (hasMore) allDocs.take(effectivePageSize) else allDocs
-            val locations = docsToReturn.mapNotNull { it.toLocationOrNull() }
-            val nextCursor = if (hasMore && docsToReturn.isNotEmpty()) {
-                val lastDoc = docsToReturn.last()
-                val lastValue = when (sortBy) {
-                    LocationSortField.NAME -> lastDoc.get<String?>("name")
-                    LocationSortField.CITY -> lastDoc.get<String?>("city")
-                    LocationSortField.RATING -> lastDoc.get<Double?>("rating")?.toString()
-                    LocationSortField.CREATED_AT -> lastDoc.get<Long?>("createdAt")?.toString()
-                }
-                encodeCursor(lastDoc.reference.path, sortBy, lastValue)
-            } else null
-            Result.success(PaginatedResult(items = locations, cursor = nextCursor, hasMore = hasMore))
-        } catch (e: CursorDecodingException) { Result.failure(e)
-        } catch (e: CursorMismatchException) { Result.failure(e)
-        } catch (e: CursorDocumentNotFoundException) { Result.failure(e)
-        } catch (e: Exception) {
-            logLocationQueryError("getLocationsPaginated", e, mapOf("pageSize" to pageSize.toString(), "sortBy" to sortBy.name))
-            Result.failure(e)
-        }
-    }
+    actual suspend fun deleteLocation(locationId: String): Result<Unit> =
+        locations.deleteLocation(locationId)
 
-    @OptIn(ExperimentalEncodingApi::class)
-    private fun encodeCursor(documentPath: String, sortField: LocationSortField, lastValue: Any?): String {
-        val cursorStr = "$documentPath|${sortField.name}|${lastValue?.toString() ?: ""}|${Clock.System.now().toEpochMilliseconds()}"
-        // encodeToByteArray() / decodeToString() sao KMP (Kotlin stdlib) e usam UTF-8 por padrao
-        // Charsets/String(ByteArray, Charset) sao JVM-only - quebram build iOS
-        return Base64.encode(cursorStr.encodeToByteArray())
-    }
+    actual suspend fun deleteLocationWithFields(locationId: String): Result<Int> =
+        locations.deleteLocationWithFields(locationId)
 
-    @OptIn(ExperimentalEncodingApi::class)
-    private fun decodeCursor(cursor: String): CursorInfo? {
-        return try {
-            val decoded = Base64.decode(cursor).decodeToString()
-            val parts = decoded.split("|")
-            if (parts.size < 4) return null
-            val timestamp = parts[3].toLongOrNull() ?: 0L
-            if (timestamp > 0 && Clock.System.now().toEpochMilliseconds() - timestamp > 15 * 60 * 1000) {
-                println("FirebaseDataSource: Cursor expirado")
-                return null
-            }
-            CursorInfo(documentPath = parts[0], sortField = LocationSortField.fromString(parts[1]),
-                lastValue = parts[2].takeIf { it.isNotEmpty() }, timestamp = timestamp)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao decodificar cursor: ${e.message}")
-            null
-        }
-    }
+    actual suspend fun getLocationsByOwner(ownerId: String): Result<List<Location>> =
+        locations.getLocationsByOwner(ownerId)
 
-    actual suspend fun deleteLocation(locationId: String): Result<Unit> {
-        return try {
-            firestore.collection("locations").document(locationId).delete()
-            Result.success(Unit)
-        } catch (e: Exception) { logLocationUpdateError(locationId, "delete", e); Result.failure(e) }
-    }
+    actual suspend fun getLocationById(locationId: String): Result<Location> =
+        locations.getLocationById(locationId)
 
-    actual suspend fun deleteLocationWithFields(locationId: String): Result<Int> {
-        return try {
-            val locationDoc = firestore.collection("locations").document(locationId).get()
-            if (!locationDoc.exists) return Result.failure(Exception("Local não encontrado: $locationId"))
-            val fieldsSnapshot = firestore.collection("fields").where { "location_id" equalTo locationId }.get()
-            val fieldIds = fieldsSnapshot.documents.map { it.id }
-            val totalDocsToDelete = 1 + fieldIds.size
-            if (fieldIds.size <= 499) {
-                val batch = firestore.batch()
-                batch.delete(firestore.collection("locations").document(locationId))
-                fieldIds.forEach { batch.delete(firestore.collection("fields").document(it)) }
-                batch.commit()
-            } else {
-                fieldIds.chunked(499).forEachIndexed { index, chunk ->
-                    val batch = firestore.batch()
-                    if (index == 0) batch.delete(firestore.collection("locations").document(locationId))
-                    chunk.forEach { batch.delete(firestore.collection("fields").document(it)) }
-                    batch.commit()
-                }
-            }
-            Result.success(totalDocsToDelete)
-        } catch (e: Exception) { logLocationUpdateError(locationId, "deleteWithFields", e); Result.failure(e) }
-    }
+    actual suspend fun getLocationWithFields(locationId: String): Result<LocationWithFields> =
+        locations.getLocationWithFields(locationId)
 
-    actual suspend fun getLocationsByOwner(ownerId: String): Result<List<Location>> {
-        return try {
-            Result.success(firestore.collection("locations").where { "owner_id" equalTo ownerId }.orderBy("name").get().documents.mapNotNull { it.toLocationOrNull() })
-        } catch (e: Exception) { logLocationQueryError("getLocationsByOwner", e, mapOf("owner_id" to ownerId)); Result.failure(e) }
-    }
+    actual suspend fun createLocation(location: Location): Result<Location> =
+        locations.createLocation(location)
 
-    actual suspend fun getLocationById(locationId: String): Result<Location> {
-        return try {
-            val doc = firestore.collection("locations").document(locationId).get()
-            Result.success(doc.toLocationOrNull() ?: return Result.failure(Exception("Local não encontrado")))
-        } catch (e: Exception) { logLocationQueryError("getLocationById", e, mapOf("location_id" to locationId)); Result.failure(e) }
-    }
+    actual suspend fun updateLocation(location: Location): Result<Unit> =
+        locations.updateLocation(location)
 
-    actual suspend fun getLocationWithFields(locationId: String): Result<LocationWithFields> {
-        return try {
-            coroutineScope {
-                val locationDeferred = async { firestore.collection("locations").document(locationId).get().toLocationOrNull() }
-                val fieldsDeferred = async {
-                    firestore.collection("fields").where { "location_id" equalTo locationId }.where { "is_active" equalTo true }
-                        .orderBy("type").orderBy("name").get().documents.mapNotNull { it.toFieldOrNull() }
-                }
-                val location = locationDeferred.await() ?: return@coroutineScope Result.failure<LocationWithFields>(Exception("Local não encontrado"))
-                Result.success(LocationWithFields(location, fieldsDeferred.await()))
-            }
-        } catch (e: Exception) { logLocationQueryError("getLocationWithFields", e, mapOf("location_id" to locationId)); Result.failure(e) }
-    }
+    actual suspend fun searchLocations(query: String): Result<List<Location>> =
+        locations.searchLocations(query)
 
-    actual suspend fun createLocation(location: Location): Result<Location> {
-        return try {
-            val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val docRef = firestore.collection("locations").document
-            val locationWithId = location.copy(id = docRef.id, ownerId = uid, createdAt = Clock.System.now().toEpochMilliseconds())
-            docRef.set(locationWithId)
-            Result.success(locationWithId)
-        } catch (e: Exception) { logLocationUpdateError(location.name, "create", e); Result.failure(e) }
-    }
+    actual suspend fun getOrCreateLocationFromPlace(placeId: String, name: String, address: String, city: String, state: String, latitude: Double?, longitude: Double?): Result<Location> =
+        locations.getOrCreateLocationFromPlace(placeId, name, address, city, state, latitude, longitude)
 
-    actual suspend fun updateLocation(location: Location): Result<Unit> {
-        return try {
-            val updates = buildMap<String, Any> {
-                put("name", location.name)
-                put("address", location.address)
-                put("owner_id", location.ownerId)
-                put("cep", location.cep)
-                put("street", location.street)
-                put("number", location.number)
-                put("complement", location.complement)
-                put("district", location.district)
-                put("city", location.city)
-                put("state", location.state)
-                put("country", location.country)
-                put("neighborhood", location.neighborhood)
-                put("region", location.region)
-                location.latitude?.let { put("latitude", it) }
-                location.longitude?.let { put("longitude", it) }
-                location.placeId?.let { put("place_id", it) }
-                put("description", location.description)
-                location.photoUrl?.let { put("photo_url", it) }
-                put("amenities", location.amenities)
-                location.phone?.let { put("phone", it) }
-                location.website?.let { put("website", it) }
-                location.instagram?.let { put("instagram", it) }
-                put("opening_time", location.openingTime)
-                put("closing_time", location.closingTime)
-                put("operating_days", location.operatingDays)
-                put("min_game_duration_minutes", location.minGameDurationMinutes)
-                put("is_active", location.isActive)
-                put("managers", location.managers)
-                // Preserva/aplica fuso: nunca envia null; fallback legado se vazio.
-                put("time_zone", location.effectiveTimeZone())
-                put("updated_at", FieldValue.serverTimestamp)
-            }
-            firestore.collection("locations").document(location.id).update(updates)
-            Result.success(Unit)
-        } catch (e: Exception) { logLocationUpdateError(location.id, "update", e); Result.failure(e) }
-    }
+    actual suspend fun addLocationReview(review: LocationReview): Result<Unit> =
+        locations.addLocationReview(review)
 
-    actual suspend fun searchLocations(query: String): Result<List<Location>> {
-        return try {
-            if (query.length < 2) return Result.success(emptyList())
-            val snapshot = firestore.collection("locations").orderBy("name")
-                .startAt(query).endAt(query + "\uf8ff").limit(20).get()
-            val locations = snapshot.documents.mapNotNull { it.toLocationOrNull() }
-            val additional = if (locations.size < 20) {
-                firestore.collection("locations").orderBy("address")
-                    .startAt(query).endAt(query + "\uf8ff").limit(20).get()
-                    .documents.mapNotNull { it.toLocationOrNull() }.filter { addr -> locations.none { it.id == addr.id } }
-            } else emptyList()
-            Result.success((locations + additional).take(20))
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar locais: ${e.message}")
-            Result.failure(e)
-        }
-    }
+    actual suspend fun getLocationReviews(locationId: String): Result<List<LocationReview>> =
+        locations.getLocationReviews(locationId)
 
-    actual suspend fun getOrCreateLocationFromPlace(placeId: String, name: String, address: String, city: String, state: String, latitude: Double?, longitude: Double?): Result<Location> {
-        return try {
-            val existingSnapshot = firestore.collection("locations").where { "place_id" equalTo placeId }.limit(1).get()
-            if (!existingSnapshot.documents.isEmpty()) {
-                val existing = existingSnapshot.documents.first().toLocationOrNull() ?: return Result.failure(Exception("Erro ao converter local existente"))
-                return Result.success(existing)
-            }
-            createLocation(Location(name = name, address = address, city = city, state = state, latitude = latitude, longitude = longitude, placeId = placeId))
-        } catch (e: Exception) { Result.failure(e) }
-    }
+    actual suspend fun seedGinasioApollo(): Result<Location> =
+        locations.seedGinasioApollo()
 
-    actual suspend fun addLocationReview(review: LocationReview): Result<Unit> {
-        return try {
-            val reviewsRef = firestore.collection("locations").document(review.locationId).collection("reviews")
-            reviewsRef.add(review)
-            val snapshot = reviewsRef.get()
-            val reviews = snapshot.documents.mapNotNull { it.toLocationReviewOrNull() }
-            val count = reviews.size
-            val avg = if (count > 0) reviews.map { it.rating }.average() else 0.0
-            firestore.collection("locations").document(review.locationId).update(mapOf("rating" to avg, "ratingCount" to count))
-            Result.success(Unit)
-        } catch (e: Exception) { Result.failure(e) }
-    }
+    actual suspend fun migrateLocations(migrationData: List<LocationMigrationData>): Result<Int> =
+        locations.migrateLocations(migrationData)
 
-    actual suspend fun getLocationReviews(locationId: String): Result<List<LocationReview>> {
-        return try {
-            val snapshot = try {
-                firestore.collection("locations").document(locationId).collection("reviews").orderBy("created_at", Direction.DESCENDING).get()
-            } catch (e: Exception) {
-                firestore.collection("locations").document(locationId).collection("reviews").get()
-            }
-            Result.success(snapshot.documents.mapNotNull { it.toLocationReviewOrNull() })
-        } catch (e: Exception) { Result.failure(e) }
-    }
+    actual suspend fun deduplicateLocations(): Result<Int> =
+        locations.deduplicateLocations()
 
-    actual suspend fun seedGinasioApollo(): Result<Location> {
-        return try {
-            val existing = firestore.collection("locations").where { "name" equalTo "Ginásio de Esportes Apollo" }.limit(1).get()
-            if (!existing.documents.isEmpty()) {
-                return Result.success(existing.documents.first().toLocationOrNull() ?: return Result.failure(Exception("Erro ao converter local")))
-            }
-            val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
-            val docRef = firestore.collection("locations").document
-            val location = Location(id = docRef.id, name = "Ginásio de Esportes Apollo", address = "R. Canal Belém - Marginal Leste, 8027",
-                city = "Curitiba", state = "PR", latitude = -25.4747, longitude = -49.2256, ownerId = uid, isVerified = true,
-                phone = "(41) 99999-9999", website = "https://ginasioapollo.com.br", instagram = "@ginasioapollo",
-                openingTime = "18:00", closingTime = "23:59", minGameDurationMinutes = 60,
-                operatingDays = listOf(1, 2, 3, 4, 5, 6, 7), createdAt = Clock.System.now().toEpochMilliseconds())
-            docRef.set(location)
-            for (i in 1..4) {
-                val fieldRef = firestore.collection("fields").document
-                fieldRef.set(Field(id = fieldRef.id, locationId = location.id, name = "Quadra Futsal $i", type = "FUTSAL",
-                    description = "Quadra de futsal profissional, piso taco", hourlyPrice = 120.0, isActive = true))
-            }
-            for (i in 1..2) {
-                val fieldRef = firestore.collection("fields").document
-                fieldRef.set(Field(id = fieldRef.id, locationId = location.id, name = "Campo Society $i", type = "SOCIETY",
-                    description = "Campo de society grama sintética", hourlyPrice = 180.0, isActive = true))
-            }
-            Result.success(location)
-        } catch (e: Exception) { Result.failure(e) }
-    }
+    actual suspend fun getFieldsByLocation(locationId: String): Result<List<Field>> =
+        locations.getFieldsByLocation(locationId)
 
-    actual suspend fun migrateLocations(migrationData: List<LocationMigrationData>): Result<Int> {
-        return try {
-            val validData = migrationData.filter { it.nameKey.isNotBlank() }
-            if (validData.isEmpty()) return Result.success(0)
-            val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado para migração"))
-            val allLocationsResult = getAllLocations()
-            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull() ?: Exception("Erro ao buscar locais"))
-            val allLocations = allLocationsResult.getOrNull() ?: emptyList()
-            var processedCount = 0
-            for (data in validData) {
-                val existingLoc = allLocations.find { it.name.trim().equals(data.nameKey.trim(), ignoreCase = true) }
-                val finalPhone = if (!data.whatsapp.isNullOrBlank()) data.whatsapp else data.phone
-                val finalInsta = data.instagram?.substringAfter(".com/")?.replace("/", "")?.replace("@", "")
-                val addr = "${data.street}, ${data.number}${if (data.complement.isNotBlank()) " - " + data.complement else ""} - ${data.neighborhood}, ${data.city} - ${data.state}"
-                if (existingLoc != null) {
-                    updateLocation(existingLoc.copy(cep = data.cep, street = data.street, number = data.number,
-                        neighborhood = data.neighborhood, city = data.city, state = data.state, country = data.country,
-                        complement = data.complement, region = if (data.region.isNotBlank()) data.region else existingLoc.region,
-                        address = addr, phone = finalPhone ?: existingLoc.phone, instagram = finalInsta ?: existingLoc.instagram,
-                        amenities = if (data.amenities.isNotEmpty()) data.amenities else existingLoc.amenities,
-                        description = data.description ?: existingLoc.description, openingTime = data.openingTime ?: existingLoc.openingTime,
-                        closingTime = data.closingTime ?: existingLoc.closingTime))
-                } else {
-                    val docRef = firestore.collection("locations").document
-                    val newLoc = Location(id = docRef.id, ownerId = uid, name = data.nameKey, cep = data.cep, street = data.street,
-                        number = data.number, neighborhood = data.neighborhood, city = data.city, state = data.state, country = data.country,
-                        complement = data.complement, region = data.region, address = addr, phone = finalPhone, instagram = finalInsta,
-                        amenities = data.amenities, description = data.description ?: "", openingTime = data.openingTime ?: "08:00",
-                        closingTime = data.closingTime ?: "23:00", minGameDurationMinutes = 60, isActive = true, isVerified = true,
-                        createdAt = Clock.System.now().toEpochMilliseconds())
-                    docRef.set(newLoc)
-                    val mainType = if (data.modalities.any { it.contains("Futsal", true) }) "FUTSAL" else "SOCIETY"
-                    val count = if (data.numFieldsEstimation > 0) data.numFieldsEstimation else 1
-                    for (i in 1..count) {
-                        val fieldRef = firestore.collection("fields").document
-                        fieldRef.set(Field(id = fieldRef.id, locationId = newLoc.id,
-                            name = if (count > 1) "Quadra $i" else "Quadra Principal",
-                            type = mainType, hourlyPrice = 100.0, isActive = true, isCovered = true))
-                    }
-                }
-                processedCount++
-            }
-            Result.success(processedCount)
-        } catch (e: Exception) { Result.failure(e) }
-    }
+    actual suspend fun getFieldById(fieldId: String): Result<Field> =
+        locations.getFieldById(fieldId)
 
-    actual suspend fun deduplicateLocations(): Result<Int> {
-        return try {
-            val allLocationsResult = getAllLocations()
-            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull() ?: Exception("Erro ao buscar locais"))
-            val allLocations = allLocationsResult.getOrNull() ?: emptyList()
-            fun String.normalizeStr(): String = this.lowercase().replace(Regex("[^a-z0-9]"), "")
-            var deletedCount = 0
-            val grouped = allLocations.groupBy { it.name.normalizeStr() }
-            for ((_, duplicates) in grouped) {
-                if (duplicates.size > 1) {
-                    val best = duplicates.sortedWith(compareByDescending<Location> { !it.cep.isNullOrBlank() }
-                        .thenByDescending { !it.phone.isNullOrBlank() }.thenByDescending { it.id }).first()
-                    duplicates.filter { it.id != best.id }.forEach { loc ->
-                        try {
-                            firestore.collection("locations").document(loc.id).delete()
-                            firestore.collection("fields").where { "location_id" equalTo loc.id }.get().documents.forEach { it.reference.delete() }
-                            deletedCount++
-                        } catch (e: Exception) { println("FirebaseDataSource: Erro ao deletar duplicata ${loc.name}: ${e.message}") }
-                    }
-                }
-            }
-            Result.success(deletedCount)
-        } catch (e: Exception) { Result.failure(e) }
-    }
+    actual suspend fun createField(field: Field): Result<Field> =
+        locations.createField(field)
 
-    // ========== FIELDS ==========
+    actual suspend fun updateField(field: Field): Result<Unit> =
+        locations.updateField(field)
 
-    actual suspend fun getFieldsByLocation(locationId: String): Result<List<Field>> {
-        return try {
-            if (locationId.isBlank()) return Result.failure(Exception("ID do local inválido"))
+    actual suspend fun deleteField(fieldId: String): Result<Unit> =
+        locations.deleteField(fieldId)
 
-            // Query 1: sub-coleção locations/{id}/fields (formato recomendado)
-            val subFields = firestore.collection("locations").document(locationId).collection("fields")
-                .orderBy("name").get().documents.mapNotNull { it.toFieldOrNull() }
+    actual suspend fun uploadFieldPhoto(filePath: String): Result<String> =
+        locations.uploadFieldPhoto(filePath)
 
-            // Query 2: coleção root fields (legado)
-            val rootFields = firestore.collection("fields").where { "location_id" equalTo locationId }
-                .orderBy("type").orderBy("name").get().documents.mapNotNull { it.toFieldOrNull() }
+    actual suspend fun logLocationAudit(log: LocationAuditLog): Result<Unit> =
+        locations.logLocationAudit(log)
 
-            // Merge deduplicando por ID
-            val merged = mutableMapOf<String, Field>()
-            subFields.filter { it.isActive }.forEach { merged[it.id] = it }
-            rootFields.filter { it.isActive }.forEach { f ->
-                if (!merged.containsKey(f.id)) merged[f.id] = f
-            }
+    actual suspend fun getLocationAuditLogs(locationId: String, limit: Int): Result<List<LocationAuditLog>> =
+        locations.getLocationAuditLogs(locationId, limit)
 
-            Result.success(merged.values.toList().sortedWith(compareBy({ it.type }, { it.name })))
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun getFieldById(fieldId: String): Result<Field> {
-        return try {
-            // Try root collection first
-            val rootDoc = firestore.collection("fields").document(fieldId).get()
-            if (rootDoc.exists) {
-                return Result.success(rootDoc.toFieldOrNull() ?: return Result.failure(Exception("Quadra não encontrada")))
-            }
-            // Try sub-collections via collectionGroup query
-            val groupSnap = firestore.collectionGroup("fields").where { FieldPath.documentId equalTo fieldId }.get()
-            if (groupSnap.documents.isNotEmpty()) {
-                return Result.success(groupSnap.documents.first().toFieldOrNull() ?: return Result.failure(Exception("Quadra não encontrada")))
-            }
-            Result.failure(Exception("Quadra não encontrada"))
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun createField(field: Field): Result<Field> {
-        return try {
-            // Create in sub-collection (recommended format)
-            val docRef = firestore.collection("locations").document(field.locationId).collection("fields").document
-            val fieldWithId = field.copy(id = docRef.id)
-            docRef.set(fieldWithId)
-            Result.success(fieldWithId)
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    actual suspend fun updateField(field: Field): Result<Unit> {
-        return try {
-            // Try sub-collection first (recommended format)
-            val subRef = firestore.collection("locations").document(field.locationId).collection("fields").document(field.id)
-            subRef.set(field)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            // Fallback to root collection
-            try {
-                firestore.collection("fields").document(field.id).set(field)
-                Result.success(Unit)
-            } catch (e2: Exception) { Result.failure(e2) }
-        }
-    }
-
-    actual suspend fun deleteField(fieldId: String): Result<Unit> {
-        return try {
-            // Try root collection first (current format)
-            firestore.collection("fields").document(fieldId).update(mapOf("is_active" to false))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            // Fallback: try to find in sub-collection via collectionGroup
-            try {
-                val groupSnap = firestore.collectionGroup("fields").where { FieldPath.documentId equalTo fieldId }.get()
-                if (groupSnap.documents.isNotEmpty()) {
-                    val doc = groupSnap.documents.first()
-                    val locationId = doc.get<String?>("location_id") ?: ""
-                    if (locationId.isNotBlank()) {
-                        firestore.collection("locations").document(locationId).collection("fields").document(fieldId)
-                            .update(mapOf("is_active" to false))
-                        return Result.success(Unit)
-                    }
-                }
-                Result.failure(e)
-            } catch (e2: Exception) { Result.failure(e2) }
-        }
-    }
-
-    actual suspend fun uploadFieldPhoto(filePath: String): Result<String> {
-        return Result.failure(Exception("Upload de fotos requer Firebase Storage — não implementado ainda"))
-    }
-
-    // ========== LOCATION AUDIT LOGS ==========
-
-    actual suspend fun logLocationAudit(log: LocationAuditLog): Result<Unit> {
-        return try {
-            val docRef = firestore.collection("locations").document(log.locationId).collection("audit_logs").document
-            val logWithId = log.copy(id = docRef.id, timestamp = if (log.timestamp == 0L) Clock.System.now().toEpochMilliseconds() else log.timestamp)
-            val data = mutableMapOf<String, Any?>(
-                "id" to logWithId.id, "location_id" to logWithId.locationId, "user_id" to logWithId.userId,
-                "user_name" to logWithId.userName, "action" to logWithId.action.name, "timestamp" to logWithId.timestamp
-            )
-            if (logWithId.changes != null) {
-                data["changes"] = logWithId.changes.mapValues { (_, fc) -> mapOf("before" to fc.before, "after" to fc.after) }
-            }
-            docRef.set(data)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao registrar log de auditoria: ${e.message}")
-            Result.failure(e)
-        }
-    }
-
-    actual suspend fun getLocationAuditLogs(locationId: String, limit: Int): Result<List<LocationAuditLog>> {
-        return try {
-            val snapshot = firestore.collection("locations").document(locationId).collection("audit_logs")
-                .orderBy("timestamp", Direction.DESCENDING).limit(limit).get()
-            Result.success(snapshot.documents.mapNotNull { it.toLocationAuditLogOrNull() })
-        } catch (e: Exception) {
-            println("FirebaseDataSource: Erro ao buscar logs de auditoria: ${e.message}")
-            Result.failure(e)
-        }
-    }
 }
-
-// ========== PRIVATE HELPERS ==========
-
-private fun instantFromTimestamp(timestamp: Timestamp): Instant {
-    return Instant.fromEpochSeconds(timestamp.seconds, timestamp.nanoseconds.toLong())
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.safeLong(field: String): Long? {
-    val value = get<Any?>(field)
-    return when (value) {
-        is Number -> value.toLong()
-        is Timestamp -> value.seconds * 1000L + value.nanoseconds / 1_000_000
-        is String -> value.toLongOrNull()
-        else -> null
-    }
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.safeInt(field: String): Int? = safeLong(field)?.toInt()
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
-    if (!exists) return null
-    return User(
-        id = id, email = get<String?>("email") ?: "", name = get<String?>("name") ?: "",
-        phone = get<String?>("phone"), nickname = get<String?>("nickname"),
-        photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
-        fcmToken = get<String?>("fcm_token") ?: get<String?>("fcmToken"),
-        isSearchable = get<Boolean?>("is_searchable") ?: get<Boolean?>("isSearchable") ?: true,
-        isProfilePublic = get<Boolean?>("is_profile_public") ?: get<Boolean?>("isProfilePublic") ?: true,
-        role = get<String?>("role") ?: UserRole.PLAYER.name,
-        createdAt = safeLong("created_at") ?: safeLong("createdAt"),
-        updatedAt = safeLong("updated_at") ?: safeLong("updatedAt"),
-        strikerRating = get<Double?>("striker_rating") ?: get<Double?>("strikerRating") ?: 0.0,
-        midRating = get<Double?>("mid_rating") ?: get<Double?>("midRating") ?: 0.0,
-        defenderRating = get<Double?>("defender_rating") ?: get<Double?>("defenderRating") ?: 0.0,
-        gkRating = get<Double?>("gk_rating") ?: get<Double?>("gkRating") ?: 0.0,
-        strikerRatingSet = get<Boolean?>("striker_rating_set") ?: get<Boolean?>("strikerRatingSet") ?: false,
-        midRatingSet = get<Boolean?>("mid_rating_set") ?: get<Boolean?>("midRatingSet") ?: false,
-        defenderRatingSet = get<Boolean?>("defender_rating_set") ?: get<Boolean?>("defenderRatingSet") ?: false,
-        gkRatingSet = get<Boolean?>("gk_rating_set") ?: get<Boolean?>("gkRatingSet") ?: false,
-        preferredPosition = get<String?>("preferred_position") ?: get<String?>("preferredPosition"),
-        preferredFieldTypes = ((get<List<*>?>("preferred_field_types") ?: get<List<*>?>("preferredFieldTypes")))?.mapNotNull { item ->
-            (item as? String)?.let { name -> try { FieldType.valueOf(name) } catch (e: Exception) { null } }
-        } ?: emptyList(),
-        favoriteTeam = get<String?>("favorite_team") ?: get<String?>("favoriteTeam"),
-        birthDate = safeLong("birth_date") ?: safeLong("birthDate"),
-        gender = get<String?>("gender"), heightCm = safeInt("height_cm") ?: safeInt("heightCm"),
-        weightKg = safeInt("weight_kg") ?: safeInt("weightKg"),
-        dominantFoot = get<String?>("dominant_foot") ?: get<String?>("dominantFoot"),
-        primaryPosition = get<String?>("primary_position") ?: get<String?>("primaryPosition"),
-        secondaryPosition = get<String?>("secondary_position") ?: get<String?>("secondaryPosition"),
-        playStyle = get<String?>("play_style") ?: get<String?>("playStyle"),
-        experienceYears = safeInt("experience_years") ?: safeInt("experienceYears"),
-        level = safeInt("level") ?: 1,
-        experiencePoints = safeLong("experience_points") ?: safeLong("experiencePoints") ?: 0L,
-        milestonesAchieved = ((get<List<*>?>("milestones_achieved") ?: get<List<*>?>("milestonesAchieved")))?.mapNotNull { it as? String } ?: emptyList(),
-        autoStrikerRating = get<Double?>("auto_striker_rating") ?: 0.0, autoMidRating = get<Double?>("auto_mid_rating") ?: 0.0,
-        autoDefenderRating = get<Double?>("auto_defender_rating") ?: 0.0, autoGkRating = get<Double?>("auto_gk_rating") ?: 0.0,
-        autoRatingSamples = safeInt("auto_rating_samples") ?: 0
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Game? {
-    if (!exists) return null
-    return Game(
-        id = id, scheduleId = get<String?>("schedule_id") ?: get<String?>("scheduleId") ?: "",
-        date = get<String?>("date") ?: "", time = get<String?>("time") ?: "",
-        endTime = get<String?>("end_time") ?: get<String?>("endTime") ?: "",
-        status = get<String?>("status") ?: GameStatus.SCHEDULED.name,
-        maxPlayers = safeInt("max_players") ?: safeInt("maxPlayers") ?: 14,
-        maxGoalkeepers = safeInt("max_goalkeepers") ?: safeInt("maxGoalkeepers") ?: 3,
-        playersCount = safeInt("players_count") ?: safeInt("playersCount") ?: 0,
-        goalkeepersCount = safeInt("goalkeepers_count") ?: safeInt("goalkeepersCount") ?: 0,
-        dailyPrice = get<Double?>("daily_price") ?: get<Double?>("dailyPrice") ?: 0.0,
-        totalCost = get<Double?>("total_cost") ?: get<Double?>("totalCost") ?: 0.0,
-        pixKey = get<String?>("pix_key") ?: get<String?>("pixKey") ?: "",
-        numberOfTeams = safeInt("number_of_teams") ?: safeInt("numberOfTeams") ?: 2,
-        ownerId = get<String?>("owner_id") ?: get<String?>("ownerId") ?: "",
-        ownerName = get<String?>("owner_name") ?: get<String?>("ownerName") ?: "",
-        locationId = get<String?>("location_id") ?: get<String?>("locationId") ?: "",
-        fieldId = get<String?>("field_id") ?: get<String?>("fieldId") ?: "",
-        locationName = get<String?>("location_name") ?: get<String?>("locationName") ?: "",
-        locationAddress = get<String?>("location_address") ?: get<String?>("locationAddress") ?: "",
-        locationLat = get<Double?>("location_lat") ?: get<Double?>("locationLat"),
-        locationLng = get<Double?>("location_lng") ?: get<Double?>("locationLng"),
-        fieldName = get<String?>("field_name") ?: get<String?>("fieldName") ?: "",
-        gameType = get<String?>("game_type") ?: get<String?>("gameType") ?: "Society",
-        // Genero/categoria do jogo (Fase 4b) — sem este campo o read KMP/iOS
-        // perdia o gender (caia em MIXED). Literal "MIXED" = GameGender.MIXED.name.
-        gender = get<String?>("gender") ?: "MIXED",
-        recurrence = get<String?>("recurrence") ?: "none",
-        recurrenceIndex = safeInt("recurrence_index") ?: safeInt("recurrenceIndex"),
-        recurrenceCount = safeInt("recurrence_count") ?: safeInt("recurrenceCount"),
-        recurrenceEndDate = get<String?>("recurrence_end_date") ?: get<String?>("recurrenceEndDate"),
-        visibility = get<String?>("visibility") ?: GameVisibility.GROUP_ONLY.name,
-        createdAt = safeLong("created_at") ?: safeLong("createdAt"),
-        xpProcessed = get<Boolean?>("xp_processed") ?: get<Boolean?>("xpProcessed") ?: false,
-        xpProcessing = get<Boolean?>("xp_processing") ?: get<Boolean?>("xpProcessing") ?: false,
-        xpRewardStatus = get<String?>("xp_reward_status") ?: get<String?>("xpRewardStatus"),
-        xpRewardHeldAt = safeLong("xp_reward_held_at") ?: safeLong("xpRewardHeldAt"),
-        xpRewardHoldReasons = ((get<List<*>?>("xp_reward_hold_reasons")
-            ?: get<List<*>?>("xpRewardHoldReasons")))?.mapNotNull { it as? String } ?: emptyList(),
-        xpRewardReviewDecision = get<String?>("xp_reward_review_decision") ?: get<String?>("xpRewardReviewDecision"),
-        xpRewardReviewedAt = safeLong("xp_reward_reviewed_at") ?: safeLong("xpRewardReviewedAt"),
-        xpRewardReviewedBy = get<String?>("xp_reward_reviewed_by") ?: get<String?>("xpRewardReviewedBy"),
-        xpRewardReviewReason = get<String?>("xp_reward_review_reason") ?: get<String?>("xpRewardReviewReason"),
-        xpRewardReviewPreviousStatus = get<String?>("xp_reward_review_previous_status") ?: get<String?>("xpRewardReviewPreviousStatus"),
-        xpRewardReviewNewStatus = get<String?>("xp_reward_review_new_status") ?: get<String?>("xpRewardReviewNewStatus"),
-        validationStatus = get<String?>("validation_status") ?: get<String?>("validationStatus"),
-        validationScore = safeInt("validation_score") ?: safeInt("validationScore"),
-        validationVersion = safeInt("validation_version") ?: safeInt("validationVersion"),
-        validationUpdatedAt = safeLong("validation_updated_at") ?: safeLong("validationUpdatedAt"),
-        validationMode = get<String?>("validation_mode") ?: get<String?>("validationMode"),
-        validationReasons = ((get<List<*>?>("validation_reasons")
-            ?: get<List<*>?>("validationReasons")))?.mapNotNull { it as? String } ?: emptyList(),
-        mvpId = get<String?>("mvp_id") ?: get<String?>("mvpId"),
-        bestGkId = get<String?>("best_gk_id") ?: get<String?>("bestGkId"),
-        worstPlayerId = get<String?>("worst_player_id") ?: get<String?>("worstPlayerId"),
-        mvpVotes = safeInt("mvp_votes") ?: safeInt("mvpVotes") ?: 0,
-        mvpTotalVotes = safeInt("mvp_total_votes") ?: safeInt("mvpTotalVotes") ?: 0,
-        bestGkVotes = safeInt("best_gk_votes") ?: safeInt("bestGkVotes") ?: 0,
-        bestGkTotalVotes = safeInt("best_gk_total_votes") ?: safeInt("bestGkTotalVotes") ?: 0,
-        worstPlayerVotes = safeInt("worst_player_votes") ?: safeInt("worstPlayerVotes") ?: 0,
-        worstPlayerTotalVotes = safeInt("worst_player_total_votes") ?: safeInt("worstPlayerTotalVotes") ?: 0,
-        votingStatus = get<String?>("voting_status") ?: get<String?>("votingStatus"),
-        votingConcluded = get<Boolean?>("voting_concluded") ?: get<Boolean?>("votingConcluded") ?: false,
-        votingConcludedAt = safeLong("voting_concluded_at") ?: safeLong("votingConcludedAt"),
-        votingSubmittedCount = safeInt("voting_submitted_count") ?: safeInt("votingSubmittedCount") ?: 0,
-        voteResultReactions = (get<Map<*, *>?>("vote_result_reactions")
-            ?: get<Map<*, *>?>("voteResultReactions"))
-            ?.mapNotNull { (emoji, users) ->
-                val key = emoji as? String ?: return@mapNotNull null
-                key to (users as? List<*>)?.filterIsInstance<String>().orEmpty()
-            }
-            ?.toMap()
-            .orEmpty(),
-        winnerTeam = get<String?>("winner_team") ?: get<String?>("winnerTeam"),
-        team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0,
-        team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0,
-        team1Name = get<String?>("team1_name") ?: get<String?>("team1Name") ?: "Time 1",
-        team2Name = get<String?>("team2_name") ?: get<String?>("team2Name") ?: "Time 2",
-        groupId = get<String?>("group_id") ?: get<String?>("groupId"),
-        groupName = get<String?>("group_name") ?: get<String?>("groupName")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameConfirmationOrNull(): GameConfirmation? {
-    if (!exists) return null
-    return GameConfirmation(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        userName = get<String?>("user_name") ?: get<String?>("userName") ?: "",
-        userPhoto = get<String?>("user_photo") ?: get<String?>("userPhoto"),
-        position = get<String?>("position") ?: "FIELD",
-        teamId = get<String?>("team_id") ?: get<String?>("teamId"),
-        status = get<String?>("status") ?: ConfirmationStatus.CONFIRMED.name,
-        paymentStatus = get<String?>("payment_status") ?: get<String?>("paymentStatus") ?: PaymentStatus.PENDING.name,
-        isCasualPlayer = get<Boolean?>("is_casual_player") ?: get<Boolean?>("isCasualPlayer") ?: false,
-        goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0, saves = safeInt("saves") ?: 0,
-        yellowCards = safeInt("yellow_cards") ?: safeInt("yellowCards") ?: 0,
-        redCards = safeInt("red_cards") ?: safeInt("redCards") ?: 0,
-        nickname = get<String?>("nickname"), xpEarned = safeInt("xp_earned") ?: safeInt("xpEarned") ?: 0,
-        isMvp = get<Boolean?>("is_mvp") ?: get<Boolean?>("isMvp") ?: false,
-        isBestGk = get<Boolean?>("is_best_gk") ?: get<Boolean?>("isBestGk") ?: false,
-        isWorstPlayer = get<Boolean?>("is_worst_player") ?: get<Boolean?>("isWorstPlayer") ?: false,
-        confirmedAt = safeLong("confirmed_at") ?: safeLong("confirmedAt"),
-        partialPayment = get<Double?>("partial_payment") ?: get<Double?>("partialPayment") ?: 0.0,
-        expectedPayment = get<Double?>("expected_payment") ?: get<Double?>("expectedPayment") ?: 0.0,
-        expectedPaymentCents = safeLong("expected_payment_cents") ?: safeLong("expectedPaymentCents") ?: 0,
-        wasPresent = get<Boolean?>("was_present") ?: get<Boolean?>("wasPresent") ?: false
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(): Statistics? {
-    if (!exists) return null
-    // Suporta tanto os nomes snake_case (escritor Android legado) quanto os nomes
-    // camelCase gravados pelas Cloud Functions (`functions/src/index.ts`, `mvp-voting.ts`).
-    return Statistics(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: id,
-        totalGames = safeInt("total_games") ?: safeInt("totalGames") ?: 0,
-        totalGoals = safeInt("total_goals") ?: safeInt("totalGoals") ?: 0,
-        totalAssists = safeInt("total_assists") ?: safeInt("totalAssists") ?: 0,
-        totalSaves = safeInt("total_saves") ?: safeInt("totalSaves") ?: 0,
-        totalWins = safeInt("total_wins") ?: safeInt("totalWins") ?: safeInt("gamesWon") ?: 0,
-        totalDraws = safeInt("total_draws") ?: safeInt("totalDraws") ?: safeInt("gamesDraw") ?: 0,
-        totalLosses = safeInt("total_losses") ?: safeInt("totalLosses") ?: safeInt("gamesLost") ?: 0,
-        mvpCount = safeInt("mvp_count") ?: safeInt("mvpCount") ?: safeInt("bestPlayerCount") ?: 0,
-        bestGkCount = safeInt("best_gk_count") ?: safeInt("bestGkCount") ?: 0,
-        worstPlayerCount = safeInt("worst_player_count") ?: safeInt("worstPlayerCount") ?: 0,
-        currentStreak = safeInt("current_streak") ?: safeInt("currentStreak") ?: safeInt("currentMvpStreak") ?: 0,
-        bestStreak = safeInt("best_streak") ?: safeInt("bestStreak") ?: safeInt("bestMvpStreak") ?: 0,
-        yellowCards = safeInt("yellow_cards") ?: safeInt("yellowCards") ?: safeInt("totalYellowCards") ?: 0,
-        redCards = safeInt("red_cards") ?: safeInt("redCards") ?: safeInt("totalRedCards") ?: 0,
-        lastGameDate = safeLong("last_game_date") ?: safeLong("lastGameDate"),
-        updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserGroupOrNull(): UserGroup? {
-    if (!exists) return null
-    return UserGroup(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        groupId = get<String?>("group_id") ?: get<String?>("groupId") ?: "",
-        groupName = get<String?>("group_name") ?: get<String?>("groupName") ?: "",
-        groupPhoto = get<String?>("group_photo") ?: get<String?>("groupPhoto"),
-        role = get<String?>("role") ?: GroupMemberRole.MEMBER.name,
-        joinedAt = safeLong("joined_at") ?: safeLong("joinedAt")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toTeamOrNull(): Team? {
-    if (!exists) return null
-    return Team(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        name = get<String?>("name") ?: "", color = get<String?>("color") ?: "",
-        playerIds = (get<List<*>?>("player_ids") ?: get<List<*>?>("playerIds"))?.filterIsInstance<String>() ?: emptyList(),
-        score = safeInt("score") ?: 0
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): XpLog? {
-    if (!exists) return null
-    return XpLog(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        xpEarned = safeLong("xp_earned") ?: safeLong("xpEarned") ?: 0L,
-        xpBefore = safeLong("xp_before") ?: safeLong("xpBefore") ?: 0L,
-        xpAfter = safeLong("xp_after") ?: safeLong("xpAfter") ?: 0L,
-        levelBefore = safeInt("level_before") ?: safeInt("levelBefore") ?: 1,
-        levelAfter = safeInt("level_after") ?: safeInt("levelAfter") ?: 1,
-        xpParticipation = safeInt("xp_participation") ?: 0, xpGoals = safeInt("xp_goals") ?: 0,
-        xpAssists = safeInt("xp_assists") ?: 0, xpSaves = safeInt("xp_saves") ?: 0,
-        xpResult = safeInt("xp_result") ?: 0, xpMvp = safeInt("xp_mvp") ?: 0,
-        xpMilestones = safeInt("xp_milestones") ?: 0, xpStreak = safeInt("xp_streak") ?: 0,
-        xpTopScorer = safeInt("xp_top_scorer") ?: 0,
-        xpHatTrick = safeInt("xp_hat_trick") ?: 0,
-        xpFirstGoal = safeInt("xp_first_goal") ?: 0,
-        xpGoalkeeperGoal = safeInt("xp_goalkeeper_goal") ?: 0,
-        xpFairPlay = safeInt("xp_fair_play") ?: 0,
-        xpComeback = safeInt("xp_comeback") ?: 0,
-        xpFirstGameMonth =
-            safeInt("xp_first_game_month")
-                ?: safeInt("xp_first_game_of_month")
-                ?: 0,
-        xpMonthlyStreak = safeInt("xp_monthly_streak") ?: 0,
-        xpRecorder =
-            safeInt("xp_recorder")
-                ?: safeInt("xp_event_recorder")
-                ?: 0,
-        xpEarlyConfirmation = safeInt("xp_early_confirmation") ?: 0,
-        xpOnTimeCheckin = safeInt("xp_on_time_checkin") ?: 0,
-        xpLastMinuteSaver = safeInt("xp_last_minute_saver") ?: 0,
-        xpWaitlistPromoted = safeInt("xp_waitlist_promoted") ?: 0,
-        goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0, saves = safeInt("saves") ?: 0,
-        wasMvp = get<Boolean?>("was_mvp") ?: get<Boolean?>("wasMvp") ?: false,
-        gameResult = get<String?>("game_result") ?: get<String?>("gameResult") ?: "",
-        milestonesUnlocked = (get<List<*>?>("milestones_unlocked") ?: get<List<*>?>("milestonesUnlocked"))?.filterIsInstance<String>() ?: emptyList(),
-        createdAt = safeLong("created_at") ?: safeLong("createdAt")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameEventOrNull(): GameEvent? {
-    if (!exists) return null
-    return GameEvent(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        eventType = get<String?>("event_type") ?: get<String?>("eventType") ?: GameEventType.GOAL.name,
-        playerId = get<String?>("player_id") ?: get<String?>("playerId") ?: "",
-        playerName = get<String?>("player_name") ?: get<String?>("playerName") ?: "",
-        teamId = get<String?>("team_id") ?: get<String?>("teamId") ?: "",
-        assistedById = get<String?>("assisted_by_id") ?: get<String?>("assistedById"),
-        assistedByName = get<String?>("assisted_by_name") ?: get<String?>("assistedByName"),
-        minute = safeInt("minute") ?: 0, createdBy = get<String?>("created_by") ?: get<String?>("createdBy") ?: "",
-        createdAt = safeLong("created_at") ?: safeLong("createdAt")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toLiveScoreOrNull(): LiveScore? {
-    if (!exists) return null
-    val team1Id = get<String?>("team1_id") ?: get<String?>("team1Id") ?: ""
-    val team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0
-    val team2Id = get<String?>("team2_id") ?: get<String?>("team2Id") ?: ""
-    val team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0
-    return LiveScore(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        // #3942: mapa canônico scores (2-4 times) com fallback legado team1/team2.
-        scores = readScoresMap(team1Id, team1Score, team2Id, team2Score),
-        team1Id = team1Id,
-        team1Score = team1Score,
-        team2Id = team2Id,
-        team2Score = team2Score,
-        startedAt = safeLong("started_at") ?: safeLong("startedAt"),
-        finishedAt = safeLong("finished_at") ?: safeLong("finishedAt")
-    )
-}
-
-/**
- * Lê o mapa canônico de placares `scores: {<teamId>: n}` de um doc de
- * live_scores. Espelha `readScoresMap` do backend (functions): quando o
- * campo `scores` está ausente ou vazio (docs legados gravados antes de
- * #3942), reconstrói o mapa a partir de team1/team2 — garantindo
- * migração sem perda de dados e suporte a jogos LIVE já em andamento no
- * momento do deploy. Valores inválidos/negativos são normalizados para 0.
- */
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.readScoresMap(
-    team1Id: String,
-    team1Score: Int,
-    team2Id: String,
-    team2Score: Int,
-): Map<String, Int> {
-    val rawScores = get<Map<*, *>?>("scores")
-    if (rawScores != null && rawScores.isNotEmpty()) {
-        val canonical = buildMap {
-            rawScores.forEach { (key, value) ->
-                val teamId = key as? String
-                if (!teamId.isNullOrEmpty()) {
-                    val numeric = when (value) {
-                        is Number -> value.toInt()
-                        is String -> value.toIntOrNull()
-                        else -> null
-                    }
-                    if (numeric != null) put(teamId, maxOf(0, numeric))
-                }
-            }
-        }
-        if (canonical.isNotEmpty()) return canonical
-    }
-    // Fallback legado: reconstitui o mapa a partir de team1/team2.
-    val legacy = buildMap {
-        if (team1Id.isNotEmpty()) put(team1Id, team1Score)
-        if (team2Id.isNotEmpty()) put(team2Id, team2Score)
-    }
-    return legacy
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupOrNull(): Group? {
-    if (!exists) return null
-    return Group(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
-        photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
-        ownerId = get<String?>("owner_id") ?: get<String?>("ownerId") ?: "",
-        ownerName = get<String?>("owner_name") ?: get<String?>("ownerName") ?: "",
-        membersCount = safeInt("members_count") ?: safeInt("membersCount") ?: 0,
-        gamesCount = safeInt("games_count") ?: safeInt("gamesCount") ?: 0,
-        isPublic = get<Boolean?>("is_public") ?: get<Boolean?>("isPublic") ?: false,
-        inviteCode = get<String?>("invite_code") ?: get<String?>("inviteCode"),
-        pixKey = get<String?>("pix_key") ?: get<String?>("pixKey"),
-        defaultLocationId = get<String?>("default_location_id") ?: get<String?>("defaultLocationId"),
-        defaultLocationName = get<String?>("default_location_name") ?: get<String?>("defaultLocationName"),
-        defaultDayOfWeek = safeInt("default_day_of_week") ?: safeInt("defaultDayOfWeek"),
-        defaultTime = get<String?>("default_time") ?: get<String?>("defaultTime"),
-        defaultMaxPlayers = safeInt("default_max_players") ?: safeInt("defaultMaxPlayers") ?: 14,
-        defaultPrice = get<Double?>("default_price") ?: get<Double?>("defaultPrice") ?: 0.0,
-        // Genero padrao do grupo (Fase 4b) — sem este campo a pre-selecao do
-        // gender na criacao de jogo caia sempre em MIXED.
-        defaultGender = get<String?>("default_gender") ?: get<String?>("defaultGender"),
-        createdAt = safeLong("created_at") ?: safeLong("createdAt"),
-        updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupMemberOrNull(): GroupMember? {
-    if (!exists) return null
-    val userId = get<String?>("user_id") ?: get<String?>("userId") ?: id
-    val groupIdFromPath = reference.parent.parent?.id ?: ""
-    return GroupMember(
-        id = id, groupId = get<String?>("group_id") ?: get<String?>("groupId") ?: groupIdFromPath,
-        userId = userId, userName = get<String?>("user_name") ?: get<String?>("userName") ?: "",
-        userPhoto = get<String?>("user_photo") ?: get<String?>("userPhoto"),
-        role = get<String?>("role") ?: GroupMemberRole.MEMBER.name,
-        nickname = get<String?>("nickname"),
-        joinedAt = safeLong("joined_at") ?: safeLong("joinedAt"),
-        gamesPlayed = safeInt("games_played") ?: safeInt("gamesPlayed") ?: 0,
-        goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toPaymentOrNull(): Payment? {
-    if (!exists) return null
-    val typeStr = get<String?>("type") ?: PaymentType.DAILY.name
-    val statusStr = get<String?>("status") ?: PaymentStatus.PENDING.name
-    val methodStr = get<String?>("payment_method")
-    return Payment(
-        id = id, userId = get<String?>("user_id") ?: "", gameId = get<String?>("game_id"),
-        scheduleId = get<String?>("schedule_id"),
-        type = try { PaymentType.valueOf(typeStr) } catch (e: Exception) { PaymentType.DAILY },
-        amount = get<Double?>("amount") ?: 0.0,
-        status = try { PaymentStatus.valueOf(statusStr) } catch (e: Exception) { PaymentStatus.PENDING },
-        paymentMethod = methodStr?.let { try { PaymentMethod.valueOf(it) } catch (e: Exception) { null } },
-        dueDate = get<String?>("due_date") ?: "", paidAt = safeLong("paid_at"),
-        pixKey = get<String?>("pix_key"), pixQrcode = get<String?>("pix_qrcode"),
-        pixTxid = get<String?>("pix_txid"), receiptUrl = get<String?>("receipt_url"),
-        notes = get<String?>("notes"), createdAt = safeLong("created_at")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toRankingStatisticsOrNull(): Statistics? {
-    if (!exists) return null
-    return Statistics(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        totalGames = get<Long?>("totalGames")?.toInt() ?: get<Long?>("total_games")?.toInt() ?: 0,
-        totalGoals = get<Long?>("totalGoals")?.toInt() ?: get<Long?>("total_goals")?.toInt() ?: 0,
-        totalAssists = get<Long?>("totalAssists")?.toInt() ?: get<Long?>("total_assists")?.toInt() ?: 0,
-        totalSaves = get<Long?>("totalSaves")?.toInt() ?: get<Long?>("total_saves")?.toInt() ?: 0,
-        totalWins = get<Long?>("totalWins")?.toInt() ?: get<Long?>("total_wins")?.toInt() ?: 0,
-        totalDraws = get<Long?>("totalDraws")?.toInt() ?: get<Long?>("total_draws")?.toInt() ?: 0,
-        totalLosses = get<Long?>("totalLosses")?.toInt() ?: get<Long?>("total_losses")?.toInt() ?: 0,
-        mvpCount = get<Long?>("mvpCount")?.toInt() ?: get<Long?>("mvp_count")?.toInt() ?: 0,
-        bestGkCount = get<Long?>("bestGkCount")?.toInt() ?: get<Long?>("best_gk_count")?.toInt() ?: 0,
-        worstPlayerCount = get<Long?>("worstPlayerCount")?.toInt() ?: get<Long?>("worst_player_count")?.toInt() ?: 0,
-        currentStreak = get<Long?>("currentStreak")?.toInt() ?: get<Long?>("current_streak")?.toInt() ?: 0,
-        bestStreak = get<Long?>("bestStreak")?.toInt() ?: get<Long?>("best_streak")?.toInt() ?: 0,
-        yellowCards = get<Long?>("yellowCards")?.toInt() ?: get<Long?>("yellow_cards")?.toInt() ?: 0,
-        redCards = get<Long?>("redCards")?.toInt() ?: get<Long?>("red_cards")?.toInt() ?: 0,
-        lastGameDate = safeLong("last_game_date") ?: safeLong("lastGameDate"),
-        updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserStreakOrNull(): UserStreak? {
-    if (!exists) return null
-    return UserStreak(
-        id = id, userId = get<String?>("user_id") ?: "", scheduleId = get<String?>("schedule_id"),
-        currentStreak = get<Long?>("current_streak")?.toInt() ?: 0,
-        longestStreak = get<Long?>("longest_streak")?.toInt() ?: 0,
-        lastGameDate = get<String?>("last_game_date"), streakStartedAt = get<String?>("streak_started_at")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toBadgeDefinitionOrNull(): BadgeDefinition? {
-    if (!exists) return null
-    val categoryStr = get<String?>("category") ?: "PERFORMANCE"
-    val rarityStr = get<String?>("rarity") ?: "COMMON"
-    return BadgeDefinition(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
-        emoji = get<String?>("emoji") ?: "",
-        category = try { BadgeCategory.valueOf(categoryStr) } catch (e: Exception) { BadgeCategory.PERFORMANCE },
-        rarity = try { BadgeRarity.valueOf(rarityStr) } catch (e: Exception) { BadgeRarity.COMMON },
-        requiredValue = get<Long?>("required_value")?.toInt() ?: 1,
-        isHidden = get<Boolean?>("is_hidden") ?: false
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserBadgeOrNull(): UserBadge? {
-    if (!exists) return null
-    return UserBadge(
-        id = id, userId = get<String?>("user_id") ?: "", badgeId = get<String?>("badge_id") ?: "",
-        unlockedAt = safeLong("unlocked_at") ?: 0,
-        unlockCount = get<Long?>("unlock_count")?.toInt() ?: get<Long?>("count")?.toInt() ?: 1
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonOrNull(): Season? {
-    if (!exists) return null
-    return Season(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
-        startDate = safeLong("start_date") ?: 0, endDate = safeLong("end_date") ?: 0,
-        isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: false,
-        createdAt = safeLong("created_at"), closedAt = safeLong("closed_at"),
-        totalParticipants = get<Long?>("total_participants")?.toInt() ?: 0,
-        totalGames = get<Long?>("total_games")?.toInt() ?: 0
-    )
-}
-
-/**
- * Normaliza o filtro de gênero para a chave do sub-mapa `by_gender` (Fase 4b).
- * null/ausente/inválido = null (combinado, campos planos). MALE/FEMALE/MIXED
- * = segmentado. Tolerante a case (mesma semântica de GameGender.fromString,
- * mas SEM colapsar inválido em MIXED — aqui inválido vira combinado).
- */
-private fun normalizeSeasonGenderKey(raw: String?): String? {
-    val up = raw?.trim()?.uppercase() ?: return null
-    return if (up == "MALE" || up == "FEMALE" || up == "MIXED") up else null
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonParticipationOrNull(
-    genderKey: String? = null
-): SeasonParticipation? {
-    if (!exists) return null
-
-    // Fase 4b: quando segmentado, as stats vêm do sub-mapa by_gender.{G}.
-    // Valores aninhados chegam como Any? (GitLive não garante Long) → ler como
-    // Number. Campos fora do sub-mapa (division/rating/saves/streaks/xp)
-    // permanecem GLOBAIS, espelhando web e functions.
-    val seg: Map<*, *>? = if (genderKey != null) {
-        (get<Map<*, *>?>("by_gender"))?.get(genderKey) as? Map<*, *>
-    } else null
-    // Quando o sub-mapa existe, ele é AUTORITATIVO (chave ausente = 0), para
-    // nunca vazar o valor combinado plano dentro da visão segmentada. Sem
-    // sub-mapa (combinado, ou doc legado sem by_gender) usa o fallback plano.
-    fun stat(key: String, flat: () -> Int): Int =
-        if (seg != null) (seg[key] as? Number)?.toInt() ?: 0 else flat()
-
-    return SeasonParticipation(
-        id = id, seasonId = get<String?>("season_id") ?: "", userId = get<String?>("user_id") ?: "",
-        division = get<String?>("division") ?: LeagueDivision.BRONZE.name,
-        leagueRating = get<Long?>("league_rating")?.toInt() ?: 1000,
-        points = stat("points") { get<Long?>("points")?.toInt() ?: 0 },
-        gamesPlayed = stat("games_played") { get<Long?>("games_played")?.toInt() ?: 0 },
-        wins = stat("wins") { get<Long?>("wins")?.toInt() ?: 0 },
-        draws = stat("draws") { get<Long?>("draws")?.toInt() ?: 0 },
-        losses = stat("losses") { get<Long?>("losses")?.toInt() ?: 0 },
-        goals = stat("goals_scored") { get<Long?>("goals")?.toInt() ?: get<Long?>("goals_scored")?.toInt() ?: 0 },
-        assists = stat("assists") { get<Long?>("assists")?.toInt() ?: 0 },
-        saves = get<Long?>("saves")?.toInt() ?: 0,
-        mvpCount = stat("mvp_count") { get<Long?>("mvp_count")?.toInt() ?: 0 },
-        bestGkCount = get<Long?>("best_gk_count")?.toInt() ?: 0,
-        worstPlayerCount = get<Long?>("worst_player_count")?.toInt() ?: 0,
-        currentStreak = get<Long?>("current_streak")?.toInt() ?: 0,
-        bestStreak = get<Long?>("best_streak")?.toInt() ?: 0,
-        xpEarned = get<Long?>("xp_earned") ?: 0L,
-        createdAt = safeLong("created_at"), updatedAt = safeLong("updated_at")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toWeeklyChallengeOrNull(): WeeklyChallenge? {
-    if (!exists) return null
-    val typeStr = get<String?>("type") ?: "score_goals"
-    return WeeklyChallenge(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
-        type = try { ChallengeType.valueOf(typeStr) } catch (e: Exception) { ChallengeType.SCORE_GOALS },
-        targetValue = get<Long?>("target_value")?.toInt() ?: 0,
-        xpReward = get<Long?>("xp_reward") ?: 100L,
-        startDate = get<String?>("start_date") ?: "", endDate = get<String?>("end_date") ?: "",
-        isActive = get<Boolean?>("is_active") ?: true, scheduleId = get<String?>("schedule_id")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserChallengeProgressOrNull(): UserChallengeProgress? {
-    if (!exists) return null
-    return UserChallengeProgress(
-        id = id, userId = get<String?>("user_id") ?: "", challengeId = get<String?>("challenge_id") ?: "",
-        currentProgress = get<Long?>("current_progress")?.toInt() ?: 0,
-        isCompleted = get<Boolean?>("is_completed") ?: false, completedAt = safeLong("completed_at")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toAppNotificationOrNull(): AppNotification? {
-    if (!exists) return null
-    val typeStr = get<String?>("type") ?: NotificationType.GENERAL.name
-    val actionTypeStr = get<String?>("action_type")
-    return AppNotification(
-        id = id, userId = get<String?>("user_id") ?: "",
-        type = NotificationType.fromString(typeStr), title = get<String?>("title") ?: "",
-        message = get<String?>("message") ?: "", senderId = get<String?>("sender_id"),
-        senderName = get<String?>("sender_name"), senderPhoto = get<String?>("sender_photo"),
-        referenceId = get<String?>("reference_id"), referenceType = get<String?>("reference_type"),
-        actionType = NotificationAction.fromString(actionTypeStr),
-        read = get<Boolean?>("read") ?: false, readAt = safeLong("read_at"),
-        createdAt = safeLong("created_at"), expiresAt = safeLong("expires_at")
-    )
-}
-
-private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toActivityOrNull(): Activity? {
-    if (!exists) return null
-    return Activity(
-        id = id, userId = get<String?>("user_id") ?: "", userName = get<String?>("user_name") ?: "",
-        userPhoto = get<String?>("user_photo"), type = ActivityType.fromString(get<String?>("type")),
-        title = get<String?>("title") ?: "", description = get<String?>("description") ?: "",
-        referenceId = get<String?>("reference_id"), referenceType = get<String?>("reference_type"),
-        metadata = (get<Map<*, *>?>("metadata") as? Map<String, String>) ?: emptyMap(),
-        createdAt = safeLong("created_at"), visibility = ActivityVisibility.fromString(get<String?>("visibility"))
-    )
-}
-
-private fun activityToMap(activity: Activity): Map<String, Any?> {
-    return mapOf(
-        "user_id" to activity.userId, "user_name" to activity.userName, "user_photo" to activity.userPhoto,
-        "type" to activity.type, "title" to activity.title, "description" to activity.description,
-        "reference_id" to activity.referenceId, "reference_type" to activity.referenceType,
-        "metadata" to activity.metadata, "created_at" to FieldValue.serverTimestamp,
-        "visibility" to activity.visibility
-    )
-}
-
-// ========== CURSOR PAGINATION CLASSES ==========
-
-private data class CursorInfo(
-    val documentPath: String, val sortField: LocationSortField,
-    val lastValue: String?, val timestamp: Long
-) {
-    val documentId: String get() = documentPath.substringAfterLast("/")
-}
-
-class CursorDecodingException(message: String) : Exception(message)
-class CursorMismatchException(message: String) : Exception(message)
-class CursorDocumentNotFoundException(message: String) : Exception(message)
