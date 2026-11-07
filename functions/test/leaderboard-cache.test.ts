@@ -400,35 +400,28 @@ describe("leaderboard-cache batching", () => {
     ]);
   });
 
-  // FIX #3900: o #3879 passou a filtrar por `group_ids array-contains` sem
-  // backfill. Docs gravados antes daquele deploy so tem o escalar `group_id`
-  // e sao excluidos de array-contains, o que zerava o ranking do grupo.
-  describe("uniao group_ids/group_id (#3900)", () => {
+  // D9: consulta unica por `group_ids array-contains` (consulta legada por
+  // `group_id` removida apos conclusao do backfill #3900).
+  describe("consulta unica group_ids (D9 / #3900)", () => {
     const GROUP_ID = "group-1";
 
-    /**
-     * Query de season_participation que responde conforme o filtro de grupo
-     * aplicado, para distinguir a consulta nova da legada.
-     */
     const makeSeasonQuery = (
-      byFilter: {migrated?: unknown[]; legacy?: unknown[]}
+      byFilter: {migrated?: unknown[]}
     ) => {
+      const getMock = jest.fn();
       const build = (filters: string[]): any => ({
         where: jest.fn((field: string, _op: string, value: string) =>
           build([...filters, `${field}:${value}`])),
         orderBy: jest.fn(() => build(filters)),
         limit: jest.fn(() => build(filters)),
-        get: jest.fn(async () => {
+        get: getMock.mockImplementation(async () => {
           if (filters.includes(`group_ids:${GROUP_ID}`)) {
             return {docs: byFilter.migrated ?? []};
-          }
-          if (filters.includes(`group_id:${GROUP_ID}`)) {
-            return {docs: byFilter.legacy ?? []};
           }
           return {docs: []};
         }),
       });
-      return build([]);
+      return {query: build([]), getMock};
     };
 
     const wireCollections = (seasonQuery: unknown, memberIds: string[]) => {
@@ -469,6 +462,7 @@ describe("leaderboard-cache batching", () => {
         user_id: userId,
         season_id: "season-1",
         group_id: GROUP_ID,
+        group_ids: [GROUP_ID],
         points,
         games_played: 4,
         wins: 3,
@@ -476,11 +470,11 @@ describe("leaderboard-cache batching", () => {
       }),
     });
 
-    it("doc legado (so group_id) aparece com estatisticas reais", async () => {
-      wireCollections(
-        makeSeasonQuery({migrated: [], legacy: [participation("p1", "u1", 20)]}),
-        ["u1"]
-      );
+    it("executa uma unica consulta em season_participation filtrada por group_ids", async () => {
+      const {query, getMock} = makeSeasonQuery({
+        migrated: [participation("p1", "u1", 20)],
+      });
+      wireCollections(query, ["u1"]);
 
       const players = await __testing.buildLeaguePlayersDirectory(
         "season-1",
@@ -488,22 +482,20 @@ describe("leaderboard-cache batching", () => {
         "ALL"
       );
 
+      expect(getMock).toHaveBeenCalledTimes(1);
       expect(players).toEqual([
         expect.objectContaining({userId: "u1", points: 20, wins: 3}),
       ]);
     });
 
-    it("estado misto: legado e migrado convivem sem duplicar usuario", async () => {
-      // O fluxo novo grava group_id E group_ids, entao o doc migrado casa nas
-      // duas consultas — a deduplicacao por id de documento e obrigatoria.
-      const migratedDoc = participation("p-u1", "u1", 30, {group_ids: [GROUP_ID]});
-      wireCollections(
-        makeSeasonQuery({
-          migrated: [migratedDoc],
-          legacy: [migratedDoc, participation("p-u2", "u2", 15)],
-        }),
-        ["u1", "u2"]
-      );
+    it("retorna multiplos participantes da consulta unica", async () => {
+      const {query, getMock} = makeSeasonQuery({
+        migrated: [
+          participation("p-u1", "u1", 30),
+          participation("p-u2", "u2", 15),
+        ],
+      });
+      wireCollections(query, ["u1", "u2"]);
 
       const players = await __testing.buildLeaguePlayersDirectory(
         "season-1",
@@ -511,6 +503,7 @@ describe("leaderboard-cache batching", () => {
         "ALL"
       );
 
+      expect(getMock).toHaveBeenCalledTimes(1);
       expect(players).toHaveLength(2);
       expect(players).toEqual(expect.arrayContaining([
         expect.objectContaining({userId: "u1", points: 30}),
@@ -521,7 +514,8 @@ describe("leaderboard-cache batching", () => {
     it("loga warn quando ha membros ativos e nenhuma participacao", async () => {
       const logger = jest.requireMock("firebase-functions").logger;
       (logger.warn as jest.Mock).mockClear();
-      wireCollections(makeSeasonQuery({migrated: [], legacy: []}), ["u1"]);
+      const {query} = makeSeasonQuery({migrated: []});
+      wireCollections(query, ["u1"]);
 
       await __testing.buildLeaguePlayersDirectory("season-1", GROUP_ID, "ALL");
 

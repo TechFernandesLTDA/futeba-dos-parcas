@@ -80,7 +80,7 @@ export const STATISTICS = {
 /**
  * `xp_logs` — IDs determinísticos (`game_{gameId}_user_{uid}`,
  * `badge_{badgeId}_user_{uid}`, transactionId); campo `user_id`
- * (xp/processing.ts:431 buildXpLogData, index.ts:1197).
+ * (index.ts onGameStatusUpdate).
  */
 export const XP_LOGS = {
   collection: "xp_logs",
@@ -423,7 +423,7 @@ export const UID_OWNED_COLLECTIONS: readonly UidOwnedCollection[] = [
     collection: XP_LOGS.collection,
     uidFields: [XP_LOGS.uidField],
     docIdScheme: "game_{gameId}_user_{uid} | badge_{badgeId}_user_{uid}",
-    writer: "xp/processing.ts:431, index.ts:1197",
+    writer: "index.ts onGameStatusUpdate",
     merge: "repoint",
     cleanup: "delete",
   },

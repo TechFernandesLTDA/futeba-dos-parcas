@@ -1340,72 +1340,10 @@ async function fetchLeagueParticipations(
     return snap.docs;
   };
 
-  // Le o mesmo valor que orderField ordena, para reordenar em memoria.
-  const readOrderPoints = (
-    doc: FirebaseFirestore.QueryDocumentSnapshot
-  ): number => {
-    const data = doc.data();
-    const src = isSegmented ?
-      ((data.by_gender || {})[genderKey] || {}) :
-      data;
-    return readNumber(src.points);
-  };
-
-  const readParticipationUserId = (
-    doc: FirebaseFirestore.QueryDocumentSnapshot
-  ): string => {
-    const data = doc.data();
-    return readString(data.user_id) ||
-      readString(data.userId) ||
-      doc.id;
-  };
-
-  let docs: FirebaseFirestore.QueryDocumentSnapshot[];
-
-  if (groupId) {
-    // FIX #3879: o filtro por array-contains em group_ids (todos os grupos
-    // jogados na temporada) substitui o escalar group_id (apenas o ultimo),
-    // para o usuario aparecer no ranking de TODOS os grupos em que jogou.
-    //
-    // FIX #3900: aquele fix foi deployado sem backfill de group_ids, e o
-    // Firestore exclui de array-contains todo doc que nao tem o campo.
-    // Documentos gravados antes do deploy so tem group_id escalar, entao a
-    // consulta nova voltava vazia e o diretorio renderizava o roster
-    // completo com estatisticas zeradas — falha silenciosa.
-    //
-    // Unimos as duas consultas para que docs legados e migrados aparecam
-    // juntos. Nao basta usar a legada so quando a nova vem vazia: durante a
-    // migracao o grupo fica em estado misto e a nova volta parcial, o que
-    // deixaria os legados de fora sem disparar nenhum fallback.
-    // TODO(#3900): remover a consulta legada apos concluir o backfill.
-    const [migrated, legacy] = await Promise.all([
-      runOrdered(baseQuery.where("group_ids", "array-contains", groupId)),
-      runOrdered(baseQuery.where("group_id", "==", groupId)),
-    ]);
-
-    const byDocId = new Map<
-      string,
-      FirebaseFirestore.QueryDocumentSnapshot
-    >();
-    for (const doc of migrated) byDocId.set(doc.id, doc);
-    for (const doc of legacy) {
-      if (!byDocId.has(doc.id)) byDocId.set(doc.id, doc);
-    }
-
-    // Duas queries ordenadas de forma independente nao formam um top-N
-    // global quando concatenadas: reordenamos pela mesma chave da query
-    // (pontos desc, user_id asc) antes de aplicar o limite.
-    docs = Array.from(byDocId.values())
-      .sort((a, b) => {
-        const diff = readOrderPoints(b) - readOrderPoints(a);
-        if (diff !== 0) return diff;
-        return readParticipationUserId(a)
-          .localeCompare(readParticipationUserId(b));
-      })
-      .slice(0, resultLimit);
-  } else {
-    docs = await runOrdered(baseQuery);
-  }
+  const query = groupId ?
+    baseQuery.where("group_ids", "array-contains", groupId) :
+    baseQuery;
+  const docs = await runOrdered(query);
 
   return docs.map((doc) => {
     const data = doc.data();

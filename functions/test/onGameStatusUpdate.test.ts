@@ -201,7 +201,6 @@ jest.mock("firebase-admin/firestore", () => ({
 jest.mock("../src/notifications/batch-sender", () => ({}));
 jest.mock("../src/monitoring/alerting", () => ({}));
 jest.mock("../src/cache/leaderboard-cache", () => ({}));
-jest.mock("../src/xp/parallel-processing", () => ({}));
 jest.mock("../src/voting/mvp-voting", () => ({}));
 
 // Mock badges
