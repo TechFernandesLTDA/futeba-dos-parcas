@@ -3,6 +3,7 @@ package com.futebadosparcas.data.repository
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
 import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.domain.model.GroupInvite
+import com.futebadosparcas.data.model.BlockedPlayer
 import com.futebadosparcas.data.model.Group as PublicGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
@@ -1252,6 +1253,25 @@ class GroupRepository constructor(
             } else {
                 Result.failure(e)
             }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Obtém a lista de jogadores bloqueados de um grupo (Issue #64).
+     */
+    suspend fun getBlockedPlayers(groupId: String): Result<List<BlockedPlayer>> {
+        return try {
+            val snapshot = groupsCollection.document(groupId)
+                .collection("blocked_players")
+                .get()
+                .await()
+
+            val blockedList = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(BlockedPlayer::class.java)?.copy(userId = doc.id)
+            }
+            Result.success(blockedList)
         } catch (e: Exception) {
             Result.failure(e)
         }
