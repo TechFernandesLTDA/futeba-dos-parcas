@@ -2,7 +2,12 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {FieldPath, FieldValue, Timestamp} from "firebase-admin/firestore";
-import {FUNCTION_REGION} from "../constants";
+import {
+  FUNCTION_REGION,
+  MAX_ASSISTS_PER_GAME,
+  MAX_GOALS_PER_GAME,
+  MAX_SAVES_PER_GAME,
+} from "../constants";
 import {sendNotificationToUsers, NotificationType} from "../notifications/helpers";
 import {mirrorBadgeToRoot} from "../badges/user-badge-docs";
 
@@ -110,6 +115,62 @@ export function getCompletedWeekKey(referenceDate: Date): string {
   return getWeekKey(previousDay);
 }
 
+/**
+ * D5: Normaliza e aplica o limite anti-cheat por jogo aos stats semanais.
+ * @param {number} goals Gols reportados no jogo
+ * @param {number} assists Assistências reportadas no jogo
+ * @param {number} saves Defesas reportadas no jogo
+ * @return {{goals: number, assists: number, saves: number}} Stats limitados
+ */
+export function clampWeeklyStats(
+  goals: number,
+  assists: number,
+  saves: number
+): { goals: number; assists: number; saves: number } {
+  return {
+    goals: Math.max(0, Math.min(Math.floor(goals || 0), MAX_GOALS_PER_GAME)),
+    assists: Math.max(0, Math.min(Math.floor(assists || 0), MAX_ASSISTS_PER_GAME)),
+    saves: Math.max(0, Math.min(Math.floor(saves || 0), MAX_SAVES_PER_GAME)),
+  };
+}
+
+/**
+ * D7: Ordenação determinística com critérios de desempate consistentes:
+ * 1. Pontos (descendente)
+ * 2. Gols (descendente)
+ * 3. Assistências (descendente)
+ * 4. Vitórias (descendente)
+ * 5. Nome do usuário (ascendente)
+ * 6. ID do usuário (ascendente)
+ *
+ * @param {T[]} items Lista de jogadores do ranking
+ * @return {T[]} Lista ordenada de forma determinística
+ */
+export function sortWeeklyRankings<T extends {
+  points: number;
+  goals?: number;
+  assists?: number;
+  wins?: number;
+  userName?: string;
+  userId: string;
+}>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    const aGoals = a.goals ?? 0;
+    const bGoals = b.goals ?? 0;
+    if (bGoals !== aGoals) return bGoals - aGoals;
+    const aAssists = a.assists ?? 0;
+    const bAssists = b.assists ?? 0;
+    if (bAssists !== aAssists) return bAssists - aAssists;
+    const aWins = a.wins ?? 0;
+    const bWins = b.wins ?? 0;
+    if (bWins !== aWins) return bWins - aWins;
+    const nameCmp = (a.userName || "").localeCompare(b.userName || "");
+    if (nameCmp !== 0) return nameCmp;
+    return a.userId.localeCompare(b.userId);
+  });
+}
+
 export const processWeeklyRanking = onSchedule(
   {
     schedule: "every sunday 23:57",
@@ -213,16 +274,22 @@ export const processWeeklyRanking = onSchedule(
 
         const s = scores[uid];
 
+        // D5: Clampa gols, assistências e defesas pelos limites anti-cheat por jogo
+        const rawGoals = (c.goals as number) || 0;
+        const rawAssists = (c.assists as number) || 0;
+        const rawSaves = (c.saves as number) || 0;
+        const clamped = clampWeeklyStats(rawGoals, rawAssists, rawSaves);
+
         s.presence += 1;
         s.points += 3;
 
-        s.goals += (c.goals as number) || 0;
-        s.points += ((c.goals as number) || 0) * 5;
+        s.goals += clamped.goals;
+        s.points += clamped.goals * 5;
 
-        s.assists += (c.assists as number) || 0;
-        s.points += ((c.assists as number) || 0) * 3;
+        s.assists += clamped.assists;
+        s.points += clamped.assists * 3;
 
-        s.saves += (c.saves as number) || 0;
+        s.saves += clamped.saves;
 
         if (c.is_mvp) {
           s.mvp += 1;
@@ -256,7 +323,8 @@ export const processWeeklyRanking = onSchedule(
       }
     }
 
-    const rankings = Object.values(scores).sort((a, b) => b.points - a.points);
+    // D7: Desempate determinístico (pontos -> gols -> assistências -> vitórias -> nome -> userId)
+    const rankings = sortWeeklyRankings(Object.values(scores));
     const topRankings = rankings.slice(0, 100);
 
     const rankingDoc = db().collection("weekly-rankings").doc(weekKey);
@@ -342,7 +410,13 @@ export const processWeeklyRanking = onSchedule(
       });
     }
 
-    scoutRankings.sort((a, b) => b.points - a.points);
+    // D7: Desempate determinístico para scout ranking (pontos -> nome -> userId)
+    scoutRankings.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      const nameCmp = (a.userName || "").localeCompare(b.userName || "");
+      if (nameCmp !== 0) return nameCmp;
+      return a.userId.localeCompare(b.userId);
+    });
 
     if (scoutRankings.length > 0) {
       const scoutDoc = db().collection("weekly-rankings").doc(`${weekKey}_scout`);

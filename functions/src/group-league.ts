@@ -11,6 +11,10 @@ import {
   MAX_ASSISTS_PER_GAME,
   MAX_GOALS_PER_GAME,
 } from "./constants";
+import {
+  isParticipationEligible,
+  toGameConfirmation,
+} from "./game/helpers";
 
 const POINTS_WIN = 3;
 const POINTS_DRAW = 1;
@@ -340,8 +344,14 @@ async function buildNextMatchPayload(
     tx.get(teamsQuery),
   ]);
 
+  // D6: Liga do grupo exige presença efetiva (isParticipationEligible).
+  // Confirmações que possuem sinal de presença mas não compareceram são ignoradas.
+  const eligibleConfirmationDocs = confirmationsSnap.docs.filter((doc) =>
+    isParticipationEligible(toGameConfirmation(doc.data()))
+  );
+
   const confirmations: ProcessedConfirmation[] =
-    confirmationsSnap.docs.map((doc) => ({
+    eligibleConfirmationDocs.map((doc) => ({
       userId: (doc.data().user_id as string) || "",
       goals: clampStat(doc.data().goals, MAX_GOALS_PER_GAME),
       assists: clampStat(doc.data().assists, MAX_ASSISTS_PER_GAME),

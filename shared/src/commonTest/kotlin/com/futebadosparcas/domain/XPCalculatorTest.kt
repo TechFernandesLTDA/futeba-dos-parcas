@@ -172,8 +172,23 @@ class XPCalculatorTest {
     }
 
     @Test
-    fun totalXpNuncaPassaDe500() {
-        // Cenario extremo: MVP + vitoria + muitos gols + streak 10
+    fun totalXpSemMvpNuncaPassaDe500() {
+        // Cenario extremo de performance: vitoria + muitos gols + streak 10
+        val data = createDefaultPlayerData(
+            goals = 15,
+            assists = 10,
+            saves = 30,
+            teamWon = true,
+            isMvp = false,
+            currentStreak = 10
+        )
+        val result = XPCalculator.calculate(data)
+        assertEquals(500L, result.totalXp)
+    }
+
+    @Test
+    fun totalXpComMvpPodeAtingir550() {
+        // D2 + FIX #726: MVP entra por fora do teto de performance (500 + 50 = 550)
         val data = createDefaultPlayerData(
             goals = 15,
             assists = 10,
@@ -183,7 +198,7 @@ class XPCalculatorTest {
             currentStreak = 10
         )
         val result = XPCalculator.calculate(data)
-        assertTrue(result.totalXp <= 500)
+        assertEquals(550L, result.totalXp)
     }
 
     @Test
