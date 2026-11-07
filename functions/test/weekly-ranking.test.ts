@@ -6,11 +6,14 @@
  * (inclusive BRT self-hosted). Não dependem de process.env.TZ.
  */
 import {
+  applyConfirmationToWeeklyScore,
   clampWeeklyStats,
   getCompletedWeekKey,
   getWeekKey,
   getWeekRange,
+  sortScoutRankings,
   sortWeeklyRankings,
+  WeeklyPlayerScore,
 } from "../src/growth/weekly-ranking";
 
 const iso = (d: Date) => d.toISOString().split("T")[0];
@@ -115,5 +118,110 @@ describe("D7: desempate determinístico no ranking semanal (sortWeeklyRankings)"
     ];
     const sorted = sortWeeklyRankings(items);
     expect(sorted[0].userId).toBe("u1");
+  });
+
+  it("desempata por userId quando nomes de usuário são iguais", () => {
+    const items = [
+      {userId: "u2", points: 20, goals: 2, assists: 2, wins: 1, userName: "Arthur"},
+      {userId: "u1", points: 20, goals: 2, assists: 2, wins: 1, userName: "Arthur"},
+    ];
+    const sorted = sortWeeklyRankings(items);
+    expect(sorted[0].userId).toBe("u1");
+  });
+});
+
+describe("D7: desempate determinístico no scout ranking (sortScoutRankings)", () => {
+  it("ordena primariamente por pontos descendente", () => {
+    const items = [
+      {userId: "u1", userName: "Arthur", points: 15},
+      {userId: "u2", userName: "Zico", points: 40},
+    ];
+    const sorted = sortScoutRankings(items);
+    expect(sorted[0].userId).toBe("u2");
+  });
+
+  it("desempata por nome de usuário quando pontos são iguais", () => {
+    const items = [
+      {userId: "u1", userName: "Zico", points: 30},
+      {userId: "u2", userName: "Arthur", points: 30},
+    ];
+    const sorted = sortScoutRankings(items);
+    expect(sorted[0].userId).toBe("u2");
+  });
+
+  it("desempata por userId quando nomes de usuário são iguais", () => {
+    const items = [
+      {userId: "u2", userName: "Arthur", points: 30},
+      {userId: "u1", userName: "Arthur", points: 30},
+    ];
+    const sorted = sortScoutRankings(items);
+    expect(sorted[0].userId).toBe("u1");
+  });
+});
+
+describe("D5: acúmulo de estatísticas com anti-cheat (applyConfirmationToWeeklyScore)", () => {
+  function makeInitialScore(uid = "u1"): WeeklyPlayerScore {
+    return {
+      userId: uid,
+      userName: "Jogador",
+      points: 0,
+      goals: 0,
+      assists: 0,
+      saves: 0,
+      presence: 0,
+      mvp: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      bolaMurcha: 0,
+    };
+  }
+
+  it("acumula presença e pontos normais de jogo", () => {
+    const score = makeInitialScore();
+    applyConfirmationToWeeklyScore(score, {
+      goals: 2,
+      assists: 1,
+      saves: 3,
+    });
+    expect(score.presence).toBe(1);
+    expect(score.goals).toBe(2);
+    expect(score.assists).toBe(1);
+    expect(score.saves).toBe(3);
+    // presença: 3, gols: 2 * 5 = 10, assistências: 1 * 3 = 3 => 16 pontos
+    expect(score.points).toBe(16);
+  });
+
+  it("clampa gols e assistências inflados pelo anti-cheat", () => {
+    const score = makeInitialScore();
+    applyConfirmationToWeeklyScore(score, {
+      goals: 99,
+      assists: 50,
+      saves: 100,
+    });
+    expect(score.goals).toBe(15);
+    expect(score.assists).toBe(10);
+    expect(score.saves).toBe(30);
+    // presença: 3, gols: 15 * 5 = 75, assistências: 10 * 3 = 30 => 108 pontos
+    expect(score.points).toBe(108);
+  });
+
+  it("aplica bônus de MVP e penalidade de Bola Murcha", () => {
+    const scoreMvp = makeInitialScore();
+    applyConfirmationToWeeklyScore(scoreMvp, {
+      goals: 1,
+      is_mvp: true,
+    });
+    expect(scoreMvp.mvp).toBe(1);
+    // presença 3 + gol 5 + MVP 8 = 16
+    expect(scoreMvp.points).toBe(16);
+
+    const scoreWorst = makeInitialScore();
+    applyConfirmationToWeeklyScore(scoreWorst, {
+      is_worst_player: true,
+    });
+    expect(scoreWorst.bolaMurcha).toBe(1);
+    // presença 3 - Bola Murcha 3 = 0
+    expect(scoreWorst.points).toBe(0);
   });
 });

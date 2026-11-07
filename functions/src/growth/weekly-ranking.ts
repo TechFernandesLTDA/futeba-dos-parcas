@@ -16,23 +16,23 @@ const WEEKLY_GAMES_QUERY_LIMIT = 5000;
 const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
 const GAME_TEAMS_QUERY_LIMIT = 100;
 
-interface WeeklyScores {
-  [userId: string]: {
-    userId: string;
-    userName: string;
-    userPhoto?: string;
-    points: number;
-    goals: number;
-    assists: number;
-    saves: number;
-    presence: number;
-    mvp: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    bolaMurcha: number;
-  };
+export interface WeeklyPlayerScore {
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  points: number;
+  goals: number;
+  assists: number;
+  saves: number;
+  presence: number;
+  mvp: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  bolaMurcha: number;
 }
+
+export type WeeklyScores = Record<string, WeeklyPlayerScore>;
 
 /**
  * Retorna a chave da semana no formato "YYYY-WW" para a data fornecida.
@@ -171,6 +171,66 @@ export function sortWeeklyRankings<T extends {
   });
 }
 
+/**
+ * D7: Desempate determinístico para scout ranking (pontos -> nome -> userId).
+ * @param {T[]} items Lista de técnicos do scout ranking
+ * @return {T[]} Lista ordenada de forma determinística
+ */
+export function sortScoutRankings<T extends {
+  points: number;
+  userName?: string;
+  userId: string;
+}>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    const nameCmp = (a.userName || "").localeCompare(b.userName || "");
+    if (nameCmp !== 0) return nameCmp;
+    return a.userId.localeCompare(b.userId);
+  });
+}
+
+/**
+ * D5: Acumula os stats de uma confirmação no placar semanal do jogador com limites anti-cheat.
+ * @param {WeeklyPlayerScore} s Placar semanal do jogador
+ * @param {object} c Confirmação do jogo
+ */
+export function applyConfirmationToWeeklyScore(
+  s: WeeklyPlayerScore,
+  c: {
+    goals?: number;
+    assists?: number;
+    saves?: number;
+    is_mvp?: boolean;
+    is_worst_player?: boolean;
+  }
+): void {
+  const rawGoals = (c.goals as number) || 0;
+  const rawAssists = (c.assists as number) || 0;
+  const rawSaves = (c.saves as number) || 0;
+  const clamped = clampWeeklyStats(rawGoals, rawAssists, rawSaves);
+
+  s.presence += 1;
+  s.points += 3;
+
+  s.goals += clamped.goals;
+  s.points += clamped.goals * 5;
+
+  s.assists += clamped.assists;
+  s.points += clamped.assists * 3;
+
+  s.saves += clamped.saves;
+
+  if (c.is_mvp) {
+    s.mvp += 1;
+    s.points += 8;
+  }
+
+  if (c.is_worst_player) {
+    s.bolaMurcha += 1;
+    s.points -= 3;
+  }
+}
+
 export const processWeeklyRanking = onSchedule(
   {
     schedule: "every sunday 23:57",
@@ -274,32 +334,8 @@ export const processWeeklyRanking = onSchedule(
 
         const s = scores[uid];
 
-        // D5: Clampa gols, assistências e defesas pelos limites anti-cheat por jogo
-        const rawGoals = (c.goals as number) || 0;
-        const rawAssists = (c.assists as number) || 0;
-        const rawSaves = (c.saves as number) || 0;
-        const clamped = clampWeeklyStats(rawGoals, rawAssists, rawSaves);
-
-        s.presence += 1;
-        s.points += 3;
-
-        s.goals += clamped.goals;
-        s.points += clamped.goals * 5;
-
-        s.assists += clamped.assists;
-        s.points += clamped.assists * 3;
-
-        s.saves += clamped.saves;
-
-        if (c.is_mvp) {
-          s.mvp += 1;
-          s.points += 8;
-        }
-
-        if (c.is_worst_player) {
-          s.bolaMurcha += 1;
-          s.points -= 3;
-        }
+        // D5: Acumula presença, gols, assistências, defesas com anti-cheat, MVP e Bola Murcha
+        applyConfirmationToWeeklyScore(s, c);
 
         const userTeam = teams.find((t) =>
           t.playerIds.includes(uid)
@@ -411,19 +447,14 @@ export const processWeeklyRanking = onSchedule(
     }
 
     // D7: Desempate determinístico para scout ranking (pontos -> nome -> userId)
-    scoutRankings.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      const nameCmp = (a.userName || "").localeCompare(b.userName || "");
-      if (nameCmp !== 0) return nameCmp;
-      return a.userId.localeCompare(b.userId);
-    });
+    const sortedScoutRankings = sortScoutRankings(scoutRankings);
 
-    if (scoutRankings.length > 0) {
+    if (sortedScoutRankings.length > 0) {
       const scoutDoc = db().collection("weekly-rankings").doc(`${weekKey}_scout`);
       await scoutDoc.set({
         week_key: weekKey,
         type: "scout",
-        rankings: scoutRankings.slice(0, 50),
+        rankings: sortedScoutRankings.slice(0, 50),
         created_at: FieldValue.serverTimestamp(),
       });
     }
