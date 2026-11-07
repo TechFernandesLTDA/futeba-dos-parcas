@@ -183,7 +183,7 @@ export const CreateDateTimeSection: React.FC<CreateDateTimeSectionProps> = ({
       {/* Suggested time slots (chips) */}
       <Box>
         <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
-          {t('games.create.suggestedTimes')}
+          Horários prontos — sem duplicar habitual, populares e sugestões
         </Typography>
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
           {suggestedTimeChips.map((chip) => {

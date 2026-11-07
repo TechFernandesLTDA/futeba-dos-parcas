@@ -759,8 +759,8 @@ export const CreateGameScreen: React.FC = () => {
     const targetGroup = selectedEligibleGroup || eligibleOwnedGroups[0];
     if (!targetGroup) {
       showError(hasAnyOwnedGroup
-        ? t('games.create.noQualifiedGroupQuickCreate')
-        : t('games.create.noOwnedGroupQuickCreate'));
+        ? 'Nenhum grupo elegível para criação rápida'
+        : 'Você precisa ser admin de um grupo para criar jogos');
       return;
     }
     const { date: nextDate } = calculateNextOccurrence(template.time, template.recurrence_type || 'weekly');
@@ -928,7 +928,6 @@ export const CreateGameScreen: React.FC = () => {
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      showError(t('games.create.fillRequiredFields'));
       return;
     }
 
