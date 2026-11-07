@@ -99,7 +99,8 @@ fun LoginScreen(
     onEmailPasswordSignIn: (email: String, password: String) -> Unit,
     onForgotPassword: (email: String) -> Unit,
     onNavigateToRegister: () -> Unit,
-    onNavigateToMain: () -> Unit
+    onNavigateToMain: () -> Unit,
+    passwordResetMessage: String? = null
 ) {
     // Navegar automaticamente quando login for bem-sucedido
     LaunchedEffect(uiState) {
@@ -178,6 +179,7 @@ fun LoginScreen(
 
                     LoginCard(
                         uiState = uiState,
+                        passwordResetMessage = passwordResetMessage,
                         contentPadding = if (compactWidth) 20.dp else 32.dp,
                         onGoogleSignInClick = onGoogleSignInClick,
                         onEmailPasswordSignIn = onEmailPasswordSignIn,
@@ -221,6 +223,7 @@ private fun AppLogo() {
 @Composable
 private fun LoginCard(
     uiState: LoginState,
+    passwordResetMessage: String? = null,
     contentPadding: androidx.compose.ui.unit.Dp,
     onGoogleSignInClick: () -> Unit,
     onEmailPasswordSignIn: (email: String, password: String) -> Unit,
@@ -366,6 +369,28 @@ private fun LoginCard(
                         text = stringResource(Res.string.auth_authenticating),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = !passwordResetMessage.isNullOrBlank(),
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut()
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Text(
+                        text = passwordResetMessage.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }

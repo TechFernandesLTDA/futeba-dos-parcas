@@ -133,6 +133,22 @@ sealed class DeepLinkRoute(
         }
     }
 
+    /**
+     * Convite por código curto (Universal Link: /invite/{code})
+     * Exemplo: https://futebadosparcas.com.br/invite/ABC123 ou futeba://invite/ABC123
+     */
+    data class InviteByCode(val inviteCode: String) : DeepLinkRoute("/invite/{code}") {
+        override fun extractParams(url: String): Map<String, String> = mapOf("code" to inviteCode)
+        override fun toShareableUrl(): String = "$PRODUCTION_URL/invite/$inviteCode"
+
+        companion object {
+            fun fromUrl(url: String): InviteByCode? {
+                val regex = Regex(".*/invite/([^/?#]+)")
+                return regex.find(url)?.groupValues?.get(1)?.takeIf { it.isNotBlank() }?.let { InviteByCode(it) }
+            }
+        }
+    }
+
     // ==================== Perfil ====================
 
     /**
@@ -282,6 +298,7 @@ sealed class DeepLinkRoute(
 
     companion object {
         const val BASE_URL = "https://futeba.app"
+        const val PRODUCTION_URL = "https://futebadosparcas.com.br"
         const val CUSTOM_SCHEME = "futeba"
         const val DYNAMIC_LINK_DOMAIN = "futebadosparcas.page.link"
 
@@ -299,6 +316,8 @@ sealed class DeepLinkRoute(
         val supportedHosts = listOf(
             "futeba.app",
             "www.futeba.app",
+            "futebadosparcas.com.br",
+            "www.futebadosparcas.com.br",
             DYNAMIC_LINK_DOMAIN
         )
 
@@ -317,6 +336,7 @@ sealed class DeepLinkRoute(
                 ?: ShareMvpCard.fromUrl(normalizedUrl)
                 ?: ShareGameResult.fromUrl(normalizedUrl)
                 ?: GameDetail.fromUrl(normalizedUrl)
+                ?: InviteByCode.fromUrl(normalizedUrl)
                 ?: GroupInvite.fromUrl(normalizedUrl)
                 ?: GroupRanking.fromUrl(normalizedUrl)
                 ?: GroupDetail.fromUrl(normalizedUrl)

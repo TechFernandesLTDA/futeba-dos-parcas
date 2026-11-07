@@ -46,8 +46,9 @@ import com.futebadosparcas.compose.resources.release_type_patch
 import com.futebadosparcas.domain.model.ReleaseHighlight
 import com.futebadosparcas.domain.model.ReleaseNote
 import com.futebadosparcas.domain.model.ReleaseType
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 
@@ -93,8 +94,8 @@ internal fun formatReleaseDate(epochMillis: Long): String {
     if (epochMillis <= 0L) return ""
     return runCatching {
         val date = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(TimeZone.UTC)
-        val day = date.dayOfMonth.toString().padStart(2, '0')
-        val month = date.monthNumber.toString().padStart(2, '0')
+        val day = date.day.toString().padStart(2, '0')
+        val month = date.month.number.toString().padStart(2, '0')
         "$day/$month/${date.year}"
     }.getOrDefault("")
 }

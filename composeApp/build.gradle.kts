@@ -89,9 +89,10 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
         }
 
-        // #4440: testes unitários de lógica pura (ex.: classificação de erros de ViewModel).
+        // #4433 / #4440: testes unitários em commonTest (rotas, ViewModels e lógica de estado).
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
         }
 
         androidMain.dependencies {

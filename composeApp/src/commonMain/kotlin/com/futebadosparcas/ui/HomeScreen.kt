@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Group as FilledGroup
 import androidx.compose.material.icons.filled.Home as FilledHome
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Person as FilledPerson
 import androidx.compose.material.icons.filled.Schedule
@@ -67,6 +70,9 @@ fun HomeScreen(
     onNavigateToGroups: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onOpenProfileSetup: () -> Unit = {},
+    onNavigateToRanking: () -> Unit = {},
+    onNavigateToBadges: () -> Unit = {},
+    onNavigateToLocations: () -> Unit = {},
 ) {
     val appName = stringResource(Res.string.app_name)
     val whatsNewContentDescription = stringResource(Res.string.cd_whats_new)
@@ -175,7 +181,10 @@ fun HomeScreen(
                             HomeToolsSection(
                                 onNavigateToGames = onNavigateToGames,
                                 onNavigateToGroups = onNavigateToGroups,
-                                onNavigateToProfile = onNavigateToProfile
+                                onNavigateToProfile = onNavigateToProfile,
+                                onNavigateToRanking = onNavigateToRanking,
+                                onNavigateToBadges = onNavigateToBadges,
+                                onNavigateToLocations = onNavigateToLocations
                             )
                         }
                     }
@@ -200,7 +209,10 @@ fun HomeScreen(
                         HomeToolsSection(
                             onNavigateToGames = onNavigateToGames,
                             onNavigateToGroups = onNavigateToGroups,
-                            onNavigateToProfile = onNavigateToProfile
+                            onNavigateToProfile = onNavigateToProfile,
+                            onNavigateToRanking = onNavigateToRanking,
+                            onNavigateToBadges = onNavigateToBadges,
+                            onNavigateToLocations = onNavigateToLocations
                         )
                     }
                 }
@@ -484,7 +496,10 @@ private fun StatusPill(
 private fun HomeToolsSection(
     onNavigateToGames: () -> Unit,
     onNavigateToGroups: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToRanking: () -> Unit = {},
+    onNavigateToBadges: () -> Unit = {},
+    onNavigateToLocations: () -> Unit = {}
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -506,6 +521,24 @@ private fun HomeToolsSection(
             title = stringResource(Res.string.home_tools_groups_title),
             body = stringResource(Res.string.home_tools_groups_body),
             onClick = onNavigateToGroups
+        )
+        ToolSummaryCard(
+            icon = Icons.Filled.EmojiEvents,
+            title = "Ranking",
+            body = "Classificação da temporada, artilharia e pontuação XP",
+            onClick = onNavigateToRanking
+        )
+        ToolSummaryCard(
+            icon = Icons.Filled.MilitaryTech,
+            title = "Conquistas",
+            body = "Medalhas e marcos desbloqueados nas partidas",
+            onClick = onNavigateToBadges
+        )
+        ToolSummaryCard(
+            icon = Icons.Filled.LocationOn,
+            title = "Locais",
+            body = "Quadras e campos cadastrados para as peladas",
+            onClick = onNavigateToLocations
         )
         ToolSummaryCard(
             icon = Icons.Filled.FilledPerson,

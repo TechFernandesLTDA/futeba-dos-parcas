@@ -49,6 +49,12 @@ interface AuthRepository {
     suspend fun signUp(email: String, password: String): Result<String>
 
     /**
+     * Envia e-mail de redefinição de senha para o endereço informado.
+     */
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("sendPasswordResetEmail não implementado"))
+
+    /**
      * Realiza logout do usuário.
      *
      * Suspend para evitar runBlocking em iOS (deadlock garantido se chamado da main thread).

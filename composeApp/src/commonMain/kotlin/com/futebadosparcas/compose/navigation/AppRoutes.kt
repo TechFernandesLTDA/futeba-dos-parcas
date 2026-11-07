@@ -1,5 +1,7 @@
 package com.futebadosparcas.compose.navigation
 
+import com.futebadosparcas.domain.model.DeepLinkRoute
+
 /**
  * Rotas de navegação do composeApp (compartilhadas entre Android e iOS via CMP).
  *
@@ -26,6 +28,7 @@ object AppRoutes {
     /** Cadastro por e-mail e senha (#4424). Aberto pelo "Criar conta" do Login. */
     const val REGISTER = "register"
     const val GAMES = "games"
+    const val CREATE_GAME = "create_game"
     const val GAME_DETAIL = "game/{gameId}"
     const val GROUPS = "groups"
     const val GROUP_DETAIL = "group/{groupId}"
@@ -80,6 +83,12 @@ object AppRoutes {
         "game/${requireRouteId(gameId, "gameId")}"
 
     /**
+     * Rota concreta para o detalhe de um grupo (B12).
+     */
+    fun groupDetail(groupId: String): String =
+        "group/${requireRouteId(groupId, "groupId")}"
+
+    /**
      * Rota concreta para a tela de convite de jogadores.
      *
      * O ID ainda chega do contexto do jogo/hub até a tela completa de grupo ser
@@ -99,6 +108,30 @@ object AppRoutes {
 
     fun mvpVoting(gameId: String): String =
         "mvp_voting/${requireRouteId(gameId, "gameId")}"
+
+    /**
+     * Resolve uma URL de Universal Link / Deep Link (#4426) para uma rota do NavHost
+     * do `composeApp`. Suporta `/game/{id}`, `/invite/{code}`, `/group/{id}` e `/ranking`.
+     */
+    fun resolveDeepLink(url: String): String? {
+        val trimmed = url.trim()
+        if (trimmed.isEmpty() || !DeepLinkRoute.isValidDeepLink(trimmed)) return null
+        return runCatching {
+            when (val parsed = DeepLinkRoute.parse(trimmed)) {
+                is DeepLinkRoute.GameDetail -> gameDetail(parsed.gameId)
+                is DeepLinkRoute.GameInvite -> gameDetail(parsed.gameId)
+                is DeepLinkRoute.LiveGame -> gameDetail(parsed.gameId)
+                is DeepLinkRoute.InviteByCode -> invitePlayers(parsed.inviteCode)
+                is DeepLinkRoute.GroupInvite -> groupDetail(parsed.groupId)
+                is DeepLinkRoute.GroupDetail -> groupDetail(parsed.groupId)
+                is DeepLinkRoute.GroupRanking -> RANKING
+                is DeepLinkRoute.Ranking -> RANKING
+                is DeepLinkRoute.MyProfile, is DeepLinkRoute.UserProfile -> PROFILE
+                is DeepLinkRoute.LocationDetail -> LOCATIONS
+                else -> null
+            }
+        }.getOrNull()
+    }
 
     private fun requireRouteId(value: String, name: String): String {
         val trimmed = value.trim()

@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Estados da exportação dos dados pessoais (#4483, LGPD art. 18, V).
@@ -41,8 +43,8 @@ enum class ExportMyDataError {
  * (paridade total com Web e Android, #4482/#4483).
  */
 fun exportMyDataFileName(date: LocalDate): String {
-    val month = date.monthNumber.toString().padStart(2, '0')
-    val day = date.dayOfMonth.toString().padStart(2, '0')
+    val month = date.month.number.toString().padStart(2, '0')
+    val day = date.day.toString().padStart(2, '0')
     return "futeba-dos-parcas-meus-dados-${date.year}-$month-$day.json"
 }
 
@@ -52,6 +54,7 @@ fun exportMyDataFileName(date: LocalDate): String {
  * Chama a callable `exportMyData` (timeout 180 s) e entrega o arquivo JSON para a folha de
  * compartilhamento / seletor de arquivos da plataforma ([shareJsonFile]).
  */
+@OptIn(ExperimentalTime::class)
 class ExportMyDataViewModel(
     private val exportMyData: suspend () -> Result<ExportMyDataPayload>,
     private val shareJsonFile: suspend (fileName: String, json: String) -> Boolean,
