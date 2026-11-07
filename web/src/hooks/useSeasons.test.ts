@@ -1,8 +1,20 @@
 // @vitest-environment jsdom
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { createTestWrapper } from '../test/renderWithProviders';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+function createWrapper() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) => React.createElement(
+    QueryClientProvider,
+    { client },
+    children,
+  );
+}
 
 const mockGetDocs = vi.fn();
 const mockCollection = vi.fn();
@@ -43,7 +55,7 @@ beforeEach(() => {
 
 describe('useSeasons', () => {
   it('consulta a coleção seasons ordenada por start_date desc', async () => {
-    const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+    const { result } = renderHook(() => useSeasons(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(mockCollection).toHaveBeenCalledWith({}, 'seasons');
@@ -68,7 +80,7 @@ describe('useSeasons', () => {
         }),
       ],
     });
-    const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+    const { result } = renderHook(() => useSeasons(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.seasons).toEqual([
@@ -89,7 +101,7 @@ describe('useSeasons', () => {
     mockGetDocs.mockResolvedValue({
       docs: [seasonDoc('s-2', { name: 'Antiga', isActive: true, start_date: '2025-01-01' })],
     });
-    const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+    const { result } = renderHook(() => useSeasons(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.seasons).toHaveLength(1));
 
     expect(result.current.seasons[0].isActive).toBe(true);
@@ -99,7 +111,7 @@ describe('useSeasons', () => {
     mockGetDocs.mockResolvedValue({
       docs: [seasonDoc('s-3', { is_active: false, isActive: true })],
     });
-    const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+    const { result } = renderHook(() => useSeasons(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.seasons).toHaveLength(1));
 
     expect(result.current.seasons[0].isActive).toBe(false);
@@ -107,7 +119,7 @@ describe('useSeasons', () => {
 
   it('aplica defaults para documento vazio: Temporada, datas "" e isActive false', async () => {
     mockGetDocs.mockResolvedValue({ docs: [seasonDoc('s-4', {})] });
-    const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+    const { result } = renderHook(() => useSeasons(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.seasons).toHaveLength(1));
 
     // isActive fica undefined quando o doc não tem is_active nem isActive
@@ -125,7 +137,7 @@ describe('useSeasons', () => {
   });
 
   it('não consulta Firestore quando enabled=false', () => {
-      const { result } = renderHook(() => useSeasons({ enabled: false }), { wrapper: createTestWrapper() });
+      const { result } = renderHook(() => useSeasons({ enabled: false }), { wrapper: createWrapper() });
 
       expect(mockGetDocs).not.toHaveBeenCalled();
       // useSeasons envolve a query: loading = isLoading, que é false para query
@@ -141,7 +153,7 @@ describe('useSeasons', () => {
     vi.useFakeTimers();
     try {
       mockGetDocs.mockRejectedValue(new Error('unavailable'));
-      const { result } = renderHook(() => useSeasons(), { wrapper: createTestWrapper() });
+      const { result } = renderHook(() => useSeasons(), { wrapper: createWrapper() });
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(10_000);
