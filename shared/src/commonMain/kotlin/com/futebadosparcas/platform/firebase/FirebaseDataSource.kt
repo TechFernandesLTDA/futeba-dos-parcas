@@ -103,6 +103,15 @@ expect class FirebaseDataSource() {
      */
     suspend fun deleteAccount(): Result<Unit>
 
+    /**
+     * #4483: exporta os dados pessoais do usuário autenticado pela callable `exportMyData`
+     * (LGPD art. 18, V; timeout 180 s). Devolve o JSON formatado e o flag `complete`.
+     *
+     * Em falha da callable, devolve [CallableException] com o código do Functions
+     * (`resource-exhausted`, `details.reason = "export-too-large"`, etc.).
+     */
+    suspend fun exportMyData(): Result<ExportMyDataPayload>
+
     /** Registra o token FCM em armazenamento privado por instalação. */
     suspend fun registerPushToken(registration: PushTokenRegistration): Result<Unit>
 
@@ -759,3 +768,14 @@ sealed class BatchOperation {
         val documentId: String
     ) : BatchOperation()
 }
+
+/**
+ * Resultado da callable `exportMyData` (#4482/#4483, LGPD art. 18, V).
+ *
+ * @property json Conteúdo JSON completo formatado, pronto para salvar/compartilhar.
+ * @property complete `false` quando alguma fonte falhou ou foi truncada no servidor.
+ */
+data class ExportMyDataPayload(
+    val json: String,
+    val complete: Boolean
+)

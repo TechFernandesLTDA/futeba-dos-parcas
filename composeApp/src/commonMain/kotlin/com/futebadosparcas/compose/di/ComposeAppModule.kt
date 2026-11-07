@@ -2,6 +2,8 @@ package com.futebadosparcas.compose.di
 
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.ui.account.DeleteAccountViewModel
+import com.futebadosparcas.ui.account.ExportMyDataViewModel
+import com.futebadosparcas.ui.account.shareExportedJsonFile
 import com.futebadosparcas.ui.auth.RegisterViewModel
 import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.settings.ThemeSettingsViewModel
@@ -48,6 +50,15 @@ val composeAppModule = module {
         DeleteAccountViewModel(
             deleteAccount = { dataSource.deleteAccount() },
             authRepository = get()
+        )
+    }
+
+    // Portabilidade / acesso LGPD (#4483): exporta os dados pessoais em JSON.
+    viewModel {
+        val dataSource = get<FirebaseDataSource>()
+        ExportMyDataViewModel(
+            exportMyData = { dataSource.exportMyData() },
+            shareJsonFile = ::shareExportedJsonFile
         )
     }
     // viewModel { GamesViewModel(get()) }  // requer GameRepository (plataforma)

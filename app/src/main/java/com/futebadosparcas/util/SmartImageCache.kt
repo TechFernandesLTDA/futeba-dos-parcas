@@ -73,7 +73,7 @@ enum class ImageSource {
  * Cache inteligente de imagens com dois níveis.
  */
 class SmartImageCache(
-    private val context: Context,
+    context: Context,
     private val config: ImageCacheConfig = ImageCacheConfig()
 ) {
     // Cache de memória (L1)
@@ -102,8 +102,8 @@ class SmartImageCache(
             }
         }
 
-        // Configura diretório de cache em disco
-        cacheDir = File(context.cacheDir, config.cacheDirectory)
+        // Configura diretório de cache em disco (usa applicationContext para não reter Activity)
+        cacheDir = File(context.applicationContext.cacheDir, config.cacheDirectory)
         if (!cacheDir.exists()) {
             cacheDir.mkdirs()
         }

@@ -4150,6 +4150,20 @@ subir no ranking!</string>
     <string name="delete_account_unavailable_env">A exclusão de conta precisa de conexão com o servidor, que não está configurada neste ambiente.</string>
     <string name="delete_account_web_url">https://futebadosparcas.com.br/delete_account.html</string>
 
+    <!-- Baixar meus dados (#4483, LGPD art. 18, V) -->
+    <string name="profile_hub_action_export_data">Baixar meus dados</string>
+    <string name="profile_hub_action_export_data_body">Gera um arquivo JSON com seus dados pessoais, jogos, estatísticas e o que você publicou no app.</string>
+    <string name="export_my_data_loading">Gerando arquivo…</string>
+    <string name="export_my_data_success_title">Dados prontos</string>
+    <string name="export_my_data_success_body">Arquivo com seus dados gerado.</string>
+    <string name="export_my_data_partial_title">Exportação parcial</string>
+    <string name="export_my_data_partial_body">Arquivo gerado, mas algumas partes não puderam ser incluídas. Tente de novo mais tarde para obter a cópia completa.</string>
+    <string name="export_my_data_error_title">Não foi possível exportar</string>
+    <string name="export_my_data_error_generic">Não foi possível gerar o arquivo com seus dados. Tente de novo em instantes.</string>
+    <string name="export_my_data_error_rate_limited">Você atingiu o limite de 3 exportações por dia. Tente de novo amanhã.</string>
+    <string name="export_my_data_error_too_large">Seus dados passaram do tamanho máximo para download direto. Fale com o suporte para receber a cópia.</string>
+    <string name="export_my_data_unavailable_env">A exportação de dados precisa de conexão com o servidor, que não está configurada neste ambiente.</string>
+
     <!-- Rotas sem tela completa no iOS (estados de erro/indisponível) -->
     <string name="route_unavailable_retry">Tentar novamente</string>
     <string name="route_unavailable_back">Voltar</string>

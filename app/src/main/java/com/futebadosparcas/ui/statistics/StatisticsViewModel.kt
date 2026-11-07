@@ -18,8 +18,10 @@ import kotlinx.coroutines.launch
 class StatisticsViewModel(
     private val statisticsRepository: StatisticsRepository,
     private val userRepository: UserRepository,
-    private val context: Context
+    context: Context
 ) : ViewModel() {
+
+    private val appContext: Context = context.applicationContext
 
     companion object {
         private const val TAG = "StatisticsViewModel"
@@ -102,7 +104,7 @@ class StatisticsViewModel(
                     topScorers = topScorers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
-                            playerName = userMap[stats.id]?.name ?: context.getString(R.string.stats_player_fallback),
+                            playerName = userMap[stats.id]?.name ?: appContext.getString(R.string.stats_player_fallback),
                             value = stats.totalGoals.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,
@@ -115,7 +117,7 @@ class StatisticsViewModel(
                     topGoalkeepers = topGoalkeepers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
-                            playerName = userMap[stats.id]?.name ?: context.getString(R.string.stats_player_fallback),
+                            playerName = userMap[stats.id]?.name ?: appContext.getString(R.string.stats_player_fallback),
                             value = stats.totalSaves.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,
@@ -128,7 +130,7 @@ class StatisticsViewModel(
                     bestPlayers = bestPlayers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
-                            playerName = userMap[stats.id]?.name ?: context.getString(R.string.stats_player_fallback),
+                            playerName = userMap[stats.id]?.name ?: appContext.getString(R.string.stats_player_fallback),
                             value = stats.mvpCount.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,

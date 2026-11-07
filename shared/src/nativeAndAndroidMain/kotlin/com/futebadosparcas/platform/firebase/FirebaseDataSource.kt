@@ -28,8 +28,15 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Implementação multiplataforma do FirebaseDataSource usando GitLive Firebase SDK 2.4.0.
@@ -45,6 +52,36 @@ actual class FirebaseDataSource actual constructor() {
 
     companion object {
         private const val FUNCTIONS_REGION = "southamerica-east1"
+        private const val EXPORT_MY_DATA_TIMEOUT_SECONDS = 180L
+        private val exportJson = Json { prettyPrint = true }
+
+        /**
+         * Converte o retorno da callable `exportMyData` em [ExportMyDataPayload].
+         * `complete` ausente conta como completo; só `false` explícito é parcial.
+         */
+        internal fun exportPayloadFromCallableData(data: Any?): ExportMyDataPayload {
+            val complete = when (data) {
+                is JsonObject -> (data["complete"] as? JsonPrimitive)?.content != "false"
+                is Map<*, *> -> data["complete"] != false
+                else -> true
+            }
+            val json = exportJson.encodeToString(JsonElement.serializer(), toExportJsonElement(data))
+            return ExportMyDataPayload(json = json, complete = complete)
+        }
+
+        private fun toExportJsonElement(value: Any?): JsonElement = when (value) {
+            null -> JsonNull
+            is JsonElement -> value
+            is String -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is Number -> JsonPrimitive(value)
+            is Map<*, *> -> JsonObject(
+                value.entries.associate { (key, item) -> key.toString() to toExportJsonElement(item) }
+            )
+            is Iterable<*> -> JsonArray(value.map { toExportJsonElement(it) })
+            is Array<*> -> JsonArray(value.map { toExportJsonElement(it) })
+            else -> JsonPrimitive(value.toString())
+        }
         private const val LOCATION_SCOPED_QUERY_LIMIT = 500
         private const val COLLECTION_GAMES = "games"
         private const val COLLECTION_CONFIRMATIONS = "confirmations"
@@ -793,6 +830,28 @@ actual class FirebaseDataSource actual constructor() {
                     message = e.message,
                     cause = e,
                     // #4440: details.reason/groups distinguem os dois failed-precondition.
+                    reason = CallableException.reasonFromDetails(e.details),
+                    groups = CallableException.groupsFromDetails(e.details)
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun exportMyData(): Result<ExportMyDataPayload> {
+        return try {
+            val response = Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("exportMyData", timeout = EXPORT_MY_DATA_TIMEOUT_SECONDS.seconds)
+                .invoke()
+                .data<JsonElement>()
+            Result.success(exportPayloadFromCallableData(response))
+        } catch (e: FirebaseFunctionsException) {
+            Result.failure(
+                CallableException(
+                    code = e.code.name.lowercase().replace('_', '-'),
+                    message = e.message,
+                    cause = e,
                     reason = CallableException.reasonFromDetails(e.details),
                     groups = CallableException.groupsFromDetails(e.details)
                 )
@@ -3915,22 +3974,24 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameConfirmationOr
 
 private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(): Statistics? {
     if (!exists) return null
+    // Suporta tanto os nomes snake_case (escritor Android legado) quanto os nomes
+    // camelCase gravados pelas Cloud Functions (`functions/src/index.ts`, `mvp-voting.ts`).
     return Statistics(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
+        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: id,
         totalGames = safeInt("total_games") ?: safeInt("totalGames") ?: 0,
         totalGoals = safeInt("total_goals") ?: safeInt("totalGoals") ?: 0,
         totalAssists = safeInt("total_assists") ?: safeInt("totalAssists") ?: 0,
         totalSaves = safeInt("total_saves") ?: safeInt("totalSaves") ?: 0,
-        totalWins = safeInt("total_wins") ?: safeInt("totalWins") ?: 0,
-        totalDraws = safeInt("total_draws") ?: safeInt("totalDraws") ?: 0,
-        totalLosses = safeInt("total_losses") ?: safeInt("totalLosses") ?: 0,
-        mvpCount = safeInt("mvp_count") ?: safeInt("mvpCount") ?: 0,
+        totalWins = safeInt("total_wins") ?: safeInt("totalWins") ?: safeInt("gamesWon") ?: 0,
+        totalDraws = safeInt("total_draws") ?: safeInt("totalDraws") ?: safeInt("gamesDraw") ?: 0,
+        totalLosses = safeInt("total_losses") ?: safeInt("totalLosses") ?: safeInt("gamesLost") ?: 0,
+        mvpCount = safeInt("mvp_count") ?: safeInt("mvpCount") ?: safeInt("bestPlayerCount") ?: 0,
         bestGkCount = safeInt("best_gk_count") ?: safeInt("bestGkCount") ?: 0,
         worstPlayerCount = safeInt("worst_player_count") ?: safeInt("worstPlayerCount") ?: 0,
-        currentStreak = safeInt("current_streak") ?: safeInt("currentStreak") ?: 0,
-        bestStreak = safeInt("best_streak") ?: safeInt("bestStreak") ?: 0,
-        yellowCards = safeInt("yellow_cards") ?: safeInt("yellowCards") ?: 0,
-        redCards = safeInt("red_cards") ?: safeInt("redCards") ?: 0,
+        currentStreak = safeInt("current_streak") ?: safeInt("currentStreak") ?: safeInt("currentMvpStreak") ?: 0,
+        bestStreak = safeInt("best_streak") ?: safeInt("bestStreak") ?: safeInt("bestMvpStreak") ?: 0,
+        yellowCards = safeInt("yellow_cards") ?: safeInt("yellowCards") ?: safeInt("totalYellowCards") ?: 0,
+        redCards = safeInt("red_cards") ?: safeInt("redCards") ?: safeInt("totalRedCards") ?: 0,
         lastGameDate = safeLong("last_game_date") ?: safeLong("lastGameDate"),
         updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
     )

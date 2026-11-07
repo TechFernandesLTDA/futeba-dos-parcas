@@ -63,6 +63,8 @@ data class GameEntity(
     val status: String,
     val maxPlayers: Int,
     val maxGoalkeepers: Int,
+    val playersCount: Int = 0,
+    val goalkeepersCount: Int = 0,
     val players: List<String>, // Needs Converter
     val dailyPrice: Double,
     val confirmationClosesAt: String?,
@@ -116,6 +118,8 @@ fun GameEntity.toDomain() = Game(
     status = status,
     maxPlayers = maxPlayers,
     maxGoalkeepers = maxGoalkeepers,
+    playersCount = playersCount,
+    goalkeepersCount = goalkeepersCount,
     dailyPrice = dailyPrice,
     numberOfTeams = numberOfTeams,
     ownerId = ownerId,
@@ -142,6 +146,8 @@ fun Game.toEntity() = GameEntity(
     status = status,
     maxPlayers = maxPlayers,
     maxGoalkeepers = maxGoalkeepers,
+    playersCount = playersCount,
+    goalkeepersCount = goalkeepersCount,
     players = emptyList(), // KMP Game não tem players list
     dailyPrice = dailyPrice,
     confirmationClosesAt = null, // KMP Game não tem confirmationClosesAt

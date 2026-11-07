@@ -286,5 +286,19 @@ class StatisticsTest {
             assertEquals(stats1, stats2)
             assertNotEquals(stats1, stats3)
         }
+
+        @Test
+        @DisplayName("presenceRate e currentMvpStreak refletem dados reais e bestGoalCount permanece 0 sem servidor")
+        fun `computed metrics map real values`() {
+            val empty = Statistics(totalGames = 0, currentStreak = 0)
+            assertEquals(0.0, empty.presenceRate)
+            assertEquals(0, empty.currentMvpStreak)
+            assertEquals(0, empty.bestGoalCount)
+
+            val active = Statistics(totalGames = 5, currentStreak = 3)
+            assertEquals(1.0, active.presenceRate)
+            assertEquals(3, active.currentMvpStreak)
+            assertEquals(0, active.bestGoalCount)
+        }
     }
 }
