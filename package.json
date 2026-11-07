@@ -13,7 +13,8 @@
     "test:load:realtime": "node scripts/load/realtime-multiuser.js",
     "test:load:wall-media": "node scripts/load/group-wall-media.js",
     "check:tokens": "node scripts/check-design-tokens-parity.js",
-    "check:grace": "node scripts/check-verification-grace-parity.js"
+    "check:grace": "node scripts/check-verification-grace-parity.js",
+    "check:badges": "node scripts/check-badges-parity.js"
   },
   "overrides": {
     "uuid": ">=14.0.0",
