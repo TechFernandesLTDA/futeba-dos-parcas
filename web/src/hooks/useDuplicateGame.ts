@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { useTranslation } from 'react-i18next';
 
-interface RecentGame {
+export interface RecentGame {
   id: string;
   locationId: string;
   locationName: string;

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,9 +7,21 @@ import i18n from 'i18next';
 
 const mockNavigate = vi.fn();
 const mockGetFieldAvailability = vi.fn();
+const mockShowSuccess = vi.fn();
+const mockShowError = vi.fn();
 let mockLocations: Array<Record<string, unknown> & { id: string }> = [];
 let mockCity: { city: string; state: string } | null = { city: 'Curitiba', state: 'PR' };
 const mockChangeCity = vi.fn();
+
+const STABLE_EMPTY_ARRAY: never[] = [];
+const STABLE_FIELD_GAMES_DATA = {
+  byDate: new Map(),
+  fullyBookedDates: new Set(),
+  conflictDates: new Set(),
+};
+const STABLE_USER = { id: 'test-id', name: 'Test User', level: 1 };
+const STABLE_FIREBASE_USER = { uid: 'test-uid', displayName: 'Test User' };
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -21,28 +32,36 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'test-id', name: 'Test User', level: 1 },
-    firebaseUser: { uid: 'test-uid', displayName: 'Test User' },
+    user: STABLE_USER,
+    firebaseUser: STABLE_FIREBASE_USER,
     loading: false,
   }),
 }));
 
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({
-    showSuccess: vi.fn(),
-    showError: vi.fn(),
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
+  }),
+}));
+
+vi.mock('../../hooks/useFieldGames', () => ({
+  useFieldGames: () => ({
+    data: STABLE_FIELD_GAMES_DATA,
+    loading: false,
+    error: null,
   }),
 }));
 
 vi.mock('../../hooks/useGroups', () => ({
   useGroupDetail: () => ({
     group: null,
-    members: [],
+    members: STABLE_EMPTY_ARRAY,
     loading: false,
     error: null,
   }),
   useGroups: () => ({
-    groups: [],
+    groups: STABLE_EMPTY_ARRAY,
     loading: false,
     error: null,
   }),
@@ -64,7 +83,7 @@ vi.mock('../../hooks/useLocations', () => ({
     loading: false,
     error: null,
   }),
-  useLocationsByIds: () => [],
+  useLocationsByIds: () => STABLE_EMPTY_ARRAY,
 }));
 
 vi.mock('../../hooks/useVenueSelector', () => ({
@@ -75,12 +94,12 @@ vi.mock('../../hooks/useVenueSelector', () => ({
     changeCity: mockChangeCity,
     cityVenues: mockLocations,
     inCity: mockLocations,
-    otherCities: [],
+    otherCities: STABLE_EMPTY_ARRAY,
     loading: false,
     loadingOtherCities: false,
     error: null,
   }),
-  useStateCities: () => ({ cities: [], loading: false, error: null }),
+  useStateCities: () => ({ cities: STABLE_EMPTY_ARRAY, loading: false, error: null }),
 }));
 
 vi.mock('../../hooks/useDocumentTitle', () => ({
@@ -175,8 +194,6 @@ describe('CreateGameScreen', () => {
 
   it('renderiza o título "Criar Jogo" no header', () => {
     renderCreateGameScreen();
-    // O FormScaffold renderiza o título como heading (h1); o texto "Criar Jogo"
-    // também aparece no botão de submit, então usamos role=heading para isolar.
     expect(
       screen.getByRole('heading', { level: 1, name: 'Criar Jogo' }),
     ).toBeInTheDocument();
@@ -232,23 +249,24 @@ describe('CreateGameScreen', () => {
     expect(screen.getByRole('button', { name: /trocar cidade/i })).toBeInTheDocument();
   });
 
-  it('marca quadras importadas em rascunho com o selo "Não verificada"', async () => {
+  it('marca quadras importadas em rascunho com o selo "Não verificada"', () => {
     mockLocations = [
       { id: 'loc-draft', name: 'Quadra Importada', city: 'Curitiba', state: 'PR', isVerified: false, publicationStatus: 'DRAFT' },
       { id: 'loc-ok', name: 'Arena Oficial', city: 'Curitiba', state: 'PR', isVerified: true, publicationStatus: 'PUBLISHED' },
     ];
-    const user = userEvent.setup();
     renderCreateGameScreen();
 
-    await user.click(screen.getByRole('combobox', { name: /quadra \/ local/i }));
+    const combobox = screen.getByRole('combobox', { name: /quadra \/ local/i });
+    fireEvent.focus(combobox);
+    fireEvent.keyDown(combobox, { key: 'ArrowDown' });
 
     const draft = screen.getByRole('option', { name: /quadra importada/i });
     expect(within(draft).getByText('Não verificada')).toBeInTheDocument();
     const official = screen.getByRole('option', { name: /arena oficial/i });
     expect(within(official).queryByText('Não verificada')).not.toBeInTheDocument();
-  }, 15000);
+  });
 
-  it('expõe nome e estado acessíveis reativos ao favoritar um local', async () => {
+  it('expõe nome e estado acessíveis reativos ao favoritar um local', () => {
     mockLocations = [{
       id: 'loc-1',
       name: 'Arena Teste',
@@ -258,43 +276,41 @@ describe('CreateGameScreen', () => {
       status: 'ACTIVE',
       fields: [],
     }];
-    const user = userEvent.setup();
     renderCreateGameScreen();
 
-    await user.click(screen.getByRole('combobox', { name: /quadra \/ local/i }));
-    await user.click(screen.getByRole('option', { name: /arena teste/i }));
+    const combobox = screen.getByRole('combobox', { name: /quadra \/ local/i });
+    fireEvent.focus(combobox);
+    fireEvent.keyDown(combobox, { key: 'ArrowDown' });
+    fireEvent.click(screen.getByRole('option', { name: /arena teste/i }));
     const addFavorite = screen.getByRole('button', {
       name: 'Adicionar local aos favoritos',
     });
     expect(addFavorite).toHaveAttribute('aria-pressed', 'false');
 
-    await user.click(addFavorite);
+    fireEvent.click(addFavorite);
 
     const removeFavorite = screen.getByRole('button', {
       name: 'Remover local dos favoritos',
     });
     expect(removeFavorite).toHaveAttribute('aria-pressed', 'true');
     expect(localStorage.getItem('favorite_locations')).toContain('loc-1');
-    // Timeout ampliado (padrão do repo p/ testes de interação): userEvent +
-    // combobox MUI excedem os 5s padrão em runners CI compartilhados.
-  }, 15000);
+  });
 
   it('traduz o nome acessível do favorito para inglês', async () => {
     mockLocations = [{
       id: 'loc-1', name: 'Test Arena', city: 'London', status: 'ACTIVE', fields: [],
     }];
     await i18n.changeLanguage('en');
-    const user = userEvent.setup();
     renderCreateGameScreen();
 
-    await user.click(screen.getByRole('combobox', { name: /field \/ location/i }));
-    await user.click(screen.getByRole('option', { name: /test arena/i }));
+    const combobox = screen.getByRole('combobox', { name: /field \/ location/i });
+    fireEvent.focus(combobox);
+    fireEvent.keyDown(combobox, { key: 'ArrowDown' });
+    fireEvent.click(screen.getByRole('option', { name: /test arena/i }));
     expect(screen.getByRole('button', {
       name: 'Add location to favorites',
     })).toBeInTheDocument();
-    // Timeout ampliado (padrão do repo p/ testes de interação): userEvent +
-    // combobox MUI excedem os 5s padrão em runners CI compartilhados.
-  }, 15000);
+  });
 });
 
 describe('CreateGameScreen pricing helpers', () => {
