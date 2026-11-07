@@ -1,5 +1,11 @@
 package com.futebadosparcas.data
 
+import com.futebadosparcas.domain.ai.BalancedDrawAlgorithm
+import com.futebadosparcas.domain.ai.DrawStrategy
+import com.futebadosparcas.domain.ai.PlayerForBalancing
+import com.futebadosparcas.domain.model.ConfirmationStatus
+import com.futebadosparcas.domain.model.LevelTable
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.repository.GameTeamRepository
@@ -53,17 +59,47 @@ class GameTeamRepositoryImpl(
                 )
             }
             val allPlayers = confirmationsResult.getOrNull() ?: emptyList()
-
-            val teamPlayerLists = List(numberOfTeams) { mutableListOf<String>() }
-
-            val goalkeepers = allPlayers.filter { it.position == "GOALKEEPER" }
-            goalkeepers.forEachIndexed { index, gk ->
-                teamPlayerLists[index % numberOfTeams].add(gk.userId)
+            // Fix Bug B1: filtrar apenas confirmados
+            val confirmedPlayers = allPlayers.filter {
+                it.getStatusEnum() == ConfirmationStatus.CONFIRMED
             }
 
-            val fieldPlayers = allPlayers.filter { it.position != "GOALKEEPER" }.shuffled()
-            fieldPlayers.forEachIndexed { index, player ->
-                teamPlayerLists[index % numberOfTeams].add(player.userId)
+            val teamPlayerLists: List<MutableList<String>> = if (balanceTeams) {
+                val balancingPlayers = confirmedPlayers.map { conf ->
+                    val pos = if (conf.position.equals("GOALKEEPER", ignoreCase = true)) {
+                        PlayerPosition.GOALKEEPER
+                    } else {
+                        PlayerPosition.LINE
+                    }
+                    val level = LevelTable.getLevelForXp(conf.xpEarned.toLong()).toFloat()
+                    PlayerForBalancing(
+                        id = conf.userId,
+                        name = conf.getDisplayName(),
+                        position = pos,
+                        attackSkill = level,
+                        midfieldSkill = level,
+                        defenseSkill = level,
+                        goalkeeperSkill = level,
+                        overallRating = level
+                    )
+                }
+                val drawResult = BalancedDrawAlgorithm.balance(
+                    players = balancingPlayers,
+                    numberOfTeams = numberOfTeams,
+                    strategy = DrawStrategy.SNAKE_DRAFT
+                )
+                drawResult.teams.map { it.players.map { p -> p.id }.toMutableList() }
+            } else {
+                val lists = List(numberOfTeams) { mutableListOf<String>() }
+                val goalkeepers = confirmedPlayers.filter { it.position == "GOALKEEPER" }
+                goalkeepers.forEachIndexed { index, gk ->
+                    lists[index % numberOfTeams].add(gk.userId)
+                }
+                val fieldPlayers = confirmedPlayers.filter { it.position != "GOALKEEPER" }.shuffled()
+                fieldPlayers.forEachIndexed { index, player ->
+                    lists[index % numberOfTeams].add(player.userId)
+                }
+                lists
             }
 
             val teamColors = listOf("#58CC02", "#FF9600", "#1CB0F6", "#FF4B4B", "#FFD600", "#CE82FF")
