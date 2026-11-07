@@ -18,7 +18,7 @@ import { MobileShell } from './components/layout/MobileShell';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { useVerifiedClaim } from './hooks/useVerifiedClaim';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
-import { useIsGroupMember } from './hooks/useGroups';
+import { useIsGroupMember } from './hooks/useIsGroupMember';
 import { useToast } from './contexts/ToastContext';
 import { ProfileGate } from './components/gate/ProfileGate';
 import { useResourcePreloading } from './hooks/useResourcePreloading';

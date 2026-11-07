@@ -51,6 +51,8 @@ describe('i18n cold-start locale loading (#3931)', () => {
     });
 
     expect(i18n.hasResourceBundle('pt-BR', 'translation')).toBe(true);
+    expect(i18n.hasResourceBundle('en', 'translation')).toBe(false);
+    expect(i18n.hasResourceBundle('es', 'translation')).toBe(false);
     expect(i18n.t('common.date.tomorrow')).toBe('Amanhã');
   });
 });

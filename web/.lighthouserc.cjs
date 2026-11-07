@@ -29,6 +29,7 @@ module.exports = {
         'categories:seo': ['error', { minScore: 0.9 }],
         'largest-contentful-paint': ['warn', { maxNumericValue: 2500 }],
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
+        'resource-summary:script:size': ['error', { maxNumericValue: 1500000 }],
         'interaction-to-next-paint': 'off',
       },
     },
