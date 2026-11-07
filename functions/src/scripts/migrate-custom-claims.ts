@@ -148,7 +148,7 @@ export async function runMigration(): Promise<MigrationStats> {
     // Processar em chunks de 500 (limite do Firestore)
     let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
 
-    // eslint-disable-next-line no-constant-condition
+     
     while (true) {
       let query = db()
         .collection("users")

@@ -278,7 +278,7 @@ export const submitMvpVote =
         );
         throw new HttpsError(
           "resource-exhausted",
-          // eslint-disable-next-line new-cap
+           
           ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds),
           {
             retryAfter: resetInSeconds,
@@ -311,7 +311,7 @@ export const submitMvpVote =
       ) {
         throw new HttpsError(
           "invalid-argument",
-          // eslint-disable-next-line new-cap
+           
           ERROR_MSGS.FIELD_REQUIRED("votedPlayerId")
         );
       }
@@ -321,7 +321,7 @@ export const submitMvpVote =
       ) {
         throw new HttpsError(
           "invalid-argument",
-          // eslint-disable-next-line new-cap
+           
           ERROR_MSGS.ALLOWED_VALUES(
             "Categoria",
             VALID_VOTE_CATEGORIES as readonly string[]
@@ -512,7 +512,7 @@ export const submitMvpVote =
             if (existingVote.exists) {
               throw new HttpsError(
                 "already-exists",
-                // eslint-disable-next-line new-cap
+                 
                 ERROR_MSGS.ALREADY_VOTED(category)
               );
             }
@@ -661,7 +661,7 @@ export const submitMvpVotes =
         );
         throw new HttpsError(
           "resource-exhausted",
-          // eslint-disable-next-line new-cap
+           
           ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds),
           {
             retryAfter: resetInSeconds,
@@ -715,7 +715,7 @@ export const submitMvpVotes =
         ) {
           throw new HttpsError(
             "invalid-argument",
-            // eslint-disable-next-line new-cap
+             
             ERROR_MSGS.FIELD_REQUIRED("votedPlayerId")
           );
         }
@@ -726,7 +726,7 @@ export const submitMvpVotes =
         ) {
           throw new HttpsError(
             "invalid-argument",
-            // eslint-disable-next-line new-cap
+             
             ERROR_MSGS.ALLOWED_VALUES(
               "Categoria",
               VALID_VOTE_CATEGORIES as readonly string[]
@@ -930,7 +930,7 @@ export const submitMvpVotes =
               if (ballotVoteSnaps[categoryIndex].exists) {
                 throw new HttpsError(
                   "already-exists",
-                  // eslint-disable-next-line new-cap
+                   
                   ERROR_MSGS.ALREADY_VOTED(vote.category)
                 );
               }
@@ -1094,7 +1094,7 @@ export const concludeMvpVoting =
         );
         throw new HttpsError(
           "resource-exhausted",
-          // eslint-disable-next-line new-cap
+           
           ERROR_MSGS.RATE_LIMIT_RETRY(resetInSec),
           {retryAfter: resetInSec, limit: 5}
         );

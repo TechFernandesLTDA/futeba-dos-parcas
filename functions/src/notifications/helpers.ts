@@ -496,7 +496,7 @@ async function getUserFcmTokensWithMapping(
     logger.error("Erro ao buscar registro privado em lote:", e);
   }
 
-  for (let i = 0; i < userIds.length; i += FIRESTORE_WHERE_IN_LIMIT) { // eslint-disable-line max-len
+  for (let i = 0; i < userIds.length; i += FIRESTORE_WHERE_IN_LIMIT) {  
     chunks.push(userIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT));
   }
 

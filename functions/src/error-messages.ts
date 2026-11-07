@@ -130,6 +130,6 @@ export function throwError(
 export function getRateLimitMessage(
   resetInSeconds: number
 ): string {
-  // eslint-disable-next-line new-cap
+   
   return ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds);
 }

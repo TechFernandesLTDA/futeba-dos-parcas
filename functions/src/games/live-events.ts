@@ -1,4 +1,4 @@
-/* eslint-disable new-cap */
+ 
 import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions";
 import {

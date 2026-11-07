@@ -107,7 +107,7 @@ export const reviewHeldGameRewards = onCall<
       const retryMessage =
         "Muitas tentativas. Tente novamente em " +
         `${resetInSeconds} segundos.`;
-      // eslint-disable-next-line new-cap
+       
       throw new HttpsError(
         "resource-exhausted",
         retryMessage

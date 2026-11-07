@@ -162,7 +162,7 @@ async function enforceLifecycleRateLimit(
     );
     throw new HttpsError(
       "resource-exhausted",
-      // eslint-disable-next-line new-cap
+       
       ERROR_MSGS.RATE_LIMIT_RETRY(resetInSeconds),
       {
         retryAfter: resetInSeconds,
