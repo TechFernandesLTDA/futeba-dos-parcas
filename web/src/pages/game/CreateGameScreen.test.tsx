@@ -7,9 +7,21 @@ import i18n from 'i18next';
 
 const mockNavigate = vi.fn();
 const mockGetFieldAvailability = vi.fn();
+const mockShowSuccess = vi.fn();
+const mockShowError = vi.fn();
 let mockLocations: Array<Record<string, unknown> & { id: string }> = [];
 let mockCity: { city: string; state: string } | null = { city: 'Curitiba', state: 'PR' };
 const mockChangeCity = vi.fn();
+
+const STABLE_EMPTY_ARRAY: never[] = [];
+const STABLE_FIELD_GAMES_DATA = {
+  byDate: new Map(),
+  fullyBookedDates: new Set(),
+  conflictDates: new Set(),
+};
+const STABLE_USER = { id: 'test-id', name: 'Test User', level: 1 };
+const STABLE_FIREBASE_USER = { uid: 'test-uid', displayName: 'Test User' };
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -20,28 +32,36 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'test-id', name: 'Test User', level: 1 },
-    firebaseUser: { uid: 'test-uid', displayName: 'Test User' },
+    user: STABLE_USER,
+    firebaseUser: STABLE_FIREBASE_USER,
     loading: false,
   }),
 }));
 
 vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({
-    showSuccess: vi.fn(),
-    showError: vi.fn(),
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
+  }),
+}));
+
+vi.mock('../../hooks/useFieldGames', () => ({
+  useFieldGames: () => ({
+    data: STABLE_FIELD_GAMES_DATA,
+    loading: false,
+    error: null,
   }),
 }));
 
 vi.mock('../../hooks/useGroups', () => ({
   useGroupDetail: () => ({
     group: null,
-    members: [],
+    members: STABLE_EMPTY_ARRAY,
     loading: false,
     error: null,
   }),
   useGroups: () => ({
-    groups: [],
+    groups: STABLE_EMPTY_ARRAY,
     loading: false,
     error: null,
   }),
@@ -63,7 +83,7 @@ vi.mock('../../hooks/useLocations', () => ({
     loading: false,
     error: null,
   }),
-  useLocationsByIds: () => [],
+  useLocationsByIds: () => STABLE_EMPTY_ARRAY,
 }));
 
 vi.mock('../../hooks/useVenueSelector', () => ({
@@ -74,12 +94,12 @@ vi.mock('../../hooks/useVenueSelector', () => ({
     changeCity: mockChangeCity,
     cityVenues: mockLocations,
     inCity: mockLocations,
-    otherCities: [],
+    otherCities: STABLE_EMPTY_ARRAY,
     loading: false,
     loadingOtherCities: false,
     error: null,
   }),
-  useStateCities: () => ({ cities: [], loading: false, error: null }),
+  useStateCities: () => ({ cities: STABLE_EMPTY_ARRAY, loading: false, error: null }),
 }));
 
 vi.mock('../../hooks/useDocumentTitle', () => ({
@@ -174,8 +194,6 @@ describe('CreateGameScreen', () => {
 
   it('renderiza o título "Criar Jogo" no header', () => {
     renderCreateGameScreen();
-    // O FormScaffold renderiza o título como heading (h1); o texto "Criar Jogo"
-    // também aparece no botão de submit, então usamos role=heading para isolar.
     expect(
       screen.getByRole('heading', { level: 1, name: 'Criar Jogo' }),
     ).toBeInTheDocument();

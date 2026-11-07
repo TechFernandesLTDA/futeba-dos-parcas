@@ -268,7 +268,11 @@ export const CreateGameScreen: React.FC = () => {
   const { location: initialLocation } = useLocationDetail(locationIdParam || undefined);
   const venueSelector = useVenueSelector({ searchQuery: venueQuery, recentIds: usedLocationIds });
   const { location: selectedLocationDetail } = useLocationDetail(formData.locationId || undefined);
-  const quickPickLocations = useLocationsByIds([...favoriteIds, ...localRecentIds, ...recentIds]);
+  const quickPickIds = useMemo(
+    () => [...favoriteIds, ...localRecentIds, ...recentIds],
+    [favoriteIds, localRecentIds, recentIds]
+  );
+  const quickPickLocations = useLocationsByIds(quickPickIds);
   const locationsLoading = venueSelector.loading || venueSelector.resolvingCity;
   const locationsError = venueSelector.error;
   const locations = useMemo(() => {
@@ -466,9 +470,14 @@ export const CreateGameScreen: React.FC = () => {
     }
   }, [initialLocation, formData.locationId]);
 
+  const showErrorRef = useRef(showError);
+  useEffect(() => {
+    showErrorRef.current = showError;
+  }, [showError]);
+
   useEffect(() => {
     if (!formData.locationId) {
-      setFields([]);
+      setFields((prev) => (prev.length === 0 ? prev : []));
       setFieldsError(null);
       return;
     }
@@ -504,7 +513,7 @@ export const CreateGameScreen: React.FC = () => {
         if (cancelled) return;
         logger.error('Erro ao buscar quadras:', err);
         setFieldsError(t('games.create.errorLoadFields'));
-        showError(t('games.create.errorLoadFields'));
+        showErrorRef.current(t('games.create.errorLoadFields'));
       } finally {
         if (!cancelled) setFieldsLoading(false);
       }
@@ -513,7 +522,7 @@ export const CreateGameScreen: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [formData.locationId, formData.time, formData.endTime, formData.fieldId, t, showError]);
+  }, [formData.locationId, formData.time, formData.endTime, formData.fieldId, t]);
 
   useEffect(() => {
     if (!selectedFieldPricing || formData.priceManualOverride) return;
@@ -645,8 +654,8 @@ export const CreateGameScreen: React.FC = () => {
 
   useEffect(() => {
     if (!formData.fieldId || !formData.date || !formData.time) {
-      setConflictSuggestions([]);
-      setConflictMessage('');
+      setConflictSuggestions((prev) => (prev.length === 0 ? prev : []));
+      setConflictMessage((prev) => (prev === '' ? prev : ''));
       return;
     }
     let cancelled = false;
@@ -669,19 +678,19 @@ export const CreateGameScreen: React.FC = () => {
           setConflictMessage(conflict.message);
           setConflictSuggestions(conflict.suggestions);
         } else {
-          setConflictSuggestions([]);
-          setConflictMessage('');
+          setConflictSuggestions((prev) => (prev.length === 0 ? prev : []));
+          setConflictMessage((prev) => (prev === '' ? prev : ''));
         }
       } catch (err) {
         logger.error('Erro ao checar disponibilidade:', err);
-        showError(t('games.create.conflictCheckFailed'));
+        showErrorRef.current(t('games.create.conflictCheckFailed'));
       }
     };
     checkAvailability();
     return () => {
       cancelled = true;
     };
-  }, [formData.fieldId, formData.date, formData.time, formData.endTime, fieldGames.byDate, showError, t]);
+  }, [formData.fieldId, formData.date, formData.time, formData.endTime, fieldGames.byDate, t]);
 
   const handleSaveTemplate = async () => {
     if (templateName.trim().length < 3) {
