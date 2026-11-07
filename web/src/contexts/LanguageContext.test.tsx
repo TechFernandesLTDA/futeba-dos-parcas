@@ -53,8 +53,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 // O '../i18n' real inicializa i18next com LanguageDetector (não determinístico
-// em jsdom) — mock vazio basta: LanguageContext só importa pelo efeito colateral.
-vi.mock('../i18n', () => ({}));
+// em jsdom) — exportamos mock de loadLanguageResources para testar setLanguage.
+vi.mock('../i18n', () => ({
+  loadLanguageResources: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('firebase/firestore', () => ({
   doc: vi.fn((...segments: unknown[]) => ({

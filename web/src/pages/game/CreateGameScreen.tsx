@@ -503,8 +503,8 @@ export const CreateGameScreen: React.FC = () => {
       } catch (err) {
         if (cancelled) return;
         logger.error('Erro ao buscar quadras:', err);
-        setFieldsError(t('games.create.errorLoadingFields'));
-        showError(t('games.create.errorLoadingFields'));
+        setFieldsError(t('games.create.errorLoadFields'));
+        showError(t('games.create.errorLoadFields'));
       } finally {
         if (!cancelled) setFieldsLoading(false);
       }
@@ -583,7 +583,7 @@ export const CreateGameScreen: React.FC = () => {
         const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
         const data = await response.json();
         if (data.erro) {
-          setCepError(t('games.create.cepNotFound'));
+          setCepError(t('locations.quickCreate.cepNotFound'));
         } else {
           const address = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
           handleInputChange('locationAddress', address);
@@ -593,8 +593,8 @@ export const CreateGameScreen: React.FC = () => {
         }
       } catch (err) {
         logger.error('Erro ao buscar CEP:', err);
-        setCepError(t('games.create.errorFetchingCep'));
-        showError(t('games.create.errorFetchingCep'));
+        setCepError(t('locations.quickCreate.cepError'));
+        showError(t('locations.quickCreate.cepError'));
       } finally {
         setCepLoading(false);
       }
@@ -753,7 +753,7 @@ export const CreateGameScreen: React.FC = () => {
 
   const handleQuickCreateFromTemplate = async (template: GameTemplate) => {
     if (!template.time) {
-      showError(t('games.create.templateWithoutTime'));
+      showError(t('games.create.templateWithoutTimeTooltip'));
       return;
     }
     const targetGroup = selectedEligibleGroup || eligibleOwnedGroups[0];
