@@ -92,6 +92,9 @@ jobs:
       - name: Design tokens parity (web/Android/composeApp vs shared/design-tokens.json)
         run: node scripts/check-design-tokens-parity.js
 
+      - name: Badges parity (web/Android vs shared/badges-catalog.json)
+        run: node scripts/check-badges-parity.js
+
       - name: Requisitos do Google Play (targetSdk minimo e guarda de 16 KB)
         run: node --test scripts/ci/play-requirements-contract.test.js scripts/ci/check-16kb-alignment.test.js
 
