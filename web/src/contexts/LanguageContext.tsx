@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, R
 import { useTranslation } from 'react-i18next';
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import '../i18n';
+import { loadLanguageResources } from '../i18n';
 
 export type SupportedLanguage = 'pt-BR' | 'en' | 'es';
 
@@ -28,6 +28,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = useCallback(async (lang: SupportedLanguage) => {
     setLanguageState(lang);
+    await loadLanguageResources(lang);
     await i18n.changeLanguage(lang);
     try {
       localStorage.setItem(STORAGE_KEY, lang);

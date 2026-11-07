@@ -17,11 +17,15 @@ const appBuild = process.env.GITHUB_RUN_NUMBER ?? 'dev'
 export default defineConfig({
   plugins: [
     react(),
-    visualizer({
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    ...(process.env.ANALYZE === 'true'
+      ? [
+          visualizer({
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
   ],
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
@@ -33,6 +37,7 @@ export default defineConfig({
       // receive an object instead of a React component in production builds.
       { find: /^@mui\/icons-material$/, replacement: '@mui/icons-material/esm' },
       { find: /^@mui\/icons-material\/(?!esm\/)(.*)$/, replacement: '@mui/icons-material/esm/$1' },
+      { find: /^re2js$/, replacement: path.resolve(__dirname, './src/utils/re2jsShim.ts') },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
   },
@@ -48,9 +53,14 @@ export default defineConfig({
           'vendor-charts',
           'vendor-firebase-functions',
           'vendor-firebase-storage',
+          'vendor-firebase-messaging',
+          'vendor-firebase-analytics',
           'vendor-google-maps',
           'vendor-mui-icons',
+          'vendor-mui-extra',
           'i18n-locales',
+          'i18n-en',
+          'i18n-es',
         ]
 
         return deps.filter((dep) =>

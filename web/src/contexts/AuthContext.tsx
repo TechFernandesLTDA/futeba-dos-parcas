@@ -31,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import type { validateInviteCode as validateInviteCodeType, syncFieldOwnerClaim as syncFieldOwnerClaimType } from '../services/cloudFunctions';
 import { normalizePlayerStats } from '../utils/playerStats';
 import { getEffectiveLevel, getExperiencePoints } from '../utils/xpAccounting';
-import { unregisterBrowserFcmToken } from '../services/firebaseMessaging';
+import type { unregisterBrowserFcmToken as unregisterBrowserFcmTokenType } from '../services/firebaseMessaging';
 import { trackEvent } from '../utils/analytics';
 import { clearGroupWallMediaOutboxOwner } from '../utils/groupWallMediaOutbox';
 
@@ -57,6 +57,11 @@ const loadValidateInviteCode = async (): Promise<typeof validateInviteCodeType> 
 const loadSyncFieldOwnerClaim = async (): Promise<typeof syncFieldOwnerClaimType> => {
   const module = await import('../services/cloudFunctions');
   return module.syncFieldOwnerClaim;
+};
+
+const loadUnregisterBrowserFcmToken = async (): Promise<typeof unregisterBrowserFcmTokenType> => {
+  const module = await import('../services/firebaseMessaging');
+  return module.unregisterBrowserFcmToken;
 };
 
 // #3187: erros de convite agora carregam `.code` (AppAuthError) — telas mapeiam
@@ -929,6 +934,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Falha de IndexedDB não pode impedir o encerramento da sessão.
           logger.warn('Falha ao limpar anexos pendentes durante logout', outboxError);
         }
+        const unregisterBrowserFcmToken = await loadUnregisterBrowserFcmToken();
         await unregisterBrowserFcmToken(currentUid);
       }
       await signOut(auth);
