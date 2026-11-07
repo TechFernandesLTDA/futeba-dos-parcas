@@ -47,6 +47,7 @@ import { useFavoriteSquads } from '../../hooks/useFavoriteSquads';
 import { applyFavoriteSquadToTeams, getApplicableFavoriteSquads } from '../../utils/favoriteSquads';
 import type { FavoriteSquad } from '../../types/favoriteSquad';
 import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
+import { canUserFormTeams, type RawGameOwner } from '../../utils/teamFormationPermissions';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -66,17 +67,6 @@ interface ConfirmationData {
   status: string;
 }
 
-// #2276: interface tipada para o doc games (substitui Record<string, any>).
-interface RawGameOwner {
-  ownerId?: string;
-  owner_id?: string;
-  team1Players?: string[];
-  team1_players?: string[];
-  team2Players?: string[];
-  team2_players?: string[];
-  teamFormationVersion?: number;
-  team_formation_version?: number;
-}
 
 function resolveSavedTeams(players: TeamPlayer[], team1PlayerIds: string[], team2PlayerIds: string[]) {
   const playersById = new Map(players.map((player) => [player.id, player]));
@@ -148,9 +138,8 @@ export const TeamFormationScreen: React.FC = () => {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
           const gameData = snakeToCamel<RawGameOwner>(gameDoc.data());
-          const ownerId = gameData.ownerId || gameData.owner_id;
           const currentUser = userRef.current;
-          if (currentUser && currentUser.id !== ownerId) {
+          if (!canUserFormTeams(currentUser, gameData)) {
             showErrorRef.current(t('teamFormation.ownerOnlyError'));
             navigateRef.current(`/game/${gameId}`);
             return;

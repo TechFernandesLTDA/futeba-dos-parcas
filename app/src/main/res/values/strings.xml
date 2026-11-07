@@ -850,7 +850,7 @@ subir no ranking!</string>
     <string name="layout_share_card_text_3">Baixe o App e jogue com a gente!</string>
     <string name="layout_splash_branding_text_1">Futeba dos Parças</string>
     <string name="layout_splash_branding_text_3">v1.5.0</string>
-    <string name="layout_splash_branding_text_2">Desenvolvido por Renan Locatiz Fernandes</string>
+    <string name="layout_splash_branding_text_2">Um produto da Tech Fernandes</string>
     <string name="bottom_nav_menu_title_1">Liga</string>
     <string name="game_detail_menu_title_1">Convidar no WhatsApp</string>
     <string name="game_detail_menu_title_2">Compartilhar</string>
@@ -2010,7 +2010,7 @@ subir no ranking!</string>
     <string name="about_credits_title">Créditos</string>
     <string name="about_credits_tech">Desenvolvido com Kotlin, Jetpack Compose e Firebase.</string>
     <string name="about_credits_icons">Ícones: Material Design Icons</string>
-    <string name="about_copyright">© 2024-2026 Futeba dos Parças. Todos os direitos reservados.</string>
+    <string name="about_copyright">© 2024-2026 Tech Fernandes LTDA. Todos os direitos reservados.</string>
 
     <!-- Profile Screen -->
     <string name="profile_version">Versão %1$s</string>

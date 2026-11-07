@@ -129,6 +129,28 @@ class LiveGameViewModelTest {
     }
 
     @Test
+    fun `co-organizador tem permissao de gerenciamento do jogo ao vivo`() = runTest(dispatcher) {
+        val coOrgId = "co-organizer-1"
+        gameFlow.value = Result.success(
+            Game(
+                id = "game-1",
+                ownerId = "owner-1",
+                coOrganizers = listOf(coOrgId),
+                status = "LIVE"
+            )
+        )
+        every { authRepository.getCurrentUserId() } returns coOrgId
+
+        viewModel.loadGame("game-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertInstanceOf(LiveGameUiState.Success::class.java, state)
+        state as LiveGameUiState.Success
+        assertEquals(true, state.isOwner)
+    }
+
+    @Test
     fun `documento de placar ausente mantem loading ate emissao real`() = runTest(dispatcher) {
         scoreFlow.value = null
         viewModel.loadGame("game-1")
