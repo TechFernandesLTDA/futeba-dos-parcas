@@ -94,7 +94,8 @@ class LiveGameViewModel(
                 }
                 currentGame = game
 
-                val isOwner = authRepository.getCurrentUserId() == game.ownerId
+                val currentUserId = authRepository.getCurrentUserId()
+                val isOwner = currentUserId != null && (currentUserId == game.ownerId || currentUserId in game.coOrganizers)
 
                 // Detectar fim de jogo para navegação - apenas uma vez
                 if (game.status == GameStatus.FINISHED.name && !hasNavigatedToVote) {
