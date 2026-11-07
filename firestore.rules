@@ -262,11 +262,10 @@ service cloud.firestore {
       );
     }
 
-    // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
+    // Verifica se o usuario autenticado e um jogador confirmado no jogo (C-002 fix)
     // Bug fix: Verifica status == 'CONFIRMED' alem de existencia do documento
     function isConfirmedPlayer(gameId) {
-      let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + userId()));
-      return confirmationDoc != null && confirmationDoc.data.status == 'CONFIRMED';
+      return isConfirmedUserForGame(gameId, userId());
     }
 
     // Helper global unico para verificar se o usuario e dono do jogo (C-005 fix)
@@ -318,6 +317,16 @@ service cloud.firestore {
     function canManageGameById(gameId) {
       let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
       return gameDoc != null && canManageGame(gameDoc.data);
+    }
+
+    // Leitura do group_id do jogo pai a partir do ID do jogo
+    function gameGroupIdOf(gameId) {
+      return get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null);
+    }
+
+    // Leitura do status do jogo pai a partir do ID do jogo
+    function gameStatusOf(gameId) {
+      return get(/databases/$(database)/documents/games/$(gameId)).data.get('status', null);
     }
 
     // Leitura do estado ao vivo: participantes/gestores do jogo e qualquer
@@ -387,15 +396,20 @@ service cloud.firestore {
         voteId.matches('^.{1,128}_' + userId() + '_(MVP|BEST_GOALKEEPER|WORST)$');
     }
 
+    // Helper para verificar se um usuario especifico e membro ativo de um grupo
+    function isGroupMemberUser(groupId, targetUserId) {
+      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(targetUserId));
+      return memberDoc != null &&
+        memberDoc.data.user_id == targetUserId &&
+        (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
+    }
+
     // Helper para verificar se usuario e membro ativo de um grupo.
     // Memberships legados não possuem `status`; nesses documentos, a própria
     // existência representa vínculo ativo. Status explícito não-ACTIVE é negado.
     // #2151: usa apenas get() + null check (antes usava exists()+get() = double read)
     function isGroupMember(groupId) {
-      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
-      return memberDoc != null &&
-        memberDoc.data.user_id == userId() &&
-        (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
+      return isGroupMemberUser(groupId, userId());
     }
 
     // Helper para verificar se usuario e admin/owner de um grupo
@@ -408,15 +422,25 @@ service cloud.firestore {
         && (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
     }
 
+    // Helper para verificar se usuario e membro ou owner de um grupo
+    function isGroupMemberOrOwner(groupId) {
+      return isGroupMember(groupId) || isGroupOwnerById(groupId);
+    }
+
+    // Helper para verificar se usuario e admin ou owner de um grupo
+    function isGroupAdminOrOwner(groupId) {
+      return isGroupAdmin(groupId) || isGroupOwnerById(groupId);
+    }
+
     // Compatibilidade para grupos criados no web antes do member OWNER gravar
     // status='ACTIVE'. O owner_id do documento do grupo continua sendo a fonte
     // autoritativa para permitir o mural sem liberar visitantes/public groups.
     function canUseGroupWall(groupId) {
-      return isGroupMember(groupId) || isGroupOwnerById(groupId);
+      return isGroupMemberOrOwner(groupId);
     }
 
     function canModerateGroupWall(groupId) {
-      return isGroupAdmin(groupId) || isGroupOwnerById(groupId);
+      return isGroupAdminOrOwner(groupId);
     }
 
     // C-003 FIX: Valida se o ID de confirmation segue o padrao esperado
@@ -448,6 +472,30 @@ service cloud.firestore {
              (get(/databases/$(database)/documents/groups/$(data.group_id)).data.status == 'ACTIVE' ||
               !('status' in get(/databases/$(database)/documents/groups/$(data.group_id)).data)) &&
              get(/databases/$(database)/documents/groups/$(data.group_id)).data.get('member_count', 0) >= 5;
+    }
+
+    // Helper para verificar se usuario e owner ou manager de um local
+    function isLocationOwnerOrManager(locId) {
+      let loc = get(/databases/$(database)/documents/locations/$(locId));
+      return loc != null && (
+        loc.data.owner_id == userId() ||
+        ('managers' in loc.data && userId() in loc.data.managers)
+      );
+    }
+
+    // Helper para verificar se usuario pode gerenciar um campo de local (admin, owner ou manager)
+    function canManageLocationField(locId) {
+      return isAdmin() || isLocationOwnerOrManager(locId);
+    }
+
+    // Helper para verificar se usuario pode gerenciar subrecursos de um local existente (owner, manager ou admin)
+    function canManageLocationById(locId) {
+      let loc = get(/databases/$(database)/documents/locations/$(locId));
+      return loc != null && (
+        loc.data.owner_id == userId() ||
+        ('managers' in loc.data && userId() in loc.data.managers) ||
+        isAdmin()
+      );
     }
 
     // ============================================
@@ -1017,28 +1065,6 @@ service cloud.firestore {
     match /chats/{chatId} {
       function isChatParticipant() {
         return isAuthenticated() && userId() in resource.data.participants;
-      }
-
-      function isChatParticipantOnCreate() {
-        return isAuthenticated() && userId() in request.resource.data.participants;
-      }
-
-      function isDirectMessageMetadataUpdate() {
-        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'last_message',
-          'last_message_at',
-          'last_sender_id',
-          'unread_count'
-        ]) &&
-        request.resource.data.last_sender_id == userId() &&
-        request.resource.data.last_message is string &&
-        request.resource.data.last_message.size() >= 1 &&
-        request.resource.data.last_message.size() <= 1000 &&
-        request.resource.data.last_message_at == request.time &&
-        request.resource.data.unread_count is map &&
-        request.resource.data.participants == resource.data.participants &&
-        request.resource.data.created_by == resource.data.created_by &&
-        request.resource.data.created_at == resource.data.created_at;
       }
 
       function isDirectMessageReadReceiptUpdate() {
@@ -1655,8 +1681,7 @@ service cloud.firestore {
         (isAdmin() ||
          (request.resource.data.owner_id == userId() &&
           (request.resource.data.get('group_id', null) == null ||
-           isGroupAdmin(request.resource.data.group_id) ||
-           isGroupOwnerById(request.resource.data.group_id))));
+           isGroupAdminOrOwner(request.resource.data.group_id))));
 
       // Usuario pode atualizar suas proprias recorrencias
       // Admins podem atualizar qualquer uma
@@ -1665,8 +1690,7 @@ service cloud.firestore {
         isAdmin() ||
         ((resource.data.get('group_id', null) == null ?
            resource.data.owner_id == userId() :
-           (isGroupAdmin(resource.data.group_id) ||
-            isGroupOwnerById(resource.data.group_id))) &&
+           isGroupAdminOrOwner(resource.data.group_id)) &&
          fieldUnchanged('owner_id') &&
          fieldUnchanged('group_id') &&
          fieldUnchanged('created_at'))
@@ -1678,24 +1702,13 @@ service cloud.firestore {
         (isAdmin() ||
          (resource.data.get('group_id', null) == null ?
            resource.data.owner_id == userId() :
-           (isGroupAdmin(resource.data.group_id) ||
-            isGroupOwnerById(resource.data.group_id))));
+           isGroupAdminOrOwner(resource.data.group_id)));
     }
 
     // ============================================
     // COLECAO: confirmations
     // ============================================
     match /confirmations/{confirmationId} {
-      // FIX #4144: helpers de leitura do jogo pai (o doc de confirmation
-      // nao tem group_id — vem do game). Funções evitam gets() repetidos
-      // inline e mantêm o budget de expressões sob controle.
-      function gameGroupIdOf(gameId) {
-        return get(/databases/$(database)/documents/games/$(gameId)).data.get('group_id', null);
-      }
-      function gameStatusOf(gameId) {
-        return get(/databases/$(database)/documents/games/$(gameId)).data.get('status', null);
-      }
-
       // #1016: ampliar leitura para admins, dono do jogo e confirmados (necessario para list query)
       allow read: if isAuthenticated() && (
         resource.data.user_id == userId() ||
@@ -1878,6 +1891,32 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: venue_owner_onboarding
+    // ============================================
+    match /venue_owner_onboarding/{ownerId} {
+      allow read: if isAuthenticated() && (isAdmin() || userId() == ownerId);
+      allow create, update, delete: if false;
+
+      match /events/{eventId} {
+        allow read: if isAuthenticated() && (isAdmin() || userId() == ownerId);
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ============================================
+    // COLECAO: venue_accounts
+    // ============================================
+    match /venue_accounts/{accountId} {
+      allow read: if isAuthenticated() && (isAdmin() || userId() == accountId);
+      allow create, update, delete: if false;
+
+      match /events/{eventId} {
+        allow read: if isAuthenticated() && (isAdmin() || userId() == accountId);
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ============================================
     // COLECAO: locations
     // ============================================
     //
@@ -1904,26 +1943,6 @@ service cloud.firestore {
     // ** Campos protegidos: owner_id, created_at, is_verified, is_active (apenas admin)
     //
     // ============================================
-    match /venue_owner_onboarding/{ownerId} {
-      allow read: if isAuthenticated() && (isAdmin() || userId() == ownerId);
-      allow create, update, delete: if false;
-
-      match /events/{eventId} {
-        allow read: if isAuthenticated() && (isAdmin() || userId() == ownerId);
-        allow create, update, delete: if false;
-      }
-    }
-
-    match /venue_accounts/{accountId} {
-      allow read: if isAuthenticated() && (isAdmin() || userId() == accountId);
-      allow create, update, delete: if false;
-
-      match /events/{eventId} {
-        allow read: if isAuthenticated() && (isAdmin() || userId() == accountId);
-        allow create, update, delete: if false;
-      }
-    }
-
     match /locations/{locationId} {
 
       // ------------------------------------------
@@ -2144,25 +2163,6 @@ service cloud.firestore {
       // ==========================================
       match /fields/{fieldId} {
 
-        // Helper para verificar ownership do local pai
-        function getParentLocation() {
-          return get(/databases/$(database)/documents/locations/$(locationId));
-        }
-
-        function isParentOwner() {
-          let loc = getParentLocation();
-          return loc != null && loc.data.owner_id == userId();
-        }
-
-        function isParentManager() {
-          let loc = getParentLocation();
-          return loc != null && 'managers' in loc.data && userId() in loc.data.managers;
-        }
-
-        function canManageFields() {
-          return isAdmin() || isParentOwner() || isParentManager();
-        }
-
         // Valida dados da quadra
         function hasValidFieldData() {
           let data = request.resource.data;
@@ -2177,13 +2177,13 @@ service cloud.firestore {
 
         // Create: owner ou manager do local pode criar quadras
         allow create: if isAuthenticated() &&
-          canManageFields() &&
+          canManageLocationField(locationId) &&
           hasValidFieldData();
 
         // Update: owner ou manager do local pode atualizar quadras
         // Nao pode alterar location_id (quadra nao pode mudar de local)
         allow update: if isAuthenticated() &&
-          canManageFields() &&
+          canManageLocationField(locationId) &&
           hasValidFieldData() &&
           fieldUnchanged('location_id');
 
@@ -2210,18 +2210,8 @@ service cloud.firestore {
       //
       // ==========================================
       match /audit_logs/{logId} {
-
-        function canReadAuditLogs() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            isAdmin()
-          );
-        }
-
         // Read: owner, managers ou admin podem ler logs de auditoria
-        allow read: if isAuthenticated() && canReadAuditLogs();
+        allow read: if isAuthenticated() && canManageLocationById(locationId);
 
         // Write: BLOQUEADO para clientes
         // Apenas Cloud Functions com Admin SDK podem escrever logs
@@ -2230,85 +2220,37 @@ service cloud.firestore {
       }
 
       match /manager_invites/{inviteId} {
-
-        function canReadManagerInvite() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            resource.data.manager_uid == userId() ||
-            (
-              resource.data.manager_email is string &&
-              request.auth.token.email is string &&
-              resource.data.manager_email == request.auth.token.email.lower()
-            ) ||
-            isAdmin()
-          );
-        }
-
-        allow read: if isAuthenticated() && canReadManagerInvite();
+        allow read: if isAuthenticated() && (
+          canManageLocationById(locationId) ||
+          resource.data.manager_uid == userId() ||
+          (
+            resource.data.manager_email is string &&
+            request.auth.token.email is string &&
+            resource.data.manager_email == request.auth.token.email.lower()
+          )
+        );
 
         // Criacao, aceite e remocao passam por Cloud Functions auditadas.
         allow create, update, delete: if false;
       }
 
       match /commercial_events/{eventId} {
-
-        function canReadCommercialEvents() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            isAdmin()
-          );
-        }
-
-        allow read: if isAuthenticated() && canReadCommercialEvents();
+        allow read: if isAuthenticated() && canManageLocationById(locationId);
         allow create, update, delete: if false;
       }
 
       match /publication_requests/{requestId} {
-
-        function canReadPublicationRequests() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            isAdmin()
-          );
-        }
-
-        allow read: if isAuthenticated() && canReadPublicationRequests();
+        allow read: if isAuthenticated() && canManageLocationById(locationId);
         allow create, update, delete: if false;
       }
 
       match /subscription_payments/{paymentId} {
-
-        function canReadSubscriptionPayments() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            isAdmin()
-          );
-        }
-
-        allow read: if isAuthenticated() && canReadSubscriptionPayments();
+        allow read: if isAuthenticated() && canManageLocationById(locationId);
         allow create, update, delete: if false;
       }
 
       match /subscription_ledger/{entryId} {
-
-        function canReadSubscriptionLedger() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            isAdmin()
-          );
-        }
-
-        allow read: if isAuthenticated() && canReadSubscriptionLedger();
+        allow read: if isAuthenticated() && canManageLocationById(locationId);
         allow create, update, delete: if false;
       }
 
@@ -2385,21 +2327,11 @@ service cloud.firestore {
       //
       // ==========================================
       match /availability/{slotId} {
-
-        function canManageAvailability() {
-          let loc = get(/databases/$(database)/documents/locations/$(locationId));
-          return loc != null && (
-            loc.data.owner_id == userId() ||
-            ('managers' in loc.data && userId() in loc.data.managers) ||
-            isAdmin()
-          );
-        }
-
         // Read: usuarios autenticados
         allow read: if isAuthenticated();
 
         // Write: owner, managers ou admin
-        allow create, update, delete: if isAuthenticated() && canManageAvailability();
+        allow create, update, delete: if isAuthenticated() && canManageLocationById(locationId);
       }
     }
 
@@ -2421,38 +2353,20 @@ service cloud.firestore {
     //
     // ============================================
     match /fields/{fieldId} {
-
-      // Helper: verifica se usuario e owner do local vinculado
-      function isLocationOwnerForField(locationId) {
-        let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
-        return locDoc != null && locDoc.data.owner_id == userId();
-      }
-
-      // Helper: verifica se usuario e manager do local vinculado
-      function isLocationManagerForField(locationId) {
-        let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
-        return locDoc != null && 'managers' in locDoc.data && userId() in locDoc.data.managers;
-      }
-
-      // Helper: verifica se pode gerenciar o campo
-      function canManageField(locationId) {
-        return isAdmin() || isLocationOwnerForField(locationId) || isLocationManagerForField(locationId);
-      }
-
       // Qualquer usuario autenticado pode ler quadras
       allow read: if isAuthenticated();
 
       // Dono ou manager do local pode criar quadras
       // Validacao: location_id obrigatorio
       allow create: if isAuthenticated() &&
-        canManageField(request.resource.data.location_id) &&
+        canManageLocationField(request.resource.data.location_id) &&
         request.resource.data.location_id is string &&
         isValidName(request.resource.data.name);
 
       // Dono ou manager do local pode atualizar quadras
       // Restricoes: nao pode alterar location_id ou is_active (admin only)
       allow update: if isAuthenticated() &&
-        canManageField(resource.data.location_id) &&
+        canManageLocationField(resource.data.location_id) &&
         fieldUnchanged('location_id') &&
         (isAdmin() || fieldUnchanged('is_active')) &&
         isValidName(request.resource.data.name);
@@ -2753,7 +2667,7 @@ service cloud.firestore {
       match /cashbox/{entryId} {
         // Owner legacy fallback: GroupMemberRoute permite owner_id mesmo quando
         // groups/{groupId}/members/{uid} ainda nao existe/nao esta ACTIVE.
-        allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
+        allow read: if isAuthenticated() && isGroupMemberOrOwner(groupId);
 
         // Ledger financeiro e server-authoritative. Clientes, inclusive admin,
         // usam createCashboxEntry/voidCashboxEntry; Admin SDK ignora rules.
@@ -2762,7 +2676,7 @@ service cloud.firestore {
 
       match /cashbox_summary/{docId} {
         // #1037.4: isGroupMember() faz get() — garante autenticação explícita primeiro
-        allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupOwnerById(groupId));
+        allow read: if isAuthenticated() && isGroupMemberOrOwner(groupId);
 
         // Resumo e derivado exclusivamente pelo backend canonico.
         allow create, update, delete: if false;
@@ -2776,7 +2690,7 @@ service cloud.firestore {
       // ============================================
       match /monthly_finance_config/{docId} {
         allow read: if isAuthenticated() &&
-          (isAdmin() || isGroupMember(groupId) || isGroupOwnerById(groupId));
+          (isAdmin() || isGroupMemberOrOwner(groupId));
         allow create, update, delete: if false;
       }
 
@@ -2784,22 +2698,20 @@ service cloud.firestore {
         allow read: if isAuthenticated() && (
           memberId == userId() ||
           isAdmin() ||
-          isGroupOwnerById(groupId) ||
-          isGroupAdmin(groupId)
+          isGroupAdminOrOwner(groupId)
         );
         allow create, update, delete: if false;
       }
 
       match /monthly_finance_periods/{periodKey} {
         allow read: if isAuthenticated() &&
-          (isAdmin() || isGroupMember(groupId) || isGroupOwnerById(groupId));
+          (isAdmin() || isGroupMemberOrOwner(groupId));
         allow create, update, delete: if false;
 
         match /payers/{payerId} {
           allow read: if isAuthenticated() && (
             payerId == userId() ||
-            isGroupOwnerById(groupId) ||
-            isGroupAdmin(groupId) ||
+            isGroupAdminOrOwner(groupId) ||
             isAdmin()
           );
           allow create, update, delete: if false;
@@ -2807,15 +2719,14 @@ service cloud.firestore {
 
         match /games/{gameId} {
           allow read: if isAuthenticated() &&
-            (isAdmin() || isGroupMember(groupId) || isGroupOwnerById(groupId));
+            (isAdmin() || isGroupMemberOrOwner(groupId));
           allow create, update, delete: if false;
         }
 
         match /settlements/{settlementId} {
           allow read: if isAuthenticated() && (
             resource.data.payer_id == userId() ||
-            isGroupOwnerById(groupId) ||
-            isGroupAdmin(groupId) ||
+            isGroupAdminOrOwner(groupId) ||
             isAdmin()
           );
           allow create, update, delete: if false;
@@ -2823,8 +2734,7 @@ service cloud.firestore {
 
         match /events/{eventId} {
           allow read: if isAuthenticated() && (
-            isGroupOwnerById(groupId) ||
-            isGroupAdmin(groupId) ||
+            isGroupAdminOrOwner(groupId) ||
             isAdmin()
           );
           allow create, update, delete: if false;
@@ -3107,7 +3017,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // COLLECTION GROUP: wall_posts
+    // COLLECTION-GROUP: wall_posts
     // Issue #3236: feed social agregado cross-grupo.
     // ============================================
     match /{path=**}/wall_posts/{postId} {
@@ -3130,15 +3040,6 @@ service cloud.firestore {
     // amplo e aceitavel — necessario pro join flow lookup por code.
     // ============================================
     match /invites/{inviteId} {
-      // H2 FIX: verifica status ACTIVE — admin banido nao pode gerar invites
-      function isGroupAdminFor(gId) {
-        let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        return member != null
-          && member.data.user_id == userId()
-          && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
-          && member.data.status == 'ACTIVE';
-      }
-
       // Auditoria 2026-05-30 #2351: doc-id == code. Lookup por get(doc-id),
       // nao por where('code')==X (que era LIST e vazava enumeracao de TODOS
       // os convites de todos os grupos).
@@ -3183,22 +3084,7 @@ service cloud.firestore {
     match /group_invites/{inviteId} {
       // H2 FIX: verifica status ACTIVE — admin banido nao pode gerenciar convites
       function canManageInvites(gId) {
-        let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
-        return (
-          member != null
-          && member.data.user_id == userId()
-          && (member.data.role == 'OWNER' || member.data.role == 'ADMIN')
-          && member.data.status == 'ACTIVE'
-        ) || (
-          groupDoc != null
-          && groupDoc.data.owner_id == userId()
-        );
-      }
-
-      function isInviteGroupOwner(gId) {
-        let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
-        return groupDoc != null && groupDoc.data.owner_id == userId();
+        return isGroupAdminOrOwner(gId);
       }
 
       function inviteNotExpired() {
@@ -3234,7 +3120,7 @@ service cloud.firestore {
                          request.resource.data.group_id,
                          request.resource.data.invited_user_id
                        ) &&
-                       isInviteGroupOwner(request.resource.data.group_id);
+                       isGroupOwnerById(request.resource.data.group_id);
 
       // FIX #577: era update sem field restriction → invitee podia overwrite group_id/invited_by_id.
       // Agora invitee só muda status (ACCEPTED/DECLINED) + updated_at; inviter cancela (CANCELLED).
@@ -3437,13 +3323,6 @@ service cloud.firestore {
     // COLECAO: notifications
     // ============================================
     match /notifications/{notificationId} {
-      function isTargetActiveGroupMember(groupId, targetUserId) {
-        let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(targetUserId));
-        return memberDoc != null &&
-          memberDoc.data.user_id == targetUserId &&
-          (!('status' in memberDoc.data) || memberDoc.data.status == 'ACTIVE');
-      }
-
       function hasValidGameSummonReference() {
         let data = request.resource.data;
         let gameDoc = get(/databases/$(database)/documents/games/$(data.game_id));
@@ -3459,7 +3338,7 @@ service cloud.firestore {
             (('group_id' in data) &&
              gameDoc != null &&
              gameDoc.data.group_id == data.group_id &&
-             isTargetActiveGroupMember(data.group_id, data.user_id))
+             isGroupMemberUser(data.group_id, data.user_id))
           );
       }
 
@@ -4011,53 +3890,6 @@ service cloud.firestore {
     // COLECAO: reports (denuncias de conteudo social)
     // ============================================
     match /reports/{reportId} {
-      function isAllowedReportTargetType() {
-        return request.resource.data.target_type in [
-          'group_wall_post',
-          'game_chat_message',
-          'game_comment',
-          'game_photo',
-          'game_video'
-        ];
-      }
-
-      function hasValidReportTargetFields() {
-        return (
-          request.resource.data.target_type == 'group_wall_post' &&
-          request.resource.data.group_id is string &&
-          request.resource.data.post_id is string &&
-          request.resource.data.target_path ==
-            'groups/' + request.resource.data.group_id +
-            '/wall_posts/' + request.resource.data.post_id
-        ) || (
-          request.resource.data.target_type == 'game_chat_message' &&
-          request.resource.data.game_id is string &&
-          request.resource.data.target_id is string &&
-          request.resource.data.target_path ==
-            'games/' + request.resource.data.game_id +
-            '/chat/' + request.resource.data.target_id
-        ) || (
-          request.resource.data.target_type == 'game_comment' &&
-          request.resource.data.game_id is string &&
-          request.resource.data.target_id is string &&
-          request.resource.data.target_path ==
-            'games/' + request.resource.data.game_id +
-            '/comments/' + request.resource.data.target_id
-        ) || (
-          request.resource.data.target_type == 'game_photo' &&
-          request.resource.data.game_id is string &&
-          request.resource.data.target_id is string &&
-          request.resource.data.target_path ==
-            'game_photos/' + request.resource.data.target_id
-        ) || (
-          request.resource.data.target_type == 'game_video' &&
-          request.resource.data.game_id is string &&
-          request.resource.data.target_id is string &&
-          request.resource.data.target_path ==
-            'game_videos/' + request.resource.data.target_id
-        );
-      }
-
       allow read: if isAdmin();
       // Criacao passa por Cloud Function para aplicar rate limit e validar alvo.
       allow create: if false;
@@ -4096,7 +3928,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // APP SETTINGS - Configurações globais do app (XP rates, etc)
+    // COLECAO: app_settings (configurações globais do app)
     // CMD-12: Proteção de configurações de gamificação
     // ============================================
     match /app_settings/{docId} {
@@ -4108,7 +3940,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // GAME TEMPLATES - Templates de jogos salvos por usuário
+    // SUB-COLECAO: users/{userId}/game_templates
     // CMD-12: Templates são privados por usuário
     // ============================================
     match /users/{userId}/game_templates/{templateId} {
@@ -4120,7 +3952,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // SEASON FINAL STANDINGS - Rankings finais de temporadas encerradas
+    // COLECAO: season_final_standings (rankings finais)
     // CMD-12: Histórico de rankings é público, edição apenas admin
     // ============================================
     match /season_final_standings/{standingId} {
@@ -4132,7 +3964,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // BADGES - Definições de badges (metadata)
+    // COLECAO: badges (metadados de badges)
     // CMD-12: Badges metadata é público, edição apenas admin
     // ============================================
     match /badges/{badgeId} {
@@ -4204,20 +4036,16 @@ service cloud.firestore {
           data.status in ['PENDING', 'ACCEPTED', 'DECLINED', 'FINISHED'];
       }
 
-      function canManageGroupChallengeGroup(groupId) {
-        return isGroupAdmin(groupId) || isGroupOwnerById(groupId);
-      }
-
       function canWriteGroupChallenge(data) {
         return isAdmin() ||
-          canManageGroupChallengeGroup(data.challenger_group_id) ||
-          canManageGroupChallengeGroup(data.challenged_group_id);
+          isGroupAdminOrOwner(data.challenger_group_id) ||
+          isGroupAdminOrOwner(data.challenged_group_id);
       }
 
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() &&
         request.resource.data.created_by == userId() &&
-        canManageGroupChallengeGroup(request.resource.data.challenger_group_id) &&
+        isGroupAdminOrOwner(request.resource.data.challenger_group_id) &&
         request.resource.data.status == 'PENDING' &&
         request.resource.data.current_progress == 0 &&
         request.resource.data.keys().hasOnly([
@@ -4356,32 +4184,6 @@ service cloud.firestore {
         ];
       }
 
-      function hasValidGeohash(data) {
-        return data.geohash is string &&
-               data.geohash.size() >= 1 &&
-               data.geohash.size() <= 12;
-      }
-
-      function isEnabledLocationPayload(data) {
-        return data.keys().hasOnly(allowedLocationFields()) &&
-               data.keys().hasAll([
-                 'user_id',
-                 'location_sharing_enabled',
-                 'location_consent_at',
-                 'location_updated_at',
-                 'geohash',
-                 'lat',
-                 'lng'
-               ]) &&
-               data.user_id == userId &&
-               data.location_sharing_enabled == true &&
-               data.location_consent_at is timestamp &&
-               data.location_updated_at == request.time &&
-               hasValidGeohash(data) &&
-               isValidLatitude(data.lat) &&
-               isValidLongitude(data.lng);
-      }
-
       function isDisabledLocationPayload(data) {
         return data.keys().hasOnly([
                  'user_id',
@@ -4460,7 +4262,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // USER FEEDBACK
+    // COLECAO: user_feedback (feedback dos usuários)
     // ============================================
     match /user_feedback/{feedbackId} {
       // SECFIX #872: read individual restrito ao owner ou admin
@@ -4491,7 +4293,7 @@ service cloud.firestore {
     }
 
     // ============================================
-    // FAVORITE TEAMS: Colecao de times de futebol (read-only)
+    // COLECAO: favorite_teams (times de futebol - read-only)
     // Dados estaticos geridos por admin/seed script.
     // ============================================
     match /favorite_teams/{teamId} {
