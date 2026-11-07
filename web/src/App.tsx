@@ -558,8 +558,8 @@ function AppRoutes() {
         {/* /game/:gameId saiu daqui (#4408): ver GameDetailRoute acima. */}
         {/* Groups */}
         {/* Rotas estáticas precedem parâmetros para deixar a resolução inequívoca. */}
-        {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}
-        <Route path="/group/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        {/* Modernização D12: qualquer usuário verificado (com perfil completo) pode criar grupos */}
+        <Route path="/group/create" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></VerifiedRoute>} />
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         <Route path="/group/:groupId/post/:postId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         {/* GAP-3: rotas privadas do grupo exigem membership (ou ADMIN). */}
