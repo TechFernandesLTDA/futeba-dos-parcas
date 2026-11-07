@@ -259,20 +259,23 @@ export async function processSinglePlayerXp(params: {
 
   const isWorstPlayer = isWorstAndConfirmed;
 
-  let xp = settings.xp_presence;
-  xp += cappedGoals * settings.xp_per_goal;
-  xp += cappedAssists * settings.xp_per_assist;
-  xp += cappedSaves * settings.xp_per_save;
+  // D2 + FIX #726: Separamos o cálculo de performance (presença, gols, assistências,
+  // defesas, resultado, clean sheet) do bônus de MVP (+50) e da penalidade (-10).
+  // O teto de 500 XP (MAX_XP_PER_GAME) limita a performance; o bônus de MVP entra
+  // por fora permitindo atingir até 550 XP (espelhando a votação MVP pós-jogo).
+  // D4 + FIX #1575: Penalidades respeitam piso em MIN_XP_PER_GAME (-100).
+  let performanceXpWithoutStreak = settings.xp_presence;
+  performanceXpWithoutStreak += cappedGoals * settings.xp_per_goal;
+  performanceXpWithoutStreak += cappedAssists * settings.xp_per_assist;
+  performanceXpWithoutStreak += cappedSaves * settings.xp_per_save;
 
   if (result === "WIN") {
-    xp += settings.xp_win;
+    performanceXpWithoutStreak += settings.xp_win;
   } else if (result === "DRAW") {
-    xp += settings.xp_draw;
+    performanceXpWithoutStreak += settings.xp_draw;
   }
 
-  if (isMvp && !mvpVotingAlreadyPaid) {
-    xp += settings.xp_mvp;
-  }
+  const mvpXp = (isMvp && !mvpVotingAlreadyPaid) ? settings.xp_mvp : 0;
 
   let cleanSheetXp = 0;
   if (conf.position === "GOALKEEPER") {
@@ -290,7 +293,7 @@ export async function processSinglePlayerXp(params: {
       );
     }
   }
-  xp += cleanSheetXp;
+  performanceXpWithoutStreak += cleanSheetXp;
 
   let penaltyXp = 0;
   if (isWorstPlayer && !worstVotingAlreadyPaid) {
@@ -302,9 +305,8 @@ export async function processSinglePlayerXp(params: {
       `${penaltyXp} XP penalty.`
     );
   }
-  xp += penaltyXp;
 
-  const baseXpWithoutStreak = xp;
+  const baseXpWithoutStreak = performanceXpWithoutStreak;
 
   return db().runTransaction(async (tx) => {
     const userRef = db()
@@ -488,19 +490,34 @@ export async function processSinglePlayerXp(params: {
       );
     const milesXp = cappedMilestones.appliedXp;
 
-    const playerXp = Math.max(
-      MIN_XP_PER_GAME,
+    // D2 + FIX #726: Teto de performance (500). MVP (+50) entra por fora (até 550 total).
+    // D4 + FIX #1575: Piso em MIN_XP_PER_GAME (-100).
+    const cappedPerformanceXp = Math.max(
+      0,
       Math.min(
         baseXp + milesXp,
         MAX_XP_PER_GAME
       )
     );
-    const finalXp = currentXp + playerXp;
+    const playerXp = Math.max(
+      MIN_XP_PER_GAME,
+      Math.min(
+        cappedPerformanceXp + mvpXp + penaltyXp,
+        MAX_XP_PER_GAME + mvpXp
+      )
+    );
+
+    // FIX #1575 + #2111: clamp do incremento atômico para respeitar MIN_XP_PER_GAME
+    // sem absorver silenciosamente penalidades quando user tem XP baixo
+    const clampedPlayerXp = (currentXp + playerXp < MIN_XP_PER_GAME) ?
+      MIN_XP_PER_GAME - currentXp :
+      playerXp;
+    const finalXp = currentXp + clampedPlayerXp;
     const currentLevel = getLevelForXp(currentXp);
     const newLevel = getLevelForXp(finalXp);
 
     const userUpdate: Record<string, unknown> = {
-      experience_points: FieldValue.increment(playerXp),
+      experience_points: FieldValue.increment(clampedPlayerXp),
       level: newLevel,
       updated_at: now,
     };

@@ -506,4 +506,32 @@ describe("group-league historical match transactions (#3438)", () => {
     );
     expect(applyWrites).toHaveLength(0);
   });
+
+  it("D6: ignora confirmações com sinal de presença explícito mas ausentes", async () => {
+    const fake = createLeagueFirestore(undefined, {
+      confirmations: [
+        {
+          user_id: "u1", status: "CONFIRMED", goals: 2, assists: 0,
+          is_mvp: true, checked_in: true, was_present: true,
+        },
+        {
+          user_id: "u2", status: "CONFIRMED", goals: 0, assists: 1,
+          is_mvp: false, checked_in: false, was_present: false,
+        },
+      ],
+    });
+    mockDb.mockReturnValue(fake.firestore);
+
+    await mockOnGameWrittenHandler!(gameWriteEvent(
+      {status: "LIVE", group_id: "group-1"},
+      {status: "FINISHED", group_id: "group-1", date: "2026-07-17"},
+    ));
+
+    const standingSets = fake.writes.filter(
+      ({kind, path}) => kind === "set" && path.includes("/league_standings/"),
+    );
+    // Somente u1 deve ter standing criado, u2 estava ausente
+    expect(standingSets).toHaveLength(1);
+    expect(standingSets[0].path).toContain("u1");
+  });
 });

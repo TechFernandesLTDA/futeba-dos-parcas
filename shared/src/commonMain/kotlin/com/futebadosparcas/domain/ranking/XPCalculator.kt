@@ -143,6 +143,7 @@ object XPCalculator {
     private const val MAX_ASSISTS_PER_GAME = 10
     private const val MAX_SAVES_PER_GAME = 30
     private const val MAX_XP_PER_GAME = 500
+    private const val MIN_XP_PER_GAME = -100
 
     /**
      * Calcula o XP ganho por um jogador em uma partida.
@@ -231,9 +232,15 @@ object XPCalculator {
             penalty = penaltyXp.toLong()
         )
 
-        // Aplicar piso mínimo (MIN_XP_PER_GAME = -100) e teto máximo (#1533)
-        // Bola Murcha e penalidades podem resultar em XP negativo — piso é -100, não 0
-        val totalXp = breakdown.total.coerceIn(-100L, MAX_XP_PER_GAME.toLong())
+        // D2 + FIX #726: O teto de 500 XP (MAX_XP_PER_GAME) limita o desempenho do jogo
+        // (gols, assistencias, defesas, resultado, streak). O bonus de MVP (+50) entra por
+        // fora do teto de performance (total ate 550), espelhando as Cloud Functions (mvp-voting.ts).
+        // D4 + FIX #1575: Penalidades aplicam com piso em MIN_XP_PER_GAME (-100).
+        val performanceXp = (participationXp + goalsXp + assistsXp + savesXp + cleanSheetXp + resultXp + streakXp)
+            .toLong()
+            .coerceIn(MIN_XP_PER_GAME.toLong(), MAX_XP_PER_GAME.toLong())
+        val totalXp = (performanceXp + mvpXp.toLong() + penaltyXp.toLong())
+            .coerceIn(MIN_XP_PER_GAME.toLong(), (MAX_XP_PER_GAME + mvpXp).toLong())
 
         return XpCalculationResult(
             totalXp = totalXp,

@@ -313,22 +313,35 @@ class XPCalculatorTest {
     inner class AntiCheatLimits {
 
         @Test
-        @DisplayName("XP total não pode exceder 500")
-        fun `total XP should not exceed 500`() {
-            // Jogador com stats absurdos
+        @DisplayName("XP de performance não pode exceder 500")
+        fun `total performance XP should not exceed 500`() {
+            // Jogador com stats de performance no teto, sem MVP
             val playerData = createPlayerData(
-                goals = 50,    // Capeado em 15 * 10 = 150
-                assists = 30,  // Capeado em 10 * 7 = 70
-                saves = 100,   // Capeado em 30 * 8 = 240
-                isMvp = true,  // 30
-                teamWon = true, // 20
-                currentStreak = 10 // 100
+                goals = 50,
+                assists = 30,
+                saves = 100,
+                isMvp = false,
+                teamWon = true,
+                currentStreak = 10
             )
             val result = XPCalculator.calculate(playerData)
-
-            // Sem cap: 10 + 150 + 70 + 240 + 20 + 30 + 100 = 620
-            // Com cap: 500
             assertEquals(500L, result.totalXp)
+        }
+
+        @Test
+        @DisplayName("D2: MVP entra por fora do teto de performance podendo atingir 550 XP")
+        fun `total XP with MVP can reach 550`() {
+            // D2 + FIX #726: 500 de performance + 50 de MVP = 550 XP
+            val playerData = createPlayerData(
+                goals = 50,
+                assists = 30,
+                saves = 100,
+                isMvp = true,
+                teamWon = true,
+                currentStreak = 10
+            )
+            val result = XPCalculator.calculate(playerData)
+            assertEquals(550L, result.totalXp)
         }
 
         @Test
