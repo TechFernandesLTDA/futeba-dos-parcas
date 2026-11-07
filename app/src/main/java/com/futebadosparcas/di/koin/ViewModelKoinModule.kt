@@ -14,6 +14,7 @@ import com.futebadosparcas.ui.game_experience.VoteResultViewModel
 import com.futebadosparcas.ui.games.CreateGameViewModel
 import com.futebadosparcas.ui.games.FieldSelectionViewModel
 import com.futebadosparcas.ui.games.GameDetailViewModel
+import com.futebadosparcas.ui.games.owner.BlockedPlayersViewModel
 import com.futebadosparcas.ui.games.GamesViewModel
 import com.futebadosparcas.ui.games.LocationSelectionViewModel
 import com.futebadosparcas.ui.games.venue.FirestoreProfileCitySource
@@ -175,6 +176,14 @@ val viewModelKoinModule = module {
             waitlistRepository = get(),
             confirmationUseCase = get(),
             permissionManager = get()
+        )
+    }
+
+    viewModel {
+        BlockedPlayersViewModel(
+            gameRepository = get(),
+            groupRepository = get<AndroidGroupRepository>(),
+            authRepository = get<AndroidAuthRepository>()
         )
     }
 

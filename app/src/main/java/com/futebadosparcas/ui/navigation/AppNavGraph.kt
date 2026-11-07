@@ -55,6 +55,7 @@ import com.futebadosparcas.ui.developer.DeveloperScreen
 import com.futebadosparcas.ui.profile.EditProfileScreen
 import com.futebadosparcas.ui.locations.FieldOwnerDashboardScreen
 import com.futebadosparcas.ui.games.GameDetailScreen
+import com.futebadosparcas.ui.games.owner.BlockedPlayersRoute
 import com.futebadosparcas.ui.games.GamesScreen
 import com.futebadosparcas.ui.groups.GroupDetailScreen
 import com.futebadosparcas.ui.groups.GroupWallScreen
@@ -155,6 +156,9 @@ sealed class Screen(
         fun createRoute(gameId: String) = "mvp_vote/$gameId"
     }
     data object TacticalBoard : Screen("tactical_board", titleResId = R.string.tactical_board)
+    data object BlockedPlayers : Screen("game/{gameId}/blocked_players", titleResId = R.string.owner_blocked_players) {
+        fun createRoute(gameId: String) = "game/$gameId/blocked_players"
+    }
 
     // Group management
     data object Groups : Screen("groups", titleResId = R.string.groups)
@@ -207,6 +211,7 @@ sealed class Screen(
  */
 object Routes {
     fun gameDetail(gameId: String) = Screen.GameDetail.createRoute(gameId)
+    fun blockedPlayers(gameId: String) = Screen.BlockedPlayers.createRoute(gameId)
     fun liveGame(gameId: String) = Screen.LiveGame.createRoute(gameId)
     fun mvpVote(gameId: String) = Screen.MVPVote.createRoute(gameId)
     fun groupDetail(groupId: String) = Screen.GroupDetail.createRoute(groupId)
@@ -643,7 +648,21 @@ fun AppNavHost(
                 },
                 onNavigateToTacticalBoard = {
                     navController.navigate(Screen.TacticalBoard.route)
+                },
+                onNavigateToBlockedPlayers = {
+                    navController.navigate(Screen.BlockedPlayers.createRoute(gameId))
                 }
+            )
+        }
+
+        composable(
+            route = Screen.BlockedPlayers.route,
+            arguments = listOf(navArgument("gameId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
+            BlockedPlayersRoute(
+                gameId = gameId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

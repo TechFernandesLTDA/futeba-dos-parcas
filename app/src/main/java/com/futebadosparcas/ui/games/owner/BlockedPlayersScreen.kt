@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.BlockedPlayer
-import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -26,6 +26,118 @@ import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
+import org.koin.compose.viewmodel.koinViewModel
+
+/**
+ * Issue #64 / Modernizacao D15 (Onda C7):
+ * Rota composable com injecao do BlockedPlayersViewModel e tratamento dos 4 estados
+ * (Loading, Error, Empty, Success).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BlockedPlayersRoute(
+    gameId: String,
+    onNavigateBack: () -> Unit,
+    viewModel: BlockedPlayersViewModel = koinViewModel()
+) {
+    LaunchedEffect(gameId) {
+        viewModel.load(gameId)
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val successState = uiState as? BlockedPlayersUiState.Success
+    val userMessage = successState?.userMessage
+    LaunchedEffect(userMessage) {
+        if (!userMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(userMessage)
+            viewModel.clearUserMessage()
+        }
+    }
+
+    when (val state = uiState) {
+        is BlockedPlayersUiState.Loading -> {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.owner_blocked_players)) },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back)
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+        is BlockedPlayersUiState.Error -> {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.owner_blocked_players)) },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back)
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    EmptyState(
+                        type = EmptyStateType.Error(
+                            title = stringResource(R.string.error_generic),
+                            description = state.message,
+                            onRetry = { viewModel.retry() }
+                        )
+                    )
+                }
+            }
+        }
+        is BlockedPlayersUiState.Success -> {
+            BlockedPlayersScreen(
+                blockedPlayers = state.blockedPlayers,
+                availablePlayers = state.availablePlayers,
+                onBlockPlayer = { userId, userName, reason ->
+                    viewModel.blockPlayer(userId, userName, reason)
+                },
+                onUnblockPlayer = { userId ->
+                    viewModel.unblockPlayer(userId)
+                },
+                onNavigateBack = onNavigateBack,
+                snackbarHostState = snackbarHostState
+            )
+        }
+    }
+}
 
 /**
  * Issue #64: Tela para gerenciar jogadores bloqueados
@@ -37,11 +149,17 @@ fun BlockedPlayersScreen(
     availablePlayers: List<GameConfirmation>,
     onBlockPlayer: (String, String, String) -> Unit,
     onUnblockPlayer: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    snackbarHostState: SnackbarHostState? = null
 ) {
     var showBlockDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        snackbarHost = {
+            if (snackbarHostState != null) {
+                SnackbarHost(snackbarHostState)
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.owner_blocked_players)) },

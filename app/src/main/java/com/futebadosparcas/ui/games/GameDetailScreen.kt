@@ -23,6 +23,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Place
@@ -79,7 +80,8 @@ fun GameDetailScreen(
     onNavigateToMvpVote: (String) -> Unit,
     onNavigateToTacticalBoard: () -> Unit,
     onNavigateToLiveGame: () -> Unit = {},
-    onNavigateToLocation: (String) -> Unit = {}
+    onNavigateToLocation: (String) -> Unit = {},
+    onNavigateToBlockedPlayers: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -146,12 +148,14 @@ fun GameDetailScreen(
                     game = state.game,
                     hasTeams = state.teams.isNotEmpty(),
                     hasVoted = state.hasVoted,
+                    canManageGame = state.canManageGame,
                     onBackClick = onNavigateBack,
                     onInviteWhatsApp = { inviteToWhatsApp(context, state, resources.getString(R.string.whatsapp_invite_title)) },
                     onShare = { shareGameDetails(context, state, resources.getString(R.string.game_at), resources.getString(R.string.share)) },
                     onVoteMvp = { onNavigateToMvpVote(gameId) },
                     onShareCard = { generateAndShareCard(context, state) },
-                    onTacticalBoard = onNavigateToTacticalBoard
+                    onTacticalBoard = onNavigateToTacticalBoard,
+                    onBlockedPlayers = onNavigateToBlockedPlayers
                 )
             } else {
                 // TopBar padrão para loading/error
@@ -213,12 +217,14 @@ fun GameDetailTopBar(
     game: Game,
     hasTeams: Boolean,
     hasVoted: Boolean?,
+    canManageGame: Boolean = false,
     onBackClick: () -> Unit,
     onInviteWhatsApp: () -> Unit,
     onShare: () -> Unit,
     onVoteMvp: () -> Unit,
     onShareCard: () -> Unit,
-    onTacticalBoard: () -> Unit
+    onTacticalBoard: () -> Unit,
+    onBlockedPlayers: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val votingPresentation = resolveGameDetailVotingPresentation(game.status, hasVoted)
@@ -245,6 +251,13 @@ fun GameDetailTopBar(
                         onClick = { onShare(); showMenu = false },
                         leadingIcon = { Icon(Icons.Outlined.Share, stringResource(R.string.share)) }
                     )
+                    if (canManageGame) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.owner_blocked_players)) },
+                            onClick = { onBlockedPlayers(); showMenu = false },
+                            leadingIcon = { Icon(Icons.Outlined.Block, stringResource(R.string.owner_blocked_players)) }
+                        )
+                    }
                     if (votingPresentation != null) {
                         DropdownMenuItem(
                             text = {
