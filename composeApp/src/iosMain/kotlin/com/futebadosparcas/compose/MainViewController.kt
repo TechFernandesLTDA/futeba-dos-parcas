@@ -26,3 +26,12 @@ import androidx.compose.ui.window.ComposeUIViewController
  * (LIGHT/DARK) no iOS; quando houver, controlar `preferredStatusBarStyle` aqui.
  */
 fun MainViewController() = ComposeUIViewController { App() }
+
+/**
+ * #4426: Encaminha Universal Links e custom scheme URLs (`https://futebadosparcas.com.br/game/{id}`,
+ * `/invite/{code}`, `futeba://...`) recebidos pelo SwiftUI `.onOpenURL` para a navegação do Compose.
+ */
+fun handleIncomingDeepLink(url: String) {
+    ComposeDeepLinkBridge.onOpenUrl(url)
+}
+

@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -168,7 +169,7 @@ fun PostGameReportScreen(
                 actions = {
                     IconButton(onClick = onShareWhatsApp) {
                         Icon(
-                            imageVector = Icons.Filled.Chat,
+                            imageVector = Icons.AutoMirrored.Filled.Chat,
                             contentDescription = stringResource(Res.string.owner_share_whatsapp_cd),
                             // #4096: token do tema (primary >= 3,0:1 sobre surface nos dois modos)
                             tint = MaterialTheme.colorScheme.primary

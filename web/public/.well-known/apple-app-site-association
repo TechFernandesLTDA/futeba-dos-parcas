@@ -1,0 +1,36 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "TEAMID.com.futebadosparcas"
+        ],
+        "components": [
+          {
+            "/": "/game/*",
+            "comment": "Abrir detalhe de jogo via Universal Link (#4426)"
+          },
+          {
+            "/": "/invite/*",
+            "comment": "Aceitar convite de grupo via Universal Link (#4426)"
+          },
+          {
+            "/": "/group/*",
+            "comment": "Abrir detalhe de grupo via Universal Link (#4426)"
+          }
+        ],
+        "paths": [
+          "/game/*",
+          "/invite/*",
+          "/group/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.com.futebadosparcas"
+    ]
+  }
+}

@@ -20,6 +20,9 @@ class LoginViewModel(
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: StateFlow<LoginState> = _loginState
 
+    private val _passwordResetMessage = MutableStateFlow<String?>(null)
+    val passwordResetMessage: StateFlow<String?> = _passwordResetMessage
+
     private var loginJob: Job? = null
 
     fun checkExistingUser() {
@@ -90,8 +93,39 @@ class LoginViewModel(
     }
 
     fun sendPasswordResetEmail(email: String) {
-        // log: sendPasswordResetEmail not available in KMP AuthRepository
-        // Sem efeito no momento.
+        val trimmed = email.trim()
+        if (trimmed.isBlank()) {
+            _loginState.value = LoginState.Error("Informe seu e-mail para recuperar a senha.")
+            return
+        }
+        loginJob?.cancel()
+        loginJob = viewModelScope.launch {
+            _passwordResetMessage.value = null
+            _loginState.value = LoginState.Loading
+            authRepository.sendPasswordResetEmail(trimmed).fold(
+                onSuccess = {
+                    _loginState.value = LoginState.Idle
+                    _passwordResetMessage.value =
+                        "E-mail de redefinição enviado para $trimmed. Verifique sua caixa de entrada."
+                },
+                onFailure = { error ->
+                    _loginState.value = LoginState.Error(
+                        error.message ?: "Não foi possível enviar o e-mail de recuperação."
+                    )
+                }
+            )
+        }
+    }
+
+    fun onGoogleSignInUnavailable() {
+        _passwordResetMessage.value = null
+        _loginState.value = LoginState.Error(
+            "O login com Google ainda não está configurado no iOS. Entre com e-mail e senha ou crie uma conta."
+        )
+    }
+
+    fun clearPasswordResetMessage() {
+        _passwordResetMessage.value = null
     }
 
     fun onGoogleSignInError(message: String) {
@@ -99,6 +133,7 @@ class LoginViewModel(
     }
 
     fun resetState() {
+        _passwordResetMessage.value = null
         _loginState.value = LoginState.Idle
     }
 }

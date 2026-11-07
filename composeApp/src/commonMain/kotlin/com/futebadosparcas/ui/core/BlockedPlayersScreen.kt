@@ -7,6 +7,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.SportsSoccer
@@ -56,9 +57,12 @@ fun BlockedPlayersScreen(
     availablePlayers: List<GameConfirmation>,
     onBlockPlayer: (String, String, String) -> Unit,
     onUnblockPlayer: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onReportPlayer: ((String, String, String) -> Unit)? = null,
+    feedbackMessage: String? = null
 ) {
     var showBlockDialog by remember { mutableStateOf(false) }
+    var showReportDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -73,6 +77,14 @@ fun BlockedPlayersScreen(
                     }
                 },
                 actions = {
+                    if (onReportPlayer != null) {
+                        IconButton(onClick = { showReportDialog = true }) {
+                            Icon(
+                                Icons.Default.Flag,
+                                contentDescription = "Denunciar jogador"
+                            )
+                        }
+                    }
                     IconButton(onClick = { showBlockDialog = true }) {
                         Icon(
                             Icons.Default.PersonAdd,
@@ -83,48 +95,83 @@ fun BlockedPlayersScreen(
             )
         }
     ) { paddingValues ->
-        if (blockedPlayers.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Block,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (!feedbackMessage.isNullOrBlank()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                ) {
                     Text(
-                        text = stringResource(Res.string.owner_no_blocked_players),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(Res.string.owner_no_blocked_players_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = feedbackMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(12.dp)
                     )
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .widthIn(max = 920.dp),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(blockedPlayers, key = { it.userId }) { player ->
-                    BlockedPlayerCard(
-                        player = player,
-                        onUnblock = { onUnblockPlayer(player.userId) }
-                    )
+
+            if (blockedPlayers.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Block,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(Res.string.owner_no_blocked_players),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(Res.string.owner_no_blocked_players_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (onReportPlayer != null) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedButton(onClick = { showReportDialog = true }) {
+                                Icon(Icons.Default.Flag, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Denunciar jogador")
+                            }
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .widthIn(max = 920.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(blockedPlayers, key = { it.userId }) { player ->
+                        BlockedPlayerCard(
+                            player = player,
+                            onUnblock = { onUnblockPlayer(player.userId) },
+                            onReport = onReportPlayer?.let { reportFn ->
+                                { reportFn(player.userId, player.userName, player.reason.ifBlank { "harassment" }) }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -140,12 +187,24 @@ fun BlockedPlayersScreen(
             }
         )
     }
+
+    if (showReportDialog && onReportPlayer != null) {
+        ReportPlayerDialog(
+            availablePlayers = availablePlayers,
+            onDismiss = { showReportDialog = false },
+            onReport = { userId, userName, reason ->
+                onReportPlayer(userId, userName, reason)
+                showReportDialog = false
+            }
+        )
+    }
 }
 
 @Composable
 private fun BlockedPlayerCard(
     player: BlockedPlayerData,
-    onUnblock: () -> Unit
+    onUnblock: () -> Unit,
+    onReport: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -202,6 +261,16 @@ private fun BlockedPlayerCard(
                 }
             }
 
+            if (onReport != null) {
+                IconButton(onClick = onReport) {
+                    Icon(
+                        imageVector = Icons.Default.Flag,
+                        contentDescription = "Denunciar ${player.userName}",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
             IconButton(onClick = onUnblock) {
                 Icon(
                     imageVector = Icons.Default.RemoveCircleOutline,
@@ -223,6 +292,8 @@ private fun BlockPlayerDialog(
     onBlock: (String, String, String) -> Unit
 ) {
     var selectedPlayer by remember { mutableStateOf<GameConfirmation?>(null) }
+    var manualUserId by remember { mutableStateOf("") }
+    var manualUserName by remember { mutableStateOf("") }
     var reason by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -241,7 +312,29 @@ private fun BlockPlayerDialog(
                 if (availablePlayers.isEmpty()) {
                     Text(
                         text = stringResource(Res.string.owner_no_players_to_block),
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = manualUserName,
+                        onValueChange = {
+                            manualUserName = it
+                            if (manualUserId.isBlank()) {
+                                manualUserId = it.trim().lowercase().replace(Regex("\\s+"), "_")
+                            }
+                        },
+                        label = { Text("Nome ou ID do jogador") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = reason,
+                        onValueChange = { reason = it },
+                        label = { Text(stringResource(Res.string.owner_block_reason_dialog_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2
                     )
                 } else {
                     Text(
@@ -309,16 +402,113 @@ private fun BlockPlayerDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    selectedPlayer?.let {
-                        onBlock(it.userId, it.userName, reason)
+                    val chosen = selectedPlayer
+                    if (chosen != null) {
+                        onBlock(chosen.userId, chosen.userName, reason)
+                    } else if (manualUserName.isNotBlank()) {
+                        val id = manualUserId.ifBlank {
+                            manualUserName.trim().lowercase().replace(Regex("\\s+"), "_")
+                        }
+                        onBlock(id, manualUserName.trim(), reason)
                     }
                 },
-                enabled = selectedPlayer != null,
+                enabled = selectedPlayer != null || manualUserName.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
                 Text(stringResource(Res.string.owner_block))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun ReportPlayerDialog(
+    availablePlayers: List<GameConfirmation>,
+    onDismiss: () -> Unit,
+    onReport: (String, String, String) -> Unit
+) {
+    var selectedPlayer by remember { mutableStateOf<GameConfirmation?>(null) }
+    var manualUserName by remember { mutableStateOf("") }
+    var reason by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Denunciar jogador") },
+        text = {
+            Column {
+                Text(
+                    text = "A denúncia será enviada para moderação no servidor e o jogador será bloqueado preventivamente.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                if (availablePlayers.isEmpty()) {
+                    OutlinedTextField(
+                        value = manualUserName,
+                        onValueChange = { manualUserName = it },
+                        label = { Text("Nome ou ID do jogador") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.heightIn(max = 160.dp)) {
+                        items(availablePlayers, key = { it.userId }) { player ->
+                            val isSelected = selectedPlayer?.userId == player.userId
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = isSelected,
+                                        onClick = { selectedPlayer = player },
+                                        role = Role.RadioButton
+                                    )
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = isSelected, onClick = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = player.getDisplayName(),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text("Motivo da denúncia") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val chosen = selectedPlayer
+                    if (chosen != null) {
+                        onReport(chosen.userId, chosen.userName, reason.ifBlank { "harassment" })
+                    } else if (manualUserName.isNotBlank()) {
+                        val id = manualUserName.trim().lowercase().replace(Regex("\\s+"), "_")
+                        onReport(id, manualUserName.trim(), reason.ifBlank { "harassment" })
+                    }
+                },
+                enabled = (selectedPlayer != null || manualUserName.isNotBlank()) && reason.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Enviar denúncia")
             }
         },
         dismissButton = {

@@ -9,7 +9,7 @@ import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.settings.ThemeSettingsViewModel
 import com.futebadosparcas.ui.whatsnew.releaseNotesModule
 import org.koin.core.module.Module
-import org.koin.compose.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

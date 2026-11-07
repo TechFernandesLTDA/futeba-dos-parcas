@@ -28,22 +28,34 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -150,9 +162,16 @@ import com.futebadosparcas.compose.resources.profile_hub_body
 import com.futebadosparcas.compose.resources.profile_hub_title
 import com.futebadosparcas.compose.resources.theme_settings
 import com.futebadosparcas.compose.resources.theme_settings_unavailable_body
+import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameStatus
+import com.futebadosparcas.domain.model.GameWaitlist
+import com.futebadosparcas.domain.model.MVPVote
 import com.futebadosparcas.domain.model.Team
+import com.futebadosparcas.domain.model.UserGroup
+import com.futebadosparcas.domain.model.VoteCategory
+import com.futebadosparcas.domain.model.WaitlistStatus
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
@@ -201,6 +220,29 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Ponte multiplataforma para Universal Links / Deep Links (#4426).
+ * O shell iOS (`FutebaApp.swift` -> `MainViewController.kt`) publica URLs recebidas em
+ * `.onOpenURL`, e `AppNavigation` consome e navega para `/game/{id}` ou `/invite/{code}`.
+ */
+object ComposeDeepLinkBridge {
+    private val _pendingUrl = MutableStateFlow<String?>(null)
+    val pendingUrl = _pendingUrl
+
+    fun onOpenUrl(url: String) {
+        val trimmed = url.trim()
+        if (trimmed.isNotEmpty()) {
+            _pendingUrl.value = trimmed
+        }
+    }
+
+    fun consumePendingUrl(): String? {
+        val current = _pendingUrl.value
+        _pendingUrl.value = null
+        return current
+    }
+}
 
 @Composable
 fun App() {
@@ -273,9 +315,21 @@ fun AppNavigation(
     var selectedGameId by remember { mutableStateOf<String?>(null) }
     var selectedGroupId by remember { mutableStateOf<String?>(null) }
     var blockedPlayers by remember { mutableStateOf(emptyList<BlockedPlayerData>()) }
+    val pendingDeepLinkUrl by ComposeDeepLinkBridge.pendingUrl.collectAsStateWithLifecycle()
 
     LaunchedEffect(preferencesService) {
         blockedPlayers = loadBlockedPlayers(preferencesService)
+    }
+
+    LaunchedEffect(pendingDeepLinkUrl) {
+        val url = pendingDeepLinkUrl ?: return@LaunchedEffect
+        val targetRoute = AppRoutes.resolveDeepLink(url)
+        ComposeDeepLinkBridge.consumePendingUrl()
+        if (targetRoute != null) {
+            navController.navigate(targetRoute) {
+                launchSingleTop = true
+            }
+        }
     }
 
     NavHost(
@@ -350,6 +404,7 @@ fun AppNavigation(
         composable(AppRoutes.LOGIN) {
             val vm: LoginViewModel? = koinViewModelOrNull<LoginViewModel>()
             val uiState = vm?.loginState?.collectAsStateWithLifecycle()?.value ?: LoginState.Idle
+            val passwordResetMessage = vm?.passwordResetMessage?.collectAsStateWithLifecycle()?.value
 
             LaunchedEffect(uiState) {
                 if (uiState is LoginState.Success) {
@@ -360,14 +415,17 @@ fun AppNavigation(
             LoginScreen(
                 uiState = uiState,
                 versionName = "",
-                onGoogleSignInClick = { vm?.onGoogleSignInSuccess() },
+                // G7 (B9): sem Client ID Google nativo configurado no iOS, avisa claramente
+                // em vez de disparar ação silenciosa falsa.
+                onGoogleSignInClick = { vm?.onGoogleSignInUnavailable() },
                 onEmailPasswordSignIn = { email, password -> vm?.signInWithEmailAndPassword(email, password) },
                 onForgotPassword = { email -> vm?.sendPasswordResetEmail(email) },
                 // #4424: "Criar conta" abre o cadastro, não o setup de perfil.
                 onNavigateToRegister = {
                     navController.navigate(AppRoutes.REGISTER) { launchSingleTop = true }
                 },
-                onNavigateToMain = { navController.navigateToHomeClearingBackStack() }
+                onNavigateToMain = { navController.navigateToHomeClearingBackStack() },
+                passwordResetMessage = passwordResetMessage
             )
         }
 
@@ -423,7 +481,10 @@ fun AppNavigation(
                 onNavigateToGames = { navController.navigateToTopLevel(AppRoutes.GAMES) },
                 onNavigateToGroups = { navController.navigateToTopLevel(AppRoutes.GROUPS) },
                 onNavigateToProfile = { navController.navigateToTopLevel(AppRoutes.PROFILE) },
-                onOpenProfileSetup = { navController.navigate(AppRoutes.PROFILE_SETUP) }
+                onOpenProfileSetup = { navController.navigate(AppRoutes.PROFILE_SETUP) },
+                onNavigateToRanking = { navController.navigate(AppRoutes.RANKING) },
+                onNavigateToBadges = { navController.navigate(AppRoutes.BADGES) },
+                onNavigateToLocations = { navController.navigate(AppRoutes.LOCATIONS) }
             )
         }
 
@@ -434,17 +495,36 @@ fun AppNavigation(
                     selectedGameId = gameId
                     navController.navigate(AppRoutes.gameDetail(gameId))
                 },
-                onCreateGameClick = { navController.navigateToTopLevel(AppRoutes.GROUPS) }
+                onCreateGameClick = { navController.navigate(AppRoutes.CREATE_GAME) }
+            )
+        }
+
+        // Criar Jogo (#4437 — G4)
+        composable(AppRoutes.CREATE_GAME) {
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            CreateGameRoute(
+                dataSource = dataSource,
+                currentUserId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId(),
+                selectedGroupId = selectedGroupId,
+                onNavigateBack = { navController.popBackStack() },
+                onGameCreated = { createdGame ->
+                    selectedGameId = createdGame.id
+                    navController.navigate(AppRoutes.gameDetail(createdGame.id)) {
+                        popUpTo(AppRoutes.CREATE_GAME) { inclusive = true }
+                    }
+                }
             )
         }
 
         composable(AppRoutes.GAME_DETAIL) { entry ->
             val gameId = entry.arguments?.read { getStringOrNull("gameId") }
             val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val currentUserId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId()
             LaunchedEffect(gameId) { selectedGameId = gameId }
             GameDetailRoute(
                 gameId = gameId,
                 dataSource = dataSource,
+                currentUserId = currentUserId,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenPostGameReport = { game ->
                     navController.navigate(AppRoutes.postGameReport(game.id))
@@ -517,15 +597,14 @@ fun AppNavigation(
 
         composable(AppRoutes.MVP_VOTING) { entry ->
             val gameId = entry.arguments?.read { getStringOrNull("gameId") }
-            var retryKey by remember { mutableIntStateOf(0) }
-            key(retryKey) {
-                UnavailableRouteScreen(
-                    title = stringResource(Res.string.route_mvp_voting_title),
-                    message = stringResource(Res.string.route_mvp_voting_unavailable),
-                    onRetry = { retryKey += 1 },
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val currentUserId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId()
+            MvpVotingRoute(
+                gameId = gameId,
+                dataSource = dataSource,
+                currentUserId = currentUserId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(AppRoutes.INVITE_PLAYERS) { entry ->
@@ -554,13 +633,25 @@ fun AppNavigation(
             }
         }
 
-        // Jogadores bloqueados (tela real ui/core/BlockedPlayersScreen)
+        // Jogadores bloqueados e denúncia com efeito no servidor (#4423 — G1)
         composable(AppRoutes.BLOCKED_PLAYERS) {
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            var availablePlayers by remember { mutableStateOf(emptyList<GameConfirmation>()) }
+            var moderationFeedback by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(selectedGameId, dataSource) {
+                val gId = selectedGameId
+                if (!gId.isNullOrBlank() && dataSource != null) {
+                    availablePlayers = dataSource.getGameConfirmations(gId).getOrDefault(emptyList())
+                }
+            }
+
             BlockedPlayersScreen(
                 blockedPlayers = blockedPlayers,
-                availablePlayers = emptyList(),
+                availablePlayers = availablePlayers,
+                feedbackMessage = moderationFeedback,
                 onBlockPlayer = { userId, userName, reason ->
-                    val updated = blockedPlayers + BlockedPlayerData(
+                    val updated = blockedPlayers.filterNot { it.userId == userId } + BlockedPlayerData(
                         userId = userId,
                         userName = userName,
                         reason = reason,
@@ -568,23 +659,120 @@ fun AppNavigation(
                     )
                     blockedPlayers = updated
                     persistBlockedPlayers(preferencesService, updated)
+                    shareScope.launch {
+                        val currentUid = authRepository?.getCurrentUserId()
+                            ?: dataSource?.getCurrentUserId().orEmpty()
+                        val serverResult = dataSource?.blockUserOnServer(
+                            userId = currentUid,
+                            targetUserId = userId,
+                            userName = userName,
+                            reason = reason
+                        )
+                        moderationFeedback = if (serverResult?.isSuccess == true) {
+                            "Jogador bloqueado e sincronizado com o servidor."
+                        } else {
+                            "Jogador bloqueado localmente."
+                        }
+                    }
                 },
                 onUnblockPlayer = { userId ->
                     val updated = blockedPlayers.filterNot { it.userId == userId }
                     blockedPlayers = updated
                     persistBlockedPlayers(preferencesService, updated)
+                    shareScope.launch {
+                        val currentUid = authRepository?.getCurrentUserId()
+                            ?: dataSource?.getCurrentUserId().orEmpty()
+                        dataSource?.unblockUserOnServer(
+                            userId = currentUid,
+                            targetUserId = userId
+                        )
+                        moderationFeedback = "Bloqueio removido."
+                    }
+                },
+                onReportPlayer = { targetUserId, targetUserName, reason ->
+                    val updated = blockedPlayers.filterNot { it.userId == targetUserId } + BlockedPlayerData(
+                        userId = targetUserId,
+                        userName = targetUserName,
+                        reason = "Denúncia: $reason",
+                        blockedAt = null
+                    )
+                    blockedPlayers = updated
+                    persistBlockedPlayers(preferencesService, updated)
+                    shareScope.launch {
+                        val currentUid = authRepository?.getCurrentUserId()
+                            ?: dataSource?.getCurrentUserId().orEmpty()
+                        val reportResult = dataSource?.submitPlayerReport(
+                            reporterId = currentUid,
+                            targetUserId = targetUserId,
+                            targetUserName = targetUserName,
+                            reason = reason,
+                            gameId = selectedGameId,
+                            groupId = selectedGroupId
+                        )
+                        moderationFeedback = if (reportResult?.isSuccess == true) {
+                            "Denúncia registrada no servidor e jogador bloqueado."
+                        } else {
+                            "Denúncia registrada localmente e jogador bloqueado."
+                        }
+                    }
                 },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // Groups
+        // Groups (B12 — lista de grupos e entrada para GROUP_DETAIL)
         composable(AppRoutes.GROUPS) {
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val currentUserId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId()
+            var userGroups by remember { mutableStateOf(emptyList<UserGroup>()) }
+
+            LaunchedEffect(currentUserId, dataSource) {
+                if (!currentUserId.isNullOrBlank() && dataSource != null) {
+                    dataSource.getUserGroupsFlow(currentUserId).collect { result ->
+                        userGroups = result.getOrDefault(emptyList())
+                        if (selectedGroupId.isNullOrBlank()) {
+                            selectedGroupId = userGroups.firstOrNull()?.groupId
+                        }
+                    }
+                }
+            }
+
+            val groupActions = userGroups.map { group ->
+                FeatureHubAction(
+                    label = group.groupName.ifBlank { "Grupo" },
+                    description = "Abrir painel do grupo (${group.role})",
+                    icon = Icons.Filled.Group,
+                    onClick = {
+                        selectedGroupId = group.groupId
+                        navController.navigate(AppRoutes.groupDetail(group.groupId))
+                    }
+                )
+            }
+
+            val defaultGroupTargetId = selectedGroupId?.takeIf { it.isNotBlank() }
+                ?: userGroups.firstOrNull()?.groupId
+                ?: "meu_grupo"
+
             FeatureHubScreen(
                 title = stringResource(Res.string.groups_hub_title),
                 body = stringResource(Res.string.groups_hub_body),
                 onNavigateBack = { navController.popBackStack() },
-                actions = listOf(
+                actions = groupActions + listOf(
+                    FeatureHubAction(
+                        label = stringResource(Res.string.group_detail_title),
+                        description = stringResource(Res.string.group_detail_body),
+                        icon = Icons.Filled.Group,
+                        onClick = {
+                            selectedGroupId = defaultGroupTargetId
+                            navController.navigate(AppRoutes.groupDetail(defaultGroupTargetId))
+                        }
+                    ),
+                    FeatureHubAction(
+                        label = "Criar Jogo",
+                        description = "Agendar nova partida para o grupo",
+                        icon = Icons.Filled.Add,
+                        onClick = { navController.navigate(AppRoutes.CREATE_GAME) }
+                    ),
                     FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_games),
                         description = stringResource(Res.string.groups_hub_action_games_body),
@@ -607,33 +795,61 @@ fun AppNavigation(
             )
         }
 
-        // Group detail
-        composable(AppRoutes.GROUP_DETAIL) {
+        // Group detail (B12 — recebe selectedGroupId / routeGroupId, NUNCA selectedGameId)
+        composable(AppRoutes.GROUP_DETAIL) { entry ->
+            val routeGroupId = entry.arguments?.read { getStringOrNull("groupId") }
+            val effectiveGroupId = routeGroupId?.takeIf { it.isNotBlank() } ?: selectedGroupId
+            LaunchedEffect(routeGroupId) {
+                if (!routeGroupId.isNullOrBlank()) {
+                    selectedGroupId = routeGroupId
+                }
+            }
             FeatureHubScreen(
                 title = stringResource(Res.string.group_detail_title),
                 body = stringResource(Res.string.group_detail_body),
                 onNavigateBack = { navController.popBackStack() },
                 actions = listOf(
                     FeatureHubAction(
+                        label = "Criar Jogo",
+                        description = "Agendar partida neste grupo",
+                        icon = Icons.Filled.Add,
+                        onClick = {
+                            selectedGroupId = effectiveGroupId
+                            navController.navigate(AppRoutes.CREATE_GAME)
+                        }
+                    ),
+                    FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_games),
                         description = stringResource(Res.string.groups_hub_action_games_body),
                         icon = Icons.Filled.SportsSoccer,
                         onClick = { navController.navigateToTopLevel(AppRoutes.GAMES) }
                     ),
                     FeatureHubAction(
-                        label = stringResource(Res.string.groups_hub_action_blocked),
-                        description = stringResource(Res.string.groups_hub_action_blocked_body),
-                        icon = Icons.Filled.Block,
-                        onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
-                    ),
-                    FeatureHubAction(
                         label = stringResource(Res.string.group_detail_action_cashbox),
                         description = stringResource(Res.string.group_detail_action_cashbox_body),
                         icon = Icons.Filled.QueryStats,
                         onClick = {
-                            selectedGroupId = selectedGroupId ?: selectedGameId
+                            selectedGroupId = effectiveGroupId
                             navController.navigate(AppRoutes.CASHBOX)
                         }
+                    ),
+                    FeatureHubAction(
+                        label = stringResource(Res.string.game_detail_invite_players),
+                        description = "Convidar jogadores para o grupo",
+                        icon = Icons.Filled.Person,
+                        onClick = {
+                            val targetGroup = effectiveGroupId
+                            if (!targetGroup.isNullOrBlank()) {
+                                selectedGroupId = targetGroup
+                                navController.navigate(AppRoutes.invitePlayers(targetGroup))
+                            }
+                        }
+                    ),
+                    FeatureHubAction(
+                        label = stringResource(Res.string.groups_hub_action_blocked),
+                        description = stringResource(Res.string.groups_hub_action_blocked_body),
+                        icon = Icons.Filled.Block,
+                        onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     ),
                     FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_whats_new),
@@ -645,7 +861,7 @@ fun AppNavigation(
             )
         }
 
-        // Profile
+        // Profile (B12 — inclui pontos de entrada para Ranking, Badges e Locais)
         composable(AppRoutes.PROFILE) {
             var showLogoutDialog by remember { mutableStateOf(false) }
             var showExportUnavailableDialog by remember { mutableStateOf(false) }
@@ -692,6 +908,24 @@ fun AppNavigation(
                         description = stringResource(Res.string.profile_hub_action_setup_body),
                         icon = Icons.Filled.Person,
                         onClick = { navController.navigate(AppRoutes.PROFILE_SETUP) }
+                    ),
+                    FeatureHubAction(
+                        label = "Ranking",
+                        description = "Classificação da temporada, artilharia e XP",
+                        icon = Icons.Filled.EmojiEvents,
+                        onClick = { navController.navigate(AppRoutes.RANKING) }
+                    ),
+                    FeatureHubAction(
+                        label = "Conquistas",
+                        description = "Medalhas e marcos desbloqueados",
+                        icon = Icons.Filled.MilitaryTech,
+                        onClick = { navController.navigate(AppRoutes.BADGES) }
+                    ),
+                    FeatureHubAction(
+                        label = "Locais",
+                        description = "Quadras e campos das peladas",
+                        icon = Icons.Filled.LocationOn,
+                        onClick = { navController.navigate(AppRoutes.LOCATIONS) }
                     ),
                     FeatureHubAction(
                         label = stringResource(Res.string.profile_hub_action_stats),
@@ -837,6 +1071,7 @@ private sealed interface RealtimeRouteState<out T> {
 private fun GameDetailRoute(
     gameId: String?,
     dataSource: FirebaseDataSource?,
+    currentUserId: String?,
     onNavigateBack: () -> Unit,
     onOpenPostGameReport: (Game) -> Unit,
     onOpenOwnerStats: (Game) -> Unit,
@@ -849,6 +1084,15 @@ private fun GameDetailRoute(
     var state by remember(gameId, dataSource, retryKey) {
         mutableStateOf<RealtimeRouteState<Game>>(RealtimeRouteState.Loading)
     }
+    var confirmations by remember(gameId, dataSource, retryKey) {
+        mutableStateOf<List<GameConfirmation>>(emptyList())
+    }
+    var waitlistEntries by remember(gameId, dataSource, retryKey) {
+        mutableStateOf<List<GameWaitlist>>(emptyList())
+    }
+    var actionInProgress by remember { mutableStateOf(false) }
+    var actionFeedback by remember { mutableStateOf<String?>(null) }
+    val actionScope = rememberCoroutineScope()
 
     LaunchedEffect(gameId, dataSource, retryKey) {
         if (gameId.isNullOrBlank()) {
@@ -858,6 +1102,20 @@ private fun GameDetailRoute(
         if (dataSource == null) {
             state = RealtimeRouteState.Error(getString(Res.string.route_game_unavailable_env))
             return@LaunchedEffect
+        }
+        launch {
+            dataSource.getGameConfirmationsFlow(gameId).collect { result ->
+                if (result.isSuccess) {
+                    confirmations = result.getOrDefault(emptyList())
+                }
+            }
+        }
+        launch {
+            dataSource.getGameWaitlistFlow(gameId).collect { result ->
+                if (result.isSuccess) {
+                    waitlistEntries = result.getOrDefault(emptyList())
+                }
+            }
         }
         dataSource.getGameByIdFlow(gameId).collect { result ->
             state = if (result.isSuccess) {
@@ -882,6 +1140,91 @@ private fun GameDetailRoute(
         )
         is RealtimeRouteState.Success -> GameDetailHub(
             game = current.data,
+            confirmations = confirmations,
+            waitlistEntries = waitlistEntries,
+            currentUserId = currentUserId,
+            actionInProgress = actionInProgress,
+            actionFeedback = actionFeedback,
+            onConfirmPresence = { position ->
+                val uid = currentUserId ?: dataSource?.getCurrentUserId()
+                if (uid.isNullOrBlank() || dataSource == null) {
+                    actionFeedback = "Faça login para confirmar presença."
+                } else {
+                    actionInProgress = true
+                    actionFeedback = null
+                    actionScope.launch {
+                        val user = dataSource.getCurrentUser().getOrNull()
+                        val result = dataSource.confirmPresence(
+                            gameId = current.data.id,
+                            userId = uid,
+                            userName = user?.name?.ifBlank { "Jogador" } ?: "Jogador",
+                            userPhoto = user?.photoUrl,
+                            position = position,
+                            isCasualPlayer = false
+                        )
+                        actionInProgress = false
+                        actionFeedback = if (result.isSuccess) {
+                            "Presença confirmada com sucesso!"
+                        } else {
+                            result.exceptionOrNull()?.message ?: "Não foi possível confirmar presença."
+                        }
+                    }
+                }
+            },
+            onCancelPresence = {
+                val uid = currentUserId ?: dataSource?.getCurrentUserId()
+                if (uid.isNullOrBlank() || dataSource == null) {
+                    actionFeedback = "Faça login para cancelar presença."
+                } else {
+                    actionInProgress = true
+                    actionFeedback = null
+                    actionScope.launch {
+                        val result = dataSource.cancelConfirmation(current.data.id, uid)
+                        actionInProgress = false
+                        actionFeedback = if (result.isSuccess) {
+                            "Presença cancelada."
+                        } else {
+                            result.exceptionOrNull()?.message ?: "Não foi possível cancelar presença."
+                        }
+                    }
+                }
+            },
+            onJoinWaitlist = { position ->
+                if (dataSource == null) {
+                    actionFeedback = "Serviço indisponível."
+                } else {
+                    actionInProgress = true
+                    actionFeedback = null
+                    actionScope.launch {
+                        val result = dataSource.joinWaitlist(current.data.id, position)
+                        actionInProgress = false
+                        actionFeedback = if (result.isSuccess) {
+                            val pos = result.getOrNull()?.queuePosition ?: 1
+                            "Você entrou na lista de espera (posição #$pos)."
+                        } else {
+                            result.exceptionOrNull()?.message ?: "Não foi possível entrar na lista de espera."
+                        }
+                    }
+                }
+            },
+            onLeaveWaitlist = {
+                val uid = currentUserId ?: dataSource?.getCurrentUserId()
+                if (uid.isNullOrBlank() || dataSource == null) {
+                    actionFeedback = "Serviço indisponível."
+                } else {
+                    actionInProgress = true
+                    actionFeedback = null
+                    actionScope.launch {
+                        val result = dataSource.leaveWaitlist(current.data.id, uid)
+                        actionInProgress = false
+                        actionFeedback = if (result.isSuccess) {
+                            "Você saiu da lista de espera."
+                        } else {
+                            result.exceptionOrNull()?.message ?: "Não foi possível sair da lista de espera."
+                        }
+                    }
+                }
+            },
             onNavigateBack = onNavigateBack,
             onOpenPostGameReport = { onOpenPostGameReport(current.data) },
             onOpenOwnerStats = if (current.data.ownerId.isBlank()) null else {
@@ -1127,6 +1470,15 @@ private fun UnavailableRouteScreen(
 @Composable
 private fun GameDetailHub(
     game: Game,
+    confirmations: List<GameConfirmation>,
+    waitlistEntries: List<GameWaitlist>,
+    currentUserId: String?,
+    actionInProgress: Boolean,
+    actionFeedback: String?,
+    onConfirmPresence: (String) -> Unit,
+    onCancelPresence: () -> Unit,
+    onJoinWaitlist: (String) -> Unit,
+    onLeaveWaitlist: () -> Unit,
     onNavigateBack: () -> Unit,
     onOpenPostGameReport: () -> Unit,
     onOpenOwnerStats: (() -> Unit)?,
@@ -1135,6 +1487,22 @@ private fun GameDetailHub(
     onOpenInvitePlayers: (() -> Unit)?,
     onOpenBlockedPlayers: () -> Unit
 ) {
+    var selectedPosition by remember { mutableStateOf("FIELD") }
+    val confirmedPlayers = remember(confirmations) {
+        confirmations.filter { it.status == ConfirmationStatus.CONFIRMED.name }
+    }
+    val confirmedCount = maxOf(game.playersCount, confirmedPlayers.size)
+    val isGameFull = game.maxPlayers > 0 && confirmedCount >= game.maxPlayers
+    val isUserConfirmed = !currentUserId.isNullOrBlank() &&
+        confirmedPlayers.any { it.userId == currentUserId }
+    val userWaitlistEntry = remember(waitlistEntries, currentUserId) {
+        if (currentUserId.isNullOrBlank()) null
+        else waitlistEntries.firstOrNull {
+            it.userId == currentUserId &&
+                (it.status == WaitlistStatus.WAITING.name || it.status == WaitlistStatus.NOTIFIED.name)
+        }
+    }
+
     Scaffold(
         topBar = {
             AdaptiveTopBar(
@@ -1179,25 +1547,181 @@ private fun GameDetailHub(
                 modifier = Modifier.widthIn(max = 960.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            Text(
-                text = game.locationName.ifBlank { stringResource(Res.string.game_detail_fallback_title) },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.semantics { heading() }
-            )
-            Text(
-                text = listOf(game.date, game.time, game.status)
-                    .filter { it.isNotBlank() }
-                    .joinToString(" • "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = stringResource(Res.string.game_detail_organizer_tools),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.semantics { heading() }
-            )
+                Text(
+                    text = game.locationName.ifBlank { stringResource(Res.string.game_detail_fallback_title) },
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() }
+                )
+                Text(
+                    text = listOf(game.date, game.time, game.status)
+                        .filter { it.isNotBlank() }
+                        .joinToString(" • "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Card de Confirmação de Presença e Lista de Espera (#4434 / #4435 — G2 & G3)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Presença ($confirmedCount / ${game.maxPlayers})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            if (waitlistEntries.isNotEmpty()) {
+                                Text(
+                                    text = "Fila de espera: ${waitlistEntries.size}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        }
+
+                        if (!isUserConfirmed && userWaitlistEntry == null && !game.isFinished() && !game.isCancelled()) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Posição:",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                FilterChip(
+                                    selected = selectedPosition == "FIELD",
+                                    onClick = { selectedPosition = "FIELD" },
+                                    label = { Text("Linha") }
+                                )
+                                FilterChip(
+                                    selected = selectedPosition == "GOALKEEPER",
+                                    onClick = { selectedPosition = "GOALKEEPER" },
+                                    label = { Text("Goleiro") }
+                                )
+                            }
+                        }
+
+                        when {
+                            game.isFinished() -> {
+                                Text(
+                                    text = "Partida encerrada. Vote no Craque da Partida (MVP) e Bola Murcha!",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Button(
+                                    onClick = onOpenVoting,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Votar MVP e Bola Murcha")
+                                }
+                            }
+                            isUserConfirmed -> {
+                                Text(
+                                    text = "Sua presença está confirmada neste jogo.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                OutlinedButton(
+                                    onClick = onCancelPresence,
+                                    enabled = !actionInProgress,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    if (actionInProgress) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.width(18.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                    }
+                                    Text("Cancelar Presença")
+                                }
+                            }
+                            userWaitlistEntry != null -> {
+                                val queuePos = userWaitlistEntry.queuePosition.coerceAtLeast(1)
+                                Text(
+                                    text = "Você está na lista de espera (posição #$queuePos).",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                                OutlinedButton(
+                                    onClick = onLeaveWaitlist,
+                                    enabled = !actionInProgress,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Sair da lista de espera")
+                                }
+                            }
+                            isGameFull -> {
+                                Text(
+                                    text = "Jogo lotado ($confirmedCount/${game.maxPlayers}). Entre na lista de espera para ser avisado se abrir vaga.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Button(
+                                    onClick = { onJoinWaitlist(selectedPosition) },
+                                    enabled = !actionInProgress,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    if (actionInProgress) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.width(18.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                    }
+                                    Text("Entrar na lista de espera")
+                                }
+                            }
+                            else -> {
+                                Button(
+                                    onClick = { onConfirmPresence(selectedPosition) },
+                                    enabled = !actionInProgress,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    if (actionInProgress) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.width(18.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                    }
+                                    Text("Confirmar Presença")
+                                }
+                            }
+                        }
+
+                        if (!actionFeedback.isNullOrBlank()) {
+                            Text(
+                                text = actionFeedback,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider()
+
+                Text(
+                    text = stringResource(Res.string.game_detail_organizer_tools),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.semantics { heading() }
+                )
 
                 if (expandedLayout) {
                     organizerActions.chunked(2).forEach { rowActions ->
@@ -1227,6 +1751,440 @@ private fun GameDetailHub(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(label)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Rota para criação de jogo (#4437 — G4) no `composeApp`.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateGameRoute(
+    dataSource: FirebaseDataSource?,
+    currentUserId: String?,
+    selectedGroupId: String?,
+    onNavigateBack: () -> Unit,
+    onGameCreated: (Game) -> Unit
+) {
+    var locationName by remember { mutableStateOf("") }
+    var locationAddress by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("2026-11-10") }
+    var time by remember { mutableStateOf("20:00") }
+    var endTime by remember { mutableStateOf("21:30") }
+    var maxPlayersText by remember { mutableStateOf("14") }
+    var dailyPriceText by remember { mutableStateOf("20.0") }
+    var gameType by remember { mutableStateOf("Society") }
+    var isSaving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    Scaffold(
+        topBar = {
+            AdaptiveTopBar(
+                title = "Criar Jogo",
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(Res.string.cd_back)
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+                .widthIn(max = 680.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Agendar Nova Pelada",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() }
+            )
+
+            OutlinedTextField(
+                value = locationName,
+                onValueChange = { locationName = it },
+                label = { Text("Local / Nome da quadra") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = locationAddress,
+                onValueChange = { locationAddress = it },
+                label = { Text("Endereço (opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Data (AAAA-MM-DD)") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = { time = it },
+                    label = { Text("Início (HH:MM)") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = endTime,
+                    onValueChange = { endTime = it },
+                    label = { Text("Término (HH:MM)") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = maxPlayersText,
+                    onValueChange = { maxPlayersText = it },
+                    label = { Text("Máx. jogadores") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+            }
+
+            OutlinedTextField(
+                value = dailyPriceText,
+                onValueChange = { dailyPriceText = it },
+                label = { Text("Valor por jogador (R$)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf("Society", "Futsal", "Campo").forEach { type ->
+                    FilterChip(
+                        selected = gameType == type,
+                        onClick = { gameType = type },
+                        label = { Text(type) }
+                    )
+                }
+            }
+
+            if (!errorMessage.isNullOrBlank()) {
+                Text(
+                    text = errorMessage.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Button(
+                onClick = {
+                    val trimmedLocation = locationName.trim()
+                    val trimmedDate = date.trim()
+                    val trimmedTime = time.trim()
+                    val maxPlayers = maxPlayersText.trim().toIntOrNull() ?: 0
+                    val dailyPrice = dailyPriceText.trim().replace(',', '.').toDoubleOrNull() ?: -1.0
+
+                    when {
+                        trimmedLocation.isEmpty() -> {
+                            errorMessage = "Informe o nome do local."
+                        }
+                        trimmedDate.isEmpty() || trimmedTime.isEmpty() -> {
+                            errorMessage = "Informe a data e o horário do jogo."
+                        }
+                        maxPlayers < Game.MIN_PLAYERS || maxPlayers > Game.MAX_PLAYERS -> {
+                            errorMessage = "O limite de jogadores deve estar entre ${Game.MIN_PLAYERS} e ${Game.MAX_PLAYERS}."
+                        }
+                        dailyPrice < 0.0 -> {
+                            errorMessage = "Informe um valor válido por jogador."
+                        }
+                        dataSource == null -> {
+                            errorMessage = "Serviço Firebase indisponível neste ambiente."
+                        }
+                        else -> {
+                            isSaving = true
+                            errorMessage = null
+                            scope.launch {
+                                val user = dataSource.getCurrentUser().getOrNull()
+                                val ownerId = currentUserId ?: user?.id.orEmpty()
+                                val newGame = Game(
+                                    date = trimmedDate,
+                                    time = trimmedTime,
+                                    endTime = endTime.trim(),
+                                    status = GameStatus.SCHEDULED.name,
+                                    maxPlayers = maxPlayers,
+                                    dailyPrice = dailyPrice,
+                                    locationName = trimmedLocation,
+                                    locationAddress = locationAddress.trim(),
+                                    gameType = gameType,
+                                    ownerId = ownerId,
+                                    ownerName = user?.name.orEmpty(),
+                                    groupId = selectedGroupId
+                                )
+                                val result = dataSource.createGame(newGame)
+                                isSaving = false
+                                result.fold(
+                                    onSuccess = { created -> onGameCreated(created) },
+                                    onFailure = { err ->
+                                        errorMessage = err.message ?: "Erro ao criar jogo."
+                                    }
+                                )
+                            }
+                        }
+                    }
+                },
+                enabled = !isSaving && locationName.isNotBlank() && date.isNotBlank() && time.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.width(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Salvar e Publicar Jogo")
+            }
+        }
+    }
+}
+
+/**
+ * Rota de votação pós-jogo (MVP e Bola Murcha — #4436 G5) no `composeApp`.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MvpVotingRoute(
+    gameId: String?,
+    dataSource: FirebaseDataSource?,
+    currentUserId: String?,
+    onNavigateBack: () -> Unit
+) {
+    var retryKey by remember { mutableIntStateOf(0) }
+    var gameState by remember(gameId, dataSource, retryKey) {
+        mutableStateOf<RealtimeRouteState<Pair<Game, List<GameConfirmation>>>>(RealtimeRouteState.Loading)
+    }
+    var selectedMvpPlayerId by remember { mutableStateOf<String?>(null) }
+    var selectedWorstPlayerId by remember { mutableStateOf<String?>(null) }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var feedbackMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(gameId, dataSource, retryKey) {
+        if (gameId.isNullOrBlank()) {
+            gameState = RealtimeRouteState.Error(getString(Res.string.route_missing_game_id))
+            return@LaunchedEffect
+        }
+        if (dataSource == null) {
+            gameState = RealtimeRouteState.Error(getString(Res.string.route_game_unavailable_env))
+            return@LaunchedEffect
+        }
+        val game = dataSource.getGameById(gameId).getOrNull() ?: run {
+            gameState = RealtimeRouteState.Error(getString(Res.string.route_game_load_error))
+            return@LaunchedEffect
+        }
+        val confirmations = dataSource.getGameConfirmations(gameId).getOrDefault(emptyList())
+        gameState = RealtimeRouteState.Success(game to confirmations)
+    }
+
+    when (val current = gameState) {
+        RealtimeRouteState.Loading -> RouteLoadingScreen(
+            title = stringResource(Res.string.route_mvp_voting_title),
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Error -> UnavailableRouteScreen(
+            title = stringResource(Res.string.route_mvp_voting_title),
+            message = current.message,
+            onRetry = { retryKey += 1 },
+            onNavigateBack = onNavigateBack
+        )
+        is RealtimeRouteState.Success -> {
+            val (game, confirmations) = current.data
+            val confirmedPlayers = confirmations.filter {
+                it.status == ConfirmationStatus.CONFIRMED.name
+            }
+            val isFinished = game.status == GameStatus.FINISHED.name
+
+            Scaffold(
+                topBar = {
+                    AdaptiveTopBar(
+                        title = stringResource(Res.string.route_mvp_voting_title),
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(Res.string.cd_back)
+                                )
+                            }
+                        }
+                    )
+                }
+            ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp)
+                        .widthIn(max = 720.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = game.locationName.ifBlank { stringResource(Res.string.game_detail_fallback_title) },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    if (!isFinished) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = "A votação oficial de MVP e Bola Murcha fica disponível quando o jogo está finalizado (status FINISHED). Status atual: ${game.status}.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+
+                    if (confirmedPlayers.isEmpty()) {
+                        Text(
+                            text = "Nenhum jogador confirmado encontrado para votação nesta partida.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = "${VoteCategory.MVP.emoji} ${VoteCategory.MVP.displayName} (MVP)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        confirmedPlayers.forEach { player ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedMvpPlayerId == player.userId,
+                                    onClick = { selectedMvpPlayerId = player.userId }
+                                )
+                                Text(
+                                    text = player.getDisplayName(),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+
+                        HorizontalDivider()
+
+                        Text(
+                            text = "${VoteCategory.WORST.emoji} ${VoteCategory.WORST.displayName}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        confirmedPlayers.forEach { player ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedWorstPlayerId == player.userId,
+                                    onClick = { selectedWorstPlayerId = player.userId }
+                                )
+                                Text(
+                                    text = player.getDisplayName(),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+
+                        if (!feedbackMessage.isNullOrBlank()) {
+                            Text(
+                                text = feedbackMessage.orEmpty(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val voterId = currentUserId ?: dataSource?.getCurrentUserId().orEmpty()
+                                if (voterId.isBlank() || dataSource == null) {
+                                    feedbackMessage = "Faça login para registrar seu voto."
+                                    return@Button
+                                }
+                                isSubmitting = true
+                                feedbackMessage = null
+                                scope.launch {
+                                    val results = mutableListOf<Result<Unit>>()
+                                    selectedMvpPlayerId?.let { mvpId ->
+                                        results += dataSource.submitMvpVoteViaCallable(
+                                            MVPVote(
+                                                id = MVPVote.generateId(game.id, voterId, VoteCategory.MVP),
+                                                gameId = game.id,
+                                                voterId = voterId,
+                                                votedPlayerId = mvpId,
+                                                category = VoteCategory.MVP
+                                            )
+                                        )
+                                    }
+                                    selectedWorstPlayerId?.let { worstId ->
+                                        results += dataSource.submitMvpVoteViaCallable(
+                                            MVPVote(
+                                                id = MVPVote.generateId(game.id, voterId, VoteCategory.WORST),
+                                                gameId = game.id,
+                                                voterId = voterId,
+                                                votedPlayerId = worstId,
+                                                category = VoteCategory.WORST
+                                            )
+                                        )
+                                    }
+                                    isSubmitting = false
+                                    feedbackMessage = if (results.isNotEmpty() && results.all { it.isSuccess }) {
+                                        "Votos registrados com sucesso!"
+                                    } else {
+                                        results.firstOrNull { it.isFailure }?.exceptionOrNull()?.message
+                                            ?: "Não foi possível registrar os votos."
+                                    }
+                                }
+                            },
+                            enabled = !isSubmitting && isFinished &&
+                                (selectedMvpPlayerId != null || selectedWorstPlayerId != null),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (isSubmitting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.width(18.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text("Confirmar Votos")
                         }
                     }
                 }
@@ -1485,8 +2443,7 @@ private const val BLOCKED_PLAYERS_PREF_KEY = "compose_blocked_players"
 private const val BLOCKED_PLAYER_ENTRY_SEPARATOR = "\u001E"
 private const val BLOCKED_PLAYER_FIELD_SEPARATOR = "\u001F"
 
-private fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
-    val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()
+internal fun decodeBlockedPlayers(raw: String): List<BlockedPlayerData> {
     if (raw.isBlank()) return emptyList()
 
     return raw.split(BLOCKED_PLAYER_ENTRY_SEPARATOR)
@@ -1502,17 +2459,9 @@ private fun loadBlockedPlayers(preferencesService: PreferencesService?): List<Bl
         }
 }
 
-private fun persistBlockedPlayers(
-    preferencesService: PreferencesService?,
-    blockedPlayers: List<BlockedPlayerData>
-) {
-    if (preferencesService == null) return
-    if (blockedPlayers.isEmpty()) {
-        preferencesService.remove(BLOCKED_PLAYERS_PREF_KEY)
-        return
-    }
-
-    val encoded = blockedPlayers.joinToString(BLOCKED_PLAYER_ENTRY_SEPARATOR) { player ->
+internal fun encodeBlockedPlayers(blockedPlayers: List<BlockedPlayerData>): String {
+    if (blockedPlayers.isEmpty()) return ""
+    return blockedPlayers.joinToString(BLOCKED_PLAYER_ENTRY_SEPARATOR) { player ->
         listOf(
             player.userId,
             player.userName,
@@ -1525,5 +2474,21 @@ private fun persistBlockedPlayers(
                 .replace("\n", " ")
         }
     }
-    preferencesService.putString(BLOCKED_PLAYERS_PREF_KEY, encoded)
+}
+
+internal fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
+    val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()
+    return decodeBlockedPlayers(raw)
+}
+
+internal fun persistBlockedPlayers(
+    preferencesService: PreferencesService?,
+    blockedPlayers: List<BlockedPlayerData>
+) {
+    if (preferencesService == null) return
+    if (blockedPlayers.isEmpty()) {
+        preferencesService.remove(BLOCKED_PLAYERS_PREF_KEY)
+        return
+    }
+    preferencesService.putString(BLOCKED_PLAYERS_PREF_KEY, encodeBlockedPlayers(blockedPlayers))
 }

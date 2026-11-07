@@ -63,6 +63,30 @@ expect class FirebaseDataSource() {
         status: String
     ): Result<Unit>
 
+    // ========== WAITLIST ==========
+
+    fun getGameWaitlistFlow(gameId: String): Flow<Result<List<GameWaitlist>>>
+    suspend fun joinWaitlist(gameId: String, position: String = "FIELD"): Result<GameWaitlist>
+    suspend fun leaveWaitlist(gameId: String, userId: String): Result<Unit>
+
+    // ========== MODERATION (BLOCK & REPORT — #4423) ==========
+
+    suspend fun blockUserOnServer(
+        userId: String,
+        targetUserId: String,
+        userName: String = "",
+        reason: String = ""
+    ): Result<Unit>
+    suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit>
+    suspend fun submitPlayerReport(
+        reporterId: String,
+        targetUserId: String,
+        targetUserName: String,
+        reason: String,
+        gameId: String? = null,
+        groupId: String? = null
+    ): Result<Unit>
+
     // ========== TEAMS ==========
 
     suspend fun getGameTeams(gameId: String): Result<List<Team>>
@@ -291,6 +315,11 @@ expect class FirebaseDataSource() {
      * Cria conta com email e senha. Retorna o uid em caso de sucesso.
      */
     suspend fun signUpWithEmailPassword(email: String, password: String): Result<String>
+
+    /**
+     * Envia email de redefinição de senha via Firebase Auth.
+     */
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit>
 
     /**
      * Realiza logout do usuário.

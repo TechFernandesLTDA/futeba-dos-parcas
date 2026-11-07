@@ -40,6 +40,10 @@ class AuthRepositoryImpl(
         return firebaseDataSource.signUpWithEmailPassword(email, password)
     }
 
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return firebaseDataSource.sendPasswordResetEmail(email)
+    }
+
     override suspend fun logout() {
         firebaseDataSource.logout()
     }

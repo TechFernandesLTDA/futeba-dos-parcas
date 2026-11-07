@@ -525,6 +525,239 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    // ========== WAITLIST ==========
+
+    actual fun getGameWaitlistFlow(gameId: String): Flow<Result<List<GameWaitlist>>> {
+        return firestore.collection(COLLECTION_GAMES)
+            .document(gameId)
+            .collection("waitlist")
+            .snapshots()
+            .map { snapshot ->
+                val entries = snapshot.documents.mapNotNull { doc ->
+                    val status = doc.get<String?>("status") ?: WaitlistStatus.WAITING.name
+                    if (status != WaitlistStatus.WAITING.name && status != WaitlistStatus.NOTIFIED.name) {
+                        return@mapNotNull null
+                    }
+                    GameWaitlist(
+                        id = doc.id,
+                        gameId = doc.get<String?>("game_id") ?: gameId,
+                        userId = doc.get<String?>("user_id") ?: doc.id,
+                        userName = doc.get<String?>("user_name") ?: "",
+                        userPhoto = doc.get<String?>("user_photo"),
+                        position = doc.get<String?>("position") ?: "FIELD",
+                        queuePosition = doc.get<Long?>("queue_position")?.toInt() ?: 0,
+                        status = status,
+                        addedAt = doc.safeLong("added_at"),
+                        notifiedAt = doc.safeLong("notified_at"),
+                        responseDeadline = doc.safeLong("response_deadline")
+                    )
+                }.sortedBy { it.queuePosition }
+                Result.success(entries)
+            }
+            .catch { e -> emit(Result.failure(e)) }
+    }
+
+    actual suspend fun joinWaitlist(gameId: String, position: String): Result<GameWaitlist> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuário não autenticado"))
+            val normalizedPos = if (position == "GOALKEEPER") "GOALKEEPER" else "FIELD"
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("joinGameWaitlist")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "position" to normalizedPos
+                    )
+                )
+            val doc = firestore.collection(COLLECTION_GAMES)
+                .document(gameId)
+                .collection("waitlist")
+                .document(uid)
+                .get()
+            val entry = if (doc.exists) {
+                GameWaitlist(
+                    id = doc.id,
+                    gameId = doc.get<String?>("game_id") ?: gameId,
+                    userId = doc.get<String?>("user_id") ?: uid,
+                    userName = doc.get<String?>("user_name") ?: (auth.currentUser?.displayName ?: ""),
+                    userPhoto = doc.get<String?>("user_photo"),
+                    position = doc.get<String?>("position") ?: normalizedPos,
+                    queuePosition = doc.get<Long?>("queue_position")?.toInt() ?: 1,
+                    status = doc.get<String?>("status") ?: WaitlistStatus.WAITING.name
+                )
+            } else {
+                GameWaitlist(
+                    id = uid,
+                    gameId = gameId,
+                    userId = uid,
+                    userName = auth.currentUser?.displayName ?: "",
+                    position = normalizedPos,
+                    queuePosition = 1,
+                    status = WaitlistStatus.WAITING.name
+                )
+            }
+            Result.success(entry)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun leaveWaitlist(gameId: String, userId: String): Result<Unit> {
+        return try {
+            val waitlistCol = firestore.collection(COLLECTION_GAMES)
+                .document(gameId)
+                .collection("waitlist")
+            val docRef = waitlistCol.document(userId)
+            val doc = docRef.get()
+            if (doc.exists) {
+                docRef.delete()
+            } else {
+                val query = waitlistCol.where { "user_id" equalTo userId }.get()
+                val batch = firestore.batch()
+                query.documents.forEach { batch.delete(it.reference) }
+                batch.commit()
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== MODERATION (BLOCK & REPORT — #4423) ==========
+
+    actual suspend fun blockUserOnServer(
+        userId: String,
+        targetUserId: String,
+        userName: String,
+        reason: String
+    ): Result<Unit> {
+        return try {
+            if (userId.isBlank() || targetUserId.isBlank() || userId == targetUserId) {
+                return Result.failure(IllegalArgumentException("IDs inválidos para bloqueio"))
+            }
+            // Caminho canônico autorizado em firestore.rules: users/{userId}/blocked/{targetUserId}
+            firestore.collection(COLLECTION_USERS)
+                .document(userId)
+                .collection("blocked")
+                .document(targetUserId)
+                .set(
+                    mapOf(
+                        "target_user_id" to targetUserId,
+                        "created_at" to FieldValue.serverTimestamp
+                    )
+                )
+            // Caminho espelho opcional users/{userId}/blocked_users/{targetUserId} (best-effort)
+            runCatching {
+                firestore.collection(COLLECTION_USERS)
+                    .document(userId)
+                    .collection("blocked_users")
+                    .document(targetUserId)
+                    .set(
+                        mapOf(
+                            "target_user_id" to targetUserId,
+                            "user_name" to userName,
+                            "reason" to reason,
+                            "created_at" to FieldValue.serverTimestamp
+                        )
+                    )
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit> {
+        return try {
+            if (userId.isBlank() || targetUserId.isBlank()) {
+                return Result.failure(IllegalArgumentException("IDs inválidos para desbloqueio"))
+            }
+            firestore.collection(COLLECTION_USERS)
+                .document(userId)
+                .collection("blocked")
+                .document(targetUserId)
+                .delete()
+            runCatching {
+                firestore.collection(COLLECTION_USERS)
+                    .document(userId)
+                    .collection("blocked_users")
+                    .document(targetUserId)
+                    .delete()
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun submitPlayerReport(
+        reporterId: String,
+        targetUserId: String,
+        targetUserName: String,
+        reason: String,
+        gameId: String?,
+        groupId: String?
+    ): Result<Unit> {
+        return try {
+            val normalizedReason = when (reason.trim().lowercase()) {
+                "inappropriate_content", "abusive_language", "spam", "harassment", "other" -> reason.trim().lowercase()
+                else -> "harassment"
+            }
+            // 1. Gravação em reports (coleção de denúncias no Firestore)
+            val reportWrites = mutableListOf<Result<Unit>>()
+            reportWrites += runCatching {
+                val docRef = firestore.collection("reports").document
+                val payload = mutableMapOf<String, Any>(
+                    "reporter_id" to reporterId,
+                    "target_user_id" to targetUserId,
+                    "target_user_name" to targetUserName,
+                    "target_type" to "player",
+                    "reason" to normalizedReason,
+                    "details" to reason.trim(),
+                    "status" to "OPEN",
+                    "created_at" to FieldValue.serverTimestamp
+                )
+                if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
+                if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
+                docRef.set(payload)
+            }
+            // 2. Fallback via callable submitContentReport quando vinculado a jogo/grupo
+            if (reportWrites.none { it.isSuccess } && !gameId.isNullOrBlank()) {
+                reportWrites += runCatching {
+                    Firebase.functions(FUNCTIONS_REGION)
+                        .httpsCallable("submitContentReport")
+                        .invoke(
+                            mapOf(
+                                "targetType" to "game_comment",
+                                "gameId" to gameId,
+                                "targetId" to targetUserId,
+                                "reason" to normalizedReason
+                            )
+                        )
+                    Unit
+                }
+            }
+            // 3. Garante bloqueio preventivo no servidor (Guideline 1.2 App Store:
+            // denunciar jogador também pode isolar o contato imediatamente)
+            if (reporterId.isNotBlank() && targetUserId.isNotBlank() && reporterId != targetUserId) {
+                reportWrites += blockUserOnServer(
+                    userId = reporterId,
+                    targetUserId = targetUserId,
+                    userName = targetUserName,
+                    reason = reason
+                )
+            }
+            if (reportWrites.any { it.isSuccess }) {
+                Result.success(Unit)
+            } else {
+                reportWrites.firstOrNull() ?: Result.failure(Exception("Falha ao registrar denúncia"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ========== TEAMS ==========
 
     actual suspend fun getGameTeams(gameId: String): Result<List<Team>> {
@@ -1278,6 +1511,19 @@ actual class FirebaseDataSource actual constructor() {
             val uid = result.user?.uid
                 ?: return Result.failure(Exception("Falha ao criar conta: usuário nulo"))
             Result.success(uid)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            val trimmed = email.trim()
+            if (trimmed.isBlank()) {
+                return Result.failure(IllegalArgumentException("Informe um e-mail válido"))
+            }
+            auth.sendPasswordResetEmail(trimmed)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
