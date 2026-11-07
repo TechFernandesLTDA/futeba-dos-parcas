@@ -24,9 +24,7 @@ import com.futebadosparcas.data.local.model.UserEntity
         PopularSearchEntity::class
     ],
     version = 7,
-    // TODO: Habilitar exportSchema = true e configurar room.schemaLocation no build.gradle.kts
-    // para rastrear migracoes automaticamente
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
