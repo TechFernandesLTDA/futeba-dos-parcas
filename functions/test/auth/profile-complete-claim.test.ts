@@ -13,6 +13,12 @@ const mockDoc = jest.fn().mockReturnValue({
 const mockCollection = jest.fn().mockReturnValue({
   doc: mockDoc,
 });
+// Leitura do doc de contas de revisão (admin.firestore().doc(path)). Mock
+// separado do users/{uid} para a config não ser respondida com o perfil.
+const mockConfigDocGet = jest.fn();
+const mockConfigDoc = jest.fn().mockReturnValue({
+  get: mockConfigDocGet,
+});
 
 jest.mock("firebase-admin", () => ({
   apps: [{name: "test"}],
@@ -24,6 +30,7 @@ jest.mock("firebase-admin", () => ({
   })),
   firestore: jest.fn(() => ({
     collection: mockCollection,
+    doc: mockConfigDoc,
   })),
 }));
 
@@ -116,6 +123,7 @@ describe("Profile Complete Claim", () => {
       exists: true,
       data: () => ({cpfVerifiedAt: {seconds: 1}, phone: validPhone}),
     });
+    mockConfigDocGet.mockResolvedValue({exists: false, data: () => undefined});
     loadModule();
   });
 
@@ -287,5 +295,149 @@ describe("Profile Complete Claim", () => {
     await expect(recomputeMyProfileClaimHandler!({
       auth: {uid: "user1", token: {}},
     })).rejects.toMatchObject({code: "internal"});
+  });
+  describe("conta de revisão da Play", () => {
+    // UIDs fictícios. O UID real do revisor nunca entra no repo (público).
+    const REVIEW_UID = "review-uid-test";
+
+    function listReviewUids(uids: unknown[]) {
+      mockConfigDocGet.mockResolvedValue({
+        exists: true,
+        data: () => ({uids}),
+      });
+    }
+
+    function reviewWriteEvent(
+      after: Record<string, unknown> | undefined,
+      before?: Record<string, unknown> | undefined
+    ) {
+      const event = userWriteEvent(after, before);
+      event.params.uid = REVIEW_UID;
+      return event;
+    }
+
+    test("(a) callable dá verified e profileComplete ao UID listado, sem CPF/telefone", async () => {
+      listReviewUids([REVIEW_UID]);
+      mockGetUser.mockResolvedValue({
+        customClaims: {role: "PLAYER"},
+        phoneNumber: undefined,
+      });
+      mockDocGet.mockResolvedValue({exists: true, data: () => ({})});
+
+      const result = await recomputeMyProfileClaimHandler!({
+        auth: {uid: REVIEW_UID, token: {}},
+      });
+
+      expect(mockConfigDoc).toHaveBeenCalledWith(
+        "system_config/play_review_accounts"
+      );
+      expect(result).toEqual({
+        success: true,
+        profileComplete: true,
+        updated: true,
+      });
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+        role: "PLAYER",
+        verified: true,
+        profileComplete: true,
+      });
+      expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
+    });
+
+    test("(b) trigger não remove as claims do UID listado quando o CPF some", async () => {
+      listReviewUids([REVIEW_UID]);
+      mockGetUser.mockResolvedValue({
+        customClaims: {role: "PLAYER", verified: true, profileComplete: true},
+        phoneNumber: undefined,
+      });
+
+      // Presença de cpfVerifiedAt muda (antes tinha, depois não): o trigger
+      // não sai cedo e chega ao cálculo da claim.
+      await onUserProfileWrittenHandler!(reviewWriteEvent(
+        {},
+        {cpfVerifiedAt: {seconds: 1}}
+      ));
+
+      expect(mockGetUser).toHaveBeenCalledWith(REVIEW_UID);
+      expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+    });
+
+    test("(b) trigger restaura as claims do UID listado se alguém as baixou", async () => {
+      listReviewUids(["outro-uid-test", REVIEW_UID]);
+      mockGetUser.mockResolvedValue({
+        customClaims: {role: "PLAYER", profileComplete: false},
+        phoneNumber: undefined,
+      });
+
+      await onUserProfileWrittenHandler!(reviewWriteEvent(
+        {cpfVerifiedAt: {seconds: 1}},
+        {}
+      ));
+
+      expect(mockSetCustomUserClaims).toHaveBeenCalledTimes(1);
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+        role: "PLAYER",
+        verified: true,
+        profileComplete: true,
+      });
+    });
+
+    test("(c) UID não listado segue a regra antiga, mesmo com a lista preenchida", async () => {
+      listReviewUids([REVIEW_UID]);
+      mockGetUser.mockResolvedValue({
+        customClaims: {role: "PLAYER", profileComplete: true},
+        phoneNumber: undefined,
+      });
+
+      await onUserProfileWrittenHandler!(userWriteEvent(
+        {},
+        {cpfVerifiedAt: {seconds: 1}}
+      ));
+
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith("user1", {
+        role: "PLAYER",
+        profileComplete: false,
+      });
+      expect(mockSetCustomUserClaims.mock.calls[0][1]).not.toHaveProperty(
+        "verified"
+      );
+    });
+
+    test("(c) lista malformada não libera ninguém", async () => {
+      mockConfigDocGet.mockResolvedValue({
+        exists: true,
+        data: () => ({uids: REVIEW_UID}),
+      });
+      mockGetUser.mockResolvedValue({
+        customClaims: {role: "PLAYER"},
+        phoneNumber: undefined,
+      });
+      mockDocGet.mockResolvedValue({exists: true, data: () => ({})});
+
+      const result = await recomputeMyProfileClaimHandler!({
+        auth: {uid: REVIEW_UID, token: {}},
+      });
+
+      expect(result.profileComplete).toBe(false);
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+        role: "PLAYER",
+        profileComplete: false,
+      });
+    });
+
+    test("trigger propaga falha ao ler a lista (retry) em vez de rebaixar a claim", async () => {
+      const readError = new Error("Firestore unavailable");
+      mockConfigDocGet.mockRejectedValue(readError);
+      mockGetUser.mockResolvedValue({
+        customClaims: {role: "PLAYER", verified: true, profileComplete: true},
+        phoneNumber: undefined,
+      });
+
+      await expect(onUserProfileWrittenHandler!(reviewWriteEvent(
+        {},
+        {cpfVerifiedAt: {seconds: 1}}
+      ))).rejects.toBe(readError);
+      expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+    });
   });
 });

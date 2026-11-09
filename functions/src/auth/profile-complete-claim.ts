@@ -11,6 +11,11 @@ import {FUNCTION_REGION} from "../constants";
 import {isValidPhoneBR} from "../validation/phone-br";
 import {isRecord} from "../validation/guards";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  buildReviewAccountClaims,
+  hasReviewAccountClaims,
+  isReviewAccount,
+} from "./review-accounts";
 
 interface UserProfileData {
   cpfVerifiedAt?: unknown;
@@ -77,11 +82,30 @@ async function setProfileCompleteClaim(
     };
   }
 
+  const currentClaims = userRecord.customClaims ?? {};
+
+  // Conta de revisão da Play (lista server-only): verified e profileComplete
+  // ficam sempre verdadeiros, sem CPF/telefone. Sem este desvio, o trigger e
+  // o recompute self-service desfariam a claim aplicada pelo script.
+  if (await isReviewAccount(uid)) {
+    if (hasReviewAccountClaims(currentClaims)) {
+      return {profileComplete: true, updated: false};
+    }
+    await admin.auth().setCustomUserClaims(
+      uid,
+      buildReviewAccountClaims(currentClaims)
+    );
+    logger.info(
+      "[PROFILE_COMPLETE] Review account claims kept",
+      {uid}
+    );
+    return {profileComplete: true, updated: true};
+  }
+
   const profileComplete = computeProfileComplete(
     profileData,
     userRecord.phoneNumber
   );
-  const currentClaims = userRecord.customClaims ?? {};
   if (currentClaims.profileComplete === profileComplete) {
     return {profileComplete, updated: false};
   }
