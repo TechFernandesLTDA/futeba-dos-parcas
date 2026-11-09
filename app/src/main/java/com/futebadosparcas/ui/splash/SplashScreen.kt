@@ -46,7 +46,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun SplashScreen(
     user: User?,
-    userChecked: Boolean = false,
+    destination: SplashDestination?,
     versionName: String,
     randomQuote: String,
     onNavigate: (destination: SplashDestination) -> Unit
@@ -55,21 +55,21 @@ fun SplashScreen(
     var badgeScale by remember { mutableFloatStateOf(0.8f) }
     var hasNavigated by remember { mutableStateOf(false) }
 
-    val launcherKey = user != null to userChecked
-
-    LaunchedEffect(launcherKey) {
-        if (!userChecked) return@LaunchedEffect
-        if (user != null && !hasNavigated) {
+    // Navega assim que o destino é decidido (SplashStartupResolver sempre decide,
+    // com teto de tempo). Antes a navegação dependia de `userChecked`, que só virava
+    // true quando a leitura do usuário no Firestore retornava (spec
+    // BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY).
+    LaunchedEffect(destination) {
+        val target = destination ?: return@LaunchedEffect
+        if (hasNavigated) return@LaunchedEffect
+        if (user != null) {
             // Animação de aparecimento do brasão
             badgeAlpha = 1f
             badgeScale = 1f
             delay(800)
-            hasNavigated = true
-            onNavigate(SplashDestination.Main)
-        } else if (user == null && !hasNavigated) {
-            hasNavigated = true
-            onNavigate(SplashDestination.Login)
         }
+        hasNavigated = true
+        onNavigate(target)
     }
 
     Surface(

@@ -1,7 +1,47 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-01T20:14:42.229Z",
+  "generatedAt": "2026-11-09T05:14:57.981Z",
   "notes": [
+    {
+      "version": "1.43.0",
+      "buildNumber": 84,
+      "releaseDate": "2026-11-09",
+      "type": "minor",
+      "showPopup": true,
+      "published": true,
+      "headline": "O app abre sem travar, mesmo com internet ruim, e agora você pode baixar os seus dados.",
+      "highlights": [
+        {
+          "icon": "speed",
+          "title": "Abre sem travar",
+          "description": "A tela de abertura não fica mais parada esperando a internet."
+        },
+        {
+          "icon": "security",
+          "title": "Baixar meus dados",
+          "description": "Na tela Sobre, você baixa uma cópia dos seus dados quando quiser."
+        },
+        {
+          "icon": "groups",
+          "title": "Sorteio mais justo",
+          "description": "O sorteio de times equilibra melhor os jogadores."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Tela de jogadores bloqueados disponível no menu.",
+        "Conquistas iguais no app, no site e no iPhone.",
+        "Visual mais consistente, com cores e textos revisados."
+      ],
+      "fixed": [
+        "A abertura do app não trava mais quando a internet demora a responder.",
+        "Entrar com e-mail ou Google não pede login de novo a cada abertura.",
+        "Entrar e verificar a conta mostram um aviso com botão de tentar de novo quando a internet falha, em vez de carregar para sempre."
+      ],
+      "issueRefs": [
+        4483
+      ]
+    },
     {
       "version": "1.42.0",
       "buildNumber": 83,

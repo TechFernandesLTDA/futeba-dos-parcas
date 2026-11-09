@@ -27,6 +27,27 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.43.0][android-1.43.0] - 2026-11-09
+
+#### Adicionado
+- Botão Baixar meus dados na tela Sobre (LGPD) (#4483, #4494).
+- Tela de jogadores bloqueados ligada à navegação (#4529).
+- `exportSchema` no Room, com o schema v7 versionado (#4524).
+
+#### Mudado
+- Sorteio oficial balanceado único, com paridade entre KMP e TypeScript (#4528).
+- Catálogo único de badges no `shared`, com gate de paridade (#4530).
+- `FirebaseDataSource` modularizado em delegates de domínio (#4525) e código morto removido (#4526).
+- Tokens de tema, `strings.xml`, lint e tema dinâmico (#4518); correções Android da Onda B (#4515).
+- Todo login bem-sucedido grava o horário do login, e a reautenticação de 4 h passa a valer para e-mail, Google e cadastro; a biometria aparece no Login para quem abre o app depois de 4 h (#4533).
+
+#### Corrigido
+- Splash presa na abertura a frio já logada: a leitura do usuário não tinha tempo limite e prendia a navegação. Agora `SplashStartupResolver` decide o destino pela sessão local, com `withTimeoutOrNull` de 3 s na leitura (recusa da Play na 1.42.0) (#4533).
+- Login por e-mail e continuação da sessão com tempo limite de 20 s; `getIdToken` do gate de verificação com 15 s e estado `Failed` com nova tentativa (#4533).
+- Declaração vazia de Android Auto removida do manifesto (#4527).
+
+_Issues: #4483 · PRs: #4494, #4515, #4518, #4524, #4525, #4526, #4527, #4528, #4529, #4530, #4533_
+
 ### [1.42.0][android-1.42.0] - 2026-11-01
 
 #### Mudado
@@ -3317,6 +3338,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.0.md
 [android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
 [android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md
 [android-1.40.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.40.0.md

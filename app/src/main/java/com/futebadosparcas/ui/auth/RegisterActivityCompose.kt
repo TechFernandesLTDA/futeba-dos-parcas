@@ -10,11 +10,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.util.PreferencesManager
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class RegisterActivityCompose : AppCompatActivity() {
 
     private val viewModel: RegisterViewModel by viewModel()
+    private val preferencesManager: PreferencesManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -32,6 +35,10 @@ class RegisterActivityCompose : AppCompatActivity() {
                     },
                     onNavigateToLogin = { finish() },
                     onNavigateToMain = {
+                        // Cadastro também é login: grava o horário para a splash não
+                        // tratar a sessão como expirada (spec
+                        // BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY).
+                        runCatching { preferencesManager.setLastLoginTime() }
                         val intent = Intent(this, MainActivityCompose::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)
