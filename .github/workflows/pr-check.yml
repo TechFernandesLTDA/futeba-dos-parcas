@@ -99,13 +99,13 @@ jobs:
         run: node --test scripts/ci/play-requirements-contract.test.js scripts/ci/check-16kb-alignment.test.js
 
       - name: Build Check
-        run: ./gradlew --max-workers=6 --no-daemon compileDebugKotlin
+        run: ./gradlew --max-workers=3 --no-daemon compileDebugKotlin
 
       - name: Detekt (analise estatica com baseline)
-        run: ./gradlew --max-workers=6 --no-daemon detekt
+        run: ./gradlew --max-workers=3 --no-daemon detekt
 
       - name: Unit Tests
-        run: ./gradlew --max-workers=6 --no-daemon :app:testDebugUnitTest
+        run: ./gradlew --max-workers=3 --no-daemon :app:testDebugUnitTest
 
       - name: Check for hardcoded strings
         run: |

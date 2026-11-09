@@ -23,7 +23,7 @@ test('KMP shared unit tests run on the heavy Gradle pool with a complete Android
   assert.match(tests, /uses: android-actions\/setup-android@v4/);
   assert.match(tests, /sdkmanager "platforms;android-37\.0"/);
   assert.match(tests, /echo "sdk\.dir=\$ANDROID_SDK_ROOT" > local\.properties/);
-  assert.match(tests, /\.\/gradlew :shared:testDebugUnitTest/);
+  assert.match(tests, /\.\/gradlew --max-workers=3 :shared:testDebugUnitTest/);
 });
 
 test('iOS framework and app builds stay pinned to the self-hosted Mac (no hosted macOS minutes)', () => {

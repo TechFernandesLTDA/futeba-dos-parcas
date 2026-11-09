@@ -87,7 +87,7 @@ test('Detekt keeps trusted-only execution and publishes its report as an artifac
     detekt,
     /name: Upload Detekt Report[\s\S]*?continue-on-error: true[\s\S]*?name: detekt-report[\s\S]*?retention-days: 7/
   );
-  assert.match(detekt, /run: \.\/gradlew --max-workers=6 --no-daemon detekt/);
+  assert.match(detekt, /run: \.\/gradlew --max-workers=3 --no-daemon detekt/);
   assert.doesNotMatch(jobBody(androidWorkflow, 'gate'), /\b(?:checks|security-events|contents): write\b/);
 });
 
