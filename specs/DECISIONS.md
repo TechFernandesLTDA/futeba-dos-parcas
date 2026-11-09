@@ -2148,3 +2148,18 @@ Resolvidos no código: `exportMyData` (#4482), índices COLLECTION_GROUP de `mem
   (só arquivos de teste ou config) antes do push.
 - Base: `docs/modernizacao/ESSENCIA.md`, `docs/modernizacao/DIAGNOSTICO.md`, `docs/modernizacao/PLANO.md` e `docs/modernizacao/PENDENCIAS-EXTERNAS.md`.
 
+
+## 2026-11-09: Splash nunca espera a rede para navegar (recusa da Play na 1.42.0)
+
+Spec: `specs/BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY.md`.
+
+- A splash decide o destino com estado local (sessão do Firebase e horário do último login). A leitura do usuário,
+  que só alimenta o brasão, tem teto de **3 s**; se estourar, a splash navega sem brasão.
+- Destino no timeout: o mesmo da regra de 4 horas (Main se o login é recente, Login se não). Falha definitiva na
+  leitura continua indo para o Login, que refaz a leitura e mostra erro com nova tentativa.
+- Todo login bem-sucedido (email, Google, continuação da sessão no Login, cadastro e biometria) grava o horário do
+  login. Antes só a biometria gravava, e toda abertura passava pelo Login.
+- Tetos para a espera não mudar de tela: **20 s** no login e na continuação da sessão (`auth_error_network`) e
+  **15 s** no `getIdToken(false)` do gate anti-bot (Failed com retry).
+- Alternativa descartada: teto dentro de `UserRepositoryImpl`/`FirebaseUsersDataSource`. É código KMP compartilhado
+  com o iOS e a navegação já não depende dele na abertura.

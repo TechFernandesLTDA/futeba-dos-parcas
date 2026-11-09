@@ -5,6 +5,7 @@ import com.futebadosparcas.data.repository.AuthRepository as AndroidAuthReposito
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.util.MockLogExtension
+import com.futebadosparcas.util.PreferencesManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -12,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -34,6 +36,7 @@ class LoginViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var authRepository: AuthRepository
     private lateinit var androidAuthRepository: AndroidAuthRepository
+    private lateinit var preferencesManager: PreferencesManager
     private lateinit var viewModel: LoginViewModel
 
     private val testUser = User(id = "user-1", name = "Joao Silva")
@@ -43,8 +46,9 @@ class LoginViewModelTest {
         Dispatchers.setMain(testDispatcher)
         authRepository = mockk(relaxed = true)
         androidAuthRepository = mockk(relaxed = true)
+        preferencesManager = mockk(relaxed = true)
 
-        viewModel = LoginViewModel(authRepository, androidAuthRepository)
+        viewModel = LoginViewModel(authRepository, androidAuthRepository, preferencesManager)
     }
 
     @AfterEach
@@ -243,6 +247,88 @@ class LoginViewModelTest {
             val state = viewModel.loginState.value
             assertInstanceOf(LoginState.Error::class.java, state)
             assertEquals(R.string.auth_error_generic, (state as LoginState.Error).errorResId)
+        }
+    }
+
+    @Nested
+    @DisplayName("Splash travada na revisão da Play (BUGFIX_2026-11-09)")
+    inner class SplashTravadaTests {
+
+        @Test
+        @DisplayName("login por email com sucesso grava o horário do login")
+        fun `email login success records last login time`() = runTest(testDispatcher) {
+            coEvery { androidAuthRepository.signInWithEmailAndPassword(any(), any()) } returns
+                Result.success(testUser)
+
+            viewModel.signInWithEmailAndPassword("revisor@email.com", "senha-de-teste")
+            advanceUntilIdle()
+
+            assertInstanceOf(LoginState.Success::class.java, viewModel.loginState.value)
+            verify(exactly = 1) { preferencesManager.setLastLoginTime(any()) }
+        }
+
+        @Test
+        @DisplayName("login Google (ou continuação da sessão) com sucesso grava o horário do login")
+        fun `google login success records last login time`() = runTest(testDispatcher) {
+            coEvery { authRepository.getCurrentUser() } returns Result.success(testUser)
+
+            viewModel.onGoogleSignInSuccess()
+            advanceUntilIdle()
+
+            verify(exactly = 1) { preferencesManager.setLastLoginTime(any()) }
+        }
+
+        @Test
+        @DisplayName("login com erro não grava o horário do login")
+        fun `failed login does not record last login time`() = runTest(testDispatcher) {
+            coEvery { androidAuthRepository.signInWithEmailAndPassword(any(), any()) } returns
+                Result.failure(RuntimeException("senha errada"))
+
+            viewModel.signInWithEmailAndPassword("revisor@email.com", "senha-de-teste")
+            advanceUntilIdle()
+
+            verify(exactly = 0) { preferencesManager.setLastLoginTime(any()) }
+        }
+
+        @Test
+        @DisplayName("falha ao gravar o horário não impede o login")
+        fun `failing to record time still succeeds`() = runTest(testDispatcher) {
+            every { preferencesManager.setLastLoginTime(any()) } throws SecurityException("keystore")
+            coEvery { androidAuthRepository.signInWithEmailAndPassword(any(), any()) } returns
+                Result.success(testUser)
+
+            viewModel.signInWithEmailAndPassword("revisor@email.com", "senha-de-teste")
+            advanceUntilIdle()
+
+            assertInstanceOf(LoginState.Success::class.java, viewModel.loginState.value)
+        }
+
+        @Test
+        @DisplayName("continuação da sessão que nunca responde vira erro de conexão, sem loading eterno")
+        fun `hanging session continuation times out to error`() = runTest(testDispatcher) {
+            coEvery { authRepository.getCurrentUser() } coAnswers { awaitCancellation() }
+
+            viewModel.onGoogleSignInSuccess()
+            advanceUntilIdle()
+
+            val state = viewModel.loginState.value
+            assertInstanceOf(LoginState.Error::class.java, state)
+            assertEquals(R.string.auth_error_network, (state as LoginState.Error).errorResId)
+        }
+
+        @Test
+        @DisplayName("login por email que nunca responde vira erro de conexão")
+        fun `hanging email login times out to error`() = runTest(testDispatcher) {
+            coEvery { androidAuthRepository.signInWithEmailAndPassword(any(), any()) } coAnswers {
+                awaitCancellation()
+            }
+
+            viewModel.signInWithEmailAndPassword("revisor@email.com", "senha-de-teste")
+            advanceUntilIdle()
+
+            val state = viewModel.loginState.value
+            assertInstanceOf(LoginState.Error::class.java, state)
+            assertEquals(R.string.auth_error_network, (state as LoginState.Error).errorResId)
         }
     }
 }

@@ -411,7 +411,8 @@ val viewModelKoinModule = module {
     viewModel {
         LoginViewModel(
             authRepository = get(),
-            androidAuthRepository = get()
+            androidAuthRepository = get(),
+            preferencesManager = get()
         )
     }
 

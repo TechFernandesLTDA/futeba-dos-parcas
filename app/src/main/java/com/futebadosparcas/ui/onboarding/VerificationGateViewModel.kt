@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 /**
  * Estados possiveis do gate de verificacao pos-login.
@@ -67,7 +69,18 @@ sealed class VerifiedState {
  */
 class VerificationGateViewModel(
     private val auth: FirebaseAuth,
+    private val tokenTimeoutMillis: Long = TOKEN_TIMEOUT_MILLIS,
 ) : ViewModel() {
+
+    companion object {
+        /**
+         * Teto para ler o token no [check]. getIdToken(false) vai à rede quando o token
+         * expirou; sem teto, o loading do gate podia ficar para sempre (spec
+         * BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY). Estourou: [VerifiedState.Failed]
+         * com botão de nova tentativa.
+         */
+        const val TOKEN_TIMEOUT_MILLIS = 15_000L
+    }
 
     private val _state = MutableStateFlow<VerifiedState>(VerifiedState.Unknown)
     val state: StateFlow<VerifiedState> = _state.asStateFlow()
@@ -113,7 +126,9 @@ class VerificationGateViewModel(
                 return@launch
             }
             try {
-                val result = user.getIdToken(false).await()
+                val result = withTimeout(tokenTimeoutMillis) {
+                    user.getIdToken(false).await()
+                }
                 val verified = result?.claims?.get("verified") == true
                 if (verified) {
                     AppLogger.d("VerificationGate") { "check(): verified=true — liberando app" }
@@ -125,6 +140,9 @@ class VerificationGateViewModel(
                     }
                     _state.value = VerifiedState.Unverified(hasPhone = hasPhone)
                 }
+            } catch (e: TimeoutCancellationException) {
+                AppLogger.e("VerificationGate", "check(): token não chegou a tempo", e)
+                _state.value = VerifiedState.Failed("Erro ao verificar sessao. Tente novamente.")
             } catch (e: Exception) {
                 AppLogger.e("VerificationGate", "check(): falha ao ler token", e)
                 _state.value = VerifiedState.Failed("Erro ao verificar sessao. Tente novamente.")

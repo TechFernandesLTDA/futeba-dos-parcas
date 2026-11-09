@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.onboarding
 
+import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -139,6 +140,22 @@ class VerificationGateViewModelTest {
         advanceUntilIdle()
 
         assertInstanceOf(VerifiedState.Failed::class.java, viewModel.state.value)
+    }
+
+    @Test
+    @DisplayName("check(): getIdToken nunca responde => Failed com retry, sem loading eterno")
+    fun check_tokenNeverCompletes_returnsFailed() = runTest {
+        every { auth.currentUser } returns user
+        // Task que nunca completa (rede/App Check parados). Spec
+        // BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY.
+        every { user.getIdToken(false) } returns TaskCompletionSource<GetTokenResult>().task
+
+        viewModel.check()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertInstanceOf(VerifiedState.Failed::class.java, state)
+        assertEquals(false, (state as VerifiedState.Failed).postVerify)
     }
 
     @Test

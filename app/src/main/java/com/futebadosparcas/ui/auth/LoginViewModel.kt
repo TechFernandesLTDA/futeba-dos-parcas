@@ -9,15 +9,19 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.AuthErrorMapper
+import com.futebadosparcas.util.PreferencesManager
 import com.google.firebase.auth.FirebaseAuthException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class LoginViewModel(
     private val authRepository: AuthRepository,
-    private val androidAuthRepository: AndroidAuthRepository
+    private val androidAuthRepository: AndroidAuthRepository,
+    private val preferencesManager: PreferencesManager,
+    private val loginTimeoutMillis: Long = LOGIN_TIMEOUT_MILLIS
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -35,10 +39,12 @@ class LoginViewModel(
         loginJob?.cancel()
         loginJob = viewModelScope.launch {
             if (authRepository.isLoggedIn()) {
-                val result = authRepository.getCurrentUser()
+                val result = withTimeoutOrNull(loginTimeoutMillis) {
+                    authRepository.getCurrentUser()
+                } ?: Result.failure(LoginTimeoutException())
                 result.fold(
                     onSuccess = { user ->
-                        _loginState.value = LoginState.Success(user)
+                        onLoginSucceeded(user)
                     },
                     onFailure = {
                         _loginState.value = LoginState.Idle
@@ -55,15 +61,21 @@ class LoginViewModel(
             _loginState.value = LoginState.Loading
 
             AppLogger.d(TAG) { "Calling authRepository.getCurrentUser()" }
-            val result = authRepository.getCurrentUser()
+            // Teto de tempo: este caminho roda sozinho no onStart do Login quando já há
+            // sessão (inclusive vindo da splash). Sem teto, uma leitura do Firestore que
+            // não completa deixava o loading para sempre (spec
+            // BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY).
+            val result = withTimeoutOrNull(loginTimeoutMillis) {
+                authRepository.getCurrentUser()
+            } ?: Result.failure(LoginTimeoutException())
             result.fold(
                 onSuccess = { user ->
                     AppLogger.d(TAG) { "getCurrentUser SUCCESS - userId: ${user.id}" }
-                    _loginState.value = LoginState.Success(user)
+                    onLoginSucceeded(user)
                 },
                 onFailure = { error ->
                     AppLogger.e(TAG, "getCurrentUser FAILURE: ${error.message}", error)
-                    _loginState.value = LoginState.Error(AuthErrorMapper.mapAuthError(error))
+                    _loginState.value = LoginState.Error(mapLoginError(error))
                 }
             )
         }
@@ -73,14 +85,16 @@ class LoginViewModel(
         loginJob?.cancel()
         loginJob = viewModelScope.launch {
             _loginState.value = LoginState.Loading
-            val result = androidAuthRepository.signInWithEmailAndPassword(email, password)
+            val result = withTimeoutOrNull(loginTimeoutMillis) {
+                androidAuthRepository.signInWithEmailAndPassword(email, password)
+            } ?: Result.failure(LoginTimeoutException())
             result.fold(
                 onSuccess = { user ->
-                    _loginState.value = LoginState.Success(user)
+                    onLoginSucceeded(user)
                 },
                 onFailure = { error ->
                     // Mapeia o erro bruto do Firebase para mensagem amigável PT-BR (#3184)
-                    _loginState.value = LoginState.Error(AuthErrorMapper.mapAuthError(error))
+                    _loginState.value = LoginState.Error(mapLoginError(error))
                 }
             )
         }
@@ -115,6 +129,31 @@ class LoginViewModel(
         }
     }
 
+    /**
+     * Login concluído: grava o horário do login antes de liberar a navegação.
+     *
+     * Antes só a biometria gravava esse horário. Sem ele a splash considerava todo
+     * login expirado e mandava sempre de volta ao Login (spec
+     * BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY).
+     */
+    private fun onLoginSucceeded(user: User) {
+        try {
+            preferencesManager.setLastLoginTime()
+        } catch (e: Exception) {
+            // Falha nas preferências encriptadas não pode impedir o login.
+            AppLogger.e(TAG, "Falha ao gravar o horário do login: ${e.message}", e)
+        }
+        _loginState.value = LoginState.Success(user)
+    }
+
+    @StringRes
+    private fun mapLoginError(error: Throwable): Int =
+        if (error is LoginTimeoutException) {
+            R.string.auth_error_network
+        } else {
+            AuthErrorMapper.mapAuthError(error)
+        }
+
     fun onGoogleSignInError(@StringRes errorResId: Int) {
         _loginState.value = LoginState.Error(errorResId)
     }
@@ -134,10 +173,16 @@ class LoginViewModel(
         resetJob?.cancel()
     }
 
-    private companion object {
+    companion object {
         private const val TAG = "LoginViewModel"
+
+        /** Teto do login e da continuação automática da sessão. */
+        const val LOGIN_TIMEOUT_MILLIS = 20_000L
     }
 }
+
+/** O login (ou a leitura do usuário depois dele) passou de [LoginViewModel.LOGIN_TIMEOUT_MILLIS]. */
+internal class LoginTimeoutException : Exception("Login excedeu o tempo limite")
 
 /**
  * Estados do fluxo de login.
