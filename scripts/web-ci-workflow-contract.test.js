@@ -238,7 +238,7 @@ test('mutation testing stays outside PR and preserves its report artifact', () =
   assert.equal(stryker.thresholds.break, 60);
   assert.ok(stryker.concurrency <= 4, 'Stryker não pode ocupar todos os núcleos do host compartilhado');
   assertNodeJobContract('mutation', mutation);
-  assert.match(mutationTestStep, /run: npm run test:mutation/);
+  assert.match(mutationTestStep, /run: npm run test:mutation -- --concurrency 2/);
   assert.doesNotMatch(
     mutationTestStep,
     /continue-on-error/,

@@ -89,7 +89,7 @@ jobs:
           GSEOF
 
       - name: Run Lint
-        run: ./gradlew --max-workers=6 --no-daemon lint
+        run: ./gradlew --max-workers=3 --no-daemon lint
 
       - name: Upload Lint Report
         if: always()
@@ -163,7 +163,7 @@ jobs:
 
       # Detekt usa baseline (detekt-baseline.xml) para ignorar violacoes pre-existentes
       - name: Run Detekt
-        run: ./gradlew --max-workers=6 --no-daemon detekt
+        run: ./gradlew --max-workers=3 --no-daemon detekt
 
       - name: Upload Detekt Report
         if: always()
@@ -238,7 +238,7 @@ jobs:
           GSEOF
 
       - name: Run Unit Tests
-        run: ./gradlew --max-workers=6 --no-daemon :app:testDebugUnitTest
+        run: ./gradlew --max-workers=3 --no-daemon :app:testDebugUnitTest
 
       - name: Upload Test Results
         if: always()
@@ -318,7 +318,7 @@ jobs:
           GSEOF
 
       - name: Build Debug APK
-        run: ./gradlew --max-workers=6 --no-daemon assembleDebug
+        run: ./gradlew --max-workers=3 --no-daemon assembleDebug
 
       # Em push apenas valida o build; execucao manual tambem entrega o APK para diagnostico.
       - name: Upload Debug APK

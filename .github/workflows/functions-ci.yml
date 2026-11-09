@@ -165,7 +165,7 @@ jobs:
       # test:coverage = "jest --coverage" → gera coverage/lcov.info (reporter
       # lcov configurado em jest.config.js), consumido pelo gate de diff-coverage.
       - name: Run Tests (com coverage)
-        run: npm run test:coverage
+        run: npm run test:coverage -- --maxWorkers=3
 
       - name: Upload Test Coverage (best-effort)
         if: always()
@@ -308,7 +308,7 @@ jobs:
         run: npm ci
 
       - name: Run Mutation Tests
-        run: npm run test:mutation
+        run: npm run test:mutation -- --concurrency 2
 
       - name: Upload Mutation Report
         if: always()
