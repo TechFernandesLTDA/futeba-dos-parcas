@@ -53,6 +53,8 @@ class LoginActivityCompose : AppCompatActivity() {
 
     private val preferencesManager: PreferencesManager by inject()
 
+    private var hasNavigatedToMain = false
+
     companion object {
         private const val TAG = "LoginActivity"
     }
@@ -298,6 +300,11 @@ class LoginActivityCompose : AppCompatActivity() {
      * Navega para a tela principal.
      */
     private fun navigateToMain() {
+        // Biometria e continuação automática da sessão (onStart) podem concluir juntas
+        // agora que todo login grava o horário: navega uma vez só (spec
+        // BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY).
+        if (hasNavigatedToMain) return
+        hasNavigatedToMain = true
         val intent = Intent(this, MainActivityCompose::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

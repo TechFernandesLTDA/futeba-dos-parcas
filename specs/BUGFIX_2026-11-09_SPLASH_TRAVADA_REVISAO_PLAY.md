@@ -84,6 +84,7 @@ abertura e somava outra espera sem teto.
 | `app/.../ui/splash/SplashScreen.kt` | navega pelo destino decidido, não por `userChecked` |
 | `app/.../ui/auth/LoginViewModel.kt` | grava o horário em todo login; teto de 20 s com erro de conexão |
 | `app/.../ui/auth/RegisterActivityCompose.kt` | grava o horário após cadastro |
+| `app/.../ui/auth/LoginActivityCompose.kt` | navega para a Main uma vez só (biometria e continuação automática podem concluir juntas agora que o horário é gravado) |
 | `app/.../ui/onboarding/VerificationGateViewModel.kt` | teto de 15 s no `getIdToken(false)` do `check()`, cai em Failed com retry |
 | `app/.../di/koin/ViewModelKoinModule.kt` | injeta `PreferencesManager` no `LoginViewModel` |
 
@@ -110,6 +111,9 @@ abertura e somava outra espera sem teto.
 - Tetos em `UserRepositoryImpl`/`FirebaseUsersDataSource` (KMP, usados também no iOS): a navegação não depende mais
   deles na abertura.
 - Regra de reautenticação de 4 horas: mantida como está.
+- `ProfileGate` com `profileComplete == null`: spinner sem saída se `checkProfileComplete()` falhar
+  (`getIdToken(false)` sem teto, erro vira `null`). Risco baixo (o token acabou de ser lido pelo gate anti-bot),
+  fica como follow-up: teto e estado de erro com retry.
 
 ### 3.3 Riscos e Mitigações
 
