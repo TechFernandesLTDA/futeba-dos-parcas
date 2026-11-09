@@ -61,14 +61,26 @@ export async function isReviewAccount(uid: string): Promise<boolean> {
 }
 
 /**
+ * Claim que marca a origem: `verified`/`profileComplete` vieram da designação
+ * de conta de revisão, não do fluxo real de SMS + CPF. Permite revogar quando
+ * o UID sai da lista.
+ */
+export const REVIEW_ACCOUNT_CLAIM = "reviewAccount";
+
+/**
  * Claims efetivas de uma conta de revisão: as atuais (role etc.) com
- * `verified` e `profileComplete` verdadeiros.
+ * `verified` e `profileComplete` verdadeiros e a marca de origem.
  *
  * @param {Claims} current Claims atuais do usuário.
  * @return {Claims} Claims a gravar.
  */
 export function buildReviewAccountClaims(current: Claims): Claims {
-  return {...current, verified: true, profileComplete: true};
+  return {
+    ...current,
+    verified: true,
+    profileComplete: true,
+    [REVIEW_ACCOUNT_CLAIM]: true,
+  };
 }
 
 /**
@@ -78,7 +90,42 @@ export function buildReviewAccountClaims(current: Claims): Claims {
  * @return {boolean} true se nada precisa mudar.
  */
 export function hasReviewAccountClaims(current: Claims): boolean {
-  return current.verified === true && current.profileComplete === true;
+  return current.verified === true &&
+    current.profileComplete === true &&
+    current[REVIEW_ACCOUNT_CLAIM] === true;
+}
+
+/**
+ * Diz se as claims carregam a marca de conta de revisão.
+ *
+ * @param {Claims} current Claims atuais do usuário.
+ * @return {boolean} true se a designação concedeu as claims.
+ */
+export function hasReviewAccountMark(current: Claims): boolean {
+  return current[REVIEW_ACCOUNT_CLAIM] === true;
+}
+
+/**
+ * Claims de uma conta que saiu da lista de revisão: volta à regra normal.
+ * - Remove a marca `reviewAccount`.
+ * - `profileComplete` = regra normal (CPF verificado + telefone BR no Auth).
+ * - `verified` só fica se a regra normal também fecha. O `verified` real
+ *   (`setUserVerified`) exige o mesmo par telefone + CPF; sem ele, o
+ *   `verified` veio só da designação e é retirado.
+ * Demais claims (role etc.) preservadas.
+ *
+ * @param {Claims} current Claims atuais do usuário.
+ * @param {boolean} realProfileComplete Resultado da regra normal.
+ * @return {Claims} Claims a gravar.
+ */
+export function buildRemovedReviewAccountClaims(
+  current: Claims,
+  realProfileComplete: boolean
+): Claims {
+  const next: Claims = {...current, profileComplete: realProfileComplete};
+  delete next[REVIEW_ACCOUNT_CLAIM];
+  if (!realProfileComplete) delete next.verified;
+  return next;
 }
 
 export type ApplyReviewClaimsOutcome =
@@ -91,7 +138,8 @@ export type ApplyReviewClaimsOutcome =
 /**
  * Aplica as claims de conta de revisão a um UID, se ele estiver na lista.
  * Idempotente. Não revoga refresh tokens (derrubaria a sessão do revisor);
- * o app força refresh do token no gate de verificação.
+ * o app força refresh do token no gate de verificação. A remoção da lista é
+ * tratada por `revokeRemovedReviewAccount` (profile-complete-claim.ts).
  *
  * @param {string} uid ID do usuário.
  * @param {Set<string>} listed UIDs listados (de loadReviewAccountUids).

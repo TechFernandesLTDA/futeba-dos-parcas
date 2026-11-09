@@ -25,6 +25,7 @@ jest.mock("firebase-admin", () => ({
 import {
   REVIEW_ACCOUNTS_DOC,
   applyReviewAccountClaims,
+  buildRemovedReviewAccountClaims,
   buildReviewAccountClaims,
   isReviewAccount,
   loadReviewAccountUids,
@@ -95,6 +96,34 @@ describe("review-accounts", () => {
       custom: 1,
       verified: true,
       profileComplete: true,
+      reviewAccount: true,
+    });
+  });
+
+  describe("buildRemovedReviewAccountClaims (saída da lista)", () => {
+    const designated = {
+      role: "PLAYER",
+      custom: 1,
+      verified: true,
+      profileComplete: true,
+      reviewAccount: true,
+    };
+
+    test("sem verificação real: retira verified e a marca, profileComplete false", () => {
+      expect(buildRemovedReviewAccountClaims(designated, false)).toEqual({
+        role: "PLAYER",
+        custom: 1,
+        profileComplete: false,
+      });
+    });
+
+    test("com verificação real (CPF + telefone): mantém verified, retira a marca", () => {
+      expect(buildRemovedReviewAccountClaims(designated, true)).toEqual({
+        role: "PLAYER",
+        custom: 1,
+        verified: true,
+        profileComplete: true,
+      });
     });
   });
 
@@ -112,6 +141,7 @@ describe("review-accounts", () => {
         role: "PLAYER",
         verified: true,
         profileComplete: true,
+        reviewAccount: true,
       });
       expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
     });
@@ -125,9 +155,24 @@ describe("review-accounts", () => {
       expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
     });
 
-    test("idempotente quando as claims já estão certas", async () => {
+    test("claims certas mas sem a marca de origem: grava a marca", async () => {
       mockGetUser.mockResolvedValue({
         customClaims: {role: "PLAYER", verified: true, profileComplete: true},
+      });
+
+      await expect(
+        applyReviewAccountClaims(REVIEW_UID, listed, false)
+      ).resolves.toBe("would-apply");
+    });
+
+    test("idempotente quando as claims já estão certas", async () => {
+      mockGetUser.mockResolvedValue({
+        customClaims: {
+          role: "PLAYER",
+          verified: true,
+          profileComplete: true,
+          reviewAccount: true,
+        },
       });
 
       await expect(

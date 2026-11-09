@@ -340,6 +340,7 @@ describe("Profile Complete Claim", () => {
         role: "PLAYER",
         verified: true,
         profileComplete: true,
+        reviewAccount: true,
       });
       expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
     });
@@ -347,7 +348,12 @@ describe("Profile Complete Claim", () => {
     test("(b) trigger não remove as claims do UID listado quando o CPF some", async () => {
       listReviewUids([REVIEW_UID]);
       mockGetUser.mockResolvedValue({
-        customClaims: {role: "PLAYER", verified: true, profileComplete: true},
+        customClaims: {
+          role: "PLAYER",
+          verified: true,
+          profileComplete: true,
+          reviewAccount: true,
+        },
         phoneNumber: undefined,
       });
 
@@ -379,6 +385,7 @@ describe("Profile Complete Claim", () => {
         role: "PLAYER",
         verified: true,
         profileComplete: true,
+        reviewAccount: true,
       });
     });
 
@@ -422,6 +429,123 @@ describe("Profile Complete Claim", () => {
       expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
         role: "PLAYER",
         profileComplete: false,
+      });
+    });
+
+    const designatedClaims = {
+      role: "PLAYER",
+      verified: true,
+      profileComplete: true,
+      reviewAccount: true,
+    };
+
+    test("remoção: trigger volta à regra normal, retira verified e revoga tokens", async () => {
+      listReviewUids(["outro-uid-test"]);
+      mockGetUser.mockResolvedValue({
+        customClaims: designatedClaims,
+        phoneNumber: undefined,
+      });
+
+      await onUserProfileWrittenHandler!(reviewWriteEvent(
+        {},
+        {cpfVerifiedAt: {seconds: 1}}
+      ));
+
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+        role: "PLAYER",
+        profileComplete: false,
+      });
+      expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(REVIEW_UID);
+    });
+
+    test("remoção: callable retira as claims mesmo sem mudança no perfil", async () => {
+      // Documento de config ausente = lista vazia.
+      mockGetUser.mockResolvedValue({
+        customClaims: designatedClaims,
+        phoneNumber: undefined,
+      });
+      mockDocGet.mockResolvedValue({exists: true, data: () => ({})});
+
+      const result = await recomputeMyProfileClaimHandler!({
+        auth: {uid: REVIEW_UID, token: {}},
+      });
+
+      expect(result).toEqual({
+        success: true,
+        profileComplete: false,
+        updated: true,
+      });
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+        role: "PLAYER",
+        profileComplete: false,
+      });
+      expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(REVIEW_UID);
+    });
+
+    test("remoção: conta com verificação real (CPF + telefone) mantém verified", async () => {
+      mockGetUser.mockResolvedValue({
+        customClaims: designatedClaims,
+        phoneNumber: validPhone,
+      });
+
+      await onUserProfileWrittenHandler!(reviewWriteEvent(
+        {cpfVerifiedAt: {seconds: 1}},
+        {}
+      ));
+
+      expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+        role: "PLAYER",
+        verified: true,
+        profileComplete: true,
+      });
+    });
+
+    describe("revokeRemovedReviewAccount (script)", () => {
+      test("UID ainda listado não é tocado", async () => {
+        const {revokeRemovedReviewAccount} = loadModule();
+        await expect(revokeRemovedReviewAccount(
+          REVIEW_UID, new Set([REVIEW_UID]), true
+        )).resolves.toBe("still-listed");
+        expect(mockGetUser).not.toHaveBeenCalled();
+      });
+
+      test("conta sem a marca não é tocada", async () => {
+        const {revokeRemovedReviewAccount} = loadModule();
+        mockGetUser.mockResolvedValue({
+          customClaims: {role: "PLAYER", verified: true, profileComplete: true},
+          phoneNumber: validPhone,
+        });
+        await expect(revokeRemovedReviewAccount(
+          REVIEW_UID, new Set(), true
+        )).resolves.toBe("not-marked");
+        expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+      });
+
+      test("dry-run não grava nem revoga", async () => {
+        const {revokeRemovedReviewAccount} = loadModule();
+        mockGetUser.mockResolvedValue({customClaims: designatedClaims});
+        await expect(revokeRemovedReviewAccount(
+          REVIEW_UID, new Set(), false
+        )).resolves.toBe("would-revoke");
+        expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
+        expect(mockRevokeRefreshTokens).not.toHaveBeenCalled();
+      });
+
+      test("execute retira as claims da designação e revoga tokens", async () => {
+        const {revokeRemovedReviewAccount} = loadModule();
+        mockGetUser.mockResolvedValue({
+          customClaims: designatedClaims,
+          phoneNumber: undefined,
+        });
+        mockDocGet.mockResolvedValue({exists: true, data: () => ({})});
+        await expect(revokeRemovedReviewAccount(
+          REVIEW_UID, new Set(), true
+        )).resolves.toBe("revoked");
+        expect(mockSetCustomUserClaims).toHaveBeenCalledWith(REVIEW_UID, {
+          role: "PLAYER",
+          profileComplete: false,
+        });
+        expect(mockRevokeRefreshTokens).toHaveBeenCalledWith(REVIEW_UID);
       });
     });
 
