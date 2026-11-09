@@ -11,6 +11,13 @@ import {FUNCTION_REGION} from "../constants";
 import {isValidPhoneBR} from "../validation/phone-br";
 import {isRecord} from "../validation/guards";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  buildRemovedReviewAccountClaims,
+  buildReviewAccountClaims,
+  hasReviewAccountClaims,
+  hasReviewAccountMark,
+  isReviewAccount,
+} from "./review-accounts";
 
 interface UserProfileData {
   cpfVerifiedAt?: unknown;
@@ -47,6 +54,80 @@ export function computeProfileComplete(
 }
 
 /**
+ * Grava as claims de uma conta que saiu da lista de revisão e revoga os
+ * refresh tokens, para o token antigo (com verified/profileComplete da
+ * designação) não ser renovado. O ID token já emitido vale até expirar (1 h).
+ *
+ * @param {string} uid ID do usuario.
+ * @param {Record<string, unknown>} currentClaims Claims atuais.
+ * @param {boolean} realProfileComplete Resultado da regra normal.
+ */
+async function revokeReviewAccountClaims(
+  uid: string,
+  currentClaims: Record<string, unknown>,
+  realProfileComplete: boolean
+): Promise<void> {
+  await admin.auth().setCustomUserClaims(
+    uid,
+    buildRemovedReviewAccountClaims(currentClaims, realProfileComplete)
+  );
+  await admin.auth().revokeRefreshTokens(uid);
+  logger.info(
+    "[PROFILE_COMPLETE] Review account removed; claims back to normal rule",
+    {uid, profileComplete: realProfileComplete}
+  );
+}
+
+export type RemovedReviewAccountOutcome =
+  | "still-listed"
+  | "not-marked"
+  | "user-not-found"
+  | "would-revoke"
+  | "revoked";
+
+/**
+ * Revoga as claims de designação de um UID que não está mais na lista.
+ * Usado pelo script apply-review-account-claims, que varre o Auth atrás da
+ * marca `reviewAccount`. Idempotente.
+ *
+ * @param {string} uid ID do usuario.
+ * @param {Set<string>} listed UIDs listados hoje.
+ * @param {boolean} execute false = só simula (dry-run).
+ * @return {Promise<RemovedReviewAccountOutcome>} O que aconteceu.
+ */
+export async function revokeRemovedReviewAccount(
+  uid: string,
+  listed: Set<string>,
+  execute: boolean
+): Promise<RemovedReviewAccountOutcome> {
+  if (listed.has(uid)) return "still-listed";
+
+  const userRecord = await admin.auth().getUser(uid).catch((error) => {
+    if ((error as AuthLookupError)?.code === "auth/user-not-found") {
+      return null;
+    }
+    throw error;
+  });
+  if (!userRecord) return "user-not-found";
+
+  const currentClaims = userRecord.customClaims ?? {};
+  if (!hasReviewAccountMark(currentClaims)) return "not-marked";
+  if (!execute) return "would-revoke";
+
+  const userSnap = await admin.firestore().collection("users").doc(uid).get();
+  const userRaw = userSnap.exists ? userSnap.data() : undefined;
+  const profileData = isRecord(userRaw) ?
+    (userRaw as UserProfileData) :
+    undefined;
+  await revokeReviewAccountClaims(
+    uid,
+    currentClaims,
+    computeProfileComplete(profileData, userRecord.phoneNumber)
+  );
+  return "revoked";
+}
+
+/**
  * Atualiza custom claim profileComplete preservando claims existentes.
  *
  * @param {string} uid ID do usuario.
@@ -77,11 +158,38 @@ async function setProfileCompleteClaim(
     };
   }
 
+  const currentClaims = userRecord.customClaims ?? {};
+
+  // Conta de revisão da Play (lista server-only): verified e profileComplete
+  // ficam sempre verdadeiros, sem CPF/telefone. Sem este desvio, o trigger e
+  // o recompute self-service desfariam a claim aplicada pelo script.
+  if (await isReviewAccount(uid)) {
+    if (hasReviewAccountClaims(currentClaims)) {
+      return {profileComplete: true, updated: false};
+    }
+    await admin.auth().setCustomUserClaims(
+      uid,
+      buildReviewAccountClaims(currentClaims)
+    );
+    logger.info(
+      "[PROFILE_COMPLETE] Review account claims kept",
+      {uid}
+    );
+    return {profileComplete: true, updated: true};
+  }
+
   const profileComplete = computeProfileComplete(
     profileData,
     userRecord.phoneNumber
   );
-  const currentClaims = userRecord.customClaims ?? {};
+
+  // Saiu da lista mas ainda carrega a marca: volta à regra normal e retira o
+  // verified concedido só pela designação (sem privilégio residual).
+  if (hasReviewAccountMark(currentClaims)) {
+    await revokeReviewAccountClaims(uid, currentClaims, profileComplete);
+    return {profileComplete, updated: true};
+  }
+
   if (currentClaims.profileComplete === profileComplete) {
     return {profileComplete, updated: false};
   }

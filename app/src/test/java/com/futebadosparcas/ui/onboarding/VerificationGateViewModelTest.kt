@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * Cobre os estados do gate anti-bot pos-login:
  * - verified=true  => VerifiedState.Verified
- * - verified=false, sem telefone => VerifiedState.Unverified(hasPhone=false)
+ * - verified=false (cache e renovado), sem telefone => VerifiedState.Unverified(hasPhone=false)
+ * - cache false, renovado true => VerifiedState.Verified (claim concedida pelo servidor)
  * - verified=false, com telefone => VerifiedState.Unverified(hasPhone=true)
  * - usuario nulo   => VerifiedState.Failed
  * - token explode  => VerifiedState.Failed
@@ -80,6 +81,8 @@ class VerificationGateViewModelTest {
         every { user.phoneNumber } returns phoneNumber
         val tokenResult = makeTokenResult(if (verified) mapOf("verified" to true) else emptyMap())
         every { user.getIdToken(false) } returns Tasks.forResult(tokenResult)
+        // check() renova uma vez quando o cache diz false; o servidor confirma o mesmo estado.
+        every { user.getIdToken(true) } returns Tasks.forResult(tokenResult)
     }
 
     private fun mockUserWithVerifiedForRecheck(verified: Boolean) {
@@ -129,6 +132,56 @@ class VerificationGateViewModelTest {
         val state = viewModel.state.value
         assertInstanceOf(VerifiedState.Unverified::class.java, state)
         assertEquals(true, (state as VerifiedState.Unverified).hasPhone)
+    }
+
+    @Test
+    @DisplayName("check(): cache sem verified, token renovado com verified => Verified (claim do servidor)")
+    fun check_cachedFalse_refreshedTrue_returnsVerified() = runTest {
+        // Conta de revisão da Play: claim concedida pelo servidor depois do login.
+        // Spec feat-2026-11-09-conta-revisao-play.
+        every { auth.currentUser } returns user
+        every { user.phoneNumber } returns null
+        every { user.getIdToken(false) } returns Tasks.forResult(makeTokenResult(emptyMap()))
+        every { user.getIdToken(true) } returns Tasks.forResult(
+            makeTokenResult(mapOf("verified" to true)),
+        )
+
+        viewModel.check()
+        advanceUntilIdle()
+
+        assertInstanceOf(VerifiedState.Verified::class.java, viewModel.state.value)
+    }
+
+    @Test
+    @DisplayName("check(): cache sem verified e renovação falha => Unverified (offline não vira Failed)")
+    fun check_cachedFalse_refreshFails_returnsUnverified() = runTest {
+        every { auth.currentUser } returns user
+        every { user.phoneNumber } returns "+5511999998888"
+        every { user.getIdToken(false) } returns Tasks.forResult(makeTokenResult(emptyMap()))
+        every { user.getIdToken(true) } returns Tasks.forException(RuntimeException("offline"))
+
+        viewModel.check()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertInstanceOf(VerifiedState.Unverified::class.java, state)
+        assertEquals(true, (state as VerifiedState.Unverified).hasPhone)
+    }
+
+    @Test
+    @DisplayName("check(): cache sem verified e renovação nunca responde => Unverified após o teto")
+    fun check_cachedFalse_refreshNeverCompletes_returnsUnverified() = runTest {
+        every { auth.currentUser } returns user
+        every { user.phoneNumber } returns null
+        every { user.getIdToken(false) } returns Tasks.forResult(makeTokenResult(emptyMap()))
+        every { user.getIdToken(true) } returns TaskCompletionSource<GetTokenResult>().task
+
+        viewModel.check()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertInstanceOf(VerifiedState.Unverified::class.java, state)
+        assertEquals(false, (state as VerifiedState.Unverified).hasPhone)
     }
 
     @Test

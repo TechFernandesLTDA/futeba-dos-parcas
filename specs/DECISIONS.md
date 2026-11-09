@@ -2163,3 +2163,25 @@ Spec: `specs/BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY.md`.
   **15 s** no `getIdToken(false)` do gate anti-bot (Failed com retry).
 - Alternativa descartada: teto dentro de `UserRepositoryImpl`/`FirebaseUsersDataSource`. É código KMP compartilhado
   com o iOS e a navegação já não depende dele na abertura.
+
+## 2026-11-09: Conta de revisão da Play liberada pelo servidor (recusa da 1.42.0)
+
+Spec: `specs/feat-2026-11-09-conta-revisao-play.md`.
+
+- O revisor da Play não faz SMS nem CPF. Os UIDs de revisão ficam em `system_config/play_review_accounts`
+  (`{uids: string[]}`). A coleção não tem `match` nas rules e cai no deny-all, então só o Admin SDK acessa. As rules
+  não mudam.
+- Para UID listado, `verified` e `profileComplete` valem `true`, com a marca de origem `reviewAccount: true`, e as
+  demais claims são preservadas. Ao sair da lista, a conta volta à regra normal: a marca sai, `profileComplete` segue
+  CPF + telefone e `verified` só fica se essa regra fecha (o `verified` real exige o mesmo par); refresh tokens
+  revogados. Sem privilégio residual. O desvio fica em
+  `setProfileCompleteClaim`, usado pelo trigger `onUserProfileWritten` e pela callable `recomputeMyProfileClaim`, para
+  nenhum dos dois desfazer a claim. `computeProfileComplete` continua puro.
+- As claims são aplicadas e retiradas pelo script `functions/src/scripts/apply-review-account-claims.ts` (dry-run
+  por padrão, `--execute` para gravar, idempotente, sem imprimir UID; só revoga tokens de quem saiu da lista).
+- O gate do app renova o token uma vez quando o cache não tem `verified`, para que uma sessão aberta antes das claims
+  não fique presa até 1 h. Se a renovação falhar, o comportamento é o de antes.
+- Alternativas descartadas: CPF ou telefone falsos (decisão do dono), atalho por e-mail no cliente, lista em
+  `app_settings` (qualquer autenticado lê), callable admin (exige App Check e cliente admin logado) e trigger no doc de
+  config (efeito automático numa escrita manual).
+- Repositório público: UID, e-mail e senha do revisor nunca entram no repo.

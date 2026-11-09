@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +54,8 @@ sealed class VerifiedState {
  * ViewModel do gate anti-bot pos-login.
  *
  * Responsabilidades:
- * 1. [check]: Leitura inicial do claim `verified` via token cacheado (getIdToken(false)).
+ * 1. [check]: Leitura inicial do claim `verified` via token cacheado (getIdToken(false));
+ *    se o cache disser false, uma renovação forçada (getIdToken(true)) antes de decidir.
  * 2. [recheckAfterVerify]: Refresh forcado UMA vez apos conclusao do fluxo CPF (getIdToken(true)).
  *    Se ainda false => [VerifiedState.Failed] (sem loop automatico).
  *
@@ -111,7 +113,27 @@ class VerificationGateViewModel(
     }
 
     /**
+     * Renova o token uma vez (getIdToken(true)) e diz se ele traz `verified == true`.
+     * Qualquer falha ou estouro do teto vira `false`: o usuário segue para o fluxo de
+     * verificação como antes (offline não regride para [VerifiedState.Failed]).
+     */
+    private suspend fun refreshedTokenIsVerified(user: FirebaseUser): Boolean = try {
+        withTimeout(tokenTimeoutMillis) {
+            user.getIdToken(true).await()
+        }?.claims?.get("verified") == true
+    } catch (e: TimeoutCancellationException) {
+        AppLogger.w("VerificationGate") { "check(): renovação do token estourou o teto" }
+        false
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        AppLogger.w("VerificationGate") { "check(): renovação do token falhou: ${e.message}" }
+        false
+    }
+
+    /**
      * Verifica claim `verified` usando token cacheado (getIdToken(false)).
+     * Se o cache disser que não, renova o token uma vez antes de decidir.
      * Deve ser chamado uma vez na composicao inicial do gate.
      *
      * Em caso de usuario nulo: [VerifiedState.Failed] (sessao invalida).
@@ -129,7 +151,12 @@ class VerificationGateViewModel(
                 val result = withTimeout(tokenTimeoutMillis) {
                     user.getIdToken(false).await()
                 }
-                val verified = result?.claims?.get("verified") == true
+                // Token em cache sem verified: uma renovação forçada antes de mandar para o
+                // fluxo SMS/CPF. Cobre claim concedida pelo servidor depois do login (conta de
+                // revisão da Play, spec feat-2026-11-09-conta-revisao-play), que senão só
+                // apareceria quando o token expirasse (até 1 h).
+                val verified = result?.claims?.get("verified") == true ||
+                    refreshedTokenIsVerified(user)
                 if (verified) {
                     AppLogger.d("VerificationGate") { "check(): verified=true — liberando app" }
                     _state.value = VerifiedState.Verified
