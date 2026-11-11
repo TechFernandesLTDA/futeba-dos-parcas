@@ -297,6 +297,9 @@ actual class FirebaseDataSource actual constructor() {
     actual suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit> =
         users.unblockUserOnServer(userId, targetUserId)
 
+    actual suspend fun submitContentReport(targetType: String, targetId: String, targetName: String, reason: String, gameId: String?, groupId: String?): Result<Unit> =
+        users.submitContentReport(targetType, targetId, targetName, reason, gameId, groupId)
+
     actual suspend fun submitPlayerReport(reporterId: String, targetUserId: String, targetUserName: String, reason: String, gameId: String?, groupId: String?): Result<Unit> =
         users.submitPlayerReport(reporterId, targetUserId, targetUserName, reason, gameId, groupId)
 

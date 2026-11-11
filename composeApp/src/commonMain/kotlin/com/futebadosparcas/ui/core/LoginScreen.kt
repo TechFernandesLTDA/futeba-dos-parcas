@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -86,6 +85,7 @@ import org.jetbrains.compose.resources.stringResource
  * @param uiState estado atual do fluxo de login
  * @param versionName nome da versão exibida no rodapé
  * @param onGoogleSignInClick callback para início do login com Google
+ * @param showGoogleSignIn quando falso (iOS) esconde o botão do Google e mostra só e-mail e senha
  * @param onEmailPasswordSignIn callback para login com email/senha (não funcional nesta versão)
  * @param onForgotPassword callback para esqueci minha senha
  * @param onNavigateToRegister navega para tela de cadastro
@@ -100,7 +100,8 @@ fun LoginScreen(
     onForgotPassword: (email: String) -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToMain: () -> Unit,
-    passwordResetMessage: String? = null
+    passwordResetMessage: String? = null,
+    showGoogleSignIn: Boolean = true
 ) {
     // Navegar automaticamente quando login for bem-sucedido
     LaunchedEffect(uiState) {
@@ -131,7 +132,6 @@ fun LoginScreen(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .systemBarsPadding()
             ) {
                 val compactWidth = maxWidth < 420.dp
                 val horizontalPadding = if (compactWidth) 16.dp else 24.dp
@@ -181,6 +181,7 @@ fun LoginScreen(
                         uiState = uiState,
                         passwordResetMessage = passwordResetMessage,
                         contentPadding = if (compactWidth) 20.dp else 32.dp,
+                        showGoogleSignIn = showGoogleSignIn,
                         onGoogleSignInClick = onGoogleSignInClick,
                         onEmailPasswordSignIn = onEmailPasswordSignIn,
                         onForgotPassword = onForgotPassword,
@@ -225,12 +226,14 @@ private fun LoginCard(
     uiState: LoginState,
     passwordResetMessage: String? = null,
     contentPadding: androidx.compose.ui.unit.Dp,
+    showGoogleSignIn: Boolean,
     onGoogleSignInClick: () -> Unit,
     onEmailPasswordSignIn: (email: String, password: String) -> Unit,
     onForgotPassword: (email: String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    var showEmailForm by remember { mutableStateOf(false) }
+    // Sem o botão do Google, o formulário de e-mail e senha já abre aberto.
+    var showEmailForm by remember { mutableStateOf(!showGoogleSignIn) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -342,8 +345,10 @@ private fun LoginCard(
                     Text(stringResource(Res.string.auth_forgot_password))
                 }
 
-                TextButton(onClick = { showEmailForm = false }) {
-                    Text(stringResource(Res.string.auth_back_to_google))
+                if (showGoogleSignIn) {
+                    TextButton(onClick = { showEmailForm = false }) {
+                        Text(stringResource(Res.string.auth_back_to_google))
+                    }
                 }
             }
 
@@ -479,11 +484,13 @@ private fun LoginFooter(versionName: String) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text(
-            text = stringResource(Res.string.auth_version_lower, versionName),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center
-        )
+        if (versionName.isNotBlank()) {
+            Text(
+                text = stringResource(Res.string.auth_version_lower, versionName),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

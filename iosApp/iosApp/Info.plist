@@ -21,7 +21,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.10.0</string>
     <key>CFBundleVersion</key>
-    <string>26</string>
+    <string>27</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchScreen</key>
@@ -57,6 +57,10 @@
     <key>NSCameraUsageDescription</key>
     <string>O Futeba dos Parças usa a câmera para você tirar a foto de perfil e registrar momentos dos jogos.</string>
 
+    <!-- Privacy - Microphone -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>O Futeba dos Parças usa o microfone para você gravar mensagens de voz para o seu grupo. Nada é gravado sem você pedir.</string>
+
     <!-- Privacy - Location -->
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>O Futeba dos Parças usa sua localização para mostrar jogos e quadras perto de você e confirmar o check-in na pelada.</string>
@@ -66,15 +70,12 @@
     <false/>
 
     <!-- AdMob: ID do app e da unidade vêm da config de build (project.yml): teste no Debug,
-         a preencher na fase 2 no Release. Sem unidade, o app não inicializa o SDK. -->
+         IDs reais passados na linha de comando do archive. Sem unidade, o app não inicializa o SDK.
+         Sem NSUserTrackingUsageDescription: o app não pede ATT, os anúncios são sempre não personalizados. -->
     <key>GADApplicationIdentifier</key>
     <string>$(ADMOB_APP_ID)</string>
     <key>ADMOB_BANNER_UNIT_ID</key>
     <string>$(ADMOB_BANNER_UNIT_ID)</string>
-
-    <!-- ATT: pedido só depois da primeira vitória (e do consentimento do Google). -->
-    <key>NSUserTrackingUsageDescription</key>
-    <string>Usamos o identificador do seu aparelho só para mostrar anúncios mais relevantes. Se você não permitir, os anúncios continuam, mas não personalizados. O app funciona igual.</string>
 
     <!-- SKAdNetwork: lista de identificadores do Google (atualizada em 30/01/2026, mesma do Cuidia). -->
     <key>SKAdNetworkItems</key>

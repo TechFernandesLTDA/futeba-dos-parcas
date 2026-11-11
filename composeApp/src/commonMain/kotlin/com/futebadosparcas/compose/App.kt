@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -210,6 +211,13 @@ import com.futebadosparcas.ui.core.LoginState
 import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.core.LocationsRouteScreen
 import com.futebadosparcas.ui.core.PermissionOnboardingScreen
+import com.futebadosparcas.ui.core.ReportDialog
+import com.futebadosparcas.ui.core.ReportLog
+import com.futebadosparcas.ui.core.ReportTargetType
+import com.futebadosparcas.ui.appVersionName
+import com.futebadosparcas.ui.getPlatformName
+import com.futebadosparcas.compose.resources.report_group_action_label
+import com.futebadosparcas.compose.resources.report_group_action_body
 import com.futebadosparcas.ui.core.PostGameReport
 import com.futebadosparcas.ui.core.PostGameReportScreen
 import com.futebadosparcas.ui.core.ProfileSetupScreen
@@ -461,9 +469,10 @@ fun AppNavigation(
 
             LoginScreen(
                 uiState = uiState,
-                versionName = "",
-                // G7 (B9): sem Client ID Google nativo configurado no iOS, avisa claramente
-                // em vez de disparar ação silenciosa falsa.
+                versionName = appVersionName(),
+                // iOS: sem "Entrar com Google" (não há Client ID nativo e a diretriz 4.8 pediria
+                // Sign in with Apple); fica só e-mail e senha. Android e web não mudam.
+                showGoogleSignIn = getPlatformName() != "iOS",
                 onGoogleSignInClick = { vm?.onGoogleSignInUnavailable() },
                 onEmailPasswordSignIn = { email, password -> vm?.signInWithEmailAndPassword(email, password) },
                 onForgotPassword = { email -> vm?.sendPasswordResetEmail(email) },
@@ -851,6 +860,10 @@ fun AppNavigation(
                     selectedGroupId = routeGroupId
                 }
             }
+            val reportDataSource = koinInjectOrNull<FirebaseDataSource>()
+            val reportPreferences = koinInjectOrNull<PreferencesService>()
+            val reporterId = authRepository?.getCurrentUserId() ?: reportDataSource?.getCurrentUserId()
+            var showGroupReport by remember { mutableStateOf(false) }
             FeatureHubScreen(
                 title = stringResource(Res.string.group_detail_title),
                 body = stringResource(Res.string.group_detail_body),
@@ -899,6 +912,12 @@ fun AppNavigation(
                         onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     ),
                     FeatureHubAction(
+                        label = stringResource(Res.string.report_group_action_label),
+                        description = stringResource(Res.string.report_group_action_body),
+                        icon = Icons.Filled.Flag,
+                        onClick = { showGroupReport = true }
+                    ),
+                    FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_whats_new),
                         description = stringResource(Res.string.groups_hub_action_whats_new_body),
                         icon = Icons.Filled.NewReleases,
@@ -906,6 +925,28 @@ fun AppNavigation(
                     )
                 )
             )
+            if (showGroupReport && reportDataSource != null && !reporterId.isNullOrBlank() &&
+                !effectiveGroupId.isNullOrBlank()
+            ) {
+                ReportDialog(
+                    targetType = ReportTargetType.GROUP,
+                    targetName = "",
+                    onDismiss = { showGroupReport = false },
+                    onSubmit = { reason ->
+                        reportLog(reportPreferences).submitOnce(
+                            reporterId, ReportTargetType.GROUP.code, effectiveGroupId
+                        ) {
+                            reportDataSource.submitContentReport(
+                                targetType = ReportTargetType.GROUP.code,
+                                targetId = effectiveGroupId,
+                                targetName = "",
+                                reason = reason,
+                                groupId = effectiveGroupId
+                            ).isSuccess
+                        }
+                    }
+                )
+            }
         }
 
         // Profile (B12 — inclui pontos de entrada para Ranking, Badges e Locais)
@@ -1065,7 +1106,25 @@ fun AppNavigation(
 
         // Ranking
         composable(AppRoutes.RANKING) {
-            RankingRouteScreen(onNavigateBack = { navController.popBackStack() })
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val reportPreferences = koinInjectOrNull<PreferencesService>()
+            val reporterId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId()
+            RankingRouteScreen(
+                onNavigateBack = { navController.popBackStack() },
+                currentUserId = reporterId,
+                onSubmitReport = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName, reason ->
+                    reportLog(reportPreferences).submitOnce(
+                        reporterId, ReportTargetType.PLAYER.code, targetId
+                    ) {
+                        dataSource.submitContentReport(
+                            targetType = ReportTargetType.PLAYER.code,
+                            targetId = targetId,
+                            targetName = targetName,
+                            reason = reason
+                        ).isSuccess
+                    }
+                }
+            )
         }
 
         // Badges
@@ -2536,6 +2595,12 @@ internal fun encodeBlockedPlayers(blockedPlayers: List<BlockedPlayerData>): Stri
         }
     }
 }
+
+/** Memória local das denúncias já enviadas (sem preferências, nunca marca nada e só tenta enviar). */
+private fun reportLog(preferences: PreferencesService?) = ReportLog(
+    getFlag = { key -> preferences?.getBoolean(key, false) ?: false },
+    putFlag = { key, value -> preferences?.putBoolean(key, value) }
+)
 
 internal fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
     val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()

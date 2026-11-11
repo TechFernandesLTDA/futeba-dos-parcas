@@ -78,6 +78,14 @@ expect class FirebaseDataSource() {
         reason: String = ""
     ): Result<Unit>
     suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit>
+    suspend fun submitContentReport(
+        targetType: String,
+        targetId: String,
+        targetName: String,
+        reason: String,
+        gameId: String? = null,
+        groupId: String? = null
+    ): Result<Unit>
     suspend fun submitPlayerReport(
         reporterId: String,
         targetUserId: String,
