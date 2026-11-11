@@ -17,4 +17,28 @@ class ReportReasonTest {
             ReportTargetType.entries.map { it.code }.toSet()
         )
     }
+
+    @Test
+    fun denunciaRepetidaNaoChamaOServidorNemViraErro() = kotlinx.coroutines.test.runTest {
+        val store = mutableMapOf<String, Boolean>()
+        val log = ReportLog({ store[it] ?: false }, { k, v -> store[k] = v })
+        var calls = 0
+
+        assertEquals(ReportOutcome.SENT, log.submitOnce("u1", "player", "p9") { calls++; true })
+        assertEquals(ReportOutcome.ALREADY_REPORTED, log.submitOnce("u1", "player", "p9") { calls++; true })
+        assertEquals(1, calls)
+        // Outro alvo e outro usuário ainda enviam.
+        assertEquals(ReportOutcome.SENT, log.submitOnce("u1", "group", "p9") { calls++; true })
+        assertEquals(ReportOutcome.SENT, log.submitOnce("u2", "player", "p9") { calls++; true })
+        assertEquals(3, calls)
+    }
+
+    @Test
+    fun falhaDeVerdadeNaoGuardaEPermiteTentarDeNovo() = kotlinx.coroutines.test.runTest {
+        val store = mutableMapOf<String, Boolean>()
+        val log = ReportLog({ store[it] ?: false }, { k, v -> store[k] = v })
+
+        assertEquals(ReportOutcome.FAILED, log.submitOnce("u1", "player", "p9") { false })
+        assertEquals(ReportOutcome.SENT, log.submitOnce("u1", "player", "p9") { true })
+    }
 }

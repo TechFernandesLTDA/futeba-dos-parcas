@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,7 +132,6 @@ fun LoginScreen(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .systemBarsPadding()
             ) {
                 val compactWidth = maxWidth < 420.dp
                 val horizontalPadding = if (compactWidth) 16.dp else 24.dp

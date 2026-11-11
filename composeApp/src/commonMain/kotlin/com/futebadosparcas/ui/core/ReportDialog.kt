@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.cancel
 import com.futebadosparcas.compose.resources.close
+import com.futebadosparcas.compose.resources.report_already_body
 import com.futebadosparcas.compose.resources.report_failed_body
 import com.futebadosparcas.compose.resources.report_group_title
 import com.futebadosparcas.compose.resources.report_player_title
@@ -62,10 +63,39 @@ enum class ReportReason(val code: String, val label: StringResource) {
 
 private enum class ReportStep { CHOOSING, SENDING, SENT, FAILED }
 
+/** Resultado do envio. [ALREADY_REPORTED] mostra a confirmação neutra, sem tratar como erro. */
+enum class ReportOutcome { SENT, ALREADY_REPORTED, FAILED }
+
+/**
+ * Lembra no aparelho (preferências) quais alvos a pessoa já denunciou, para a denúncia repetida
+ * não chamar o Firestore (as regras só deixam criar uma vez) nem aparecer como erro.
+ */
+class ReportLog(
+    private val getFlag: (String) -> Boolean,
+    private val putFlag: (String, Boolean) -> Unit,
+) {
+    internal fun key(reporterId: String, targetType: String, targetId: String) =
+        "report_sent_${reporterId}_${targetType}_$targetId"
+
+    /** Já denunciou? Senão chama [send] e, se gravou, guarda o ID para a próxima vez. */
+    suspend fun submitOnce(
+        reporterId: String,
+        targetType: String,
+        targetId: String,
+        send: suspend () -> Boolean,
+    ): ReportOutcome {
+        val key = key(reporterId, targetType, targetId)
+        if (getFlag(key)) return ReportOutcome.ALREADY_REPORTED
+        if (!send()) return ReportOutcome.FAILED
+        putFlag(key, true)
+        return ReportOutcome.SENT
+    }
+}
+
 /**
  * Fluxo mínimo de denúncia (diretriz 1.2): escolhe o motivo, envia e mostra a confirmação.
  *
- * [onSubmit] grava a denúncia (código do motivo) e devolve se deu certo; a gravação em si fica
+ * [onSubmit] grava a denúncia (código do motivo) e devolve o resultado; a gravação em si fica
  * com quem chama (`FirebaseDataSource.submitContentReport`), para a tela não depender do Firebase.
  */
 @Composable
@@ -73,10 +103,11 @@ fun ReportDialog(
     targetType: ReportTargetType,
     targetName: String,
     onDismiss: () -> Unit,
-    onSubmit: suspend (reasonCode: String) -> Boolean,
+    onSubmit: suspend (reasonCode: String) -> ReportOutcome,
 ) {
     var selected by remember { mutableStateOf<ReportReason?>(null) }
     var step by remember { mutableStateOf(ReportStep.CHOOSING) }
+    var alreadyReported by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val title = stringResource(
@@ -88,7 +119,14 @@ fun ReportDialog(
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(stringResource(Res.string.report_sent_title)) },
-            text = { Text(stringResource(Res.string.report_sent_body)) },
+            text = {
+                Text(
+                    stringResource(
+                        if (alreadyReported) Res.string.report_already_body
+                        else Res.string.report_sent_body
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
             },
@@ -153,7 +191,9 @@ fun ReportDialog(
                     val reason = selected ?: return@Button
                     step = ReportStep.SENDING
                     scope.launch {
-                        step = if (onSubmit(reason.code)) ReportStep.SENT else ReportStep.FAILED
+                        val outcome = onSubmit(reason.code)
+                        alreadyReported = outcome == ReportOutcome.ALREADY_REPORTED
+                        step = if (outcome == ReportOutcome.FAILED) ReportStep.FAILED else ReportStep.SENT
                     }
                 },
             ) {

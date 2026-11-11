@@ -212,6 +212,7 @@ import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.core.LocationsRouteScreen
 import com.futebadosparcas.ui.core.PermissionOnboardingScreen
 import com.futebadosparcas.ui.core.ReportDialog
+import com.futebadosparcas.ui.core.ReportLog
 import com.futebadosparcas.ui.core.ReportTargetType
 import com.futebadosparcas.ui.appVersionName
 import com.futebadosparcas.ui.getPlatformName
@@ -860,6 +861,7 @@ fun AppNavigation(
                 }
             }
             val reportDataSource = koinInjectOrNull<FirebaseDataSource>()
+            val reportPreferences = koinInjectOrNull<PreferencesService>()
             val reporterId = authRepository?.getCurrentUserId() ?: reportDataSource?.getCurrentUserId()
             var showGroupReport by remember { mutableStateOf(false) }
             FeatureHubScreen(
@@ -931,13 +933,17 @@ fun AppNavigation(
                     targetName = "",
                     onDismiss = { showGroupReport = false },
                     onSubmit = { reason ->
-                        reportDataSource.submitContentReport(
-                            targetType = ReportTargetType.GROUP.code,
-                            targetId = effectiveGroupId,
-                            targetName = "",
-                            reason = reason,
-                            groupId = effectiveGroupId
-                        ).isSuccess
+                        reportLog(reportPreferences).submitOnce(
+                            reporterId, ReportTargetType.GROUP.code, effectiveGroupId
+                        ) {
+                            reportDataSource.submitContentReport(
+                                targetType = ReportTargetType.GROUP.code,
+                                targetId = effectiveGroupId,
+                                targetName = "",
+                                reason = reason,
+                                groupId = effectiveGroupId
+                            ).isSuccess
+                        }
                     }
                 )
             }
@@ -1101,17 +1107,22 @@ fun AppNavigation(
         // Ranking
         composable(AppRoutes.RANKING) {
             val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val reportPreferences = koinInjectOrNull<PreferencesService>()
             val reporterId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId()
             RankingRouteScreen(
                 onNavigateBack = { navController.popBackStack() },
                 currentUserId = reporterId,
                 onSubmitReport = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName, reason ->
-                    dataSource.submitContentReport(
-                        targetType = ReportTargetType.PLAYER.code,
-                        targetId = targetId,
-                        targetName = targetName,
-                        reason = reason
-                    ).isSuccess
+                    reportLog(reportPreferences).submitOnce(
+                        reporterId, ReportTargetType.PLAYER.code, targetId
+                    ) {
+                        dataSource.submitContentReport(
+                            targetType = ReportTargetType.PLAYER.code,
+                            targetId = targetId,
+                            targetName = targetName,
+                            reason = reason
+                        ).isSuccess
+                    }
                 }
             )
         }
@@ -2584,6 +2595,12 @@ internal fun encodeBlockedPlayers(blockedPlayers: List<BlockedPlayerData>): Stri
         }
     }
 }
+
+/** Memória local das denúncias já enviadas (sem preferências, nunca marca nada e só tenta enviar). */
+private fun reportLog(preferences: PreferencesService?) = ReportLog(
+    getFlag = { key -> preferences?.getBoolean(key, false) ?: false },
+    putFlag = { key, value -> preferences?.putBoolean(key, value) }
+)
 
 internal fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
     val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()

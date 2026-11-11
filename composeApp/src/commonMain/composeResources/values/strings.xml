@@ -4229,6 +4229,7 @@ subir no ranking!</string>
     <string name="report_sending">Enviando…</string>
     <string name="report_sent_title">Denúncia enviada</string>
     <string name="report_sent_body">Obrigado por avisar. Nossa equipe vai analisar e, se for o caso, tomar providências.</string>
+    <string name="report_already_body">Você já denunciou. Obrigado, vamos analisar.</string>
     <string name="report_failed_body">Não foi possível enviar agora. Confira a conexão e tente de novo.</string>
     <string name="report_action_player_cd">Denunciar %1$s</string>
     <string name="report_group_action_label">Denunciar grupo</string>
