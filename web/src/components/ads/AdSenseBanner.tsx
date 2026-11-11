@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { getAdsConfig, hasAdsConsent, isAdsAllowedPath, useAdsFree } from '../../config/ads';
 import { loadAdSense } from './adsenseLoader';
@@ -13,6 +14,7 @@ import { loadAdSense } from './adsenseLoader';
  * Use só ao final de conteúdo já carregado: o AdSense proíbe anúncio em tela sem conteúdo.
  */
 export function AdSenseBanner() {
+  const { t } = useTranslation();
   const { pathname, search } = useLocation();
   const adsFree = useAdsFree();
   const config = getAdsConfig();
@@ -52,7 +54,7 @@ export function AdSenseBanner() {
   return (
     <Box
       component="aside"
-      aria-label="Publicidade"
+      aria-label={t('a11y.advertisement')}
       sx={{ width: '100%', maxWidth: 728, mx: 'auto', my: 2, px: 2, overflow: 'hidden', minHeight: 50 }}
     >
       <ins
