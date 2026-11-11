@@ -9,8 +9,14 @@ package com.futebadosparcas.domain.monetization
  * `docs/MONETIZACAO.md`.
  */
 object MonetizationConfig {
-    /** ID do produto, igual no Google Play e na App Store (não dá para mudar depois). */
+    /** ID do produto no Google Play (cada app do Play tem os próprios IDs). */
     const val PRODUCT_ID_SEM_ANUNCIOS_ANUAL = "sem_anuncios_anual"
+
+    /**
+     * ID do produto na App Store. Diferente do Play: a App Store Connect não deixa reusar na mesma
+     * conta Apple o `sem_anuncios_anual` que já é do Cuidia. Não dá para mudar depois.
+     */
+    const val PRODUCT_ID_IOS_SEM_ANUNCIOS_ANUAL = "futeba_sem_anuncios_anual"
 
     /** ID do plano básico da assinatura no Google Play. */
     const val PLAY_BASE_PLAN_ANUAL = "anual"

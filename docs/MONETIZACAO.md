@@ -39,7 +39,7 @@ Nunca clique nos próprios anúncios reais (o AdMob pode suspender a conta). Em 
 
 ## Assinatura `sem_anuncios_anual`
 
-- Produto de assinatura com o mesmo ID no Google Play e na App Store, plano básico `anual` no Play, R$ 9,90 por ano, renovação automática. O preço mostrado na tela é sempre o que a loja devolve.
+- Produto de assinatura: **Play `sem_anuncios_anual`** (plano básico `anual`) e **App Store `futeba_sem_anuncios_anual`** (a App Store Connect não deixa reusar na mesma conta Apple o ID que já é do Cuidia; cada app do Play tem os próprios IDs), R$ 9,90 por ano, renovação automática. O preço mostrado na tela é sempre o que a loja devolve.
 - Android: Play Billing 9.1.0. Compra, "Restaurar compra" (relê as assinaturas da conta), confirmação (acknowledge) da compra paga e não confirmada (senão o Google estorna em 3 dias), "Gerenciar assinatura" (abre a tela de assinaturas do Play), conferência na abertura.
 - iOS: StoreKit 2 (`Product`, `Transaction.currentEntitlements`, `Transaction.updates`, `AppStore.sync`, `showManageSubscriptions`).
 - Textos da diretriz 3.1.2 da Apple na tela: nome e duração, preço por ano, cobrança na conta Apple, renovação automática, cancelamento até 24 h antes, onde cancelar, link de Termos de uso (EULA padrão da Apple) e Política de privacidade, mais "Restaurar compra".
@@ -80,7 +80,7 @@ Acrescentar:
 - **Dados de uso > Interação com o produto / Dados de publicidade**: publicidade de terceiros, não vinculado, rastreamento: sim.
 - **Compras**: não declarar como coletado (StoreKit; a Tech Fernandes não recebe histórico).
 - `PrivacyInfo.xcprivacy` do app: `NSPrivacyTracking` continua `false` e sem `NSPrivacyTrackingDomains` (o SDK do Google se declara; listar domínios faria o iPhone bloqueá-los para quem recusa o ATT). Mesma decisão do Cuidia.
-- Assinatura `sem_anuncios_anual` no grupo "Sem anúncios", ID idêntico ao do Play, anexada à versão que sai com ela.
+- Assinatura `sem_anuncios_anual` no grupo "Sem anúncios", ID `futeba_sem_anuncios_anual` (diferente do Play), anexada à versão que sai com ela.
 
 ## iOS: o que falta para o TestFlight (levantado em 11/11/2026)
 

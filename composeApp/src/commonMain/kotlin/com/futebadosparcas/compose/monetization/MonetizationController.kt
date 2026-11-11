@@ -113,6 +113,6 @@ class MonetizationController(
         }
 
         private fun ours(state: StorePurchaseState) =
-            StorePurchase(MonetizationConfig.PRODUCT_ID_SEM_ANUNCIOS_ANUAL, state)
+            StorePurchase(MonetizationConfig.PRODUCT_ID_IOS_SEM_ANUNCIOS_ANUAL, state)
     }
 }

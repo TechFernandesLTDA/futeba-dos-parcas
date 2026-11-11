@@ -33,7 +33,8 @@ enum class EntitlementDecision { GRANT, REVOKE, KEEP }
 object AdsFreeEntitlement {
 
     fun isOurs(purchase: StorePurchase): Boolean =
-        purchase.productId == MonetizationConfig.PRODUCT_ID_SEM_ANUNCIOS_ANUAL
+        purchase.productId == MonetizationConfig.PRODUCT_ID_SEM_ANUNCIOS_ANUAL ||
+            purchase.productId == MonetizationConfig.PRODUCT_ID_IOS_SEM_ANUNCIOS_ANUAL
 
     /** Vale como "sem anúncios": paga (não pendente) e sem pagamento suspenso. */
     fun isValid(purchase: StorePurchase): Boolean =

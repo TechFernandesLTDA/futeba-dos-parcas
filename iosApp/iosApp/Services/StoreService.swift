@@ -2,8 +2,8 @@ import UIKit
 import StoreKit
 import ComposeApp
 
-/// Ponte do StoreKit 2 para o Kotlin (`StoreBridge`): assinatura anual `sem_anuncios_anual`
-/// (mesmo ID do Google Play). Compra, "Restaurar compra", conferência na abertura e "Gerenciar
+/// Ponte do StoreKit 2 para o Kotlin (`StoreBridge`): assinatura anual `futeba_sem_anuncios_anual`
+/// (ID próprio do iOS: o `sem_anuncios_anual` já é do Cuidia na conta Apple; o Play do Futeba segue `sem_anuncios_anual`). Compra, "Restaurar compra", conferência na abertura e "Gerenciar
 /// assinatura".
 ///
 /// Regras (decididas no Kotlin, `AdsFreeEntitlement`, testadas): só a LOJA respondendo "não há
@@ -11,7 +11,7 @@ import ComposeApp
 final class StoreService: NSObject, StoreBridge {
 
     static let shared = StoreService()
-    private static let productId = "sem_anuncios_anual"
+    private static let productId = "futeba_sem_anuncios_anual"
 
     private var product: Product?
     private var updatesTask: Task<Void, Never>?

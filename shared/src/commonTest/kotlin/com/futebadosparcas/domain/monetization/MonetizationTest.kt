@@ -92,6 +92,17 @@ class AdsFreeEntitlementTest {
     }
 
     @Test
+    fun idDaAppStoreTambemLibera() {
+        assertEquals(
+            EntitlementDecision.GRANT,
+            AdsFreeEntitlement.decide(
+                StoreAnswer.Answered(listOf(p(StorePurchaseState.PURCHASED, id = MonetizationConfig.PRODUCT_ID_IOS_SEM_ANUNCIOS_ANUAL)))
+            ),
+        )
+        assertEquals("futeba_sem_anuncios_anual", MonetizationConfig.PRODUCT_ID_IOS_SEM_ANUNCIOS_ANUAL)
+    }
+
+    @Test
     fun lojaIndisponivelNuncaRevoga() {
         assertEquals(EntitlementDecision.KEEP, AdsFreeEntitlement.decide(StoreAnswer.Unavailable))
     }
