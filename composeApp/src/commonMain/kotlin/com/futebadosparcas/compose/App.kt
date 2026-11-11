@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -82,6 +83,17 @@ import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
 import com.futebadosparcas.compose.resources.cancel
 import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.profile_hub_action_remove_ads
+import com.futebadosparcas.compose.resources.profile_hub_action_remove_ads_body
+import com.futebadosparcas.compose.monetization.MonetizationController
+import com.futebadosparcas.compose.monetization.MonetizationHolder
+import com.futebadosparcas.compose.monetization.MonetizationUiState
+import com.futebadosparcas.compose.monetization.PlatformAdBanner
+import com.futebadosparcas.compose.monetization.RemoveAdsScreen
+import com.futebadosparcas.domain.monetization.AdsGate
+import com.futebadosparcas.domain.monetization.AdsState
+import com.futebadosparcas.domain.monetization.PreferencesAdsStateStore
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.futebadosparcas.compose.resources.delete_account_title
 import com.futebadosparcas.compose.resources.delete_account_unavailable_env
 import com.futebadosparcas.compose.resources.game_detail_action_team_formation
@@ -290,13 +302,48 @@ private fun AppContent() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Box(
+            // Monetização (AdMob + assinatura "Sem anúncios"): as regras ficam no controller
+            // (shared, testado). Sem as pontes do Swift (smoke-test, Android harness) ele fica inerte.
+            val preferences: PreferencesService? = koinInjectOrNull<PreferencesService>()
+            val monetization = remember(preferences) {
+                preferences?.let {
+                    MonetizationController(
+                        state = AdsState(PreferencesAdsStateStore(it)),
+                        ads = MonetizationHolder.ads,
+                        store = MonetizationHolder.store,
+                    ).also { controller -> MonetizationHolder.controller = controller }
+                }
+            }
+            LaunchedEffect(monetization) { monetization?.start() }
+            val monetizationUi by (monetization?.ui ?: remember { MutableStateFlow(MonetizationUiState()) })
+                .collectAsStateWithLifecycle()
+            val navController = rememberNavController()
+            val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing)
             ) {
-                AppNavigation()
-                WhatsNewPopupHost()
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    AppNavigation(navController)
+                    WhatsNewPopupHost()
+                }
+                // Banner só nas telas da lista de permissão, depois da primeira vitória,
+                // com consentimento e sem assinatura (AdsGate). Nunca em pagamento, login ou erro.
+                if (AdsGate.shouldShowBanner(
+                        adsFree = monetizationUi.adsFree,
+                        firstWinReached = monetizationUi.firstWinReached,
+                        unitConfigured = MonetizationHolder.ads?.unitConfigured == true,
+                        canRequestAds = monetizationUi.canRequestAds,
+                        route = currentRoute,
+                    )
+                ) {
+                    PlatformAdBanner(
+                        modifier = Modifier.fillMaxWidth(),
+                        nonPersonalized = monetizationUi.nonPersonalized,
+                    )
+                }
             }
         }
     }
@@ -944,6 +991,12 @@ fun AppNavigation(
                         onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     ),
                     FeatureHubAction(
+                        label = stringResource(Res.string.profile_hub_action_remove_ads),
+                        description = stringResource(Res.string.profile_hub_action_remove_ads_body),
+                        icon = Icons.Filled.Star,
+                        onClick = { navController.navigate(AppRoutes.REMOVE_ADS) }
+                    ),
+                    FeatureHubAction(
                         label = stringResource(Res.string.profile_hub_action_theme),
                         description = stringResource(Res.string.profile_hub_action_theme_body),
                         icon = Icons.Filled.Palette,
@@ -1034,6 +1087,10 @@ fun AppNavigation(
         }
 
         // Novidades
+        composable(AppRoutes.REMOVE_ADS) {
+            RemoveAdsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
         composable(AppRoutes.WHATS_NEW) {
             WhatsNewScreen(onBack = { navController.popBackStack() })
         }
@@ -1163,6 +1220,7 @@ private fun GameDetailRoute(
                             isCasualPlayer = false
                         )
                         actionInProgress = false
+                        if (result.isSuccess) MonetizationHolder.onFirstWin()
                         actionFeedback = if (result.isSuccess) {
                             "Presença confirmada com sucesso!"
                         } else {
@@ -1946,7 +2004,10 @@ private fun CreateGameRoute(
                                 val result = dataSource.createGame(newGame)
                                 isSaving = false
                                 result.fold(
-                                    onSuccess = { created -> onGameCreated(created) },
+                                    onSuccess = { created ->
+                                        MonetizationHolder.onFirstWin()
+                                        onGameCreated(created)
+                                    },
                                     onFailure = { err ->
                                         errorMessage = err.message ?: "Erro ao criar jogo."
                                     }

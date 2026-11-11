@@ -28,6 +28,15 @@ object MonetizationConfig {
     const val PLAY_SUBSCRIPTIONS_URL = "https://play.google.com/store/account/subscriptions"
     const val APPLE_SUBSCRIPTIONS_URL = "https://apps.apple.com/account/subscriptions"
 
+    /**
+     * Anúncios personalizados. DESLIGADO de propósito: o app aceita contas de 13 a 17 anos e a
+     * política de privacidade promete "sem publicidade direcionada" para menores (LGPD art. 14 e
+     * Estatuto Digital da Criança e do Adolescente, Lei 15.211/2025). Como a data de nascimento é
+     * opcional e a idade não é verificada, todo pedido de anúncio é NÃO personalizado, em todas
+     * as plataformas. Mudar isso exige decisão do Renan e revisão jurídica (docs/MONETIZACAO.md).
+     */
+    const val ALLOW_PERSONALIZED_ADS = false
+
     /** Chaves de preferência (aparelho). Nunca guardam dado pessoal. */
     const val PREF_FIRST_WIN = "monetizacao.primeira_vitoria"
     const val PREF_ADS_FREE = "monetizacao.sem_anuncios"

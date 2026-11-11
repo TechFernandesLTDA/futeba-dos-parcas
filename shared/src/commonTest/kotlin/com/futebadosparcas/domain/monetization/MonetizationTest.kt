@@ -63,10 +63,18 @@ class AdsGateTest {
     }
 
     @Test
-    fun recusaDoAttForcaNaoPersonalizado() {
+    fun recusaDoAttForcaNaoPersonalizadoQuandoPersonalizadoLiberado() {
+        assertTrue(AdsGate.requestNonPersonalized(false, personalizedAllowed = true))
+        assertFalse(AdsGate.requestNonPersonalized(true, personalizedAllowed = true))
+        assertFalse(AdsGate.requestNonPersonalized(null, personalizedAllowed = true))
+    }
+
+    @Test
+    fun menoresDe18PodemUsarOApp_entaoNuncaHaAnuncioPersonalizado() {
+        assertFalse(MonetizationConfig.ALLOW_PERSONALIZED_ADS)
+        assertTrue(AdsGate.requestNonPersonalized(true))
+        assertTrue(AdsGate.requestNonPersonalized(null))
         assertTrue(AdsGate.requestNonPersonalized(false))
-        assertFalse(AdsGate.requestNonPersonalized(true))
-        assertFalse(AdsGate.requestNonPersonalized(null))
     }
 }
 

@@ -30,8 +30,12 @@ object AdsGate {
             AdsPolicy.isBannerRouteAllowed(route)
 
     /**
-     * Anúncio não personalizado quando o usuário recusou o ATT (iOS). [attAuthorized] é
-     * `null` fora do iOS ou antes do pedido: aí vale só o que o UMP decidir.
+     * Anúncio não personalizado: sempre, enquanto [MonetizationConfig.ALLOW_PERSONALIZED_ADS] for
+     * falso (contas de 13 a 17 anos, sem verificação de idade). Se um dia for liberado, vale a
+     * recusa do ATT no iOS ([attAuthorized] `false`); `null` = fora do iOS ou antes do pedido.
      */
-    fun requestNonPersonalized(attAuthorized: Boolean?): Boolean = attAuthorized == false
+    fun requestNonPersonalized(
+        attAuthorized: Boolean?,
+        personalizedAllowed: Boolean = MonetizationConfig.ALLOW_PERSONALIZED_ADS,
+    ): Boolean = !personalizedAllowed || attAuthorized == false
 }

@@ -63,6 +63,9 @@ object AppRoutes {
     /** Exclusão de conta (#4391/#4401, App Store 5.1.1(v)). Acesso pelo hub de Perfil. */
     const val DELETE_ACCOUNT = "delete_account"
 
+    /** Assinatura "Sem anúncios" (diretriz 3.1.2). Aberta pelo hub de Perfil; nunca tem banner. */
+    const val REMOVE_ADS = "remove_ads"
+
     // ─── Bucket Gamification ─────────────────────────────────────────────────
     const val RANKING = "ranking"
     const val BADGES = "badges"

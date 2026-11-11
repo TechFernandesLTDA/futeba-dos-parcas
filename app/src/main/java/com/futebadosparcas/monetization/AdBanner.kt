@@ -1,5 +1,6 @@
 package com.futebadosparcas.monetization
 
+import android.os.Bundle
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.monetization.AdsGate
+import com.google.ads.mediation.admob.AdMobAdapter
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -47,6 +49,15 @@ fun AdBannerHost(
     if (show) AdBanner(modifier)
 }
 
+/** Todo pedido é não personalizado enquanto ALLOW_PERSONALIZED_ADS for falso (contas de 13 a 17 anos). */
+private fun buildAdRequest(): AdRequest {
+    val builder = AdRequest.Builder()
+    if (AdsGate.requestNonPersonalized(attAuthorized = null)) {
+        builder.addNetworkExtrasBundle(AdMobAdapter::class.java, Bundle().apply { putString("npa", "1") })
+    }
+    return builder.build()
+}
+
 @Composable
 private fun AdBanner(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -63,7 +74,7 @@ private fun AdBanner(modifier: Modifier = Modifier) {
                     override fun onAdLoaded() { loaded = true }
                     override fun onAdFailedToLoad(error: LoadAdError) { loaded = false }
                 }
-                loadAd(AdRequest.Builder().build())
+                loadAd(buildAdRequest())
             }
         }
         DisposableEffect(adView, lifecycle) {

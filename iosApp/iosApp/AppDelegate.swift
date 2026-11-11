@@ -11,6 +11,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
 
+        // Assinatura "Sem anúncios": ouve renovações/reembolsos desde a abertura (StoreKit 2).
+        StoreService.shared.startListening()
+
         // Notifications (independente de Firebase — usa UserNotifications nativo)
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in

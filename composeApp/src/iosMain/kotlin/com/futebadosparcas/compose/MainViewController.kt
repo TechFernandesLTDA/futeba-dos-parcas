@@ -1,6 +1,9 @@
 package com.futebadosparcas.compose
 
 import androidx.compose.ui.window.ComposeUIViewController
+import com.futebadosparcas.compose.monetization.IosAdsBridge
+import com.futebadosparcas.compose.monetization.MonetizationHolder
+import com.futebadosparcas.compose.monetization.StoreBridge
 
 /**
  * ViewController principal para iOS.
@@ -25,7 +28,18 @@ import androidx.compose.ui.window.ComposeUIViewController
  * um `ComposeUIViewControllerDelegate` enquanto não houver rota de tema explícita
  * (LIGHT/DARK) no iOS; quando houver, controlar `preferredStatusBarStyle` aqui.
  */
-fun MainViewController() = ComposeUIViewController { App() }
+fun MainViewController() = MainViewController(adsBridge = null, storeBridge = null)
+
+/**
+ * Entrada usada pelo Swift (`ContentView`): recebe as pontes dos SDKs nativos (Google Mobile Ads
+ * + UMP/ATT e StoreKit 2), implementadas em `iosApp/iosApp/Services/`. Sem elas (smoke-test) o
+ * app roda sem anúncios e sem a assinatura.
+ */
+fun MainViewController(adsBridge: IosAdsBridge?, storeBridge: StoreBridge?) = run {
+    MonetizationHolder.ads = adsBridge
+    MonetizationHolder.store = storeBridge
+    ComposeUIViewController { App() }
+}
 
 /**
  * #4426: Encaminha Universal Links e custom scheme URLs (`https://futebadosparcas.com.br/game/{id}`,

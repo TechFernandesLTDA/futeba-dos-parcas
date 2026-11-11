@@ -1,7 +1,23 @@
 {
   "platform": "web",
-  "generatedAt": "2026-11-02T13:13:10.376Z",
+  "generatedAt": "2026-11-11T04:52:14.104Z",
   "notes": [
+    {
+      "version": "1.63.0",
+      "buildNumber": null,
+      "releaseDate": "2026-11-11",
+      "type": "minor",
+      "showPopup": false,
+      "published": false,
+      "headline": "A versão web passa a poder mostrar anúncios discretos do Google nas páginas de conteúdo.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Os anúncios aparecem só em páginas de conteúdo e na Home, nunca em pagamento, caixa, painel, login ou erros, e são sempre não personalizados."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.61.1",
       "buildNumber": null,
