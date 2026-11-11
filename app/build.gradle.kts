@@ -44,6 +44,16 @@ gradle.taskGraph.whenReady {
     }
 }
 
+// AdMob (monetização). IDs de TESTE do Google no debug. Em release (e benchmark) vêm da config
+// de build: `ADMOB_APP_ID` e `ADMOB_BANNER_UNIT_ID`, em local.properties ou variável de ambiente.
+// O app ainda não existe no AdMob: sem valor, o release usa o ID de app de teste (evita o crash
+// de inicialização do SDK sem APPLICATION_ID) e unidade vazia, e então o app não inicializa o
+// SDK nem mostra banner. Preencher na fase 2, ver docs/MONETIZACAO.md.
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobTestBannerUnit = "ca-app-pub-3940256099942544/9214589741"
+fun admobConfig(name: String): String =
+    (localProperties.getProperty(name) ?: System.getenv(name) ?: "").trim()
+
 android {
     namespace = "com.futebadosparcas"
     compileSdk = 37
@@ -52,8 +62,8 @@ android {
         applicationId = "com.futebadosparcas"
         minSdk = 24
         targetSdk = 36
-        versionCode = 84
-        versionName = "1.43.0"
+        versionCode = 85
+        versionName = "1.44.0"
 
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
@@ -74,7 +84,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["ADMOB_APP_ID"] = admobTestAppId
+            buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"$admobTestBannerUnit\"")
+        }
         release {
+            manifestPlaceholders["ADMOB_APP_ID"] = admobConfig("ADMOB_APP_ID").ifEmpty { admobTestAppId }
+            buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"${admobConfig("ADMOB_BANNER_UNIT_ID")}\"")
             isMinifyEnabled = true
             isShrinkResources = true  // #029 - Remove unused resources
             signingConfig = signingConfigs.getByName("release")
@@ -272,6 +288,11 @@ dependencies {
     // Provider de debug só no build debug (src/debug/.../AppCheckProviders.kt).
     debugImplementation("com.google.firebase:firebase-appcheck-debug")
     implementation("com.google.firebase:firebase-config")
+
+    // Monetização: AdMob (banner), UMP (consentimento) e Play Billing (assinatura "Sem anúncios").
+    implementation("com.google.android.gms:play-services-ads:25.5.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
+    implementation("com.android.billingclient:billing:9.1.0")
 
     // Credentials para Google Sign-In
     implementation("androidx.credentials:credentials:1.5.0")

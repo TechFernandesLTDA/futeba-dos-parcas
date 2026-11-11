@@ -273,6 +273,7 @@ class GamesViewModel(
                             AppLogger.d(TAG) { "Adicionado à lista de espera do jogo $gameId (posição ${confirmResult.waitlistPosition})" }
                         } else {
                             AppLogger.d(TAG) { "Presença confirmada com sucesso no jogo $gameId" }
+                            com.futebadosparcas.monetization.MonetizationEvents.firstWin()
                         }
                     },
                     onFailure = { error ->

@@ -1146,6 +1146,8 @@ class CreateGameViewModel(
             } else {
                 gameRepository.createGame(game).fold(
                     onSuccess = { savedGame ->
+                        // Primeira vitória (libera anúncio/consentimento): primeiro jogo criado.
+                        com.futebadosparcas.monetization.MonetizationEvents.firstWin()
                         summonGroupMembers(savedGame)
                         _uiState.value = CreateGameUiState.Success(savedGame)
                     },

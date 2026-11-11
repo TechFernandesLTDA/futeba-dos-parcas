@@ -24,7 +24,7 @@ settings:
     SWIFT_VERSION: "5.9"
     ENABLE_BITCODE: NO
     IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-    DEVELOPMENT_TEAM: "" # Configure no Xcode
+    DEVELOPMENT_TEAM: 8HMZ5L98YQ # Conta Apple Developer da TECHFERNANDES (Team ID)
     CODE_SIGN_STYLE: Automatic
     SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
 
@@ -89,10 +89,20 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       configs:
         Debug:
+          # AdMob: IDs de TESTE do Google (iOS). Nunca clique em anúncio real no seu aparelho.
+          ADMOB_APP_ID: ca-app-pub-3940256099942544~1458002511
+          ADMOB_BANNER_UNIT_ID: ca-app-pub-3940256099942544/2435281174
           APS_ENVIRONMENT: development
           APP_ATTEST_ENVIRONMENT: development
           KMP_BUILD_TYPE: debug
         Release:
+          # AdMob (fase 2): o app ainda não existe no AdMob. Sem unidade, o app não inicializa o
+          # SDK nem mostra banner; o ID de app de teste evita falha de inicialização do SDK.
+          # Preencher com o ID real SEM commitar valores aqui: passe na linha de comando do
+          # archive (`ADMOB_APP_ID=ca-app-pub-...~... ADMOB_BANNER_UNIT_ID=ca-app-pub-.../...`)
+          # ou num xcconfig local. Ver docs/MONETIZACAO.md.
+          ADMOB_APP_ID: ca-app-pub-3940256099942544~1458002511
+          ADMOB_BANNER_UNIT_ID: ""
           APS_ENVIRONMENT: production
           APP_ATTEST_ENVIRONMENT: production
           KMP_BUILD_TYPE: release

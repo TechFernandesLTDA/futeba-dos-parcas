@@ -10,8 +10,14 @@
   trazem manifestos próprios e não precisam ser repetidos aqui.
 
   Dados coletados: espelham o que o app grava no Firebase (conta, perfil, jogos,
-  fotos, localização de check-in, Crashlytics e Analytics). Nenhum dado é usado
-  para rastreamento (ATT). Os rótulos do App Store Connect precisam bater com
+  fotos, localização de check-in, Crashlytics e Analytics).
+
+  Anúncios (AdMob, desde a monetização): quem rastreia é o SDK do Google, que traz o próprio
+  manifesto e se declara sozinho; por isso `NSPrivacyTracking` continua false e não há
+  `NSPrivacyTrackingDomains` (listar domínios do Google aqui faria o iPhone bloqueá-los para
+  quem recusa o ATT, e os anúncios não personalizados deixariam de carregar). O app pede o ATT
+  só depois da primeira vitória, e os rótulos do App Store Connect declaram "ID do
+  dispositivo" e "dados de uso" para publicidade de terceiros (docs/MONETIZACAO.md). Os rótulos do App Store Connect precisam bater com
   esta lista; revise com o dono antes de enviar (spec IOS_POLISH_APPSTORE_READINESS_2026_10_31).
 -->
 <plist version="1.0">

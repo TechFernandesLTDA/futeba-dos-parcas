@@ -1306,6 +1306,10 @@ private class GameDetailMutationCoordinator(
 
             if (result.isSuccess) {
                 lastFailedMutation = null
+                // Primeira vitória (libera anúncio/consentimento): presença confirmada.
+                if (mutation is GameDetailMutation.ConfirmPresence || mutation is GameDetailMutation.AcceptInvitation) {
+                    com.futebadosparcas.monetization.MonetizationEvents.firstWin()
+                }
                 updateSuccessState {
                     it.copy(isPresenceSubmitting = false, canRetryLastMutation = false)
                 }

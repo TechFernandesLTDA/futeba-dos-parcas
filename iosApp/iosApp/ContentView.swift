@@ -13,7 +13,12 @@ struct ContentView: View {
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        // Pontes dos SDKs nativos (AdMob + UMP/ATT e StoreKit 2). Quem decide quando usá-las é o
+        // Kotlin (MonetizationController): depois da primeira vitória e nunca para assinante.
+        MainViewControllerKt.MainViewController(
+            adsBridge: AdsService.shared,
+            storeBridge: StoreService.shared
+        )
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {

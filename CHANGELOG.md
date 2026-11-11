@@ -27,6 +27,16 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.44.0][android-1.44.0] - 2026-11-11
+
+#### Adicionado
+- AdMob (banner adaptativo ancorado) e UMP (consentimento), com unidade e ID do app vindos da config de build (`ADMOB_APP_ID`, `ADMOB_BANNER_UNIT_ID`); debug usa IDs de teste do Google.
+- Assinatura `sem_anuncios_anual` pelo Play Billing 9.1.0: compra, restaurar, confirmação (acknowledge), gerenciar assinatura e conferência na abertura.
+- Regras compartilhadas em `shared/domain/monetization` (lista de permissão de telas, gate do SDK, conferência de assinatura), com testes.
+
+#### Mudado
+- Permissão `AD_ID` deixa de ser removida do manifesto (necessária ao AdMob); declarar o ID de publicidade na Play Console.
+
 ### [1.43.0][android-1.43.0] - 2026-11-09
 
 #### Adicionado
@@ -45,6 +55,7 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 - Splash presa na abertura a frio já logada: a leitura do usuário não tinha tempo limite e prendia a navegação. Agora `SplashStartupResolver` decide o destino pela sessão local, com `withTimeoutOrNull` de 3 s na leitura (recusa da Play na 1.42.0) (#4533).
 - Login por e-mail e continuação da sessão com tempo limite de 20 s; `getIdToken` do gate de verificação com 15 s e estado `Failed` com nova tentativa (#4533).
 - Declaração vazia de Android Auto removida do manifesto (#4527).
+- Gate de verificação renova o token uma vez quando o cache não traz `verified`, antes de mandar para SMS/CPF. Uma claim concedida pelo servidor depois do login (conta de revisão da Play) passa a valer na hora, sem esperar o token expirar (spec `feat-2026-11-09-conta-revisao-play`).
 
 _Issues: #4483 · PRs: #4494, #4515, #4518, #4524, #4525, #4526, #4527, #4528, #4529, #4530, #4533_
 
@@ -422,6 +433,15 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.63.0][web-1.63.0] - 2026-11-11
+
+#### Adicionado
+- Componente `AdSenseBanner` ligado por `VITE_ADSENSE_PUBLISHER_ID` e `VITE_ADSENSE_SLOT_BANNER`; sem valor, nenhum script do AdSense carrega.
+- `ads.txt` e `app-ads.txt` preparados com a linha real comentada, e CSP do `firebase.json` com as origens do AdSense.
+
+#### Mudado
+- Política de privacidade em rascunho v2.1 (anúncios e assinatura), a vigorar no deploy.
 
 ### [1.61.1][web-1.61.1] - 2026-11-02
 
@@ -2342,6 +2362,16 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.10.0][ios-1.10.0] - 2026-11-11
+
+#### Adicionado
+- Google Mobile Ads + UMP + ATT em `iosApp/Services/AdsService.swift`, e StoreKit 2 em `StoreService.swift`, ligados ao Kotlin por pontes (`AdsBridge`, `StoreBridge`).
+- `GADApplicationIdentifier`, `NSUserTrackingUsageDescription` e 50 `SKAdNetworkItems` no `Info.plist`; IDs do AdMob por configuração no `project.yml` (teste no Debug).
+- Tela "Sem anúncios" com os textos da diretriz 3.1.2 (preço, renovação, cancelamento, Termos e Privacidade, Restaurar compra).
+
+#### Mudado
+- `DEVELOPMENT_TEAM` fixado no `project.yml` (Team ID da empresa).
+
 ### [1.8.0][ios-1.8.0] - 2026-10-01
 
 #### Adicionado
@@ -2440,6 +2470,13 @@ _Issues: #3499, #3504, #3509 · PRs: #3511_
 _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
+
+### [1.17.0][functions-1.17.0] - 2026-11-09
+
+#### Adicionado
+- Contas de revisão da Play listadas em `system_config/play_review_accounts` (só Admin SDK) mantêm `verified` e `profileComplete` sem CPF nem telefone. O trigger `onUserProfileWritten` e a callable `recomputeMyProfileClaim` não rebaixam essas contas (spec `feat-2026-11-09-conta-revisao-play`).
+- Marca de origem `reviewAccount`: ao sair da lista, a conta volta à regra normal (sem `verified` concedido só pela designação) e tem os refresh tokens revogados.
+- Script `apply-review-account-claims` (dry-run por padrão, `--execute` para gravar) que aplica as claims aos UIDs listados e retira as de quem saiu da lista.
 
 ### [1.15.1][functions-1.15.1] - 2026-11-02
 
@@ -3338,6 +3375,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.44.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.44.0.md
 [android-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.0.md
 [android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
 [android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md
@@ -3368,6 +3406,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.63.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.63.0.md
 [web-1.61.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.1.md
 [web-1.61.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.0.md
 [web-1.60.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.60.0.md
@@ -3548,6 +3587,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.10.0.md
 [ios-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.8.0.md
 [ios-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.2.md
 [ios-1.7.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.1.md
@@ -3556,6 +3596,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.17.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.17.0.md
 [functions-1.15.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.1.md
 [functions-1.15.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.0.md
 [functions-1.14.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.14.0.md

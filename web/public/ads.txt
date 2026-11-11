@@ -1,0 +1,6 @@
+# ads.txt do Futeba dos Parças (Tech Fernandes).
+# Fase 2: descomentar a linha abaixo na fase 2, após criar o site no AdSense, trocando
+# pub-XXXXXXXXXXXXXXXX pelo publisher da conta AdSense (formato real:
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0).
+# Confirmar o ID no painel do AdSense antes de publicar; não presumir que é o mesmo do AdMob.
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

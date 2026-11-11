@@ -68,6 +68,12 @@ class FutebaApplication : Application(), Configuration.Provider {
             )
         }
 
+        // Monetização: passa a ouvir a primeira vitória e a conferir a assinatura (loja).
+        // Não inicializa o SDK de anúncios: isso só acontece depois da primeira vitória.
+        org.koin.java.KoinJavaComponent.get<com.futebadosparcas.monetization.AdsController>(
+            com.futebadosparcas.monetization.AdsController::class.java
+        ).start()
+
         // Registrar a fábrica do Coil 3 (KMP). O ImageLoader é criado sob demanda
         // na primeira imagem, fora do caminho crítico do cold start.
         CoilConfig.setupCoil(this)

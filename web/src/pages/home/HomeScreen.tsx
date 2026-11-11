@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { AdSenseBanner } from '../../components/ads/AdSenseBanner';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -129,6 +130,8 @@ export function HomeScreen() {
           {mountedTabs.has(4) && <Box sx={{ display: tabValue === 4 ? 'block' : 'none' }}><ProfileTab /></Box>}
         </Suspense>
       </Box>
+
+      <AdSenseBanner />
 
       <WhatsNewPopupHost />
       <PerformanceOverlay metrics={metrics} />

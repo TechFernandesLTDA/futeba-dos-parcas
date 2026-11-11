@@ -1,7 +1,30 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-10-09T03:24:31.394Z",
+  "generatedAt": "2026-11-11T04:52:14.105Z",
   "notes": [
+    {
+      "version": "1.10.0",
+      "buildNumber": 26,
+      "releaseDate": "2026-11-11",
+      "type": "minor",
+      "showPopup": false,
+      "published": false,
+      "headline": "Agora você pode tirar os anúncios do app com a assinatura anual Sem anúncios.",
+      "highlights": [
+        {
+          "icon": "block",
+          "title": "Sem anúncios",
+          "description": "No Perfil, assine por R$ 9,90 por ano para tirar os banners. Dá para restaurar a compra e gerenciar a assinatura pelos Ajustes do iPhone."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Um banner discreto aparece só nas telas principais, depois da sua primeira presença confirmada ou do seu primeiro jogo criado. Nunca aparece em pagamento, caixa, login ou erros.",
+        "O app pede a permissão de rastreamento só depois dessa primeira vitória. Os anúncios são sempre não personalizados, mesmo se você permitir."
+      ],
+      "fixed": [],
+      "issueRefs": []
+    },
     {
       "version": "1.8.0",
       "buildNumber": 24,

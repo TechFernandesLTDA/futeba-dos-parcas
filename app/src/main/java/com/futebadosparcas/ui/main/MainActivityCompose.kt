@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
@@ -93,6 +94,14 @@ class MainActivityCompose : AppCompatActivity() {
 
     // Post-game summary state — bridge entre observePostGameEvents (lifecycle) e Compose.
     private val pendingPostGameSummary = mutableStateOf<com.futebadosparcas.ui.statistics.PostGameSummary?>(null)
+
+    // Anúncios (AdMob + consentimento UMP): só ativam depois da primeira vitória e sem assinatura.
+    private val adsController: com.futebadosparcas.monetization.AdsController by inject()
+
+    override fun onStart() {
+        super.onStart()
+        adsController.onActivityStarted(this)
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -520,12 +529,19 @@ fun MainScreen(
     ) {
         // Snackbar overlay dentro do content — NavigationSuiteScaffold não expõe
         // slot de snackbar diretamente (#2189/#2190).
-        Box(modifier = Modifier.fillMaxSize()) {
-            AppNavHost(navController = navController)
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                AppNavHost(navController = navController)
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
+            }
+            // Banner AdMob só nas telas raiz da lista de permissão (AdsPolicy): nunca em
+            // pagamento, caixa, jogo ao vivo, login, erro ou admin. Assinante não vê.
+            if (showNavigation) {
+                com.futebadosparcas.monetization.AdBannerHost(route = currentDestination?.route)
+            }
         }
     }
 

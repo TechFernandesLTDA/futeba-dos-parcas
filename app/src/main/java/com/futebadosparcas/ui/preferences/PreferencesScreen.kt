@@ -51,6 +51,7 @@ fun PreferencesScreen(
     preferencesManager: PreferencesManager,
     onNavigateToThemeSettings: () -> Unit = {},
     onNavigateToDeveloper: () -> Unit = {},
+    onNavigateToRemoveAds: () -> Unit = {},
     exportState: ExportMyDataUiState = ExportMyDataUiState.Idle,
     exportSuggestedFileName: () -> String = { "" },
     onExportFileChosen: (Uri?) -> Unit = {},
@@ -78,6 +79,29 @@ fun PreferencesScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+            // ========== SEM ANÚNCIOS (assinatura) ==========
+            Card(
+                onClick = onNavigateToRemoveAds,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.remove_ads_entry_title),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(R.string.remove_ads_entry_subtitle),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             // ========== TEMA ==========
             Text(
                 text = stringResource(R.string.preferences_appearance),
