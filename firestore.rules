@@ -3904,10 +3904,15 @@ service cloud.firestore {
     // ============================================
     // COLECAO: abuse_reports (denuncias de jogador ou grupo, diretriz 1.2 da App Store)
     // ============================================
-    // So o autor cria (reporter_id == uid, status OPEN, created_at do servidor). Ninguem le,
-    // altera ou apaga pelo cliente: a moderacao le pelo servidor (Admin SDK).
+    // So o autor cria (reporter_id == uid, status OPEN, created_at do servidor). O ID do doc e
+    // deterministico ({uid}_{tipo}_{alvo}) e o doc so pode ser CRIADO (sem update): cada pessoa
+    // denuncia o mesmo alvo uma vez so (limite de abuso). Nao da para denunciar a si mesmo.
+    // Ninguem le, altera ou apaga pelo cliente: a moderacao le pelo servidor (Admin SDK).
     match /abuse_reports/{reportId} {
       allow create: if isAuthenticated() &&
+        reportId == request.resource.data.reporter_id + '_' + request.resource.data.target_type +
+          '_' + request.resource.data.target_id &&
+        request.resource.data.target_id != request.resource.data.reporter_id &&
         request.resource.data.keys().hasOnly([
           'reporter_id', 'target_type', 'target_id', 'target_name', 'reason',
           'status', 'created_at', 'game_id', 'group_id'

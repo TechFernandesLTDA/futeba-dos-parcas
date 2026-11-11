@@ -932,7 +932,6 @@ fun AppNavigation(
                     onDismiss = { showGroupReport = false },
                     onSubmit = { reason ->
                         reportDataSource.submitContentReport(
-                            reporterId = reporterId,
                             targetType = ReportTargetType.GROUP.code,
                             targetId = effectiveGroupId,
                             targetName = "",
@@ -1108,7 +1107,6 @@ fun AppNavigation(
                 currentUserId = reporterId,
                 onSubmitReport = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName, reason ->
                     dataSource.submitContentReport(
-                        reporterId = reporterId,
                         targetType = ReportTargetType.PLAYER.code,
                         targetId = targetId,
                         targetName = targetName,

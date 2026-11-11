@@ -79,7 +79,6 @@ expect class FirebaseDataSource() {
     ): Result<Unit>
     suspend fun unblockUserOnServer(userId: String, targetUserId: String): Result<Unit>
     suspend fun submitContentReport(
-        reporterId: String,
         targetType: String,
         targetId: String,
         targetName: String,

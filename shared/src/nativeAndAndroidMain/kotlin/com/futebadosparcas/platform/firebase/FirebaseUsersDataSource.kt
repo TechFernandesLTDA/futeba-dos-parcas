@@ -138,7 +138,6 @@ internal class FirebaseUsersDataSource(
             // 1. Gravação em abuse_reports (coleção de denúncias; só o autor cria, ninguém lê pelo cliente)
             val reportWrites = mutableListOf<Result<Unit>>()
             reportWrites += submitContentReport(
-                reporterId = reporterId,
                 targetType = "player",
                 targetId = targetUserId,
                 targetName = targetUserName,
@@ -188,11 +187,11 @@ internal class FirebaseUsersDataSource(
 
     /**
      * Grava uma denúncia de jogador ou de grupo em `abuse_reports` (diretriz 1.2 da App Store).
-     * As regras do Firestore só deixam o autor criar (reporter_id == uid) e ninguém ler ou
-     * alterar pelo cliente; a moderação lê pelo servidor.
+     * As regras do Firestore só deixam o autor criar (reporter_id == uid, doc id
+     * `{uid}_{tipo}_{alvo}`, uma vez só) e ninguém ler ou alterar pelo cliente; a moderação lê
+     * pelo servidor.
      */
     suspend fun submitContentReport(
-        reporterId: String,
         targetType: String,
         targetId: String,
         targetName: String,
@@ -201,8 +200,11 @@ internal class FirebaseUsersDataSource(
         groupId: String? = null
     ): Result<Unit> {
         return try {
-            if (reporterId.isBlank() || targetId.isBlank()) {
-                return Result.failure(IllegalArgumentException("IDs inválidos para denúncia"))
+            // O autor é sempre o usuário logado: nunca vem de parâmetro.
+            val reporterId = auth.currentUser?.uid
+                ?: return Result.failure(IllegalStateException("Usuário não autenticado"))
+            if (targetId.isBlank() || targetId.contains('/') || targetId == reporterId) {
+                return Result.failure(IllegalArgumentException("Alvo inválido para denúncia"))
             }
             val payload = mutableMapOf<String, Any>(
                 "reporter_id" to reporterId,
@@ -215,7 +217,10 @@ internal class FirebaseUsersDataSource(
             )
             if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
             if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
-            firestore.collection("abuse_reports").document.set(payload)
+            // ID determinístico + "só criar" nas regras: cada pessoa denuncia o mesmo alvo uma vez.
+            firestore.collection("abuse_reports")
+                .document("${reporterId}_${targetType}_$targetId")
+                .set(payload)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

@@ -25,7 +25,10 @@ import {
 
 let testEnv: RulesTestEnvironment;
 
-const SEED = "seed-report-001";
+const SEED = `${UID_PLAYER_A}_player_seed-alvo`;
+
+/** ID determinístico exigido pelas regras: {uid}_{tipo}_{alvo}. */
+const OK_ID = `${UID_PLAYER_A}_player_${UID_PLAYER_B}`;
 
 function validReport(extra: Record<string, unknown> = {}) {
   return {
@@ -49,7 +52,7 @@ beforeEach(async () => {
   await seedDoc(testEnv, `abuse_reports/${SEED}`, {
     reporter_id: UID_PLAYER_A,
     target_type: "player",
-    target_id: UID_PLAYER_B,
+    target_id: "seed-alvo",
     reason: "spam",
     status: "OPEN",
     created_at: new Date(),
@@ -61,66 +64,95 @@ afterAll(async () => {
 });
 
 describe("abuse_reports — criação", () => {
-  it("Não autenticado não cria", async () => {
-    await assertFails(asAnon(testEnv).doc("abuse_reports/r-anon").set(validReport()));
+  it("Sem login não cria", async () => {
+    await assertFails(asAnon(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport()));
   });
 
-  it("Autor autenticado cria denúncia de jogador", async () => {
-    await assertSucceeds(asPlayerA(testEnv).doc("abuse_reports/r-ok").set(validReport()));
+  it("Autor autenticado cria denúncia de jogador com o ID determinístico", async () => {
+    await assertSucceeds(asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport()));
   });
 
   it("Autor autenticado cria denúncia de grupo, com group_id", async () => {
     await assertSucceeds(
-      asPlayerA(testEnv).doc("abuse_reports/r-grupo").set(
-        validReport({ target_type: "group", target_id: "grupo-1", group_id: "grupo-1" })
-      )
+      asPlayerA(testEnv)
+        .doc(`abuse_reports/${UID_PLAYER_A}_group_grupo-1`)
+        .set(validReport({ target_type: "group", target_id: "grupo-1", group_id: "grupo-1" }))
     );
   });
 
-  it("Negado em nome de outro usuário (reporter_id diferente do uid)", async () => {
+  it("Outro uid: não cria em nome de outra pessoa", async () => {
+    // PlayerB tenta gravar uma denúncia com reporter_id de PlayerA.
+    await assertFails(asPlayerB(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport()));
+  });
+
+  it("Outro uid: não cria nem com o próprio ID se reporter_id for de outra pessoa", async () => {
     await assertFails(
-      asPlayerB(testEnv).doc("abuse_reports/r-outro").set(validReport())
+      asPlayerB(testEnv)
+        .doc(`abuse_reports/${UID_PLAYER_B}_player_${UID_PLAYER_B}x`)
+        .set(validReport({ target_id: `${UID_PLAYER_B}x` }))
     );
+  });
+
+  it("Denúncia repetida do mesmo alvo é negada (só criar, uma vez)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(db.doc(`abuse_reports/${OK_ID}`).set(validReport()));
+    await assertFails(db.doc(`abuse_reports/${OK_ID}`).set(validReport({ reason: "spam" })));
+  });
+
+  it("Autodenúncia é negada", async () => {
+    await assertFails(
+      asPlayerA(testEnv)
+        .doc(`abuse_reports/${UID_PLAYER_A}_player_${UID_PLAYER_A}`)
+        .set(validReport({ target_id: UID_PLAYER_A }))
+    );
+  });
+
+  it("Campo extra é negado", async () => {
+    await assertFails(
+      asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport({ admin: true }))
+    );
+  });
+
+  it("ID de documento fora do padrão é negado (burla do limite)", async () => {
+    await assertFails(asPlayerA(testEnv).doc("abuse_reports/qualquer-id").set(validReport()));
   });
 
   it("Negado com target_type fora da lista", async () => {
     await assertFails(
-      asPlayerA(testEnv).doc("abuse_reports/r-tipo").set(validReport({ target_type: "game" }))
+      asPlayerA(testEnv)
+        .doc(`abuse_reports/${UID_PLAYER_A}_game_${UID_PLAYER_B}`)
+        .set(validReport({ target_type: "game" }))
     );
   });
 
   it("Negado com motivo fora da lista", async () => {
     await assertFails(
-      asPlayerA(testEnv).doc("abuse_reports/r-motivo").set(validReport({ reason: "qualquer" }))
+      asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport({ reason: "qualquer" }))
     );
   });
 
   it("Negado com status diferente de OPEN", async () => {
     await assertFails(
-      asPlayerA(testEnv).doc("abuse_reports/r-status").set(validReport({ status: "RESOLVED" }))
+      asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport({ status: "RESOLVED" }))
     );
   });
 
   it("Negado com created_at do cliente (não é o horário do servidor)", async () => {
     await assertFails(
-      asPlayerA(testEnv).doc("abuse_reports/r-data").set(validReport({ created_at: new Date() }))
-    );
-  });
-
-  it("Negado com campo desconhecido", async () => {
-    await assertFails(
-      asPlayerA(testEnv).doc("abuse_reports/r-extra").set(validReport({ admin: true }))
+      asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(validReport({ created_at: new Date() }))
     );
   });
 
   it("Negado sem target_id", async () => {
     const { target_id: _omit, ...sem } = validReport();
-    await assertFails(asPlayerA(testEnv).doc("abuse_reports/r-sem-alvo").set(sem));
+    await assertFails(asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(sem));
   });
 
   it("Negado com target_name acima de 120 caracteres", async () => {
     await assertFails(
-      asPlayerA(testEnv).doc("abuse_reports/r-nome").set(validReport({ target_name: "n".repeat(121) }))
+      asPlayerA(testEnv)
+        .doc(`abuse_reports/${OK_ID}`)
+        .set(validReport({ target_name: "n".repeat(121) }))
     );
   });
 });
