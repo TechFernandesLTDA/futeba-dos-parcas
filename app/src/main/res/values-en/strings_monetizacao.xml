@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remove_ads_title">Ad-free</string>
+    <string name="remove_ads_entry_title">Ad-free</string>
+    <string name="remove_ads_entry_subtitle">Yearly subscription that removes banner ads</string>
+    <string name="remove_ads_headline">Yearly Ad-free subscription</string>
+    <string name="remove_ads_body">Removes the banner ads from Futeba dos Parças. The app stays the same, just without ads.</string>
+    <string name="remove_ads_subscribe">Subscribe for %1$s per year</string>
+    <string name="remove_ads_active">You are ad-free. Thank you for supporting Futeba dos Parças.</string>
+    <string name="remove_ads_terms">1-year subscription that renews automatically at the same price. You are charged to your Google Play account when you confirm, and again every year until you cancel. To cancel, open Play Store, Payments and subscriptions, Subscriptions, at least 1 day before the renewal. No card data goes through the app.</string>
+    <string name="remove_ads_restore">Restore purchase</string>
+    <string name="remove_ads_manage">Manage subscription</string>
+    <string name="remove_ads_privacy_options">Ad privacy options</string>
+    <string name="remove_ads_terms_link">Terms of use</string>
+    <string name="remove_ads_privacy_link">Privacy policy</string>
+    <string name="remove_ads_msg_unavailable">The subscription is not available right now. Check your internet and Google Play account and try again later.</string>
+    <string name="remove_ads_msg_pending">Payment pending. When it is confirmed, the ads go away on their own.</string>
+    <string name="remove_ads_msg_failed">The subscription was not completed. Try again later.</string>
+    <string name="remove_ads_msg_done">Done: you are ad-free.</string>
+    <string name="remove_ads_msg_restored">Purchase restored: you are ad-free.</string>
+    <string name="remove_ads_msg_nothing_to_restore">We could not find an active subscription on this Google Play account.</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remove_ads_title">Sem anúncios</string>
+    <string name="remove_ads_entry_title">Sem anúncios</string>
+    <string name="remove_ads_entry_subtitle">Assinatura anual que tira os banners de anúncio</string>
+    <string name="remove_ads_headline">Assinatura anual Sem anúncios</string>
+    <string name="remove_ads_body">Tira os banners de anúncio do Futeba dos Parças. O app continua igual, só sem anúncios.</string>
+    <string name="remove_ads_subscribe">Assinar por %1$s por ano</string>
+    <string name="remove_ads_active">Você está sem anúncios. Obrigado por apoiar o Futeba dos Parças.</string>
+    <string name="remove_ads_terms">Assinatura de 1 ano, com renovação automática pelo mesmo preço. A cobrança é feita na sua conta do Google Play ao confirmar, e de novo a cada ano, até você cancelar. Para cancelar, abra Play Store, Pagamentos e assinaturas, Assinaturas, ao menos 1 dia antes da renovação. Nenhum dado de cartão passa pelo app.</string>
+    <string name="remove_ads_restore">Restaurar compra</string>
+    <string name="remove_ads_manage">Gerenciar assinatura</string>
+    <string name="remove_ads_privacy_options">Opções de privacidade de anúncios</string>
+    <string name="remove_ads_terms_link">Termos de uso</string>
+    <string name="remove_ads_privacy_link">Política de privacidade</string>
+    <string name="remove_ads_msg_unavailable">A assinatura não está disponível agora. Confira a internet e a conta do Google Play e tente de novo mais tarde.</string>
+    <string name="remove_ads_msg_pending">Pagamento pendente. Quando for confirmado, os anúncios saem sozinhos.</string>
+    <string name="remove_ads_msg_failed">A assinatura não foi concluída. Tente de novo mais tarde.</string>
+    <string name="remove_ads_msg_done">Pronto: você está sem anúncios.</string>
+    <string name="remove_ads_msg_restored">Compra restaurada: você está sem anúncios.</string>
+    <string name="remove_ads_msg_nothing_to_restore">Não achamos assinatura ativa nesta conta do Google Play.</string>
+</resources>

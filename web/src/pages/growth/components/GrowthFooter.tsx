@@ -10,6 +10,7 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import { SEO_PARENT_COMPANY_URL } from '../../../components/seo/metadata';
 import { trackEvent } from '../../../utils/analytics';
+import { AdSenseBanner } from '../../../components/ads/AdSenseBanner';
 
 const currentYear = new Date().getFullYear();
 
@@ -33,6 +34,8 @@ export function GrowthFooter() {
   };
 
   return (
+    <>
+    <AdSenseBanner />
     <Box component="footer" sx={{ bgcolor: 'background.paper', borderTop: 1, borderColor: 'divider' }}>
       <Container maxWidth="lg" sx={{ py: 6, pb: { xs: 10, md: 6 } }}>
         <Grid container spacing={4}>
@@ -150,5 +153,6 @@ export function GrowthFooter() {
         </Stack>
       </Container>
     </Box>
+    </>
   );
 }

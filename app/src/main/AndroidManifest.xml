@@ -55,7 +55,9 @@
 
     <!-- Permissão de Gravação de Áudio (Voice Messages) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <!-- AD_ID (ID de publicidade): necessário para o AdMob. Antes da monetização esta permissão
+         era removida. Declarar "usa ID de publicidade: anúncios" na Play Console (fase 2). -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- Feature declarations -->
     <uses-feature
@@ -146,6 +148,12 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- AdMob: sem este meta-data o SDK derruba o app na inicialização. O valor vem do
+             Gradle (teste no debug; config de build no release), ver app/build.gradle.kts. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${ADMOB_APP_ID}" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

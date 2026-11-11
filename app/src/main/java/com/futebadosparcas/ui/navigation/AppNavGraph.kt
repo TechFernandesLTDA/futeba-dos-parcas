@@ -190,6 +190,7 @@ sealed class Screen(
     // Profile & Settings
     data object EditProfile : Screen("edit_profile", titleResId = R.string.edit_profile)
     data object Preferences : Screen("preferences", titleResId = R.string.preferences)
+    data object RemoveAds : Screen("remove_ads", titleResId = R.string.remove_ads_title)
     data object ThemeSettings : Screen("theme_settings", titleResId = R.string.theme_settings)
     data object GamificationSettings : Screen("gamification_settings", titleResId = R.string.gamification_settings)
     data object ConnectedAccounts : Screen("connected_accounts", titleResId = R.string.connected_accounts_title)
@@ -986,12 +987,25 @@ fun AppNavHost(
                     onNavigateToDeveloper = {
                         navController.navigate(Screen.Developer.route)
                     },
+                    onNavigateToRemoveAds = {
+                        navController.navigate(Screen.RemoveAds.route)
+                    },
                     exportState = exportState,
                     exportSuggestedFileName = exportViewModel::suggestedFileName,
                     onExportFileChosen = exportViewModel::onFileChosen,
                     onExportPickerUnavailable = exportViewModel::onPickerUnavailable,
                     onDismissExportResult = exportViewModel::dismissResult
                 )
+            }
+        }
+
+        composable(Screen.RemoveAds.route) {
+            val removeAdsViewModel: com.futebadosparcas.monetization.RemoveAdsViewModel = koinViewModel()
+            SecondaryScreenWrapper(
+                titleResId = Screen.RemoveAds.titleResId,
+                onNavigateBack = { navController.popBackStack() }
+            ) {
+                com.futebadosparcas.monetization.RemoveAdsScreen(viewModel = removeAdsViewModel)
             }
         }
 

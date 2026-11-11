@@ -19,6 +19,16 @@ import org.koin.dsl.module
 
 val utilKoinModule = module {
 
+    // Monetização: AdMob (banner + consentimento UMP) e assinatura "Sem anúncios" (Play Billing).
+    single { com.futebadosparcas.domain.monetization.AdsState(
+        com.futebadosparcas.domain.monetization.PreferencesAdsStateStore(
+            com.futebadosparcas.platform.storage.PreferencesService(androidContext())
+        )
+    ) }
+    single { com.futebadosparcas.monetization.PlayBillingManager(androidContext()) }
+    single { com.futebadosparcas.monetization.AdsController(androidContext(), get(), get()) }
+    factory { com.futebadosparcas.monetization.RemoveAdsViewModel(get(), get(), get()) }
+
     // ResourceManager para acesso a recursos Android em ViewModels
     single<ResourceManager> {
         ResourceManager(androidContext())
