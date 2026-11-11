@@ -58,3 +58,12 @@ Pelo `PrivacyInfo.xcprivacy` e por `docs/MONETIZACAO.md`: Nome, E-mail, Foto ou 
 5. Capturas de tela do iPhone e captura de revisão da assinatura (exigem login).
 6. Anexar o build 1.10.0 (26) à versão assim que sair de "Processando" e enviar os 3 itens juntos para revisão.
 7. Questionário de privacidade, classificação etária e categoria.
+
+## Atualização de 11/11/2026 (tarde): build 27
+
+- **Código** no PR #4542 (squash automático quando a CI obrigatória passar): sem "Entrar com Google" e sem ATT no iOS; denúncia de jogador e de grupo (coleção `abuse_reports`: ID `{uid}_{tipo}_{alvo}`, só criar, ninguém lê pelo cliente); rodapé com a versão real; insets duplicados removidos; `NSMicrophoneUsageDescription` em pt-BR com permissão real; strings `%s` convertidas para `%1$s`.
+- **AdMob** (conta techfernandesltda@gmail.com, `pub-8024776729932634`, conferida em Configurações): app iOS "Futeba dos Parças" `ca-app-pub-8024776729932634~1964846913`; banner "Banner inferior" `ca-app-pub-8024776729932634/6586297402`. Passados na linha de comando do archive (`ADMOB_APP_ID`, `ADMOB_BANNER_UNIT_ID`). Não foi ligado à loja (o app ainda não está publicado). Por engano foram criados um app e um banner na conta `pub-3911701036052819` (rlocatizfernandes): o Renan apaga.
+- **Archive Release 1.10.0 (27)** feito e conferido (Info.plist: build 27, IDs reais, sem `NSUserTrackingUsageDescription`; `codesign` mostra `aps-environment=production`, App Attest e os 3 domínios). **Upload não feito**: o Xcode perdeu a sessão da conta Apple ("App Store Connect access for 8HMZ5L98YQ is required"). O Renan entra de novo no Xcode (Ajustes > Contas) e roda `xcodebuild -exportArchive` com `destination upload`.
+- **Privacidade (a responder, sem publicar):** rastreamento NÃO; ID do dispositivo e interação com o produto para publicidade de terceiros, não vinculados.
+- **Simulador (iPhone 17 Pro Max, iOS 26.4):** conferidos sem Google no login, nenhum pedido de ATT, rodapé "versão 1.10.0", área segura e o diálogo real de microfone em pt-BR. Não conferidos: denúncia, tela "Sem anúncios" e capturas logadas, porque a senha do item `futeba / revisor google play` deu `ERROR_INVALID_CREDENTIAL` no Firebase (a senha do Bitwarden não bate com a conta).
+- **Falta:** upload do build, ligar o build 27 à versão, capturas de 6,3" e de revisão da assinatura, classificação etária e categoria (Esportes), privacidade sem publicar. Direitos de conteúdo, senha de revisão e envio continuam do Renan.
