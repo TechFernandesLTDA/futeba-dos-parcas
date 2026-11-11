@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Place
@@ -57,6 +58,7 @@ import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.back
+import com.futebadosparcas.compose.resources.report_action_player_cd
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -67,7 +69,12 @@ private sealed interface RouteLoadState<out T> {
 }
 
 @Composable
-fun RankingRouteScreen(onNavigateBack: () -> Unit) {
+fun RankingRouteScreen(
+    onNavigateBack: () -> Unit,
+    currentUserId: String? = null,
+    onSubmitReport: (suspend (targetId: String, targetName: String, reasonCode: String) -> Boolean)? = null,
+) {
+    var reportTarget by remember { mutableStateOf<PlayerRankingItem?>(null) }
     val repository: RankingRepository? = koinInjectOrNull<RankingRepository>()
     var state by remember(repository) {
         mutableStateOf<RouteLoadState<List<PlayerRankingItem>>>(RouteLoadState.Loading)
@@ -134,11 +141,34 @@ fun RankingRouteScreen(onNavigateBack: () -> Unit) {
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
+                            if (onSubmitReport != null && item.userId != currentUserId) {
+                                val playerName = item.nickname ?: item.playerName
+                                IconButton(onClick = { reportTarget = item }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Flag,
+                                        contentDescription = stringResource(
+                                            Res.string.report_action_player_cd,
+                                            playerName
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    val target = reportTarget
+    if (target != null && onSubmitReport != null) {
+        val targetName = target.nickname ?: target.playerName
+        ReportDialog(
+            targetType = ReportTargetType.PLAYER,
+            targetName = targetName,
+            onDismiss = { reportTarget = null },
+            onSubmit = { reason -> onSubmitReport(target.userId, targetName, reason) },
+        )
     }
 }
 

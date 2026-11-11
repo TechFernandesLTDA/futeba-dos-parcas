@@ -15,15 +15,14 @@ Nada disso está publicado: sem envio às lojas, sem deploy da web, sem merge.
 | Direito "Sem anúncios": **só a loja respondendo "não há assinatura nossa" revoga**. Loja indisponível, pendente ou erro nunca revoga; pagamento suspenso revoga | `AdsFreeEntitlement` (porte do `compras.ts` do Cuidia) | `AdsFreeEntitlementTest` |
 | Anúncios **sempre não personalizados** (`ALLOW_PERSONALIZED_ADS = false`), ver "Decisão para o Renan" | `MonetizationConfig` | `MonetizationTest` |
 
-Código: regras em `shared/src/commonMain/kotlin/com/futebadosparcas/domain/monetization/`; Android em `app/src/main/java/com/futebadosparcas/monetization/` (AdMob + UMP + Play Billing, `AdBannerHost` dentro do `MainScreen`, tela `RemoveAdsScreen` aberta por Preferências); iOS em `composeApp/.../compose/monetization/` (Kotlin: controller, tela, ponte) e `iosApp/iosApp/Services/AdsService.swift` + `StoreService.swift` (Google Mobile Ads, UMP, ATT, StoreKit 2).
+Código: regras em `shared/src/commonMain/kotlin/com/futebadosparcas/domain/monetization/`; Android em `app/src/main/java/com/futebadosparcas/monetization/` (AdMob + UMP + Play Billing, `AdBannerHost` dentro do `MainScreen`, tela `RemoveAdsScreen` aberta por Preferências); iOS em `composeApp/.../compose/monetization/` (Kotlin: controller, tela, ponte) e `iosApp/iosApp/Services/AdsService.swift` + `StoreService.swift` (Google Mobile Ads, UMP, StoreKit 2; sem ATT).
 
 ### Primeira vitória no iOS e no Android
 O app nativo Android e o app iOS (Compose Multiplatform) são telas diferentes; cada um chama o mesmo gatilho. O estado fica no aparelho (`PreferencesService`: SharedPreferences no Android, NSUserDefaults no iOS) e não guarda dado pessoal.
 
 ### Ordem no iOS (depois da primeira vitória, sem assinatura)
 1. Formulário de consentimento do Google (UMP), só onde a região exige (no Brasil o Google costuma responder "não exigido").
-2. Pedido de rastreamento (ATT), com folga de 0,5 s e só com o app ativo.
-3. `MobileAds.start`. Recusar o ATT: anúncios não personalizados (já são, sempre).
+2. `MobileAds.start`. **O iOS não pede ATT** (decisão de 11/11/2026): sem `NSUserTrackingUsageDescription`, sem `AppTrackingTransparency` no código. Os anúncios são sempre não personalizados (`npa=1`).
 
 ## IDs e config de build (a preencher na fase 2)
 
@@ -54,7 +53,7 @@ Se o iOS passar a exibir **preço, botão ou link para pagar** a mensalidade da 
 
 ## Decisão para o Renan: anúncios não personalizados
 
-O app aceita contas de **13 a 17 anos** e a política de privacidade promete "sem publicidade direcionada" para menores (LGPD art. 14; Estatuto Digital da Criança e do Adolescente, Lei 15.211/2025). A data de nascimento é opcional e a idade não é verificada. Por isso `ALLOW_PERSONALIZED_ADS = false`: todo pedido de anúncio é não personalizado (Android: `npa=1`; iOS: `npa=1`; web: `requestNonPersonalizedAds = 1`). Reduz o valor do anúncio. Liberar personalizado exige verificação de idade e revisão jurídica. O pedido de ATT continua como combinado (depois da primeira vitória), mesmo sem personalização.
+O app aceita contas de **13 a 17 anos** e a política de privacidade promete "sem publicidade direcionada" para menores (LGPD art. 14; Estatuto Digital da Criança e do Adolescente, Lei 15.211/2025). A data de nascimento é opcional e a idade não é verificada. Por isso `ALLOW_PERSONALIZED_ADS = false`: todo pedido de anúncio é não personalizado (Android: `npa=1`; iOS: `npa=1`; web: `requestNonPersonalizedAds = 1`). Reduz o valor do anúncio. Liberar personalizado exige verificação de idade e revisão jurídica. No iOS não há pedido de ATT.
 
 ## Privacidade e declarações das lojas (rascunho, para a fase 2)
 
@@ -76,10 +75,10 @@ Acrescentar ao que já está declarado:
 
 ### App Store Connect: privacidade (rótulos)
 Acrescentar:
-- **Identificadores > ID do dispositivo**: usado para **publicidade de terceiros**, **vinculado a você: não**, **usado para rastreamento: sim** (o SDK do Google; por isso o ATT).
-- **Dados de uso > Interação com o produto / Dados de publicidade**: publicidade de terceiros, não vinculado, rastreamento: sim.
+- **Identificadores > ID do dispositivo**: usado para **publicidade de terceiros**, **vinculado a você: não**, **usado para rastreamento: não** (sem ATT e só anúncio não personalizado; decisão de 11/11/2026).
+- **Dados de uso > Interação com o produto / Dados de publicidade**: publicidade de terceiros, não vinculado, rastreamento: não.
 - **Compras**: não declarar como coletado (StoreKit; a Tech Fernandes não recebe histórico).
-- `PrivacyInfo.xcprivacy` do app: `NSPrivacyTracking` continua `false` e sem `NSPrivacyTrackingDomains` (o SDK do Google se declara; listar domínios faria o iPhone bloqueá-los para quem recusa o ATT). Mesma decisão do Cuidia.
+- `PrivacyInfo.xcprivacy` do app: `NSPrivacyTracking` continua `false` e sem `NSPrivacyTrackingDomains` (o SDK do Google se declara; listar domínios faria o iPhone bloqueá-los). Mesma decisão do Cuidia.
 - Assinatura `sem_anuncios_anual` no grupo "Sem anúncios", ID `futeba_sem_anuncios_anual` (diferente do Play), anexada à versão que sai com ela.
 
 ## iOS: o que falta para o TestFlight (levantado em 11/11/2026)

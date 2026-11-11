@@ -70,8 +70,8 @@ import org.jetbrains.compose.resources.stringResource
  * - Câmera (para foto de perfil)
  * - Microfone (mensagens de voz)
  *
- * Em versão multiplataforma, as permissões são simuladas,
- * permitindo ao usuário marcar cada item como concedido.
+ * Em versão multiplataforma, notificações, localização e câmera são simuladas (o iOS pede cada
+ * uma no primeiro uso). O microfone chama a permissão real do sistema.
  */
 @Composable
 fun PermissionOnboardingScreen(
@@ -158,7 +158,7 @@ fun PermissionOnboardingScreen(
                 title = stringResource(Res.string.permission_microphone_title),
                 description = stringResource(Res.string.permission_microphone_description),
                 isGranted = microphoneGranted,
-                onRequest = { microphoneGranted = true }
+                onRequest = { requestMicrophonePermission { granted -> microphoneGranted = granted } }
             )
 
             Spacer(modifier = Modifier.weight(1f))

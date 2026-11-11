@@ -135,24 +135,17 @@ internal class FirebaseUsersDataSource(
                 "inappropriate_content", "abusive_language", "spam", "harassment", "other" -> reason.trim().lowercase()
                 else -> "harassment"
             }
-            // 1. Gravação em reports (coleção de denúncias no Firestore)
+            // 1. Gravação em abuse_reports (coleção de denúncias; só o autor cria, ninguém lê pelo cliente)
             val reportWrites = mutableListOf<Result<Unit>>()
-            reportWrites += runCatching {
-                val docRef = firestore.collection("reports").document
-                val payload = mutableMapOf<String, Any>(
-                    "reporter_id" to reporterId,
-                    "target_user_id" to targetUserId,
-                    "target_user_name" to targetUserName,
-                    "target_type" to "player",
-                    "reason" to normalizedReason,
-                    "details" to reason.trim(),
-                    "status" to "OPEN",
-                    "created_at" to FieldValue.serverTimestamp
-                )
-                if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
-                if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
-                docRef.set(payload)
-            }
+            reportWrites += submitContentReport(
+                reporterId = reporterId,
+                targetType = "player",
+                targetId = targetUserId,
+                targetName = targetUserName,
+                reason = normalizedReason,
+                gameId = gameId,
+                groupId = groupId
+            )
             // 2. Fallback via callable submitContentReport quando vinculado a jogo/grupo
             if (reportWrites.none { it.isSuccess } && !gameId.isNullOrBlank()) {
                 reportWrites += runCatching {
@@ -169,17 +162,20 @@ internal class FirebaseUsersDataSource(
                     Unit
                 }
             }
+            // A denúncia só conta como enviada se a gravação (ou o fallback) deu certo:
+            // o bloqueio abaixo não substitui o registro para a moderação.
+            val reportSent = reportWrites.any { it.isSuccess }
             // 3. Garante bloqueio preventivo no servidor (Guideline 1.2 App Store:
             // denunciar jogador também pode isolar o contato imediatamente)
             if (reporterId.isNotBlank() && targetUserId.isNotBlank() && reporterId != targetUserId) {
-                reportWrites += blockUserOnServer(
+                blockUserOnServer(
                     userId = reporterId,
                     targetUserId = targetUserId,
                     userName = targetUserName,
                     reason = reason
                 )
             }
-            if (reportWrites.any { it.isSuccess }) {
+            if (reportSent) {
                 Result.success(Unit)
             } else {
                 reportWrites.firstOrNull() ?: Result.failure(Exception("Falha ao registrar denúncia"))
@@ -189,6 +185,42 @@ internal class FirebaseUsersDataSource(
         }
     }
 
+
+    /**
+     * Grava uma denúncia de jogador ou de grupo em `abuse_reports` (diretriz 1.2 da App Store).
+     * As regras do Firestore só deixam o autor criar (reporter_id == uid) e ninguém ler ou
+     * alterar pelo cliente; a moderação lê pelo servidor.
+     */
+    suspend fun submitContentReport(
+        reporterId: String,
+        targetType: String,
+        targetId: String,
+        targetName: String,
+        reason: String,
+        gameId: String? = null,
+        groupId: String? = null
+    ): Result<Unit> {
+        return try {
+            if (reporterId.isBlank() || targetId.isBlank()) {
+                return Result.failure(IllegalArgumentException("IDs inválidos para denúncia"))
+            }
+            val payload = mutableMapOf<String, Any>(
+                "reporter_id" to reporterId,
+                "target_type" to targetType,
+                "target_id" to targetId,
+                "target_name" to targetName.trim().take(120),
+                "reason" to reason,
+                "status" to "OPEN",
+                "created_at" to FieldValue.serverTimestamp
+            )
+            if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
+            if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
+            firestore.collection("abuse_reports").document.set(payload)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     // ========== ACTIVITIES ==========
 
