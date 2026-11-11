@@ -18,7 +18,7 @@
     <string name="auth_authenticating">Authenticating...</string>
     <string name="auth_developed_by">Developed by</string>
     <string name="auth_developer_name">Renan Locatiz Fernandes</string>
-    <string name="auth_version">Version %s</string>
+    <string name="auth_version">Version %1$s</string>
     <string name="auth_register_title">Register</string>
     <string name="auth_register_message">Registration is now done only via Google Sign-In.</string>
     <string name="auth_register_redirect">You will be redirected to the login screen.</string>
@@ -251,7 +251,7 @@
     <string name="live_game_event_red_card">Red Card</string>
     <string name="live_game_event_foul">Foul</string>
     <string name="live_game_event_default">Event</string>
-    <string name="live_game_assist_by">Assist: %s</string>
+    <string name="live_game_assist_by">Assist: %1$s</string>
     <string name="live_game_finish">Finish</string>
     <string name="live_game_finish_content">Finish Game</string>
 
@@ -369,9 +369,9 @@
 
     <!-- Game Detail -->
     <string name="game_cancelled_success">Game cancelled successfully</string>
-    <string name="next_game_scheduled">Next game scheduled for %s</string>
-    <string name="scheduling_conflict">Scheduling conflict on %s</string>
-    <string name="scheduling_error">Scheduling error: %s</string>
+    <string name="next_game_scheduled">Next game scheduled for %1$s</string>
+    <string name="scheduling_conflict">Scheduling conflict on %1$s</string>
+    <string name="scheduling_error">Scheduling error: %1$s</string>
     <string name="real_time">Real Time</string>
     <string name="whatsapp_invite_title">Invite to Game</string>
     <string name="game_at">Game at</string>
@@ -412,7 +412,7 @@
     <string name="start_game">Start Game</string>
     <string name="list_open">List Open</string>
     <string name="list_closed">List Closed</string>
-    <string name="field_field">Field: %s</string>
+    <string name="field_field">Field: %1$s</string>
     <string name="action_remove">Remove</string>
     <string name="payment">Payment</string>
     <string name="accept">Accept</string>
@@ -420,7 +420,7 @@
     <string name="live_goal">Goal</string>
     <string name="live_yellow_card">Yellow Card</string>
     <string name="live_red_card">Red Card</string>
-    <string name="goals_count">Goals: %s</string>
+    <string name="goals_count">Goals: %1$s</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
     <string name="error">Error</string>
@@ -579,7 +579,7 @@
     <string name="location_detail_region">Region (Zonal)</string>
     <string name="location_detail_state">State</string>
     <string name="location_detail_geolocation">Geolocation</string>
-    <string name="location_detail_coordinates">Lat: %s / Lng: %s</string>
+    <string name="location_detail_coordinates">Lat: %1$s / Lng: %2$s</string>
     <string name="location_detail_update_coords">Update Coordinates</string>
     <string name="location_detail_amenities">Amenities</string>
     <string name="location_detail_locker_room">Locker Room</string>
@@ -603,7 +603,7 @@
     <string name="location_detail_add_button">Add</string>
     <string name="location_detail_save_button">Save</string>
     <string name="location_detail_cancel_button">Cancel</string>
-    <string name="location_detail_field_display">%s - R$ %s/h</string>
+    <string name="location_detail_field_display">%1$s - R$ %2$s/h</string>
 
     <!-- Manage Locations Screen -->
     <string name="manage_locations">Manage Locations</string>
@@ -616,14 +616,14 @@
     <string name="locations_remove_duplicates">Remove Duplicates</string>
     <string name="locations_remove_duplicates_message">Do you want to analyze and remove duplicate locations? The record with the most complete data will be kept.</string>
     <string name="locations_delete_location_title">Delete Location</string>
-    <string name="locations_delete_location_message">Are you sure you want to delete \"%s\" and all its fields?</string>
+    <string name="locations_delete_location_message">Are you sure you want to delete \"%1$s\" and all its fields?</string>
     <string name="locations_delete_field_title">Delete Field</string>
-    <string name="locations_delete_field_message">Are you sure you want to delete \"%s\"?</string>
+    <string name="locations_delete_field_message">Are you sure you want to delete \"%1$s\"?</string>
     <string name="locations_edit">Edit</string>
     <string name="locations_delete">Delete</string>
     <string name="locations_delete_field">Delete field</string>
     <string name="locations_no_fields">No fields</string>
-    <string name="locations_fields_count">Fields (%d)</string>
+    <string name="locations_fields_count">Fields (%1$d)</string>
 
     <!-- Location Dialogs -->
     <string name="location_dialog_photo_title">Field Photo</string>
@@ -659,7 +659,7 @@
     <string name="tactical_share_tactic">Share Tactic</string>
     <string name="tactical_draw_color">Draw Color</string>
     <string name="tactical_clear">Clear</string>
-    <string name="tactical_error_share">Error sharing: %s</string>
+    <string name="tactical_error_share">Error sharing: %1$s</string>
     <string name="tactical_error_save">Error saving image</string>
 
     <!-- Schedules Screen -->
@@ -699,7 +699,7 @@
     <string name="schedules_edit_schedule">Edit Schedule</string>
     <string name="schedules_save">Save</string>
     <string name="schedules_unnamed_schedule">Unnamed schedule</string>
-    <string name="schedules_create_content">Creating schedule %s</string>
+    <string name="schedules_create_content">Creating schedule %1$s</string>
     <string name="schedules_fab_description">Create Schedule</string>
 
     <!-- Players Screen -->
@@ -719,7 +719,7 @@
     <string name="players_sort_gk">Goalkeeper</string>
     <string name="players_rating_atk">ATK</string>
     <string name="players_rating_gk">GK</string>
-    <string name="players_level_format">Lvl %d</string>
+    <string name="players_level_format">Lvl %1$d</string>
     <string name="players_cd_invite">Invite player</string>
     <string name="players_vs">VS</string>
     <string name="players_goals">Goals</string>
@@ -732,7 +732,7 @@
     <string name="players_goalkeeper">Goalkeeper</string>
     <string name="players_mid">Mid</string>
     <string name="players_defense">Defense</string>
-    <string name="players_generated_on">Generated on %s</string>
+    <string name="players_generated_on">Generated on %1$s</string>
     <string name="players_close">Close</string>
     <string name="players_share">Share</string>
     <string name="players_card_title">Player Card</string>
@@ -752,9 +752,9 @@
     <string name="notifications_this_week">This Week</string>
     <string name="notifications_old">Old</string>
     <string name="notifications_now">Now</string>
-    <string name="notifications_min_ago">%dmin ago</string>
-    <string name="notifications_h_ago">%dh ago</string>
-    <string name="notifications_d_ago">%dd ago</string>
+    <string name="notifications_min_ago">%1$dmin ago</string>
+    <string name="notifications_h_ago">%1$dh ago</string>
+    <string name="notifications_d_ago">%1$dd ago</string>
 
     <!-- Preferences Screen -->
     <string name="preferences_appearance">Appearance</string>
@@ -890,7 +890,7 @@
     <string name="dialog_add_photo">Add photo</string>
     <string name="dialog_error_camera">Error opening camera</string>
     <string name="dialog_transfer_ownership">Transfer Ownership</string>
-    <string name="dialog_transfer_message">Are you sure you want to transfer group ownership to \"%s\"?\n\nYou will become admin and cannot reverse this action.</string>
+    <string name="dialog_transfer_message">Are you sure you want to transfer group ownership to \"%1$s\"?\n\nYou will become admin and cannot reverse this action.</string>
     <string name="dialog_transfer">Transfer</string>
     <string name="dialog_no_members">No other members to transfer ownership to.</string>
 
@@ -912,8 +912,8 @@
     <string name="statistics_jogos">games</string>
     <string name="statistics_average">Average</string>
     <string name="statistics_points">pts</string>
-    <string name="statistics_avatar">Avatar of %s</string>
-    <string name="statistics_level_badge">Level badge %s</string>
+    <string name="statistics_avatar">Avatar of %1$s</string>
+    <string name="statistics_level_badge">Level badge %1$s</string>
     <string name="statistics_league">League</string>
     <string name="statistics_evolution">Evolution</string>
     <string name="statistics_went_up">Went up!</string>
@@ -922,7 +922,7 @@
     <string name="statistics_good_phase">Good phase</string>
     <string name="statistics_stable">Stable</string>
     <string name="statistics_protegido">Protected</string>
-    <string name="statistics_subindo">Rising (%d/3)</string>
+    <string name="statistics_subindo">Rising (%1$d/3)</string>
     <string name="statistics_rating">Rating</string>
     <string name="statistics_mvp_times">times MVP</string>
     <string name="stat_xp">XP</string>
@@ -938,21 +938,21 @@
     <string name="post_game_loss">DON\'T GIVE UP!</string>
     <string name="post_game_max_effort">MAXIMUM EFFORT!</string>
     <string name="post_game_journey">YOUR JOURNEY IN THE MATCH</string>
-    <string name="post_game_xp_earned">+%d XP</string>
+    <string name="post_game_xp_earned">+%1$d XP</string>
     <string name="post_game_rumoa">ON TO THE NEXT LEVEL</string>
     <string name="post_game_level_up">LEVELED UP!</string>
-    <string name="post_game_level">Level %d</string>
-    <string name="post_game_level_to">Level %d - %s</string>
-    <string name="post_game_current_level">Level %d</string>
-    <string name="post_game_progress">%d%% to the next level</string>
+    <string name="post_game_level">Level %1$d</string>
+    <string name="post_game_level_to">Level %1$d - %2$s</string>
+    <string name="post_game_current_level">Level %1$d</string>
+    <string name="post_game_progress">%1$d%% to the next level</string>
     <string name="post_game_conquistas">Achievements Unlocked!</string>
 
     <!-- Player Evolution Card -->
     <string name="player_evolution_level">LEVEL</string>
-    <string name="player_evolution_xp">%d XP</string>
-    <string name="player_evolution_xp_remaining">Missing %d XP for the next level</string>
-    <string name="player_evolution_total">Total: %d XP</string>
-    <string name="player_evolution_league">League %s</string>
+    <string name="player_evolution_xp">%1$d XP</string>
+    <string name="player_evolution_xp_remaining">Missing %1$d XP for the next level</string>
+    <string name="player_evolution_total">Total: %1$d XP</string>
+    <string name="player_evolution_league">League %1$s</string>
     <string name="player_evolution_rating">Rating: %.1f</string>
 
     <!-- League Strings -->
@@ -967,7 +967,7 @@
     <string name="league_period">Period</string>
     <string name="league_points">Points</string>
     <string name="league_games_played">Games</string>
-    <string name="league_games_played_lower">%d games</string>
+    <string name="league_games_played_lower">%1$d games</string>
     <string name="league_victories">Victories</string>
     <string name="league_mvp_count">MVPs</string>
     <string name="league_goals">Goals</string>
@@ -976,7 +976,7 @@
     <string name="league_division_silver">SILVER</string>
     <string name="league_division_bronze">BRONZE</string>
     <string name="league_division_diamond">DIAMOND</string>
-    <string name="league_rating_format">Rating: %s</string>
+    <string name="league_rating_format">Rating: %1$s</string>
     <string name="league_rating_description">Rating calculated based on:</string>
     <string name="league_rules_show">How it works?</string>
     <string name="league_rules_hide">Hide rules</string>
@@ -985,8 +985,8 @@
     <string name="league_evolving">Evolving</string>
     <string name="league_beginners">Beginners</string>
     <string name="league_rating_components">• XP/game (40%%)\n• Win rate (30%%)\n• Goal difference (20%%)\n• MVPs (10%%)</string>
-    <string name="league_players_count">%d players</string>
-    <string name="league_points_format">%s pts</string>
-    <string name="league_wins_goals_format">%dW • %dG</string>
-    <string name="league_next_threshold">Next: %d</string>
+    <string name="league_players_count">%1$d players</string>
+    <string name="league_points_format">%1$s pts</string>
+    <string name="league_wins_goals_format">%1$dW • %2$dG</string>
+    <string name="league_next_threshold">Next: %1$d</string>
 </resources>
