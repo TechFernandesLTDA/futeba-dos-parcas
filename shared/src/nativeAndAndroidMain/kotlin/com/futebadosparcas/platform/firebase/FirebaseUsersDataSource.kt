@@ -132,7 +132,7 @@ internal class FirebaseUsersDataSource(
     ): Result<Unit> {
         return try {
             val normalizedReason = when (reason.trim().lowercase()) {
-                "inappropriate_content", "abusive_language", "spam", "harassment", "other" -> reason.trim().lowercase()
+                "inappropriate_content", "abusive_language", "spam", "harassment", "fake_profile", "other" -> reason.trim().lowercase()
                 else -> "harassment"
             }
             // 1. Gravação em abuse_reports (coleção de denúncias; só o autor cria, ninguém lê pelo cliente)
@@ -197,7 +197,8 @@ internal class FirebaseUsersDataSource(
         targetName: String,
         reason: String,
         gameId: String? = null,
-        groupId: String? = null
+        groupId: String? = null,
+        details: String? = null
     ): Result<Unit> {
         return try {
             // O autor é sempre o usuário logado: nunca vem de parâmetro.
@@ -217,6 +218,8 @@ internal class FirebaseUsersDataSource(
             )
             if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
             if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
+            // Texto livre opcional, no máximo 500 caracteres (limite das regras do Firestore).
+            details?.trim()?.takeIf { it.isNotEmpty() }?.let { payload["details"] = it.take(500) }
             // ID determinístico + "só criar" nas regras: cada pessoa denuncia o mesmo alvo uma vez.
             firestore.collection("abuse_reports")
                 .document("${reporterId}_${targetType}_$targetId")

@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,11 +32,18 @@ import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.cancel
 import com.futebadosparcas.compose.resources.close
 import com.futebadosparcas.compose.resources.report_already_body
+import com.futebadosparcas.compose.resources.report_block_action
+import com.futebadosparcas.compose.resources.report_block_done
+import com.futebadosparcas.compose.resources.report_block_failed
+import com.futebadosparcas.compose.resources.report_block_offer
+import com.futebadosparcas.compose.resources.report_block_skip
+import com.futebadosparcas.compose.resources.report_details_label
 import com.futebadosparcas.compose.resources.report_failed_body
 import com.futebadosparcas.compose.resources.report_group_title
 import com.futebadosparcas.compose.resources.report_player_title
 import com.futebadosparcas.compose.resources.report_prompt
 import com.futebadosparcas.compose.resources.report_reason_abusive_language
+import com.futebadosparcas.compose.resources.report_reason_fake_profile
 import com.futebadosparcas.compose.resources.report_reason_harassment
 import com.futebadosparcas.compose.resources.report_reason_inappropriate_content
 import com.futebadosparcas.compose.resources.report_reason_other
@@ -58,10 +68,16 @@ enum class ReportReason(val code: String, val label: StringResource) {
     ABUSIVE_LANGUAGE("abusive_language", Res.string.report_reason_abusive_language),
     SPAM("spam", Res.string.report_reason_spam),
     HARASSMENT("harassment", Res.string.report_reason_harassment),
+    FAKE_PROFILE("fake_profile", Res.string.report_reason_fake_profile),
     OTHER("other", Res.string.report_reason_other),
 }
 
 private enum class ReportStep { CHOOSING, SENDING, SENT, FAILED }
+
+/** Tamanho máximo do texto opcional (o mesmo limite de `abuse_reports.details` nas regras). */
+const val REPORT_DETAILS_MAX_LENGTH = 500
+
+private enum class BlockStep { OFFER, BLOCKING, DONE, FAILED }
 
 /** Resultado do envio. [ALREADY_REPORTED] mostra a confirmação neutra, sem tratar como erro. */
 enum class ReportOutcome { SENT, ALREADY_REPORTED, FAILED }
@@ -95,19 +111,24 @@ class ReportLog(
 /**
  * Fluxo mínimo de denúncia (diretriz 1.2): escolhe o motivo, envia e mostra a confirmação.
  *
- * [onSubmit] grava a denúncia (código do motivo) e devolve o resultado; a gravação em si fica
- * com quem chama (`FirebaseDataSource.submitContentReport`), para a tela não depender do Firebase.
+ * [onSubmit] grava a denúncia (código do motivo e texto opcional) e devolve o resultado; a
+ * gravação em si fica com quem chama (`FirebaseDataSource.submitContentReport`), para a tela não
+ * depender do Firebase. Se [onBlock] vier preenchido (denúncia de jogador), depois do envio a tela
+ * oferece bloquear a pessoa e devolve se deu certo.
  */
 @Composable
 fun ReportDialog(
     targetType: ReportTargetType,
     targetName: String,
     onDismiss: () -> Unit,
-    onSubmit: suspend (reasonCode: String) -> ReportOutcome,
+    onSubmit: suspend (reasonCode: String, details: String) -> ReportOutcome,
+    onBlock: (suspend () -> Boolean)? = null,
 ) {
     var selected by remember { mutableStateOf<ReportReason?>(null) }
     var step by remember { mutableStateOf(ReportStep.CHOOSING) }
+    var details by remember { mutableStateOf("") }
     var alreadyReported by remember { mutableStateOf(false) }
+    var blockStep by remember { mutableStateOf(BlockStep.OFFER) }
     val scope = rememberCoroutineScope()
 
     val title = stringResource(
@@ -116,19 +137,56 @@ fun ReportDialog(
     )
 
     if (step == ReportStep.SENT) {
+        val block = onBlock
+        val offerBlock = block != null
+        val shownName = targetName.ifBlank { title }
         AlertDialog(
-            onDismissRequest = onDismiss,
+            onDismissRequest = { if (blockStep != BlockStep.BLOCKING) onDismiss() },
             title = { Text(stringResource(Res.string.report_sent_title)) },
             text = {
-                Text(
-                    stringResource(
-                        if (alreadyReported) Res.string.report_already_body
-                        else Res.string.report_sent_body
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        stringResource(
+                            if (alreadyReported) Res.string.report_already_body
+                            else Res.string.report_sent_body
+                        )
                     )
-                )
+                    if (offerBlock) {
+                        Text(
+                            text = when (blockStep) {
+                                BlockStep.DONE -> stringResource(Res.string.report_block_done, shownName)
+                                BlockStep.FAILED -> stringResource(Res.string.report_block_failed)
+                                else -> stringResource(Res.string.report_block_offer, shownName)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (blockStep == BlockStep.FAILED) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             },
             confirmButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                if (offerBlock && blockStep != BlockStep.DONE) {
+                    Button(
+                        enabled = blockStep != BlockStep.BLOCKING,
+                        onClick = {
+                            blockStep = BlockStep.BLOCKING
+                            scope.launch {
+                                blockStep = if (block()) BlockStep.DONE else BlockStep.FAILED
+                            }
+                        },
+                    ) { Text(stringResource(Res.string.report_block_action, shownName)) }
+                } else {
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                }
+            },
+            dismissButton = {
+                if (offerBlock && blockStep != BlockStep.DONE) {
+                    TextButton(
+                        enabled = blockStep != BlockStep.BLOCKING,
+                        onClick = onDismiss,
+                    ) { Text(stringResource(Res.string.report_block_skip)) }
+                }
             },
         )
         return
@@ -139,7 +197,7 @@ fun ReportDialog(
         title = { Text(title) },
         text = {
             Column(
-                modifier = Modifier.heightIn(max = 420.dp),
+                modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 if (targetName.isNotBlank()) {
@@ -175,6 +233,15 @@ fun ReportDialog(
                         )
                     }
                 }
+                OutlinedTextField(
+                    value = details,
+                    onValueChange = { details = it.take(REPORT_DETAILS_MAX_LENGTH) },
+                    enabled = step != ReportStep.SENDING,
+                    label = { Text(stringResource(Res.string.report_details_label)) },
+                    minLines = 2,
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 if (step == ReportStep.FAILED) {
                     Text(
                         text = stringResource(Res.string.report_failed_body),
@@ -191,7 +258,7 @@ fun ReportDialog(
                     val reason = selected ?: return@Button
                     step = ReportStep.SENDING
                     scope.launch {
-                        val outcome = onSubmit(reason.code)
+                        val outcome = onSubmit(reason.code, details.trim())
                         alreadyReported = outcome == ReportOutcome.ALREADY_REPORTED
                         step = if (outcome == ReportOutcome.FAILED) ReportStep.FAILED else ReportStep.SENT
                     }

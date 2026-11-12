@@ -148,6 +148,22 @@ describe("abuse_reports — criação", () => {
     await assertFails(asPlayerA(testEnv).doc(`abuse_reports/${OK_ID}`).set(sem));
   });
 
+  it("Aceita o motivo perfil falso e o texto opcional (details)", async () => {
+    await assertSucceeds(
+      asPlayerA(testEnv)
+        .doc(`abuse_reports/${OK_ID}`)
+        .set(validReport({ reason: "fake_profile", details: "Usa a foto de outra pessoa." }))
+    );
+  });
+
+  it("Negado com details acima de 500 caracteres ou que não seja texto", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`abuse_reports/${OK_ID}`).set(validReport({ details: "d".repeat(501) }))
+    );
+    await assertFails(db.doc(`abuse_reports/${OK_ID}`).set(validReport({ details: 42 })));
+  });
+
   it("Negado com target_name acima de 120 caracteres", async () => {
     await assertFails(
       asPlayerA(testEnv)

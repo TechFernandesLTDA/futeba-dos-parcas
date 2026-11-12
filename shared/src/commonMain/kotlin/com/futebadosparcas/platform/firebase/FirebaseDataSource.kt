@@ -84,7 +84,8 @@ expect class FirebaseDataSource() {
         targetName: String,
         reason: String,
         gameId: String? = null,
-        groupId: String? = null
+        groupId: String? = null,
+        details: String? = null
     ): Result<Unit>
     suspend fun submitPlayerReport(
         reporterId: String,

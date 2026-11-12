@@ -9,7 +9,7 @@ class ReportReasonTest {
     @Test
     fun codigosBatemComAsRegrasDoFirestore() {
         assertEquals(
-            setOf("inappropriate_content", "abusive_language", "spam", "harassment", "other"),
+            setOf("inappropriate_content", "abusive_language", "spam", "harassment", "fake_profile", "other"),
             ReportReason.entries.map { it.code }.toSet()
         )
         assertEquals(
@@ -40,5 +40,11 @@ class ReportReasonTest {
 
         assertEquals(ReportOutcome.FAILED, log.submitOnce("u1", "player", "p9") { false })
         assertEquals(ReportOutcome.SENT, log.submitOnce("u1", "player", "p9") { true })
+    }
+
+    @Test
+    fun textoOpcionalTemOMesmoLimiteDasRegras() {
+        // firestore.rules: details.size() <= 500
+        assertEquals(500, REPORT_DETAILS_MAX_LENGTH)
     }
 }

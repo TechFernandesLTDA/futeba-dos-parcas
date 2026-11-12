@@ -72,7 +72,8 @@ private sealed interface RouteLoadState<out T> {
 fun RankingRouteScreen(
     onNavigateBack: () -> Unit,
     currentUserId: String? = null,
-    onSubmitReport: (suspend (targetId: String, targetName: String, reasonCode: String) -> ReportOutcome)? = null,
+    onSubmitReport: (suspend (targetId: String, targetName: String, reasonCode: String, details: String) -> ReportOutcome)? = null,
+    onBlockReported: (suspend (targetId: String, targetName: String) -> Boolean)? = null,
 ) {
     var reportTarget by remember { mutableStateOf<PlayerRankingItem?>(null) }
     val repository: RankingRepository? = koinInjectOrNull<RankingRepository>()
@@ -167,7 +168,8 @@ fun RankingRouteScreen(
             targetType = ReportTargetType.PLAYER,
             targetName = targetName,
             onDismiss = { reportTarget = null },
-            onSubmit = { reason -> onSubmitReport(target.userId, targetName, reason) },
+            onSubmit = { reason, details -> onSubmitReport(target.userId, targetName, reason, details) },
+            onBlock = onBlockReported?.let { block -> { block(target.userId, targetName) } },
         )
     }
 }

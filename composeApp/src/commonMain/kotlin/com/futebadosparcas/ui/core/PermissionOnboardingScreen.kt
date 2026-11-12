@@ -20,10 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -48,12 +46,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.permission_allow
-import com.futebadosparcas.compose.resources.permission_camera_description
-import com.futebadosparcas.compose.resources.permission_camera_title
 import com.futebadosparcas.compose.resources.permission_location_description
 import com.futebadosparcas.compose.resources.permission_location_title
-import com.futebadosparcas.compose.resources.permission_microphone_description
-import com.futebadosparcas.compose.resources.permission_microphone_title
 import com.futebadosparcas.compose.resources.permission_notifications_description
 import com.futebadosparcas.compose.resources.permission_notifications_title
 import com.futebadosparcas.compose.resources.permission_onboarding_continue
@@ -67,11 +61,10 @@ import org.jetbrains.compose.resources.stringResource
  * Exibida na primeira abertura do app para solicitar:
  * - Notificações
  * - Localização (para encontrar jogos próximos)
- * - Câmera (para foto de perfil)
- * - Microfone (mensagens de voz)
  *
- * Em versão multiplataforma, notificações, localização e câmera são simuladas (o iOS pede cada
- * uma no primeiro uso). O microfone chama a permissão real do sistema.
+ * Em versão multiplataforma, notificações e localização são simuladas (o iOS pede cada uma no
+ * primeiro uso). O app não tem recurso de voz e a câmera não é usada aqui, então microfone e
+ * câmera não são pedidos (diretriz 5.1.1 da App Store).
  */
 @Composable
 fun PermissionOnboardingScreen(
@@ -82,8 +75,6 @@ fun PermissionOnboardingScreen(
     // Estados das permissões (simulados)
     var notificationGranted by remember { mutableStateOf(false) }
     var locationGranted by remember { mutableStateOf(false) }
-    var cameraGranted by remember { mutableStateOf(false) }
-    var microphoneGranted by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -140,26 +131,6 @@ fun PermissionOnboardingScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Card de Câmera
-            PermissionCard(
-                icon = Icons.Default.Camera,
-                title = stringResource(Res.string.permission_camera_title),
-                description = stringResource(Res.string.permission_camera_description),
-                isGranted = cameraGranted,
-                onRequest = { cameraGranted = true }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Card de Microfone
-            PermissionCard(
-                icon = Icons.Default.Mic,
-                title = stringResource(Res.string.permission_microphone_title),
-                description = stringResource(Res.string.permission_microphone_description),
-                isGranted = microphoneGranted,
-                onRequest = { requestMicrophonePermission { granted -> microphoneGranted = granted } }
-            )
 
             Spacer(modifier = Modifier.weight(1f))
 
