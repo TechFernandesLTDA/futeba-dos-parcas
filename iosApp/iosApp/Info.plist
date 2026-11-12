@@ -21,7 +21,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.10.0</string>
     <key>CFBundleVersion</key>
-    <string>27</string>
+    <string>28</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchScreen</key>
@@ -52,14 +52,6 @@
     <!-- Privacy - Photo Library -->
     <key>NSPhotoLibraryUsageDescription</key>
     <string>O Futeba dos Parças usa suas fotos para você escolher a foto de perfil e compartilhar imagens dos jogos.</string>
-
-    <!-- Privacy - Camera -->
-    <key>NSCameraUsageDescription</key>
-    <string>O Futeba dos Parças usa a câmera para você tirar a foto de perfil e registrar momentos dos jogos.</string>
-
-    <!-- Privacy - Microphone -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>O Futeba dos Parças usa o microfone para você gravar mensagens de voz para o seu grupo. Nada é gravado sem você pedir.</string>
 
     <!-- Privacy - Location -->
     <key>NSLocationWhenInUseUsageDescription</key>

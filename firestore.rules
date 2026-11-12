@@ -3915,7 +3915,7 @@ service cloud.firestore {
         request.resource.data.target_id != request.resource.data.reporter_id &&
         request.resource.data.keys().hasOnly([
           'reporter_id', 'target_type', 'target_id', 'target_name', 'reason',
-          'status', 'created_at', 'game_id', 'group_id'
+          'status', 'created_at', 'game_id', 'group_id', 'details'
         ]) &&
         request.resource.data.keys().hasAll([
           'reporter_id', 'target_type', 'target_id', 'reason', 'status', 'created_at'
@@ -3926,13 +3926,15 @@ service cloud.firestore {
         request.resource.data.target_id.size() > 0 &&
         request.resource.data.target_id.size() <= 128 &&
         request.resource.data.reason in [
-          'inappropriate_content', 'abusive_language', 'spam', 'harassment', 'other'
+          'inappropriate_content', 'abusive_language', 'spam', 'harassment', 'fake_profile', 'other'
         ] &&
         request.resource.data.status == 'OPEN' &&
         request.resource.data.created_at == request.time &&
         (!('target_name' in request.resource.data) ||
           (request.resource.data.target_name is string &&
             request.resource.data.target_name.size() <= 120)) &&
+        (!('details' in request.resource.data) ||
+          (request.resource.data.details is string && request.resource.data.details.size() <= 500)) &&
         (!('game_id' in request.resource.data) ||
           (request.resource.data.game_id is string && request.resource.data.game_id.size() <= 128)) &&
         (!('group_id' in request.resource.data) ||

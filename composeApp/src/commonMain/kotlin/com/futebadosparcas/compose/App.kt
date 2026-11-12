@@ -444,7 +444,7 @@ fun AppNavigation(
             )
         }
 
-        // Onboarding de permissões (notificações, localização, câmera, microfone)
+        // Onboarding de permissões (notificações e localização)
         composable(AppRoutes.PERMISSION_ONBOARDING) {
             PermissionOnboardingScreen(
                 onComplete = {
@@ -932,7 +932,7 @@ fun AppNavigation(
                     targetType = ReportTargetType.GROUP,
                     targetName = "",
                     onDismiss = { showGroupReport = false },
-                    onSubmit = { reason ->
+                    onSubmit = { reason, details ->
                         reportLog(reportPreferences).submitOnce(
                             reporterId, ReportTargetType.GROUP.code, effectiveGroupId
                         ) {
@@ -941,7 +941,8 @@ fun AppNavigation(
                                 targetId = effectiveGroupId,
                                 targetName = "",
                                 reason = reason,
-                                groupId = effectiveGroupId
+                                groupId = effectiveGroupId,
+                                details = details
                             ).isSuccess
                         }
                     }
@@ -1112,7 +1113,7 @@ fun AppNavigation(
             RankingRouteScreen(
                 onNavigateBack = { navController.popBackStack() },
                 currentUserId = reporterId,
-                onSubmitReport = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName, reason ->
+                onSubmitReport = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName, reason, details ->
                     reportLog(reportPreferences).submitOnce(
                         reporterId, ReportTargetType.PLAYER.code, targetId
                     ) {
@@ -1120,9 +1121,30 @@ fun AppNavigation(
                             targetType = ReportTargetType.PLAYER.code,
                             targetId = targetId,
                             targetName = targetName,
-                            reason = reason
+                            reason = reason,
+                            details = details
                         ).isSuccess
                     }
+                },
+                // Depois de denunciar, a tela oferece bloquear a pessoa (mesmo bloqueio de Jogadores bloqueados).
+                onBlockReported = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName ->
+                    val result = dataSource.blockUserOnServer(
+                        userId = reporterId,
+                        targetUserId = targetId,
+                        userName = targetName,
+                        reason = "Denúncia"
+                    )
+                    if (result.isSuccess) {
+                        val updated = blockedPlayers.filterNot { it.userId == targetId } + BlockedPlayerData(
+                            userId = targetId,
+                            userName = targetName,
+                            reason = "Denúncia",
+                            blockedAt = null
+                        )
+                        blockedPlayers = updated
+                        persistBlockedPlayers(preferencesService, updated)
+                    }
+                    result.isSuccess
                 }
             )
         }
