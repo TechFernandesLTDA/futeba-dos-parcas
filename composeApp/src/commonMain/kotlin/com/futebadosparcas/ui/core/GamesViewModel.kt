@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.core
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GameWithConfirmations
-import com.futebadosparcas.domain.repository.GameRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -32,10 +32,11 @@ sealed class GamesUiState {
  * - Carrega todos os jogos com contagem de confirmações via fluxo reativo
  * - Gerencia os estados: Loading, Empty, Success, Error
  * - Expõe uiState como StateFlow coletado pela tela
- * - Usa gameRepository.injectado via Koin (koinViewModel)
+ * - Recebe a fonte de jogos por Koin (koinViewModel): no iOS vem do Firestore
+ *   (módulo da plataforma); sem ela a tela mostra o estado "indisponível".
  */
 class GamesViewModel(
-    private val gameRepository: GameRepository
+    private val observeGames: () -> Flow<Result<List<GameWithConfirmations>>>
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GamesUiState>(GamesUiState.Loading)
@@ -52,7 +53,7 @@ class GamesViewModel(
     fun loadGames() {
         viewModelScope.launch {
             _uiState.value = GamesUiState.Loading
-            gameRepository.getAllGamesWithConfirmationCountFlow()
+            observeGames()
                 .catch { e ->
                     _uiState.value = GamesUiState.Error(e.message ?: "Erro inesperado")
                 }

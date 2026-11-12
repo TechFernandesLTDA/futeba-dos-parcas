@@ -38,7 +38,7 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
 
             // Proprietário
             ownerId = get<String?>("owner_id") ?: get<String?>("ownerId") ?: "",
-            managers = (get<List<*>?>("managers"))?.mapNotNull { it as? String } ?: emptyList(),
+            managers = (getStringList("managers"))?.mapNotNull { it as? String } ?: emptyList(),
             isVerified = get<Boolean?>("is_verified") ?: get<Boolean?>("isVerified") ?: false,
             isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: true,
 
@@ -81,7 +81,7 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
             photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
 
             // Infraestrutura
-            amenities = (get<List<*>?>("amenities"))?.mapNotNull { it as? String } ?: emptyList(),
+            amenities = (getStringList("amenities"))?.mapNotNull { it as? String } ?: emptyList(),
 
             // Contato
             phone = get<String?>("phone"),
@@ -91,7 +91,7 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
             // Horário de funcionamento
             openingTime = get<String?>("opening_time") ?: get<String?>("openingTime") ?: "08:00",
             closingTime = get<String?>("closing_time") ?: get<String?>("closingTime") ?: "23:00",
-            operatingDays = (get<List<*>?>("operating_days") ?: get<List<*>?>("operatingDays"))
+            operatingDays = (getIntList("operating_days") ?: getIntList("operatingDays"))
                 ?.mapNotNull { (it as? Number)?.toInt() } ?: listOf(1, 2, 3, 4, 5, 6, 7),
             minGameDurationMinutes = get<Long?>("min_game_duration_minutes")?.toInt()
                 ?: get<Long?>("minGameDurationMinutes")?.toInt() ?: 60,
@@ -101,9 +101,9 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
             // Dados denormalizados de Fields
             fieldCount = get<Long?>("field_count")?.toInt() ?: get<Long?>("fieldCount")?.toInt() ?: 0,
             activeFieldCount = get<Long?>("active_field_count")?.toInt() ?: get<Long?>("activeFieldCount")?.toInt() ?: 0,
-            activeFieldTypes = (get<List<*>?>("active_field_types") ?: get<List<*>?>("activeFieldTypes"))
+            activeFieldTypes = (getStringList("active_field_types") ?: getStringList("activeFieldTypes"))
                 ?.mapNotNull { it as? String } ?: emptyList(),
-            activeFieldAmenities = (get<List<*>?>("active_field_amenities") ?: get<List<*>?>("activeFieldAmenities"))
+            activeFieldAmenities = (getStringList("active_field_amenities") ?: getStringList("activeFieldAmenities"))
                 ?.mapNotNull { it as? String } ?: emptyList(),
             primaryFieldType = get<String?>("primary_field_type") ?: get<String?>("primaryFieldType"),
             hasActiveFields = get<Boolean?>("has_active_fields") ?: get<Boolean?>("hasActiveFields") ?: false,
@@ -148,8 +148,8 @@ internal fun DocumentSnapshot.toFieldOrNull(): Field? {
             photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
             isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: true,
             hourlyPrice = get<Double?>("hourly_price") ?: get<Double?>("hourlyPrice") ?: get<Double?>("price_per_hour") ?: get<Double?>("pricePerHour") ?: 0.0,
-            photos = (get<List<*>?>("photos"))?.mapNotNull { it as? String } ?: emptyList(),
-            managers = (get<List<*>?>("managers"))?.mapNotNull { it as? String } ?: emptyList(),
+            photos = (getStringList("photos"))?.mapNotNull { it as? String } ?: emptyList(),
+            managers = (getStringList("managers"))?.mapNotNull { it as? String } ?: emptyList(),
             surface = get<String?>("surface"),
             isCovered = get<Boolean?>("is_covered") ?: get<Boolean?>("isCovered") ?: false,
             dimensions = get<String?>("dimensions")
@@ -190,7 +190,7 @@ internal fun DocumentSnapshot.toLocationAuditLogOrNull(): LocationAuditLog? {
     if (!exists) return null
 
     return try {
-        val changesMap = (get<Map<*, *>?>("changes"))?.mapNotNull { (key, value) ->
+        val changesMap = (getLooseMap("changes"))?.mapNotNull { (key, value) ->
             val fieldKey = key as? String ?: return@mapNotNull null
             val fieldValue = value as? Map<*, *> ?: return@mapNotNull null
             val before = fieldValue["before"] as? String
@@ -220,7 +220,7 @@ internal fun DocumentSnapshot.toLocationAuditLogOrNull(): LocationAuditLog? {
  * Trata Number, Timestamp do GitLive ou String.
  */
 internal fun DocumentSnapshot.safeLongLocation(field: String): Long? {
-    val value = get<Any?>(field)
+    val value = getScalar(field)
     return when (value) {
         is Number -> value.toLong()
         is Timestamp -> value.seconds * 1000L
