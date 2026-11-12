@@ -174,7 +174,7 @@ internal class FirebaseGamesDataSource(
         return try {
             firestore.collection(COLLECTION_GAMES)
                 .document(gameId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

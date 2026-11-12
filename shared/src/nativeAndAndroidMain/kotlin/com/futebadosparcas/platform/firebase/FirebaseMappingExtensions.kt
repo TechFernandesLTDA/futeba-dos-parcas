@@ -16,7 +16,7 @@ internal fun instantFromTimestamp(timestamp: Timestamp): Instant {
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.safeLong(field: String): Long? {
-    val value = get<Any?>(field)
+    val value = getScalar(field)
     return when (value) {
         is Number -> value.toLong()
         is Timestamp -> value.seconds * 1000L + value.nanoseconds / 1_000_000
@@ -48,7 +48,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): Use
         defenderRatingSet = get<Boolean?>("defender_rating_set") ?: get<Boolean?>("defenderRatingSet") ?: false,
         gkRatingSet = get<Boolean?>("gk_rating_set") ?: get<Boolean?>("gkRatingSet") ?: false,
         preferredPosition = get<String?>("preferred_position") ?: get<String?>("preferredPosition"),
-        preferredFieldTypes = ((get<List<*>?>("preferred_field_types") ?: get<List<*>?>("preferredFieldTypes")))?.mapNotNull { item ->
+        preferredFieldTypes = ((getStringList("preferred_field_types") ?: getStringList("preferredFieldTypes")))?.mapNotNull { item ->
             (item as? String)?.let { name -> try { FieldType.valueOf(name) } catch (e: Exception) { null } }
         } ?: emptyList(),
         favoriteTeam = get<String?>("favorite_team") ?: get<String?>("favoriteTeam"),
@@ -62,7 +62,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): Use
         experienceYears = safeInt("experience_years") ?: safeInt("experienceYears"),
         level = safeInt("level") ?: 1,
         experiencePoints = safeLong("experience_points") ?: safeLong("experiencePoints") ?: 0L,
-        milestonesAchieved = ((get<List<*>?>("milestones_achieved") ?: get<List<*>?>("milestonesAchieved")))?.mapNotNull { it as? String } ?: emptyList(),
+        milestonesAchieved = ((getStringList("milestones_achieved") ?: getStringList("milestonesAchieved")))?.mapNotNull { it as? String } ?: emptyList(),
         autoStrikerRating = get<Double?>("auto_striker_rating") ?: 0.0, autoMidRating = get<Double?>("auto_mid_rating") ?: 0.0,
         autoDefenderRating = get<Double?>("auto_defender_rating") ?: 0.0, autoGkRating = get<Double?>("auto_gk_rating") ?: 0.0,
         autoRatingSamples = safeInt("auto_rating_samples") ?: 0
@@ -107,8 +107,8 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Gam
         xpProcessing = get<Boolean?>("xp_processing") ?: get<Boolean?>("xpProcessing") ?: false,
         xpRewardStatus = get<String?>("xp_reward_status") ?: get<String?>("xpRewardStatus"),
         xpRewardHeldAt = safeLong("xp_reward_held_at") ?: safeLong("xpRewardHeldAt"),
-        xpRewardHoldReasons = ((get<List<*>?>("xp_reward_hold_reasons")
-            ?: get<List<*>?>("xpRewardHoldReasons")))?.mapNotNull { it as? String } ?: emptyList(),
+        xpRewardHoldReasons = ((getStringList("xp_reward_hold_reasons")
+            ?: getStringList("xpRewardHoldReasons")))?.mapNotNull { it as? String } ?: emptyList(),
         xpRewardReviewDecision = get<String?>("xp_reward_review_decision") ?: get<String?>("xpRewardReviewDecision"),
         xpRewardReviewedAt = safeLong("xp_reward_reviewed_at") ?: safeLong("xpRewardReviewedAt"),
         xpRewardReviewedBy = get<String?>("xp_reward_reviewed_by") ?: get<String?>("xpRewardReviewedBy"),
@@ -120,8 +120,8 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Gam
         validationVersion = safeInt("validation_version") ?: safeInt("validationVersion"),
         validationUpdatedAt = safeLong("validation_updated_at") ?: safeLong("validationUpdatedAt"),
         validationMode = get<String?>("validation_mode") ?: get<String?>("validationMode"),
-        validationReasons = ((get<List<*>?>("validation_reasons")
-            ?: get<List<*>?>("validationReasons")))?.mapNotNull { it as? String } ?: emptyList(),
+        validationReasons = ((getStringList("validation_reasons")
+            ?: getStringList("validationReasons")))?.mapNotNull { it as? String } ?: emptyList(),
         mvpId = get<String?>("mvp_id") ?: get<String?>("mvpId"),
         bestGkId = get<String?>("best_gk_id") ?: get<String?>("bestGkId"),
         worstPlayerId = get<String?>("worst_player_id") ?: get<String?>("worstPlayerId"),
@@ -135,8 +135,8 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Gam
         votingConcluded = get<Boolean?>("voting_concluded") ?: get<Boolean?>("votingConcluded") ?: false,
         votingConcludedAt = safeLong("voting_concluded_at") ?: safeLong("votingConcludedAt"),
         votingSubmittedCount = safeInt("voting_submitted_count") ?: safeInt("votingSubmittedCount") ?: 0,
-        voteResultReactions = (get<Map<*, *>?>("vote_result_reactions")
-            ?: get<Map<*, *>?>("voteResultReactions"))
+        voteResultReactions = (getLooseMap("vote_result_reactions")
+            ?: getLooseMap("voteResultReactions"))
             ?.mapNotNull { (emoji, users) ->
                 val key = emoji as? String ?: return@mapNotNull null
                 key to (users as? List<*>)?.filterIsInstance<String>().orEmpty()
@@ -222,7 +222,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toTeamOrNull(): Tea
     return Team(
         id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
         name = get<String?>("name") ?: "", color = get<String?>("color") ?: "",
-        playerIds = (get<List<*>?>("player_ids") ?: get<List<*>?>("playerIds"))?.filterIsInstance<String>() ?: emptyList(),
+        playerIds = (getStringList("player_ids") ?: getStringList("playerIds"))?.filterIsInstance<String>() ?: emptyList(),
         score = safeInt("score") ?: 0
     )
 }
@@ -263,7 +263,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): Xp
         goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0, saves = safeInt("saves") ?: 0,
         wasMvp = get<Boolean?>("was_mvp") ?: get<Boolean?>("wasMvp") ?: false,
         gameResult = get<String?>("game_result") ?: get<String?>("gameResult") ?: "",
-        milestonesUnlocked = (get<List<*>?>("milestones_unlocked") ?: get<List<*>?>("milestonesUnlocked"))?.filterIsInstance<String>() ?: emptyList(),
+        milestonesUnlocked = (getStringList("milestones_unlocked") ?: getStringList("milestonesUnlocked"))?.filterIsInstance<String>() ?: emptyList(),
         createdAt = safeLong("created_at") ?: safeLong("createdAt")
     )
 }
@@ -316,7 +316,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.readScoresMap(
     team2Id: String,
     team2Score: Int,
 ): Map<String, Int> {
-    val rawScores = get<Map<*, *>?>("scores")
+    val rawScores = getLooseMap("scores")
     if (rawScores != null && rawScores.isNotEmpty()) {
         val canonical = buildMap {
             rawScores.forEach { (key, value) ->
@@ -491,7 +491,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonParticipati
     // Number. Campos fora do sub-mapa (division/rating/saves/streaks/xp)
     // permanecem GLOBAIS, espelhando web e functions.
     val seg: Map<*, *>? = if (genderKey != null) {
-        (get<Map<*, *>?>("by_gender"))?.get(genderKey) as? Map<*, *>
+        (getLooseMap("by_gender"))?.get(genderKey) as? Map<*, *>
     } else null
     // Quando o sub-mapa existe, ele é AUTORITATIVO (chave ausente = 0), para
     // nunca vazar o valor combinado plano dentro da visão segmentada. Sem
@@ -566,7 +566,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toActivityOrNull():
         userPhoto = get<String?>("user_photo"), type = ActivityType.fromString(get<String?>("type")),
         title = get<String?>("title") ?: "", description = get<String?>("description") ?: "",
         referenceId = get<String?>("reference_id"), referenceType = get<String?>("reference_type"),
-        metadata = (get<Map<*, *>?>("metadata") as? Map<String, String>) ?: emptyMap(),
+        metadata = (getLooseMap("metadata") as? Map<String, String>) ?: emptyMap(),
         createdAt = safeLong("created_at"), visibility = ActivityVisibility.fromString(get<String?>("visibility"))
     )
 }

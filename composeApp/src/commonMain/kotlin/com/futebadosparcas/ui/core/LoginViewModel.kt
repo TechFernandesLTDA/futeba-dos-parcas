@@ -58,7 +58,7 @@ class LoginViewModel(
                 onFailure = { error ->
                     // log: getCurrentUser FAILURE: ${error.message}
                     _loginState.value = LoginState.Error(
-                        error.message ?: "Erro ao fazer login"
+                        friendlyAuthError(error.message, "Erro ao fazer login")
                     )
                 }
             )
@@ -78,14 +78,14 @@ class LoginViewModel(
                         onSuccess = { user -> _loginState.value = LoginState.Success(user) },
                         onFailure = { error ->
                             _loginState.value = LoginState.Error(
-                                error.message ?: "Login efetuado, mas falha ao carregar perfil"
+                                friendlyAuthError(error.message, "Login efetuado, mas falha ao carregar perfil")
                             )
                         }
                     )
                 },
                 onFailure = { error ->
                     _loginState.value = LoginState.Error(
-                        error.message ?: "Erro ao fazer login"
+                        friendlyAuthError(error.message, "Erro ao fazer login")
                     )
                 }
             )
@@ -110,7 +110,7 @@ class LoginViewModel(
                 },
                 onFailure = { error ->
                     _loginState.value = LoginState.Error(
-                        error.message ?: "Não foi possível enviar o e-mail de recuperação."
+                        friendlyAuthError(error.message, "Não foi possível enviar o e-mail de recuperação.")
                     )
                 }
             )

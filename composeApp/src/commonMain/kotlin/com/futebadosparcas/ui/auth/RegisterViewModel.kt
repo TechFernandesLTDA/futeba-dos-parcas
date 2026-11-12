@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.auth
 
+import com.futebadosparcas.ui.core.friendlyAuthError
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
@@ -31,14 +32,14 @@ class RegisterViewModel(
                         onSuccess = { user -> _registerState.value = RegisterState.Success(user) },
                         onFailure = { error ->
                             _registerState.value = RegisterState.Error(
-                                error.message ?: "Conta criada, mas falha ao carregar perfil"
+                                friendlyAuthError(error.message, "Conta criada, mas falha ao carregar perfil")
                             )
                         }
                     )
                 },
                 onFailure = { error ->
                     _registerState.value = RegisterState.Error(
-                        error.message ?: "Erro ao criar conta"
+                        friendlyAuthError(error.message, "Erro ao criar conta")
                     )
                 }
             )

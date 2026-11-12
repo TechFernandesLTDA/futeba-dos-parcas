@@ -281,7 +281,7 @@ internal class FirebaseUsersDataSource(
         return try {
             firestore.collection(COLLECTION_STATISTICS)
                 .document(userId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             // Se o documento não existir, criar com as atualizações
@@ -393,7 +393,7 @@ internal class FirebaseUsersDataSource(
         return try {
             firestore.collection(COLLECTION_USERS)
                 .document(userId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -630,7 +630,7 @@ internal class FirebaseUsersDataSource(
             )
             firestore.collection(COLLECTION_USERS)
                 .document(userId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             println("FirebaseDataSource: updateAutoRatings falhou: ${e.message}")
@@ -848,9 +848,11 @@ internal class FirebaseUsersDataSource(
                     "auto_rating_samples" to newUser.autoRatingSamples
                 )
 
-                firestore.collection(COLLECTION_USERS)
-                    .document(uid)
-                    .set(userData)
+                // `set` com mapa heterogêneo não tem serializador no iOS: cria o documento
+                // com um mapa de textos e completa os campos com `updateLoose`.
+                val userRef = firestore.collection(COLLECTION_USERS).document(uid)
+                userRef.set(mapOf("id" to newUser.id))
+                userRef.updateLoose(userData - "id")
                 println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO (novo usuário criado) ===")
                 Result.success(newUser)
             }
@@ -1035,7 +1037,7 @@ internal class FirebaseUsersDataSource(
             val docsToDelete = mutableListOf<dev.gitlive.firebase.firestore.DocumentSnapshot>()
             docsToDelete.addAll(oldSnapshot.documents)
             allSnapshot.documents.forEach { doc ->
-                if (doc.get<Any?>("created_at") == null && !docsToDelete.any { it.id == doc.id }) docsToDelete.add(doc)
+                if (doc.getScalar("created_at") == null && !docsToDelete.any { it.id == doc.id }) docsToDelete.add(doc)
             }
             if (docsToDelete.isEmpty()) return Result.success(0)
             docsToDelete.chunked(400).forEach { chunk ->
