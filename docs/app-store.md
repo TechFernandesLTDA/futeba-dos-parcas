@@ -71,3 +71,24 @@ Pelo `PrivacyInfo.xcprivacy` e por `docs/MONETIZACAO.md`: Nome, E-mail, Foto ou 
 ## Upload por linha de comando com a chave da API (11/11/2026, tarde)
 
 Usado para o build 27 porque o Xcode 27 não expõe a conta da empresa à CLI. Arquive sem assinar (`DEVELOPMENT_TEAM=8HMZ5L98YQ CODE_SIGNING_ALLOWED=NO archive`) e exporte com `xcodebuild -exportArchive -archivePath <arquivo>.xcarchive -exportPath <pasta> -exportOptionsPlist <plist> -allowProvisioningUpdates -authenticationKeyPath ~/.config/techfernandes/asc/AuthKey_X9RJ3A672K.p8 -authenticationKeyID X9RJ3A672K -authenticationKeyIssuerID b181f3f1-0f4a-43e2-8f8c-2781023f11e2`, com o `export.plist` (`method` `app-store-connect`, `destination` `upload`, `signingStyle` `automatic`, `teamID` `8HMZ5L98YQ`). Key ID e Issuer ID não são segredo; o conteúdo do `.p8` é, e fica fora do repositório e fora deste doc.
+
+## Build 28 (PR #4543, merge `3a876500`, 11/11/2026 à noite)
+
+Resposta à rejeição por diretriz 1.2 (conteúdo de usuários) e 5.1.1 (permissão sem uso): denúncia de jogador com motivo (inclui "Perfil falso") e texto opcional até 500 caracteres, com confirmação "Recebemos sua denúncia. Vamos analisar em até 24 horas."; depois de denunciar, a tela oferece bloquear a pessoa; onboarding sem cartões de microfone e câmera e sem `NSMicrophoneUsageDescription`/`NSCameraUsageDescription` (o Android não muda). Regras do `abuse_reports` aceitam `fake_profile` e `details`.
+
+Problemas achados no Simulador (iPhone 17 Pro Max) e corrigidos no build 29: aba Jogos mostrava "Dados de jogos indisponíveis neste ambiente"; erro "Serializer for class 'Any' is not found" depois do login; abrir Locais fechava o app; erros brutos do Firebase na tela de login; data padrão do Criar jogo vencida (2026-11-10); selo "Ao vivo" fixo no Início.
+
+## Build 29 (PR #4544, merge `a71d4a75`, 12/11/2026)
+
+- **Locais fechava o app**: `PlatformLogger` iOS passava a `String` do Kotlin ao `NSLog` como argumento variádico (SIGSEGV em `objc_opt_respondsToSelector`). Agora usa `println`; não há mais `NSLog(` no código.
+- **"Serializer for class 'Any'"**: `get<Any?>`, `get<List<*>?>` e `get<Map<*, *>?>` do GitLive não têm serializador no Kotlin/Native. Leituras tolerantes em `shared/.../FirebaseSafeReads.kt` (`getScalar`, `getStringList`, `getIntList`, `getLooseMap`) e `update` de mapa heterogêneo por pares (`updateLoose`). Criação do documento do usuário sem `set` de mapa misto.
+- **Jogos no iOS**: não havia `GameRepository` no iOS. `GamesViewModel` passou a receber a fonte de jogos; no iOS vem do Firestore (próximos jogos públicos, que as regras exigem filtrados por visibilidade, mais os jogos confirmados da pessoa) e está no módulo Koin do iOS.
+- **Login**: erros do Firebase Auth traduzidos (`friendlyAuthError`, com testes): e-mail inválido, credencial incorreta, e-mail já usado, senha fraca, muitas tentativas, sem rede, conta desativada.
+- Criar jogo: data padrão é amanhã. Início: removido o selo "Ao vivo" fixo.
+- **Archive** Release 1.10.0 (29), AdMob real (`~6586297402` banner), sem `NSUserTrackingUsageDescription` e sem `NSMicrophoneUsageDescription`; `codesign` com `aps-environment=production`, App Attest e os 3 domínios. O primeiro `exportArchive` falhou com "The request expected results but none were found" (assinatura em nuvem da Apple, `RESULTS_UNAVAILABLE`); repetir o mesmo comando funcionou.
+- **Simulador (build Debug do mesmo código):** Jogos abre (estado vazio, sem erro), Locais lista locais reais do Firestore (o App Check não bloqueou), Conquistas abre sem erro, Criar jogo com data de amanhã, login mostra "Esse e-mail não parece válido. Confira e tente de novo.", onboarding sem microfone/câmera. **Não conferido:** login com a conta de revisor (não foi possível colar a senha no campo do Simulador sem digitá-la) e a denúncia logada.
+- Observações sem correção: a primeira tela fica branca por uns 10 s na partida a frio; o card de login fica cortado na base até rolar; "Estatísticas do organizador" mostra "ainda não estão disponíveis no iPhone".
+
+### Estado do envio (12/11/2026)
+
+Build 29 processado (VALID) e ligado à versão 1.10.0 (`PREPARE_FOR_SUBMISSION`), notas de revisão mantidas. O `reviewSubmission` aberto `65d5a840-dcf8-4848-af62-a2aa216d237f` ganhou o item da versão (`READY_FOR_REVIEW`). **Não foi enviado à revisão**: `POST /v1/subscriptionSubmissions` da assinatura `futeba_sem_anuncios_anual` dá 409 `STATE_ERROR.FIRST_SUBSCRIPTION_MUST_BE_SUBMITTED_ON_VERSION` ("a primeira assinatura de um app precisa ser enviada junto com a versão") e `subscriptionGroupSubmissions` dá `SUBSCRIPTION_GROUP_SUBMISSION_NOT_ALLOWED`. A API não vincula a primeira assinatura à versão: na página da versão 1.10.0 na App Store Connect, seção "Compras dentro do app e assinaturas", selecionar "Sem anúncios anual" e então "Enviar para revisão". A senha da conta de revisor não foi conferida no Simulador.
