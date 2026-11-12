@@ -254,7 +254,7 @@ internal class FirebaseLocationsDataSource(
                 put("time_zone", location.effectiveTimeZone())
                 put("updated_at", FieldValue.serverTimestamp)
             }
-            firestore.collection("locations").document(location.id).update(updates)
+            firestore.collection("locations").document(location.id).updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) { logLocationUpdateError(location.id, "update", e); Result.failure(e) }
     }

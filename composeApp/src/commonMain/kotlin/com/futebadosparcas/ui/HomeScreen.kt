@@ -41,7 +41,6 @@ import com.futebadosparcas.compose.resources.home_matchday_title
 import com.futebadosparcas.compose.resources.home_section_matchday
 import com.futebadosparcas.compose.resources.home_section_quick_actions
 import com.futebadosparcas.compose.resources.home_section_tools
-import com.futebadosparcas.compose.resources.home_status_live
 import com.futebadosparcas.compose.resources.home_status_personal
 import com.futebadosparcas.compose.resources.home_status_updated
 import com.futebadosparcas.compose.resources.home_subtitle
@@ -234,17 +233,6 @@ private fun HomeHeroCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Text(
-                    text = stringResource(Res.string.home_status_live),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                )
-            }
             Text(
                 text = stringResource(Res.string.home_welcome),
                 style = MaterialTheme.typography.headlineMedium,

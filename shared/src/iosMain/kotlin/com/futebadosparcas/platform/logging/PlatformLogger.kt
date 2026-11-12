@@ -1,34 +1,36 @@
 package com.futebadosparcas.platform.logging
 
-import platform.Foundation.NSLog
-
 /**
- * Implementacao iOS do PlatformLogger usando NSLog.
+ * Implementacao iOS do PlatformLogger.
  *
- * NSLog eh o mecanismo padrao do iOS para logging,
- * integrado com o Console.app e Xcode debug console.
+ * Usa `println` (vai para o console do Xcode e do Simulador). O `NSLog("...%@", kotlinString)`
+ * anterior derrubava o app: no Kotlin/Native o `String` do Kotlin passado como argumento
+ * variádico de C não é um objeto Objective-C, e o `%@` lia um ponteiro inválido (SIGSEGV
+ * em `objc_opt_respondsToSelector`, visto ao abrir a tela Locais no build 28).
  *
  * Formato: [TAG] NIVEL: mensagem
  */
 actual object PlatformLogger {
     actual fun d(tag: String, message: String) {
-        NSLog("[$tag] DEBUG: %@", message)
+        println("[$tag] DEBUG: $message")
     }
 
     actual fun i(tag: String, message: String) {
-        NSLog("[$tag] INFO: %@", message)
+        println("[$tag] INFO: $message")
     }
 
     actual fun w(tag: String, message: String) {
-        NSLog("[$tag] WARNING: %@", message)
+        println("[$tag] WARNING: $message")
     }
 
     actual fun e(tag: String, message: String, throwable: Throwable?) {
         if (throwable != null) {
-            NSLog("[$tag] ERROR: %@ | Exception: %@ | Stacktrace: %@",
-                message, throwable.message ?: "null", throwable.stackTraceToString())
+            println(
+                "[$tag] ERROR: $message | Exception: ${throwable.message ?: "null"} | " +
+                    "Stacktrace: ${throwable.stackTraceToString()}"
+            )
         } else {
-            NSLog("[$tag] ERROR: %@", message)
+            println("[$tag] ERROR: $message")
         }
     }
 }

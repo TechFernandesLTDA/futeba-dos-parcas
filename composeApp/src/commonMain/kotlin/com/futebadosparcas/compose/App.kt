@@ -1,5 +1,10 @@
 package com.futebadosparcas.compose
 
+import kotlin.time.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
 import com.futebadosparcas.compose.di.koinInjectOrNull
 import com.futebadosparcas.compose.di.koinViewModelOrNull
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -1912,7 +1917,7 @@ private fun CreateGameRoute(
 ) {
     var locationName by remember { mutableStateOf("") }
     var locationAddress by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("2026-11-10") }
+    var date by remember { mutableStateOf(tomorrowIsoDate()) }
     var time by remember { mutableStateOf("20:00") }
     var endTime by remember { mutableStateOf("21:30") }
     var maxPlayersText by remember { mutableStateOf("14") }
@@ -2640,3 +2645,10 @@ internal fun persistBlockedPlayers(
     }
     preferencesService.putString(BLOCKED_PLAYERS_PREF_KEY, encodeBlockedPlayers(blockedPlayers))
 }
+
+
+/** Data padrão do "Criar jogo": amanhã (no fuso do aparelho), no formato AAAA-MM-DD. */
+private fun tomorrowIsoDate(): String =
+    Clock.System.todayIn(TimeZone.currentSystemDefault())
+        .plus(1, DateTimeUnit.DAY)
+        .toString()
