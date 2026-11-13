@@ -210,6 +210,7 @@ import com.futebadosparcas.ui.core.GamesScreen
 import com.futebadosparcas.ui.core.InvitePlayersScreen
 import com.futebadosparcas.ui.core.InviteViewModel
 import com.futebadosparcas.ui.core.BadgesRouteScreen
+import com.futebadosparcas.ui.core.PlayerStatsRouteScreen
 import com.futebadosparcas.ui.core.CashboxRouteScreen
 import com.futebadosparcas.ui.core.LoginScreen
 import com.futebadosparcas.ui.core.LoginState
@@ -631,19 +632,13 @@ fun AppNavigation(
 
         composable(AppRoutes.OWNER_STATS) { entry ->
             val ownerId = entry.arguments?.read { getStringOrNull("ownerId") }
-            var retryKey by remember { mutableIntStateOf(0) }
-            key(retryKey) {
-                UnavailableRouteScreen(
-                    title = stringResource(Res.string.route_owner_stats_title),
-                    message = if (ownerId.isNullOrBlank()) {
-                        stringResource(Res.string.route_owner_stats_missing)
-                    } else {
-                        stringResource(Res.string.route_owner_stats_unavailable)
-                    },
-                    onRetry = { retryKey += 1 },
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+            val statsDataSource = koinInjectOrNull<FirebaseDataSource>()
+            val currentUserId = authRepository?.getCurrentUserId() ?: statsDataSource?.getCurrentUserId()
+            PlayerStatsRouteScreen(
+                userId = ownerId,
+                isCurrentUser = !ownerId.isNullOrBlank() && ownerId == currentUserId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(AppRoutes.TEAM_FORMATION) { entry ->
@@ -1156,7 +1151,11 @@ fun AppNavigation(
 
         // Badges
         composable(AppRoutes.BADGES) {
-            BadgesRouteScreen(onNavigateBack = { navController.popBackStack() })
+            val badgesDataSource = koinInjectOrNull<FirebaseDataSource>()
+            BadgesRouteScreen(
+                currentUserId = authRepository?.getCurrentUserId() ?: badgesDataSource?.getCurrentUserId(),
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         // Locations
