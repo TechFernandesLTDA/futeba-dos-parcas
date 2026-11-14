@@ -34,3 +34,9 @@ Vistos no build de depuração do `master`, com emuladores do Firebase; não con
 - `docs` de novidades da 1.44.0 do Android marcadas como não publicadas.
 
 As capturas evitam: login, apresentação inicial, Conquistas e detalhe do jogo.
+
+## Registro de envios ao Google Play (Android)
+
+- 1.43.0 (versionCode 84, tag `android-v1.43.0`): em Produção, com 0 instalações em 14/11/2026; vitals sem falhas, o que reflete a ausência de instalações. O APK/AAB do GitHub Release dessa versão usa `google-services.json` de mentira e fecha com "Please set a valid API key".
+- 1.43.1 (versionCode 85, tag `android-v1.43.1`, commit cb2abbbf do branch `release/android-1.43.x`): hotfix com #4551 e #4552 (Koin e detalhe do jogo; onboarding sem "IA"). `deploy-production.yml` subiu à trilha interna em 14/11/2026; promovida à Produção no Console e enviada para revisão no mesmo dia (notas pt-BR: correções de estabilidade ao abrir o app e ao abrir um jogo). Testes: 1390 sem falhas; release local minificado abre até o Login sem FATAL. Tela principal e detalhe do jogo no release não foram exercitados (exigem login).
+- 1.44.0 (AdMob e assinatura Sem anúncios, ainda não publicada) passou a versionCode 86 (PR 4556). Depende de declarações do Console e do perfil de comerciante.
