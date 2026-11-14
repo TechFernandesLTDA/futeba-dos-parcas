@@ -5,6 +5,7 @@ import com.futebadosparcas.di.koin.allKoinModules
 import com.futebadosparcas.domain.gamification.BadgeAwarder
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter
 import com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase
+import com.futebadosparcas.ui.games.GameDetailViewModel
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -40,5 +41,20 @@ class KoinGraphTest {
         )
         val faltando = exigidos.filter { it !in definidos }.map { it.simpleName }
         assertTrue(faltando.isEmpty(), "Sem definicao no Koin: $faltando")
+    }
+
+    /** Abrir o detalhe do jogo resolve [GameDetailViewModel] por koinViewModel(): todo parametro precisa de definicao. */
+    @OptIn(KoinInternalApi::class)
+    @Test
+    fun `GameDetailViewModel tem todos os parametros do construtor definidos no Koin`() {
+        val app = koinApplication { modules(allKoinModules) }
+        val definidos = app.koin.instanceRegistry.instances.values
+            .flatMap { listOf(it.beanDefinition.primaryType) + it.beanDefinition.secondaryTypes }
+            .toSet()
+
+        val faltando = GameDetailViewModel::class.constructors.first().parameters
+            .map { it.type.classifier }
+            .filter { it !in definidos }
+        assertTrue(faltando.isEmpty(), "Sem definicao no Koin para: $faltando")
     }
 }
