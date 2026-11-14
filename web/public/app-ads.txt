@@ -1,5 +1,3 @@
 # app-ads.txt dos apps Android/iOS do Futeba dos Parças (Tech Fernandes), para o AdMob.
-# Descomentar na fase 2, após conferir no AdMob o publisher e o domínio do desenvolvedor
-# cadastrado nas fichas das lojas (formato real:
-# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0).
-# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# Publisher da conta AdMob usada pelos apps (o mesmo do App ID do AdMob no app iOS publicado).
+google.com, pub-8024776729932634, DIRECT, f08c47fec0942fa0
