@@ -31,7 +31,7 @@ Essa tela fica até a primeira tela do app.
 
 | | Antes | Depois |
 |---|---|---|
-| Tela até o primeiro conteúdo | branca, de 1,3 s a 4,2 s | logo, de 2,1 s a 2,7 s |
+| Tela até o primeiro conteúdo | branca, de 1,3 s a 4,2 s | logo, de 1,9 s a 4,6 s (3 aberturas, nenhum quadro branco) |
 
 O tempo até o primeiro conteúdo não muda; o que muda é o que aparece enquanto ele não chega.
 
