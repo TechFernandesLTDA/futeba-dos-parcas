@@ -27,6 +27,17 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.43.1][android-1.43.1] - 2026-11-14
+
+#### Mudado
+- Texto do onboarding sem a palavra "IA" (#4551).
+
+#### Corrigido
+- Definições Koin de `PostGameEventEmitter`, `BadgeAwarder` e `UpdateProfileUseCase` que faltavam e causavam `NoDefinitionFoundException` ao abrir a tela principal; teste de grafo (`KoinGraphTest`) cobre a ausência (#4551).
+- `GameDetailViewModel` passa a usar `data.repository.GameRepository`, que tem definição no Koin (#4552).
+
+_PRs: #4551, #4552_
+
 ### [1.43.0][android-1.43.0] - 2026-11-09
 
 #### Adicionado
@@ -45,6 +56,7 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 - Splash presa na abertura a frio já logada: a leitura do usuário não tinha tempo limite e prendia a navegação. Agora `SplashStartupResolver` decide o destino pela sessão local, com `withTimeoutOrNull` de 3 s na leitura (recusa da Play na 1.42.0) (#4533).
 - Login por e-mail e continuação da sessão com tempo limite de 20 s; `getIdToken` do gate de verificação com 15 s e estado `Failed` com nova tentativa (#4533).
 - Declaração vazia de Android Auto removida do manifesto (#4527).
+- Gate de verificação renova o token uma vez quando o cache não traz `verified`, antes de mandar para SMS/CPF. Uma claim concedida pelo servidor depois do login (conta de revisão da Play) passa a valer na hora, sem esperar o token expirar (spec `feat-2026-11-09-conta-revisao-play`).
 
 _Issues: #4483 · PRs: #4494, #4515, #4518, #4524, #4525, #4526, #4527, #4528, #4529, #4530, #4533_
 
@@ -2441,6 +2453,13 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.17.0][functions-1.17.0] - 2026-11-09
+
+#### Adicionado
+- Contas de revisão da Play listadas em `system_config/play_review_accounts` (só Admin SDK) mantêm `verified` e `profileComplete` sem CPF nem telefone. O trigger `onUserProfileWritten` e a callable `recomputeMyProfileClaim` não rebaixam essas contas (spec `feat-2026-11-09-conta-revisao-play`).
+- Marca de origem `reviewAccount`: ao sair da lista, a conta volta à regra normal (sem `verified` concedido só pela designação) e tem os refresh tokens revogados.
+- Script `apply-review-account-claims` (dry-run por padrão, `--execute` para gravar) que aplica as claims aos UIDs listados e retira as de quem saiu da lista.
+
 ### [1.15.1][functions-1.15.1] - 2026-11-02
 
 #### Mudado
@@ -3338,6 +3357,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.43.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.1.md
 [android-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.0.md
 [android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
 [android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md
@@ -3556,6 +3576,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.17.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.17.0.md
 [functions-1.15.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.1.md
 [functions-1.15.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.0.md
 [functions-1.14.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.14.0.md

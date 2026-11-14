@@ -1,7 +1,25 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-09T05:14:57.981Z",
+  "generatedAt": "2026-11-14T12:54:02.227Z",
   "notes": [
+    {
+      "version": "1.43.1",
+      "buildNumber": 85,
+      "releaseDate": "2026-11-14",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app abre e mostra a tela principal sem fechar, e o detalhe do jogo abre normalmente.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Correção de estabilidade ao abrir o app.",
+        "Correção de estabilidade ao abrir um jogo.",
+        "Textos de boas-vindas revisados."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.0",
       "buildNumber": 84,
