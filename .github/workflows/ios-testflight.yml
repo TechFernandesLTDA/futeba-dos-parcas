@@ -134,7 +134,7 @@ jobs:
       - name: Build ComposeApp framework for device (release)
         run: |
           chmod +x gradlew
-          ./gradlew :composeApp:linkReleaseFrameworkIosArm64
+          ./gradlew --max-workers=3 :composeApp:linkReleaseFrameworkIosArm64
 
       - name: Generate device Xcode project
         run: |
@@ -155,7 +155,7 @@ jobs:
                 -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/iosApp.xcarchive"
                 SKIP_KMP_BUILD=YES)
           if [ "$MODE" = "archive-unsigned" ]; then
-            xcodebuild archive "${ARGS[@]}" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+            xcodebuild -jobs 3 archive "${ARGS[@]}" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
           else
             if [ -n "$ASC_KEY_P8_BASE64" ]; then
               umask 077
@@ -165,7 +165,7 @@ jobs:
             else
               AUTH=()
             fi
-            xcodebuild archive "${ARGS[@]}" -allowProvisioningUpdates "${AUTH[@]}" DEVELOPMENT_TEAM="$IOS_TEAM_ID"
+            xcodebuild -jobs 3 archive "${ARGS[@]}" -allowProvisioningUpdates "${AUTH[@]}" DEVELOPMENT_TEAM="$IOS_TEAM_ID"
           fi
           test -d "$RUNNER_TEMP/iosApp.xcarchive"
           echo "archive CFBundleVersion=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$RUNNER_TEMP/iosApp.xcarchive/Info.plist") short=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/iosApp.xcarchive/Info.plist")"
