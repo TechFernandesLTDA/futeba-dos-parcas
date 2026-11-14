@@ -37,6 +37,17 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 #### Mudado
 - Permissão `AD_ID` deixa de ser removida do manifesto (necessária ao AdMob); declarar o ID de publicidade na Play Console.
 
+### [1.43.1][android-1.43.1] - 2026-11-14
+
+#### Mudado
+- Texto do onboarding sem a palavra "IA" (#4551).
+
+#### Corrigido
+- Definições Koin de `PostGameEventEmitter`, `BadgeAwarder` e `UpdateProfileUseCase` que faltavam e causavam `NoDefinitionFoundException` ao abrir a tela principal; teste de grafo (`KoinGraphTest`) cobre a ausência (#4551).
+- `GameDetailViewModel` passa a usar `data.repository.GameRepository`, que tem definição no Koin (#4552).
+
+_PRs: #4551, #4552_
+
 ### [1.43.0][android-1.43.0] - 2026-11-09
 
 #### Adicionado
@@ -3376,6 +3387,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
 [android-1.44.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.44.0.md
+[android-1.43.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.1.md
 [android-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.0.md
 [android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
 [android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md

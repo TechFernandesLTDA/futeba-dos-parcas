@@ -201,6 +201,25 @@ node scripts/release-notes.js publish --platform android --version 1.27.0
 - A coleção `release_notes` é read-only para clientes (escrita só via Admin SDK);
   ver `firestore.rules` + índice composto `platform` ASC / `buildNumber` DESC.
 
+## Branch de manutenção (hotfix fora da master)
+
+Exceção usada na 1.43.1 (14/11/2026): quando a `master` já carrega mudanças que
+não podem sair (por exemplo AdMob e assinatura, que dependem de declarações do
+Console) e uma correção urgente precisa ir antes, corta-se um branch **permanente**
+`release/android-X.Y.x` a partir da tag da versão em produção, com `cherry-pick -x`
+só das correções, bump de patch, release-notes e changelog. A tag `android-vX.Y.Z`
+é criada nesse branch (não é branch de PR: fica no `origin`). `release.yml` e
+`deploy-production.yml` não exigem que a tag esteja na `master`; constroem o commit
+da tag e sobem à trilha **interna**; a promoção à Produção é feita depois.
+
+Cuidados: o `versionCode` do hotfix passa a ser o próximo livre e a `master` precisa
+ser ajustada para um valor maior (na 1.43.1, o 1.44.0 da `master` foi de 85 para 86);
+a release-notes do hotfix também entra na `master`. Os binários anexados ao GitHub
+Release são montados com `google-services.json` de mentira (`release.yml`) e **não**
+rodam (o Firebase Performance derruba o app com "Please set a valid API key"); o
+binário real é o do `deploy-production.yml`. Para testar o release no emulador,
+construa localmente com o `google-services.json` real e um keystore descartável.
+
 ## Requisitos do Google Play
 
 Duas guardas permanentes impedem que suba um build que o Play Console rejeite ou
