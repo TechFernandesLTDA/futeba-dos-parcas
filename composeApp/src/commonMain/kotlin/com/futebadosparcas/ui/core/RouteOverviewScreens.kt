@@ -59,6 +59,48 @@ import com.futebadosparcas.ui.adaptive.AdaptiveTopBar
 import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.compose.resources.back
 import com.futebadosparcas.compose.resources.report_action_player_cd
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.futebadosparcas.compose.resources.badges_route_count
+import com.futebadosparcas.compose.resources.badges_route_earned_section
+import com.futebadosparcas.compose.resources.badges_route_empty_body
+import com.futebadosparcas.compose.resources.badges_route_empty_title
+import com.futebadosparcas.compose.resources.badges_route_intro_body
+import com.futebadosparcas.compose.resources.badges_route_load_error
+import com.futebadosparcas.compose.resources.badges_route_locked_cd
+import com.futebadosparcas.compose.resources.badges_route_locked_section
+import com.futebadosparcas.compose.resources.badges_route_progress
+import com.futebadosparcas.compose.resources.badges_route_title
+import com.futebadosparcas.compose.resources.badges_route_unavailable
+import com.futebadosparcas.compose.resources.route_unavailable_retry
+import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.ui.text.style.TextAlign
+import com.futebadosparcas.domain.repository.StatisticsRepository
+import com.futebadosparcas.compose.resources.player_stats_assists
+import com.futebadosparcas.compose.resources.player_stats_cards
+import com.futebadosparcas.compose.resources.player_stats_cards_value
+import com.futebadosparcas.compose.resources.player_stats_draws
+import com.futebadosparcas.compose.resources.player_stats_empty_body_mine
+import com.futebadosparcas.compose.resources.player_stats_empty_body_other
+import com.futebadosparcas.compose.resources.player_stats_empty_title
+import com.futebadosparcas.compose.resources.player_stats_games
+import com.futebadosparcas.compose.resources.player_stats_goals
+import com.futebadosparcas.compose.resources.player_stats_goals_per_game
+import com.futebadosparcas.compose.resources.player_stats_load_error
+import com.futebadosparcas.compose.resources.player_stats_losses
+import com.futebadosparcas.compose.resources.player_stats_missing
+import com.futebadosparcas.compose.resources.player_stats_mvps
+import com.futebadosparcas.compose.resources.player_stats_saves
+import com.futebadosparcas.compose.resources.player_stats_section_attack
+import com.futebadosparcas.compose.resources.player_stats_section_more
+import com.futebadosparcas.compose.resources.player_stats_section_results
+import com.futebadosparcas.compose.resources.player_stats_title_mine
+import com.futebadosparcas.compose.resources.player_stats_win_rate
+import com.futebadosparcas.compose.resources.player_stats_wins
+import com.futebadosparcas.compose.resources.route_owner_stats_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -175,31 +217,39 @@ fun RankingRouteScreen(
 }
 
 @Composable
-fun BadgesRouteScreen(onNavigateBack: () -> Unit) {
+fun BadgesRouteScreen(
+    currentUserId: String?,
+    onNavigateBack: () -> Unit
+) {
     val repository: GamificationRepository? = koinInjectOrNull<GamificationRepository>()
-    var state by remember(repository) {
-        mutableStateOf<RouteLoadState<List<BadgeDefinition>>>(RouteLoadState.Loading)
+    var retryKey by remember { mutableStateOf(0) }
+    var state by remember(repository, currentUserId, retryKey) {
+        mutableStateOf<RouteLoadState<BadgeCollection>>(RouteLoadState.Loading)
     }
+    val unavailableMessage = stringResource(Res.string.badges_route_unavailable)
+    val loadErrorMessage = stringResource(Res.string.badges_route_load_error)
 
-    LaunchedEffect(repository) {
-        state = if (repository == null) {
-            RouteLoadState.Error("Badges indisponíveis neste ambiente.")
-        } else {
-            repository.getAvailableBadges().fold(
-                onSuccess = { RouteLoadState.Success(it) },
-                onFailure = { RouteLoadState.Error(it.message ?: "Não foi possível carregar os badges.") }
+    // As conquistas do jogador ficam em `user_badges` (gravadas pelas Cloud Functions).
+    // A coleção raiz `badges` está vazia em produção, por isso a tela antiga ficava sem itens.
+    LaunchedEffect(repository, currentUserId, retryKey) {
+        state = when {
+            repository == null || currentUserId.isNullOrBlank() -> RouteLoadState.Error(unavailableMessage)
+            else -> repository.getUserBadges(currentUserId).fold(
+                onSuccess = { RouteLoadState.Success(buildBadgeCollection(it)) },
+                onFailure = { RouteLoadState.Error(loadErrorMessage) }
             )
         }
     }
 
     OverviewScaffold(
-        title = "Badges",
+        title = stringResource(Res.string.badges_route_title),
         onNavigateBack = onNavigateBack
     ) { paddingValues ->
         OverviewBody(
             paddingValues = paddingValues,
-            state = state
-        ) { badges ->
+            state = state,
+            onRetry = { retryKey += 1 }
+        ) { collection ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize().widthIn(max = 880.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
@@ -208,42 +258,254 @@ fun BadgesRouteScreen(onNavigateBack: () -> Unit) {
                 item {
                     OverviewIntro(
                         icon = Icons.Default.MilitaryTech,
-                        title = "Coleção de conquistas",
-                        body = "Badges disponíveis para progressão e reconhecimento."
+                        title = stringResource(
+                            Res.string.badges_route_progress,
+                            collection.earned.size,
+                            collection.earned.size + collection.locked.size
+                        ),
+                        body = stringResource(Res.string.badges_route_intro_body)
                     )
                 }
-                items(badges, key = { it.id }) { badge ->
-                    OverviewCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                item {
+                    BadgeSectionTitle(stringResource(Res.string.badges_route_earned_section))
+                }
+                if (collection.earned.isEmpty()) {
+                    item {
+                        OverviewCard {
                             Text(
-                                text = badge.emoji,
-                                style = MaterialTheme.typography.headlineSmall
+                                text = stringResource(Res.string.badges_route_empty_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
                             )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = badge.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = badge.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
                             Text(
-                                text = badge.rarity.displayName,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
+                                text = stringResource(Res.string.badges_route_empty_body),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+                } else {
+                    items(collection.earned, key = { "earned_${it.definition.id}" }) { earned ->
+                        BadgeRow(
+                            badge = earned.definition,
+                            trailing = if (earned.count > 1) {
+                                stringResource(Res.string.badges_route_count, earned.count)
+                            } else {
+                                earned.definition.rarity.displayName
+                            },
+                            unlocked = true
+                        )
+                    }
+                }
+                if (collection.locked.isNotEmpty()) {
+                    item {
+                        BadgeSectionTitle(stringResource(Res.string.badges_route_locked_section))
+                    }
+                    items(collection.locked, key = { "locked_${it.id}" }) { badge ->
+                        BadgeRow(
+                            badge = badge,
+                            trailing = badge.rarity.displayName,
+                            unlocked = false
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Estatísticas de um jogador no iOS, lidas de `statistics/{uid}` (gravado pelas Cloud Functions).
+ * Antes esta rota mostrava só um aviso fixo de "ainda não disponível no iPhone".
+ */
+@Composable
+fun PlayerStatsRouteScreen(
+    userId: String?,
+    isCurrentUser: Boolean,
+    onNavigateBack: () -> Unit
+) {
+    val repository: StatisticsRepository? = koinInjectOrNull<StatisticsRepository>()
+    var retryKey by remember { mutableStateOf(0) }
+    var state by remember(repository, userId, retryKey) {
+        mutableStateOf<RouteLoadState<PlayerStatsSummary>>(RouteLoadState.Loading)
+    }
+    val missingMessage = stringResource(Res.string.player_stats_missing)
+    val loadErrorMessage = stringResource(Res.string.player_stats_load_error)
+
+    LaunchedEffect(repository, userId, retryKey) {
+        state = when {
+            repository == null || userId.isNullOrBlank() -> RouteLoadState.Error(missingMessage)
+            else -> repository.getUserStatistics(userId).fold(
+                onSuccess = { RouteLoadState.Success(buildPlayerStatsSummary(it)) },
+                onFailure = { RouteLoadState.Error(loadErrorMessage) }
+            )
+        }
+    }
+
+    OverviewScaffold(
+        title = stringResource(
+            if (isCurrentUser) Res.string.player_stats_title_mine else Res.string.route_owner_stats_title
+        ),
+        onNavigateBack = onNavigateBack
+    ) { paddingValues ->
+        OverviewBody(
+            paddingValues = paddingValues,
+            state = state,
+            onRetry = { retryKey += 1 }
+        ) { summary ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().widthIn(max = 880.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (summary.isEmpty) {
+                    item {
+                        OverviewIntro(
+                            icon = Icons.Default.QueryStats,
+                            title = stringResource(Res.string.player_stats_empty_title),
+                            body = stringResource(
+                                if (isCurrentUser) Res.string.player_stats_empty_body_mine
+                                else Res.string.player_stats_empty_body_other
+                            )
+                        )
+                    }
+                } else {
+                    item {
+                        OverviewIntro(
+                            icon = Icons.Default.QueryStats,
+                            title = stringResource(Res.string.player_stats_games, summary.games),
+                            body = stringResource(Res.string.player_stats_win_rate, summary.winRatePercent)
+                        )
+                    }
+                    item {
+                        StatTilesCard(
+                            title = stringResource(Res.string.player_stats_section_results),
+                            tiles = listOf(
+                                stringResource(Res.string.player_stats_wins) to summary.wins.toString(),
+                                stringResource(Res.string.player_stats_draws) to summary.draws.toString(),
+                                stringResource(Res.string.player_stats_losses) to summary.losses.toString()
+                            )
+                        )
+                    }
+                    item {
+                        StatTilesCard(
+                            title = stringResource(Res.string.player_stats_section_attack),
+                            tiles = listOf(
+                                stringResource(Res.string.player_stats_goals) to summary.goals.toString(),
+                                stringResource(Res.string.player_stats_assists) to summary.assists.toString(),
+                                stringResource(Res.string.player_stats_goals_per_game) to formatOneDecimal(summary.goalsPerGame)
+                            )
+                        )
+                    }
+                    item {
+                        StatTilesCard(
+                            title = stringResource(Res.string.player_stats_section_more),
+                            tiles = listOf(
+                                stringResource(Res.string.player_stats_saves) to summary.saves.toString(),
+                                stringResource(Res.string.player_stats_mvps) to summary.mvps.toString(),
+                                stringResource(Res.string.player_stats_cards) to
+                                    stringResource(Res.string.player_stats_cards_value, summary.yellowCards, summary.redCards)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatTilesCard(
+    title: String,
+    tiles: List<Pair<String, String>>
+) {
+    OverviewCard {
+        BadgeSectionTitle(title)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            tiles.forEach { (label, value) ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics(mergeDescendants = true) {},
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BadgeSectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .semantics { heading() }
+    )
+}
+
+@Composable
+private fun BadgeRow(
+    badge: BadgeDefinition,
+    trailing: String,
+    unlocked: Boolean
+) {
+    val lockedLabel = stringResource(Res.string.badges_route_locked_cd)
+    OverviewCard(
+        modifier = Modifier
+            .alpha(if (unlocked) 1f else 0.6f)
+            .semantics(mergeDescendants = true) {
+                if (!unlocked) stateDescription = lockedLabel
+            }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = badge.emoji,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = badge.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (badge.description.isNotBlank()) {
+                    Text(
+                        text = badge.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = trailing,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -441,6 +703,7 @@ private fun OverviewScaffold(
 private fun <T> OverviewBody(
     paddingValues: PaddingValues,
     state: RouteLoadState<T>,
+    onRetry: (() -> Unit)? = null,
     success: @Composable (T) -> Unit
 ) {
     Box(
@@ -458,6 +721,11 @@ private fun <T> OverviewBody(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error
                 )
+                if (onRetry != null) {
+                    OutlinedButton(onClick = onRetry) {
+                        Text(stringResource(Res.string.route_unavailable_retry))
+                    }
+                }
             }
             is RouteLoadState.Success -> success(state.data)
         }

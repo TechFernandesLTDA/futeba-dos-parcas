@@ -4019,7 +4019,7 @@ subir no ranking!</string>
     <string name="profile_hub_action_setup">Completar perfil</string>
     <string name="profile_hub_action_setup_body">Atualize nome, apelido e preferências básicas.</string>
     <string name="profile_hub_action_stats">Estatísticas</string>
-    <string name="profile_hub_action_stats_body">Acompanhe sua visão de organizador e jogos recentes.</string>
+    <string name="profile_hub_action_stats_body">Seus jogos, gols, vitórias e prêmios.</string>
     <string name="profile_hub_action_blocked">Jogadores bloqueados</string>
     <string name="profile_hub_action_blocked_body">Gerencie restrições ligadas à sua organização.</string>
     <string name="feature_hub_actions">Ações disponíveis</string>
@@ -4237,4 +4237,38 @@ subir no ranking!</string>
     <string name="report_action_player_cd">Denunciar %1$s</string>
     <string name="report_group_action_label">Denunciar grupo</string>
     <string name="report_group_action_body">Avise a equipe sobre um grupo com conteúdo impróprio.</string>
+    <!-- Conquistas no iOS: lê user_badges do jogador -->
+    <string name="badges_route_title">Conquistas</string>
+    <string name="badges_route_progress">%1$d de %2$d conquistas</string>
+    <string name="badges_route_intro_body">Ganhe conquistas jogando, marcando gols e sendo eleito o melhor da partida.</string>
+    <string name="badges_route_earned_section">Suas conquistas</string>
+    <string name="badges_route_locked_section">Para desbloquear</string>
+    <string name="badges_route_empty_title">Você ainda não tem conquistas</string>
+    <string name="badges_route_empty_body">Jogue suas primeiras partidas para desbloquear. Elas aparecem aqui assim que a partida termina.</string>
+    <string name="badges_route_count">%1$dx</string>
+    <string name="badges_route_locked_cd">Bloqueada</string>
+    <string name="badges_route_unavailable">Entre na sua conta para ver suas conquistas.</string>
+    <string name="badges_route_load_error">Não foi possível carregar suas conquistas. Confira a conexão e tente de novo.</string>
+    <!-- Estatísticas do jogador no iOS: lê statistics/{uid} -->
+    <string name="player_stats_title_mine">Minhas estatísticas</string>
+    <string name="player_stats_games">%1$d jogos disputados</string>
+    <string name="player_stats_win_rate">Aproveitamento de %1$d% dos pontos</string>
+    <string name="player_stats_section_results">Resultados</string>
+    <string name="player_stats_section_attack">Ataque</string>
+    <string name="player_stats_section_more">Mais números</string>
+    <string name="player_stats_wins">Vitórias</string>
+    <string name="player_stats_draws">Empates</string>
+    <string name="player_stats_losses">Derrotas</string>
+    <string name="player_stats_goals">Gols</string>
+    <string name="player_stats_assists">Assistências</string>
+    <string name="player_stats_goals_per_game">Gols por jogo</string>
+    <string name="player_stats_saves">Defesas</string>
+    <string name="player_stats_mvps">Craque da partida</string>
+    <string name="player_stats_cards">Cartões</string>
+    <string name="player_stats_cards_value">%1$d / %2$d</string>
+    <string name="player_stats_empty_title">Nenhum jogo registrado ainda</string>
+    <string name="player_stats_empty_body_mine">Seus números aparecem aqui depois que uma partida que você jogou for encerrada.</string>
+    <string name="player_stats_empty_body_other">Os números aparecem aqui depois que uma partida dessa pessoa for encerrada.</string>
+    <string name="player_stats_missing">Não foi possível identificar o jogador.</string>
+    <string name="player_stats_load_error">Não foi possível carregar as estatísticas. Confira a conexão e tente de novo.</string>
 </resources>
