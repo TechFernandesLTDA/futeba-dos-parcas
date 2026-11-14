@@ -58,7 +58,7 @@ O app aceita contas de **13 a 17 anos** e a política de privacidade promete "se
 ## Privacidade e declarações das lojas (rascunho, para a fase 2)
 
 ### Política de privacidade
-`web/public/privacy_policy.html` está em **rascunho v2.1** (anúncios, AdSense, assinatura, Google/lojas como operadores, "sempre não personalizados"). Só vale quando a web for implantada (fase 2): conferir a redação e atualizar a data de vigência no topo.
+`web/public/privacy_policy.html` é a **v2.1 (vigência 14/11/2026)**: anúncios do AdMob no Android e no iPhone (sem ATT, sempre não personalizados), assinatura, Google e lojas como operadores. **Não cita AdSense** (o site não foi aprovado): quando o AdSense da web for ligado, a política precisa ser atualizada antes. A página só chega ao ar com o deploy do Firebase Hosting da web (manual, publica o `web/dist` inteiro).
 
 ### Google Play: segurança dos dados (Data safety)
 Acrescentar ao que já está declarado:
