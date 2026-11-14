@@ -2482,6 +2482,21 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.18.0][functions-1.18.0] - 2026-11-14
+
+#### Mudado
+- Bônus de MVP (+50) entra por fora do teto de 500 XP por jogo; o piso por jogo é `MIN_XP_PER_GAME` (-100), com clamp atômico (#4531).
+- Ranking semanal aplica os limites de gols, assistências e defesas por jogo e desempata de forma determinística: pontos, gols, assistências, vitórias, nome e UID (#4531).
+- Liga do grupo conta só confirmações com presença elegível (#4531).
+- Nomes dos níveis 0 a 20 e limites de divisão lidos de `shared/xp-constants.json`; a conquista `streak_7` lê `user_streaks` (#4510).
+- `onGameStatusUpdate` dividido em módulos em `functions/src/xp/` e `location-management` em submódulos em `functions/src/locations/`, sem mudança de comportamento (#4516, #4520).
+- Ranking por grupo consulta só `group_ids array-contains`; a consulta legada por `group_id` saiu (#4516).
+
+#### Removido
+- Código morto: `admin-notifications`, `fake-notifications`, `rate-limiter.example`, `migration-example`, `parallel-processing` e `xp/processing` (#4516). A callable `resetXpRateLimit` deixa de existir no código.
+
+_PRs: #4510, #4516, #4520, #4531_
+
 ### [1.17.0][functions-1.17.0] - 2026-11-09
 
 #### Adicionado
@@ -3608,6 +3623,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.18.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.18.0.md
 [functions-1.17.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.17.0.md
 [functions-1.15.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.1.md
 [functions-1.15.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.0.md
