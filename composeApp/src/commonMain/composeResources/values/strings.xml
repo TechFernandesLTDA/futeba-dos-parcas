@@ -1874,7 +1874,7 @@ subir no ranking!</string>
     <string name="about_section_title">Sobre</string>
     <string name="about_description">Futeba dos Parças é o app perfeito para organizar suas peladas! Gerencie jogadores, crie times equilibrados automaticamente, acompanhe estatísticas e rankings, e muito mais.</string>
     <string name="about_feature_groups">Gerenciamento de grupos e jogadores</string>
-    <string name="about_feature_teams">Sorteio de times equilibrados com IA</string>
+    <string name="about_feature_teams">Sorteio de times equilibrados em um toque</string>
     <string name="about_feature_xp">Sistema de XP, níveis e badges</string>
     <string name="about_feature_ranking">Rankings e estatísticas detalhadas</string>
     <string name="about_feature_cashbox">Controle financeiro (caixinha)</string>
@@ -2881,7 +2881,7 @@ subir no ranking!</string>
     <string name="welcome_feature_games">Organize jogos e convide a galera</string>
     <string name="welcome_feature_ranking">Acompanhe o ranking e evolua de nível</string>
     <string name="welcome_feature_stats">Estatísticas detalhadas de cada jogador</string>
-    <string name="welcome_feature_balance">Times equilibrados com IA</string>
+    <string name="welcome_feature_balance">Times equilibrados em um toque</string>
     <string name="welcome_get_started">Vamos começar!</string>
 
     <!-- Profile Setup Screen -->
