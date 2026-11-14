@@ -18,9 +18,14 @@ import com.futebadosparcas.domain.usecase.group.LeaveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.ManageMembersUseCase
 import com.futebadosparcas.domain.usecase.group.TransferOwnershipUseCase
 import com.futebadosparcas.domain.usecase.group.UpdateGroupUseCase
+import com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase
 import org.koin.dsl.module
 
 val useCaseKoinModule = module {
+
+    single<UpdateProfileUseCase> {
+        UpdateProfileUseCase(get(), get())
+    }
 
     single<GetUpcomingGamesUseCase> {
         GetUpcomingGamesUseCase(get())

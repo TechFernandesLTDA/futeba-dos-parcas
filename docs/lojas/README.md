@@ -29,8 +29,8 @@ Política de privacidade (https://futebadosparcas.com.br/privacy_policy.html)
 
 Vistos no build de depuração do `master`, com emuladores do Firebase; não conferidos no binário de produção.
 
-- O app fecha por falta de definição no Koin: `PostGameEventEmitter` (em `MainActivityCompose.observePostGameEvents`), `UpdateProfileUseCase` e `BadgeAwarder` (parâmetros padrão de `AntiBotGate`) e `domain.repository.GameRepository` (`GameDetailViewModel`, ao abrir o detalhe do jogo).
-- A apresentação inicial do Android diz "Times equilibrados com IA". A regra da casa é não dizer "IA" na interface.
+- O app fecha por falta de definição no Koin: `PostGameEventEmitter`, `UpdateProfileUseCase` e `BadgeAwarder` foram declarados no PR de correção (coberto por `KoinGraphTest`). Continua sem definição `domain.repository.GameRepository` (`GameDetailViewModel`, ao abrir o detalhe do jogo): a interface do módulo compartilhado não tem implementação no app e usa modelos diferentes de `data.repository.GameRepository`; precisa de decisão própria.
+- A apresentação inicial do Android dizia "Times equilibrados com IA"; trocado por "Times equilibrados em um toque" (e o mesmo na tela Sobre).
 - `docs` de novidades da 1.44.0 do Android marcadas como não publicadas.
 
 As capturas evitam: login, apresentação inicial, Conquistas e detalhe do jogo.
