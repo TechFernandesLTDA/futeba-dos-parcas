@@ -2495,6 +2495,11 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 #### Removido
 - Código morto: `admin-notifications`, `fake-notifications`, `rate-limiter.example`, `migration-example`, `parallel-processing` e `xp/processing` (#4516). A callable `resetXpRateLimit` deixa de existir no código.
 
+#### Segurança
+- Functions implantadas em produção em 14/11/2026, das 12:51 às 12:57 (BRT), a partir do commit `f599fb6f`: 178 funções atualizadas e ativas. `resetXpRateLimit` continua em produção com o código de 05/11 (não foi apagada).
+- Regras do Firestore da master (#4512 e #4522) implantadas em 14/11/2026 às 12:58 (BRT): ruleset `5b290a88-ee6c-4933-b85d-6e948cbcb156`; o anterior era `edc2d9c0-8dd6-4267-99ba-704ffc80fc31`. Índices já estavam iguais aos da master.
+- Hosting republicado às 12:59 (BRT), versão `cf1f7c16722aa4b8` (anterior: `1752a077802fe9e8`), com o Team ID real no `apple-app-site-association` e o publisher do AdMob no `app-ads.txt`; a web segue na 1.63.0.
+
 _PRs: #4510, #4516, #4520, #4531_
 
 ### [1.17.0][functions-1.17.0] - 2026-11-09
