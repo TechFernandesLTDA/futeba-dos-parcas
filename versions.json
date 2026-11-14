@@ -3,7 +3,7 @@
   "_comment": "Registro central de versoes — fonte unica de verdade. Atualizado por scripts/bump-version.js. Modelo: independente por plataforma. Ver specs/feat-2026-05-22-version-control-release-notes.md",
   "android": {
     "version": "1.44.0",
-    "buildNumber": 85
+    "buildNumber": 86
   },
   "web": {
     "version": "1.63.0"
