@@ -6,7 +6,7 @@ import com.futebadosparcas.R
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.AuthRepository
-import com.futebadosparcas.domain.repository.GameRepository
+import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpAppNotifications
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -80,10 +81,12 @@ class GameDetailViewModel(
                 combine(
                     gameRepository.getGameDetailsFlow(id),
                     gameRepository.getGameConfirmationsFlow(id),
-                    gameRepository.getGameEventsFlow(id),
+                    gameRepository.getGameEventsFlow(id).map { result ->
+                        result.map { events -> events.map { it.toDomainEvent() } }
+                    },
                     gameRepository.getGameTeamsFlow(id),
                     combine(
-                        gameRepository.getLiveScoreFlow(id),
+                        gameRepository.getLiveScoreFlow(id).map { it?.toDomainLiveScore() },
                         waitlistRepository.getWaitlistFlow(id)
                     ) { liveScore, waitlistResult ->
                         liveScore to waitlistResult
@@ -808,7 +811,7 @@ class GameDetailViewModel(
     ) {
         val gId = gameId ?: return
         viewModelScope.launch {
-            val event = GameEvent(
+            val event = com.futebadosparcas.data.model.GameEvent(
                 gameId = gId,
                 eventType = eventType.name,
                 teamId = teamId,
@@ -1406,4 +1409,32 @@ data class CombinedData(
     val teamsResult: Result<List<com.futebadosparcas.domain.model.Team>>,
     val liveScore: com.futebadosparcas.domain.model.LiveScore?,
     val waitlistResult: Result<List<GameWaitlist>>
+)
+
+
+// O app usa data.repository.GameRepository (modelos do Firestore); a tela usa os modelos do dominio.
+internal fun com.futebadosparcas.data.model.GameEvent.toDomainEvent(): GameEvent = GameEvent(
+    id = id,
+    gameId = gameId,
+    eventType = eventType,
+    playerId = playerId,
+    playerName = playerName,
+    teamId = teamId,
+    assistedById = assistedById,
+    assistedByName = assistedByName,
+    minute = minute,
+    createdBy = createdBy,
+    createdAt = createdAt?.time
+)
+
+internal fun com.futebadosparcas.data.model.LiveGameScore.toDomainLiveScore(): LiveScore = LiveScore(
+    id = id,
+    gameId = gameId,
+    scores = scores,
+    team1Id = team1Id,
+    team1Score = team1Score,
+    team2Id = team2Id,
+    team2Score = team2Score,
+    startedAt = startedAt?.time,
+    finishedAt = finishedAt?.time
 )

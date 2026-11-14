@@ -8,14 +8,14 @@ import com.futebadosparcas.domain.model.CancellationReason
 import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameConfirmation
-import com.futebadosparcas.domain.model.GameEvent
+import com.futebadosparcas.data.model.GameEvent
 import com.futebadosparcas.domain.model.GameEventType
-import com.futebadosparcas.domain.model.LiveScore
+import com.futebadosparcas.data.model.LiveGameScore
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.permission.PermissionManager
 import com.futebadosparcas.domain.repository.GameExperienceRepository
-import com.futebadosparcas.domain.repository.GameRepository
+import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.ScheduleRepository
 import com.futebadosparcas.domain.usecase.ConfirmationResult
@@ -92,7 +92,7 @@ class GameDetailViewModelTest {
         val confirmationsFlow = MutableStateFlow(confirmationsResult)
         val eventsFlow: MutableStateFlow<Result<List<GameEvent>>> = MutableStateFlow(Result.success(emptyList()))
         val teamsFlow: MutableStateFlow<Result<List<Team>>> = MutableStateFlow(Result.success(emptyList()))
-        val liveScoreFlow: MutableStateFlow<LiveScore?> = MutableStateFlow(null)
+        val liveScoreFlow: MutableStateFlow<LiveGameScore?> = MutableStateFlow(null)
 
         every { gameRepository.getGameDetailsFlow("game-1") } returns gameFlow
         every { gameRepository.getGameConfirmationsFlow("game-1") } returns confirmationsFlow
