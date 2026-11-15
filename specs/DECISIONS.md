@@ -2185,3 +2185,31 @@ Spec: `specs/feat-2026-11-09-conta-revisao-play.md`.
   `app_settings` (qualquer autenticado lê), callable admin (exige App Check e cliente admin logado) e trigger no doc de
   config (efeito automático numa escrita manual).
 - Repositório público: UID, e-mail e senha do revisor nunca entram no repo.
+
+## 2026-11-15: App Check e Analytics esperam a interação nas páginas públicas (#4196, #4539)
+
+**Contexto:** o `Lighthouse CI` reprovava `categories.performance` (0,74 a 0,76) em
+PRs do Dependabot que mexem em `web/`, como o #4539. Esses PRs rodam no runner
+hospedado `ubuntu-24.04` (o `runs-on` manda o Dependabot para fora do Mac de
+propósito), com `benchmarkIndex` ~2000, contra ~4500 no `mac-futeba-1`, onde a
+master dá 0,99. Não foi regressão: os pacotes carregados eram os mesmos, sem
+AdSense. O TBT de ~1,4 s vinha do reCAPTCHA Enterprise do App Check (~1,25 s de
+CPU), do React e do gtag do Analytics, todos no boot das páginas públicas.
+
+**Decisão:** no visitante anônimo de página prerenderizada (`#prerender` presente
+e sem `data-no-prerender`), App Check e Analytics só iniciam na primeira interação
+(toque, tecla, rolagem) ou após 15 s ociosos (`web/src/services/deferredThirdParty.ts`).
+Rotas do app e sessão conhecida continuam iniciando no boot.
+
+**Alternativas descartadas:** baixar o `minScore` ou mudar o throttling do
+`.lighthouserc.cjs` (baixa a régua); mandar o Dependabot para o runner do Mac
+(roda código de dependência nova na máquina, decisão de segurança); adiar o
+iframe do Auth (mexe no login Google; o ganho não foi necessário).
+
+**Riscos aceitos:** Firestore, Storage e Auth estão `UNENFORCED` no App Check; as
+callables que exigem App Check só são chamadas após uma ação do usuário, que já
+inicia o App Check. Visitante que sai sem interagir e antes de 15 s não gera
+`page_view` no Analytics.
+
+**Medição local (CPU 20x, ≈ runner hospedado):** antes 0,74–0,75 nas 6 páginas;
+depois 0,89–0,97.
