@@ -92,3 +92,10 @@ Problemas achados no Simulador (iPhone 17 Pro Max) e corrigidos no build 29: aba
 ### Estado do envio (12/11/2026)
 
 Build 29 processado (VALID) e ligado à versão 1.10.0 (`PREPARE_FOR_SUBMISSION`), notas de revisão mantidas. O `reviewSubmission` aberto `65d5a840-dcf8-4848-af62-a2aa216d237f` ganhou o item da versão (`READY_FOR_REVIEW`). **Não foi enviado à revisão**: `POST /v1/subscriptionSubmissions` da assinatura `futeba_sem_anuncios_anual` dá 409 `STATE_ERROR.FIRST_SUBSCRIPTION_MUST_BE_SUBMITTED_ON_VERSION` ("a primeira assinatura de um app precisa ser enviada junto com a versão") e `subscriptionGroupSubmissions` dá `SUBSCRIPTION_GROUP_SUBMISSION_NOT_ALLOWED`. A API não vincula a primeira assinatura à versão: na página da versão 1.10.0 na App Store Connect, seção "Compras dentro do app e assinaturas", selecionar "Sem anúncios anual" e então "Enviar para revisão". A senha da conta de revisor não foi conferida no Simulador.
+
+## Versão 1.10.1 (build 30, 14/11/2026)
+
+- Conteúdo: tela de abertura com logo (#4549), Conquistas e Estatísticas com dados do jogador (#4548), links universais com o Team ID real (#4558). Não inclui o pedido de notificação (branch `fix/ios-pedido-notificacoes`, ainda fora da master): fica para o build 31.
+- Archive Release (AdMob real, sem `NSUserTrackingUsageDescription`), `codesign` com `aps-environment=production`, App Attest e os 3 domínios; upload por `exportArchive` com a chave da API. Build `8e13a610-c63c-4ee7-b127-901011341162` VALID.
+- Versão `6fa6bbd2-bf44-4793-8af9-c7fb05a8659c` (liberação automática após aprovação, como a 1.10.0), metadados e notas de revisão copiados da 1.10.0. Enviada à revisão: `reviewSubmission` `51a447a7-ab7d-49b7-a04f-77e39e1ec374` (WAITING_FOR_REVIEW).
+- Simulador (Debug): abertura mostra a logo e depois o onboarding. Conquistas e Estatísticas não conferidas (exigem login; a senha da conta de revisor falhou antes no Firebase).
