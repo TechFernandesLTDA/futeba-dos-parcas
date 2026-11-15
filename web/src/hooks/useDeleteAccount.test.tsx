@@ -41,6 +41,7 @@ vi.mock('../services/firebase', () => ({
   googleProvider: { providerId: 'google.com' },
 }));
 vi.mock('firebase/auth', () => ({
+  browserPopupRedirectResolver: {},
   EmailAuthProvider: { credential: (email: string, pw: string) => ({ email, pw }) },
   reauthenticateWithCredential: (...args: unknown[]) => mockReauthCredential(...args),
   reauthenticateWithPopup: (...args: unknown[]) => mockReauthPopup(...args),

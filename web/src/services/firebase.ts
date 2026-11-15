@@ -1,5 +1,13 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
+import {
+  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  GoogleAuthProvider,
+  connectAuthEmulator,
+} from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -8,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { shouldUseFirebaseEmulators } from './firebaseEmulatorMode';
+import { runWhenEngaged, shouldDeferThirdParty } from './deferredThirdParty';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -36,30 +45,47 @@ try {
 
 export { app };
 
-// App Check — DEVE ser inicializado ANTES dos outros services (auth,
-// firestore, functions) pra que SDK injete tokens automaticamente.
+// App Check — nas rotas do app é inicializado aqui, ANTES dos outros services
+// (auth, firestore, functions). Nas páginas públicas prerenderizadas vistas por
+// visitante anônimo, o reCAPTCHA só carrega na primeira interação (ou após o
+// tempo ocioso), ver deferredThirdParty.ts. Os SDKs (Firestore, Functions,
+// Auth, Storage) buscam o provider de App Check a cada requisição ou assinam
+// a inicialização tardia, então os tokens passam a ir assim que ele existir.
+// Hoje Firestore, Storage e Auth estão UNENFORCED; as callables que exigem
+// App Check só são chamadas depois de uma ação do usuário.
 export let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 if (typeof window !== 'undefined') {
   const recaptchaKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
   if (recaptchaKey && !shouldUseFirebaseEmulators) {
-    try {
-      // Em desenvolvimento, habilita token de debug para testes locais
-      if (import.meta.env.DEV) {
-        (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    runWhenEngaged(() => {
+      try {
+        // Em desenvolvimento, habilita token de debug para testes locais
+        if (import.meta.env.DEV) {
+          (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        }
+        appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaEnterpriseProvider(recaptchaKey),
+          isTokenAutoRefreshEnabled: true,
+        });
+      } catch (err) {
+        console.warn('App Check initialization failed:', err);
       }
-      appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaEnterpriseProvider(recaptchaKey),
-        isTokenAutoRefreshEnabled: true,
-      });
-    } catch (err) {
-      console.warn('App Check initialization failed:', err);
-    }
+    });
   } else if (import.meta.env.DEV && !shouldUseFirebaseEmulators) {
     console.warn('App Check not configured');
   }
 }
 
-export const auth = getAuth(app);
+// Na página pública vista por visitante anônimo, o Auth nasce sem o resolver de
+// popup/redirect: é ele que carrega o iframe do gapi (~130 KB) no boot em navegador
+// móvel. Mesmas persistências do getAuth(). Toda chamada de popup/redirect passa
+// `browserPopupRedirectResolver` explicitamente (AuthContext, useDeleteAccount), então
+// o login Google funciona igual depois da navegação para /login.
+export const auth = shouldDeferThirdParty()
+  ? initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+    })
+  : getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 // Firestore com cache local persistente (IndexedDB) — habilita offline reads,
 // reduz latência e custos de read em sessões repetidas. Suporta múltiplas abas
