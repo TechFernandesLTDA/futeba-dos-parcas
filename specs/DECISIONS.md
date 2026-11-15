@@ -2185,3 +2185,16 @@ Spec: `specs/feat-2026-11-09-conta-revisao-play.md`.
   `app_settings` (qualquer autenticado lê), callable admin (exige App Check e cliente admin logado) e trigger no doc de
   config (efeito automático numa escrita manual).
 - Repositório público: UID, e-mail e senha do revisor nunca entram no repo.
+
+## 2026-11-15: Cliente nunca cria `users/{uid}` (login com Google)
+
+Spec: `specs/bugfix-2026-11-15-android-login-google.md`.
+
+- O documento `users/{uid}` é criado só pela Cloud Function `onUserCreate`. As rules negam o create do cliente sem
+  `role`/convite, e o `set({id})` antigo falhava sempre no primeiro login.
+- O app espera o documento com intervalos crescentes (até ~14 s, abaixo dos 20 s do `LoginViewModel`). Em prod
+  (nov/2026) a função levou 6 a 7 s para criar o documento. Sem documento, o login falha com
+  `UserProfileNotReadyException` e mensagem própria; o usuário já existe no Auth e o próximo login encontra o doc.
+- A foto do Google só preenche perfil sem foto, em melhor esforço.
+- Alternativa descartada: relaxar as rules de create para o cliente gravar o perfil inteiro (reabre a
+  auto-atribuição de `level`/XP/`auto_*` fechada no #1979).
