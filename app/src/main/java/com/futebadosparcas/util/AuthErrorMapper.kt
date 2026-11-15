@@ -2,6 +2,7 @@ package com.futebadosparcas.util
 
 import androidx.annotation.StringRes
 import com.futebadosparcas.R
+import com.futebadosparcas.domain.auth.UserProfileNotReadyException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 
@@ -28,6 +29,10 @@ object AuthErrorMapper {
         // Falha de rede pode vir como FirebaseNetworkException (fora do FirebaseAuthException)
         if (e is FirebaseNetworkException) {
             return R.string.auth_error_network
+        }
+        // Primeiro login: a onUserCreate ainda não criou users/{uid}
+        if (e is UserProfileNotReadyException) {
+            return R.string.auth_error_profile_not_ready
         }
 
         return when ((e as? FirebaseAuthException)?.errorCode) {
