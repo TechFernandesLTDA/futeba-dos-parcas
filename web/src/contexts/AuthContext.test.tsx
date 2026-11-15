@@ -22,6 +22,7 @@ vi.mock('../utils/analytics', () => ({
 }));
 
 vi.mock('firebase/auth', () => ({
+  browserPopupRedirectResolver: {},
   getAuth: vi.fn(),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onAuthStateChanged: (...args: any[]) => mockOnAuthStateChanged(...args),

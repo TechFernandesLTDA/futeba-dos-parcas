@@ -5,6 +5,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
+  browserPopupRedirectResolver,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { deleteAccount } from '../services/cloudFunctions';
@@ -157,7 +158,7 @@ export function useDeleteAccount(): UseDeleteAccountResult {
     setStatus('reauthenticating');
     setErrorMessage(null);
     try {
-      await reauthenticateWithPopup(current, googleProvider);
+      await reauthenticateWithPopup(current, googleProvider, browserPopupRedirectResolver);
       await current.getIdToken(true);
     } catch (err) {
       failReauth(err);

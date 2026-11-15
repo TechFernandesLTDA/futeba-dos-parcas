@@ -2213,3 +2213,10 @@ inicia o App Check. Visitante que sai sem interagir e antes de 15 s não gera
 
 **Medição local (CPU 20x, ≈ runner hospedado):** antes 0,74–0,75 nas 6 páginas;
 depois 0,89–0,97.
+
+**Complemento (PR seguinte):** no runner hospedado o #4539 subiu para 0,81–0,85 (4 de 6
+páginas passando). Nas mesmas páginas o Auth passou a nascer sem o resolver de
+popup/redirect (`initializeAuth` com as persistências do `getAuth`), que carregava o
+iframe do gapi no boot em navegador móvel, e o `getRedirectResult` espera a interação.
+Toda chamada de popup/redirect passa `browserPopupRedirectResolver` explicitamente.
+Isso substitui a alternativa "adiar o iframe do Auth" descartada acima.
