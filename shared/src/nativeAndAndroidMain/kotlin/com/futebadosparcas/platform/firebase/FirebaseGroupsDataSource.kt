@@ -94,7 +94,7 @@ internal class FirebaseGroupsDataSource(
         return try {
             firestore.collection(COLLECTION_GROUPS)
                 .document(groupId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

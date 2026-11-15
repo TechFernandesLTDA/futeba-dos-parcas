@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.update
 interface PermissionHandler {
     fun requestNotificationPermission(onResult: (Boolean) -> Unit)
     fun requestLocationPermission(onResult: (Boolean) -> Unit)
-    fun requestCameraPermission(onResult: (Boolean) -> Unit)
-    fun requestMicrophonePermission(onResult: (Boolean) -> Unit)
 }
 
 /**
@@ -23,8 +21,6 @@ interface PermissionHandler {
 data class PermissionScreenState(
     val notificationGranted: Boolean = false,
     val locationGranted: Boolean = false,
-    val cameraGranted: Boolean = false,
-    val microphoneGranted: Boolean = false,
     val showNotificationPermission: Boolean = true // será ajustado pela plataforma (ex: Android 13+)
 )
 
@@ -50,18 +46,6 @@ class PermissionOnboardingViewModel(
         }
     }
 
-    fun requestCamera() {
-        permissionHandler.requestCameraPermission { granted ->
-            _state.update { it.copy(cameraGranted = granted) }
-        }
-    }
-
-    fun requestMicrophone() {
-        permissionHandler.requestMicrophonePermission { granted ->
-            _state.update { it.copy(microphoneGranted = granted) }
-        }
-    }
-
     /**
      * Atualização síncrona do estado de uma permissão (usada na inicialização da plataforma).
      */
@@ -70,8 +54,6 @@ class PermissionOnboardingViewModel(
             when (permission) {
                 PermissionType.NOTIFICATION -> current.copy(notificationGranted = granted)
                 PermissionType.LOCATION -> current.copy(locationGranted = granted)
-                PermissionType.CAMERA -> current.copy(cameraGranted = granted)
-                PermissionType.MICROPHONE -> current.copy(microphoneGranted = granted)
             }
         }
     }
@@ -82,5 +64,5 @@ class PermissionOnboardingViewModel(
 }
 
 enum class PermissionType {
-    NOTIFICATION, LOCATION, CAMERA, MICROPHONE
+    NOTIFICATION, LOCATION
 }

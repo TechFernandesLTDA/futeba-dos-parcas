@@ -1,15 +1,15 @@
 import UIKit
-import AppTrackingTransparency
 import GoogleMobileAds
 import UserMessagingPlatform
 import ComposeApp
 
-/// Ponte do Google Mobile Ads (AdMob) + consentimento UMP + ATT para o Kotlin (`IosAdsBridge`).
+/// Ponte do Google Mobile Ads (AdMob) + consentimento UMP para o Kotlin (`IosAdsBridge`).
 ///
 /// Regras (decididas no Kotlin, `MonetizationController`/`AdsGate`, testadas em commonTest):
 /// - `startAds` só é chamado depois da primeira vitória e nunca para assinante;
-/// - ordem: formulário de consentimento do Google (UMP, só onde a região exige) -> pedido de
-///   rastreamento (ATT) -> início do SDK. Recusar o ATT só pede anúncio não personalizado;
+/// - ordem: formulário de consentimento do Google (UMP, só onde a região exige) -> início do SDK;
+/// - o app NÃO pede ATT (AppTrackingTransparency): os anúncios são sempre não personalizados, e o
+///   resultado informado ao Kotlin é sempre 0 (sem permissão de rastreamento);
 /// - sem `ADMOB_BANNER_UNIT_ID` (config de build vazia) `unitConfigured` é falso e nada inicia.
 ///
 /// IDs: Debug usa as unidades de TESTE do Google (project.yml). Release lê `ADMOB_APP_ID` e
@@ -47,10 +47,8 @@ final class AdsService: NSObject, IosAdsBridge {
                     finish(canRequestAds: false, att: -1, onResult: onResult)
                     return
                 }
-                requestTracking { [self] att in
-                    startSdkOnce()
-                    finish(canRequestAds: true, att: att, onResult: onResult)
-                }
+                startSdkOnce()
+                finish(canRequestAds: true, att: Self.noTracking, onResult: onResult)
             }
         }
     }
@@ -96,41 +94,9 @@ final class AdsService: NSObject, IosAdsBridge {
         }
     }
 
-    /// 1 = autorizado, 0 = negado ou restrito, -1 = não decidido.
-    private func requestTracking(_ done: @escaping (Int) -> Void) {
-        func code(_ status: ATTrackingManager.AuthorizationStatus) -> Int {
-            switch status {
-            case .authorized: return 1
-            case .denied, .restricted: return 0
-            default: return -1
-            }
-        }
-        let current = ATTrackingManager.trackingAuthorizationStatus
-        guard current == .notDetermined else {
-            done(code(current))
-            return
-        }
-        let ask = {
-            // Pequena folga depois do formulário do Google, senão o iOS ignora o pedido.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                ATTrackingManager.requestTrackingAuthorization { status in
-                    DispatchQueue.main.async { done(code(status)) }
-                }
-            }
-        }
-        if UIApplication.shared.applicationState == .active {
-            ask()
-        } else {
-            // O ATT só aparece com o app ativo: espera voltar ao primeiro plano.
-            var token: NSObjectProtocol?
-            token = NotificationCenter.default.addObserver(
-                forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main
-            ) { _ in
-                if let token { NotificationCenter.default.removeObserver(token) }
-                ask()
-            }
-        }
-    }
+    /// Sem ATT, o Kotlin recebe sempre "0" (rastreamento não autorizado) e só pede anúncio
+    /// não personalizado (`npa=1`). 1 = autorizado, 0 = negado ou restrito, -1 = não decidido.
+    private static let noTracking = 0
 
     private func startSdkOnce() {
         guard !sdkStarted else { return }
@@ -186,7 +152,7 @@ private final class AdBannerContainer: UIView, BannerViewDelegate {
 
         let request = Request()
         if nonPersonalized {
-            // Recusou o ATT: só anúncios não personalizados.
+            // Sem ATT: só anúncios não personalizados.
             let extras = Extras()
             extras.additionalParameters = ["npa": "1"]
             request.register(extras)

@@ -132,27 +132,19 @@ internal class FirebaseUsersDataSource(
     ): Result<Unit> {
         return try {
             val normalizedReason = when (reason.trim().lowercase()) {
-                "inappropriate_content", "abusive_language", "spam", "harassment", "other" -> reason.trim().lowercase()
+                "inappropriate_content", "abusive_language", "spam", "harassment", "fake_profile", "other" -> reason.trim().lowercase()
                 else -> "harassment"
             }
-            // 1. Gravação em reports (coleção de denúncias no Firestore)
+            // 1. Gravação em abuse_reports (coleção de denúncias; só o autor cria, ninguém lê pelo cliente)
             val reportWrites = mutableListOf<Result<Unit>>()
-            reportWrites += runCatching {
-                val docRef = firestore.collection("reports").document
-                val payload = mutableMapOf<String, Any>(
-                    "reporter_id" to reporterId,
-                    "target_user_id" to targetUserId,
-                    "target_user_name" to targetUserName,
-                    "target_type" to "player",
-                    "reason" to normalizedReason,
-                    "details" to reason.trim(),
-                    "status" to "OPEN",
-                    "created_at" to FieldValue.serverTimestamp
-                )
-                if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
-                if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
-                docRef.set(payload)
-            }
+            reportWrites += submitContentReport(
+                targetType = "player",
+                targetId = targetUserId,
+                targetName = targetUserName,
+                reason = normalizedReason,
+                gameId = gameId,
+                groupId = groupId
+            )
             // 2. Fallback via callable submitContentReport quando vinculado a jogo/grupo
             if (reportWrites.none { it.isSuccess } && !gameId.isNullOrBlank()) {
                 reportWrites += runCatching {
@@ -169,17 +161,20 @@ internal class FirebaseUsersDataSource(
                     Unit
                 }
             }
+            // A denúncia só conta como enviada se a gravação (ou o fallback) deu certo:
+            // o bloqueio abaixo não substitui o registro para a moderação.
+            val reportSent = reportWrites.any { it.isSuccess }
             // 3. Garante bloqueio preventivo no servidor (Guideline 1.2 App Store:
             // denunciar jogador também pode isolar o contato imediatamente)
             if (reporterId.isNotBlank() && targetUserId.isNotBlank() && reporterId != targetUserId) {
-                reportWrites += blockUserOnServer(
+                blockUserOnServer(
                     userId = reporterId,
                     targetUserId = targetUserId,
                     userName = targetUserName,
                     reason = reason
                 )
             }
-            if (reportWrites.any { it.isSuccess }) {
+            if (reportSent) {
                 Result.success(Unit)
             } else {
                 reportWrites.firstOrNull() ?: Result.failure(Exception("Falha ao registrar denúncia"))
@@ -189,6 +184,51 @@ internal class FirebaseUsersDataSource(
         }
     }
 
+
+    /**
+     * Grava uma denúncia de jogador ou de grupo em `abuse_reports` (diretriz 1.2 da App Store).
+     * As regras do Firestore só deixam o autor criar (reporter_id == uid, doc id
+     * `{uid}_{tipo}_{alvo}`, uma vez só) e ninguém ler ou alterar pelo cliente; a moderação lê
+     * pelo servidor.
+     */
+    suspend fun submitContentReport(
+        targetType: String,
+        targetId: String,
+        targetName: String,
+        reason: String,
+        gameId: String? = null,
+        groupId: String? = null,
+        details: String? = null
+    ): Result<Unit> {
+        return try {
+            // O autor é sempre o usuário logado: nunca vem de parâmetro.
+            val reporterId = auth.currentUser?.uid
+                ?: return Result.failure(IllegalStateException("Usuário não autenticado"))
+            if (targetId.isBlank() || targetId.contains('/') || targetId == reporterId) {
+                return Result.failure(IllegalArgumentException("Alvo inválido para denúncia"))
+            }
+            val payload = mutableMapOf<String, Any>(
+                "reporter_id" to reporterId,
+                "target_type" to targetType,
+                "target_id" to targetId,
+                "target_name" to targetName.trim().take(120),
+                "reason" to reason,
+                "status" to "OPEN",
+                "created_at" to FieldValue.serverTimestamp
+            )
+            if (!gameId.isNullOrBlank()) payload["game_id"] = gameId
+            if (!groupId.isNullOrBlank()) payload["group_id"] = groupId
+            // Texto livre opcional, no máximo 500 caracteres (limite das regras do Firestore).
+            details?.trim()?.takeIf { it.isNotEmpty() }?.let { payload["details"] = it.take(500) }
+            // ID determinístico + "só criar" nas regras: cada pessoa denuncia o mesmo alvo uma vez.
+            firestore.collection("abuse_reports")
+                .document("${reporterId}_${targetType}_$targetId")
+                .set(payload)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     // ========== ACTIVITIES ==========
 
@@ -281,7 +321,7 @@ internal class FirebaseUsersDataSource(
         return try {
             firestore.collection(COLLECTION_STATISTICS)
                 .document(userId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             // Se o documento não existir, criar com as atualizações
@@ -393,7 +433,7 @@ internal class FirebaseUsersDataSource(
         return try {
             firestore.collection(COLLECTION_USERS)
                 .document(userId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -630,7 +670,7 @@ internal class FirebaseUsersDataSource(
             )
             firestore.collection(COLLECTION_USERS)
                 .document(userId)
-                .update(updates)
+                .updateLoose(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             println("FirebaseDataSource: updateAutoRatings falhou: ${e.message}")
@@ -848,9 +888,11 @@ internal class FirebaseUsersDataSource(
                     "auto_rating_samples" to newUser.autoRatingSamples
                 )
 
-                firestore.collection(COLLECTION_USERS)
-                    .document(uid)
-                    .set(userData)
+                // `set` com mapa heterogêneo não tem serializador no iOS: cria o documento
+                // com um mapa de textos e completa os campos com `updateLoose`.
+                val userRef = firestore.collection(COLLECTION_USERS).document(uid)
+                userRef.set(mapOf("id" to newUser.id))
+                userRef.updateLoose(userData - "id")
                 println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO (novo usuário criado) ===")
                 Result.success(newUser)
             }
@@ -1035,7 +1077,7 @@ internal class FirebaseUsersDataSource(
             val docsToDelete = mutableListOf<dev.gitlive.firebase.firestore.DocumentSnapshot>()
             docsToDelete.addAll(oldSnapshot.documents)
             allSnapshot.documents.forEach { doc ->
-                if (doc.get<Any?>("created_at") == null && !docsToDelete.any { it.id == doc.id }) docsToDelete.add(doc)
+                if (doc.getScalar("created_at") == null && !docsToDelete.any { it.id == doc.id }) docsToDelete.add(doc)
             }
             if (docsToDelete.isEmpty()) return Result.success(0)
             docsToDelete.chunked(400).forEach { chunk ->

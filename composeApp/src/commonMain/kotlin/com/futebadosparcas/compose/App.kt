@@ -1,5 +1,10 @@
 package com.futebadosparcas.compose
 
+import kotlin.time.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
 import com.futebadosparcas.compose.di.koinInjectOrNull
 import com.futebadosparcas.compose.di.koinViewModelOrNull
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -36,6 +41,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -204,12 +210,20 @@ import com.futebadosparcas.ui.core.GamesScreen
 import com.futebadosparcas.ui.core.InvitePlayersScreen
 import com.futebadosparcas.ui.core.InviteViewModel
 import com.futebadosparcas.ui.core.BadgesRouteScreen
+import com.futebadosparcas.ui.core.PlayerStatsRouteScreen
 import com.futebadosparcas.ui.core.CashboxRouteScreen
 import com.futebadosparcas.ui.core.LoginScreen
 import com.futebadosparcas.ui.core.LoginState
 import com.futebadosparcas.ui.core.LoginViewModel
 import com.futebadosparcas.ui.core.LocationsRouteScreen
 import com.futebadosparcas.ui.core.PermissionOnboardingScreen
+import com.futebadosparcas.ui.core.ReportDialog
+import com.futebadosparcas.ui.core.ReportLog
+import com.futebadosparcas.ui.core.ReportTargetType
+import com.futebadosparcas.ui.appVersionName
+import com.futebadosparcas.ui.getPlatformName
+import com.futebadosparcas.compose.resources.report_group_action_label
+import com.futebadosparcas.compose.resources.report_group_action_body
 import com.futebadosparcas.ui.core.PostGameReport
 import com.futebadosparcas.ui.core.PostGameReportScreen
 import com.futebadosparcas.ui.core.ProfileSetupScreen
@@ -436,7 +450,7 @@ fun AppNavigation(
             )
         }
 
-        // Onboarding de permissões (notificações, localização, câmera, microfone)
+        // Onboarding de permissões (notificações e localização)
         composable(AppRoutes.PERMISSION_ONBOARDING) {
             PermissionOnboardingScreen(
                 onComplete = {
@@ -461,9 +475,10 @@ fun AppNavigation(
 
             LoginScreen(
                 uiState = uiState,
-                versionName = "",
-                // G7 (B9): sem Client ID Google nativo configurado no iOS, avisa claramente
-                // em vez de disparar ação silenciosa falsa.
+                versionName = appVersionName(),
+                // iOS: sem "Entrar com Google" (não há Client ID nativo e a diretriz 4.8 pediria
+                // Sign in with Apple); fica só e-mail e senha. Android e web não mudam.
+                showGoogleSignIn = getPlatformName() != "iOS",
                 onGoogleSignInClick = { vm?.onGoogleSignInUnavailable() },
                 onEmailPasswordSignIn = { email, password -> vm?.signInWithEmailAndPassword(email, password) },
                 onForgotPassword = { email -> vm?.sendPasswordResetEmail(email) },
@@ -617,19 +632,13 @@ fun AppNavigation(
 
         composable(AppRoutes.OWNER_STATS) { entry ->
             val ownerId = entry.arguments?.read { getStringOrNull("ownerId") }
-            var retryKey by remember { mutableIntStateOf(0) }
-            key(retryKey) {
-                UnavailableRouteScreen(
-                    title = stringResource(Res.string.route_owner_stats_title),
-                    message = if (ownerId.isNullOrBlank()) {
-                        stringResource(Res.string.route_owner_stats_missing)
-                    } else {
-                        stringResource(Res.string.route_owner_stats_unavailable)
-                    },
-                    onRetry = { retryKey += 1 },
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+            val statsDataSource = koinInjectOrNull<FirebaseDataSource>()
+            val currentUserId = authRepository?.getCurrentUserId() ?: statsDataSource?.getCurrentUserId()
+            PlayerStatsRouteScreen(
+                userId = ownerId,
+                isCurrentUser = !ownerId.isNullOrBlank() && ownerId == currentUserId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(AppRoutes.TEAM_FORMATION) { entry ->
@@ -851,6 +860,10 @@ fun AppNavigation(
                     selectedGroupId = routeGroupId
                 }
             }
+            val reportDataSource = koinInjectOrNull<FirebaseDataSource>()
+            val reportPreferences = koinInjectOrNull<PreferencesService>()
+            val reporterId = authRepository?.getCurrentUserId() ?: reportDataSource?.getCurrentUserId()
+            var showGroupReport by remember { mutableStateOf(false) }
             FeatureHubScreen(
                 title = stringResource(Res.string.group_detail_title),
                 body = stringResource(Res.string.group_detail_body),
@@ -899,6 +912,12 @@ fun AppNavigation(
                         onClick = { navController.navigate(AppRoutes.BLOCKED_PLAYERS) }
                     ),
                     FeatureHubAction(
+                        label = stringResource(Res.string.report_group_action_label),
+                        description = stringResource(Res.string.report_group_action_body),
+                        icon = Icons.Filled.Flag,
+                        onClick = { showGroupReport = true }
+                    ),
+                    FeatureHubAction(
                         label = stringResource(Res.string.groups_hub_action_whats_new),
                         description = stringResource(Res.string.groups_hub_action_whats_new_body),
                         icon = Icons.Filled.NewReleases,
@@ -906,6 +925,29 @@ fun AppNavigation(
                     )
                 )
             )
+            if (showGroupReport && reportDataSource != null && !reporterId.isNullOrBlank() &&
+                !effectiveGroupId.isNullOrBlank()
+            ) {
+                ReportDialog(
+                    targetType = ReportTargetType.GROUP,
+                    targetName = "",
+                    onDismiss = { showGroupReport = false },
+                    onSubmit = { reason, details ->
+                        reportLog(reportPreferences).submitOnce(
+                            reporterId, ReportTargetType.GROUP.code, effectiveGroupId
+                        ) {
+                            reportDataSource.submitContentReport(
+                                targetType = ReportTargetType.GROUP.code,
+                                targetId = effectiveGroupId,
+                                targetName = "",
+                                reason = reason,
+                                groupId = effectiveGroupId,
+                                details = details
+                            ).isSuccess
+                        }
+                    }
+                )
+            }
         }
 
         // Profile (B12 — inclui pontos de entrada para Ranking, Badges e Locais)
@@ -1065,12 +1107,55 @@ fun AppNavigation(
 
         // Ranking
         composable(AppRoutes.RANKING) {
-            RankingRouteScreen(onNavigateBack = { navController.popBackStack() })
+            val dataSource = koinInjectOrNull<FirebaseDataSource>()
+            val reportPreferences = koinInjectOrNull<PreferencesService>()
+            val reporterId = authRepository?.getCurrentUserId() ?: dataSource?.getCurrentUserId()
+            RankingRouteScreen(
+                onNavigateBack = { navController.popBackStack() },
+                currentUserId = reporterId,
+                onSubmitReport = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName, reason, details ->
+                    reportLog(reportPreferences).submitOnce(
+                        reporterId, ReportTargetType.PLAYER.code, targetId
+                    ) {
+                        dataSource.submitContentReport(
+                            targetType = ReportTargetType.PLAYER.code,
+                            targetId = targetId,
+                            targetName = targetName,
+                            reason = reason,
+                            details = details
+                        ).isSuccess
+                    }
+                },
+                // Depois de denunciar, a tela oferece bloquear a pessoa (mesmo bloqueio de Jogadores bloqueados).
+                onBlockReported = if (dataSource == null || reporterId.isNullOrBlank()) null else { targetId, targetName ->
+                    val result = dataSource.blockUserOnServer(
+                        userId = reporterId,
+                        targetUserId = targetId,
+                        userName = targetName,
+                        reason = "Denúncia"
+                    )
+                    if (result.isSuccess) {
+                        val updated = blockedPlayers.filterNot { it.userId == targetId } + BlockedPlayerData(
+                            userId = targetId,
+                            userName = targetName,
+                            reason = "Denúncia",
+                            blockedAt = null
+                        )
+                        blockedPlayers = updated
+                        persistBlockedPlayers(preferencesService, updated)
+                    }
+                    result.isSuccess
+                }
+            )
         }
 
         // Badges
         composable(AppRoutes.BADGES) {
-            BadgesRouteScreen(onNavigateBack = { navController.popBackStack() })
+            val badgesDataSource = koinInjectOrNull<FirebaseDataSource>()
+            BadgesRouteScreen(
+                currentUserId = authRepository?.getCurrentUserId() ?: badgesDataSource?.getCurrentUserId(),
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         // Locations
@@ -1831,7 +1916,7 @@ private fun CreateGameRoute(
 ) {
     var locationName by remember { mutableStateOf("") }
     var locationAddress by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("2026-11-10") }
+    var date by remember { mutableStateOf(tomorrowIsoDate()) }
     var time by remember { mutableStateOf("20:00") }
     var endTime by remember { mutableStateOf("21:30") }
     var maxPlayersText by remember { mutableStateOf("14") }
@@ -2537,6 +2622,12 @@ internal fun encodeBlockedPlayers(blockedPlayers: List<BlockedPlayerData>): Stri
     }
 }
 
+/** Memória local das denúncias já enviadas (sem preferências, nunca marca nada e só tenta enviar). */
+private fun reportLog(preferences: PreferencesService?) = ReportLog(
+    getFlag = { key -> preferences?.getBoolean(key, false) ?: false },
+    putFlag = { key, value -> preferences?.putBoolean(key, value) }
+)
+
 internal fun loadBlockedPlayers(preferencesService: PreferencesService?): List<BlockedPlayerData> {
     val raw = preferencesService?.getString(BLOCKED_PLAYERS_PREF_KEY, null).orEmpty()
     return decodeBlockedPlayers(raw)
@@ -2553,3 +2644,10 @@ internal fun persistBlockedPlayers(
     }
     preferencesService.putString(BLOCKED_PLAYERS_PREF_KEY, encodeBlockedPlayers(blockedPlayers))
 }
+
+
+/** Data padrão do "Criar jogo": amanhã (no fuso do aparelho), no formato AAAA-MM-DD. */
+private fun tomorrowIsoDate(): String =
+    Clock.System.todayIn(TimeZone.currentSystemDefault())
+        .plus(1, DateTimeUnit.DAY)
+        .toString()

@@ -18,7 +18,12 @@ import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
+import com.futebadosparcas.domain.model.GameWithConfirmations
+import com.futebadosparcas.ui.core.GamesViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import platform.Foundation.NSBundle
 
@@ -51,4 +56,43 @@ private fun firebaseModule(): Module = module {
     single<CashboxRepository> { CashboxRepositoryImpl(get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get()) }
     single<LiveGameRepository> { LiveGameRepositoryImpl(get()) }
+    // Aba Jogos: não existe `GameRepository` no iOS; a lista vem direto do Firestore.
+    viewModel {
+        val dataSource = get<FirebaseDataSource>()
+        GamesViewModel(observeGames = { gamesForList(dataSource) })
+    }
 }
+
+/**
+ * Jogos da aba "Jogos" no iOS: próximos jogos públicos (o filtro de visibilidade é exigido
+ * pelas regras do Firestore) somados aos jogos em que a pessoa confirmou presença.
+ * Se só a parte dos confirmados falhar, a lista pública continua valendo.
+ */
+private fun gamesForList(dataSource: FirebaseDataSource): Flow<Result<List<GameWithConfirmations>>> = flow {
+    val publicGames = dataSource.getPublicGames(PUBLIC_GAMES_LIMIT)
+    val userId = dataSource.getCurrentUserId()
+    val confirmed = if (userId != null) {
+        dataSource.getConfirmedGamesForUser(userId).getOrNull().orEmpty()
+    } else {
+        emptyList()
+    }
+    val confirmedIds = confirmed.map { it.id }.toSet()
+    publicGames.fold(
+        onSuccess = { games ->
+            val all = (games + confirmed).distinctBy { it.id }
+                .sortedBy { "${it.date} ${it.time}" }
+                .map { GameWithConfirmations(it, it.playersCount, it.id in confirmedIds) }
+            emit(Result.success(all))
+        },
+        onFailure = { error ->
+            if (confirmed.isEmpty()) {
+                emit(Result.failure(error))
+            } else {
+                emit(Result.success(confirmed.sortedBy { "${it.date} ${it.time}" }
+                    .map { GameWithConfirmations(it, it.playersCount, true) }))
+            }
+        }
+    )
+}
+
+private const val PUBLIC_GAMES_LIMIT = 50

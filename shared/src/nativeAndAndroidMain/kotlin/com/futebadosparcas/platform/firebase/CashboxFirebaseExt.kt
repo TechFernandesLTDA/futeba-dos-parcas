@@ -58,7 +58,7 @@ internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
  */
 private fun DocumentSnapshot.getDateFieldAsEpochMs(field: String): Long? {
     return try {
-        val value = get<Any?>(field)
+        val value = getScalar(field)
         when (value) {
             is Timestamp -> value.seconds * 1000L + value.nanoseconds / 1_000_000L
             is Number -> value.toLong()

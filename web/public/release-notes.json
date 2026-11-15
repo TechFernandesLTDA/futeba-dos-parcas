@@ -1,6 +1,6 @@
 {
   "platform": "web",
-  "generatedAt": "2026-11-11T04:52:14.104Z",
+  "generatedAt": "2026-11-14T13:01:26.242Z",
   "notes": [
     {
       "version": "1.63.0",
@@ -8,7 +8,7 @@
       "releaseDate": "2026-11-11",
       "type": "minor",
       "showPopup": false,
-      "published": false,
+      "published": true,
       "headline": "A versão web passa a poder mostrar anúncios discretos do Google nas páginas de conteúdo.",
       "highlights": [],
       "added": [],

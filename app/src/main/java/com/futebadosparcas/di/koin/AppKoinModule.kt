@@ -16,6 +16,7 @@ import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.domain.ranking.LeagueServiceImpl
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
+import com.futebadosparcas.domain.gamification.BadgeAwarder
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter
 import com.futebadosparcas.domain.repository.GameQueryRepository
 import com.futebadosparcas.domain.repository.GameConfirmationRepository
@@ -30,6 +31,16 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val appKoinModule = module {
+
+    // Injetados pela MainActivityCompose logo depois do login; sem estas definicoes o app
+    // fecha com NoDefinitionFoundException (coberto por KoinGraphTest).
+    single<PostGameEventEmitter> {
+        PostGameEventEmitter()
+    }
+
+    single<BadgeAwarder> {
+        BadgeAwarder(get(), get())
+    }
 
     single<MatchFinalizationService> {
         MatchFinalizationService(get(), get(), get())

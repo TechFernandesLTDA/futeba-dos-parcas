@@ -37,6 +37,17 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 #### Mudado
 - Permissão `AD_ID` deixa de ser removida do manifesto (necessária ao AdMob); declarar o ID de publicidade na Play Console.
 
+### [1.43.1][android-1.43.1] - 2026-11-14
+
+#### Mudado
+- Texto do onboarding sem a palavra "IA" (#4551).
+
+#### Corrigido
+- Definições Koin de `PostGameEventEmitter`, `BadgeAwarder` e `UpdateProfileUseCase` que faltavam e causavam `NoDefinitionFoundException` ao abrir a tela principal; teste de grafo (`KoinGraphTest`) cobre a ausência (#4551).
+- `GameDetailViewModel` passa a usar `data.repository.GameRepository`, que tem definição no Koin (#4552).
+
+_PRs: #4551, #4552_
+
 ### [1.43.0][android-1.43.0] - 2026-11-09
 
 #### Adicionado
@@ -2471,6 +2482,26 @@ _Issues: #1297 · PRs: #1294, #1298, #1299, #1468_
 
 ## Cloud Functions
 
+### [1.18.0][functions-1.18.0] - 2026-11-14
+
+#### Mudado
+- Bônus de MVP (+50) entra por fora do teto de 500 XP por jogo; o piso por jogo é `MIN_XP_PER_GAME` (-100), com clamp atômico (#4531).
+- Ranking semanal aplica os limites de gols, assistências e defesas por jogo e desempata de forma determinística: pontos, gols, assistências, vitórias, nome e UID (#4531).
+- Liga do grupo conta só confirmações com presença elegível (#4531).
+- Nomes dos níveis 0 a 20 e limites de divisão lidos de `shared/xp-constants.json`; a conquista `streak_7` lê `user_streaks` (#4510).
+- `onGameStatusUpdate` dividido em módulos em `functions/src/xp/` e `location-management` em submódulos em `functions/src/locations/`, sem mudança de comportamento (#4516, #4520).
+- Ranking por grupo consulta só `group_ids array-contains`; a consulta legada por `group_id` saiu (#4516).
+
+#### Removido
+- Código morto: `admin-notifications`, `fake-notifications`, `rate-limiter.example`, `migration-example`, `parallel-processing` e `xp/processing` (#4516). A callable `resetXpRateLimit` deixa de existir no código.
+
+#### Segurança
+- Functions implantadas em produção em 14/11/2026, das 12:51 às 12:57 (BRT), a partir do commit `f599fb6f`: 178 funções atualizadas e ativas. `resetXpRateLimit` continua em produção com o código de 05/11 (não foi apagada).
+- Regras do Firestore da master (#4512 e #4522) implantadas em 14/11/2026 às 12:58 (BRT): ruleset `5b290a88-ee6c-4933-b85d-6e948cbcb156`; o anterior era `edc2d9c0-8dd6-4267-99ba-704ffc80fc31`. Índices já estavam iguais aos da master.
+- Hosting republicado às 12:59 (BRT), versão `cf1f7c16722aa4b8` (anterior: `1752a077802fe9e8`), com o Team ID real no `apple-app-site-association` e o publisher do AdMob no `app-ads.txt`; a web segue na 1.63.0.
+
+_PRs: #4510, #4516, #4520, #4531_
+
 ### [1.17.0][functions-1.17.0] - 2026-11-09
 
 #### Adicionado
@@ -3376,6 +3407,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
 [android-1.44.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.44.0.md
+[android-1.43.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.1.md
 [android-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.0.md
 [android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
 [android-1.41.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.41.0.md
@@ -3596,6 +3628,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [ios-1.6.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.2.md
 [ios-1.6.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.1.md
 [ios-1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.6.0.md
+[functions-1.18.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.18.0.md
 [functions-1.17.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.17.0.md
 [functions-1.15.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.1.md
 [functions-1.15.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/functions/1.15.0.md
