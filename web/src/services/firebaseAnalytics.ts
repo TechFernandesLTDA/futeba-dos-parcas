@@ -1,4 +1,5 @@
 import type { Analytics, EventParams } from 'firebase/analytics';
+import { whenEngaged } from './deferredThirdParty';
 
 export let analytics: Analytics | null = null;
 let analyticsInitialization: Promise<Analytics | null> | null = null;
@@ -10,6 +11,9 @@ async function initializeAnalytics(): Promise<Analytics | null> {
   }
 
   try {
+    // Página pública vista por visitante anônimo: o gtag espera a primeira interação
+    // ou o tempo ocioso (deferredThirdParty.ts). Eventos registrados antes ficam na fila.
+    await whenEngaged();
     const { getAnalytics, isSupported, logEvent } = await import('firebase/analytics');
     if (!(await isSupported())) {
       return null;
