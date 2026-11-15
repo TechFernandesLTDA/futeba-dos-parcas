@@ -31,6 +31,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
+import com.futebadosparcas.data.util.toObjectOrNullSafely
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 internal fun buildPendingOwnerGroup(
     groupId: String,
@@ -310,7 +313,7 @@ class GroupRepository constructor(
                     trySend(Result.failure(error))
                     return@addSnapshotListener
                 }
-                val groups = snapshot?.toObjects(PublicGroup::class.java)
+                val groups = snapshot?.toObjectsTolerant(PublicGroup::class.java)
                     ?.filter { it.deletedAt == null }
                     ?.sortedByDescending { it.memberCount }
                     ?: emptyList()
@@ -347,7 +350,7 @@ class GroupRepository constructor(
             val doc = groupsCollection.document(groupId).get().await()
 
             if (doc.exists()) {
-                val group = doc.toObject(Group::class.java)
+                val group = doc.toObjectTolerant(Group::class.java)
                     ?: return Result.failure(Exception("Erro ao converter grupo"))
                 Result.success(group)
             } else {
@@ -370,7 +373,7 @@ class GroupRepository constructor(
                 }
 
                 if (snapshot != null && snapshot.exists()) {
-                    val group = snapshot.toObject(Group::class.java)
+                    val group = snapshot.toObjectOrNullSafely(Group::class.java)
                     if (group != null) {
                         trySend(Result.success(group))
                     } else {
@@ -396,7 +399,7 @@ class GroupRepository constructor(
                 .get()
                 .await()
 
-            val members = snapshot.toObjects(GroupMember::class.java)
+            val members = snapshot.toObjectsTolerant(GroupMember::class.java)
             Result.success(members)
         } catch (e: Exception) {
             Result.failure(e)
@@ -416,7 +419,7 @@ class GroupRepository constructor(
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
-                val members = snapshot?.toObjects(GroupMember::class.java) ?: emptyList()
+                val members = snapshot?.toObjectsTolerant(GroupMember::class.java) ?: emptyList()
                 trySend(members)
             }
 
@@ -438,7 +441,7 @@ class GroupRepository constructor(
                 .await()
 
             if (memberDoc.exists()) {
-                val member = memberDoc.toObject(GroupMember::class.java)
+                val member = memberDoc.toObjectTolerant(GroupMember::class.java)
                 Result.success(member?.getRoleEnum())
             } else {
                 Result.success(null)
@@ -1097,7 +1100,7 @@ class GroupRepository constructor(
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
-                val members = snapshot?.toObjects(GroupMember::class.java) ?: emptyList()
+                val members = snapshot?.toObjectsTolerant(GroupMember::class.java) ?: emptyList()
                 // Ordenar por role e depois por nome
                 val sortedMembers = members.sortedWith(
                     compareBy<GroupMember> { member ->
@@ -1304,7 +1307,7 @@ class GroupRepository constructor(
                 .await()
 
             val blockedList = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(BlockedPlayer::class.java)?.copy(userId = doc.id)
+                doc.toObjectTolerant(BlockedPlayer::class.java)?.copy(userId = doc.id)
             }
             Result.success(blockedList)
         } catch (e: Exception) {

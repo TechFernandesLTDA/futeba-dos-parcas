@@ -9,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Get User Profile Use Case
@@ -82,7 +83,7 @@ class GetUserProfileUseCase constructor(
             .get()
             .await()
 
-        val user = userSnapshot.toObject(User::class.java)
+        val user = userSnapshot.toObjectTolerant(User::class.java)
             ?: throw IllegalStateException("Usuário não encontrado: $userId")
 
         AppLogger.d(TAG) {
@@ -99,7 +100,7 @@ class GetUserProfileUseCase constructor(
                 .get()
                 .await()
 
-            val statistics = statsSnapshot.toObject(Statistics::class.java)
+            val statistics = statsSnapshot.toObjectTolerant(Statistics::class.java)
 
             if (statistics != null) {
                 AppLogger.d(TAG) {

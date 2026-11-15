@@ -11,6 +11,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Use Case para buscar rankings da liga.
@@ -227,7 +228,7 @@ class GetLeagueRankingUseCase constructor(
         documents: List<DocumentSnapshot>,
         currentUserId: String?
     ): List<RankingEntry> {
-        val users = documents.mapNotNull { it.toObject(User::class.java) }
+        val users = documents.mapNotNull { it.toObjectTolerant(User::class.java) }
 
         return users.mapIndexed { index, user ->
             RankingEntry(
@@ -250,7 +251,7 @@ class GetLeagueRankingUseCase constructor(
         category: RankingCategory,
         currentUserId: String?
     ): List<RankingEntry> {
-        val stats = documents.mapNotNull { it.toObject(Statistics::class.java) }
+        val stats = documents.mapNotNull { it.toObjectTolerant(Statistics::class.java) }
         val userIds = stats.map { it.id }
 
         // Buscar dados de usuários em batch

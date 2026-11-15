@@ -7,6 +7,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.*
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 /**
  * Resultado da atualizacao de liga.
@@ -111,7 +113,7 @@ class LeagueServiceImpl constructor(
             val doc = seasonParticipationCollection.document(docId).get().await()
 
             val participation = if (doc.exists()) {
-                doc.toObject(SeasonParticipation::class.java) ?: createNewParticipation(userId, seasonId)
+                doc.toObjectTolerant(SeasonParticipation::class.java) ?: createNewParticipation(userId, seasonId)
             } else {
                 createNewParticipation(userId, seasonId)
             }
@@ -204,7 +206,7 @@ class LeagueServiceImpl constructor(
             val doc = seasonParticipationCollection.document(docId).get().await()
 
             val participation = if (doc.exists()) {
-                doc.toObject(SeasonParticipation::class.java)
+                doc.toObjectTolerant(SeasonParticipation::class.java)
             } else {
                 null
             }
@@ -228,7 +230,7 @@ class LeagueServiceImpl constructor(
                 .get()
                 .await()
 
-            val participations = snapshot.toObjects(SeasonParticipation::class.java)
+            val participations = snapshot.toObjectsTolerant(SeasonParticipation::class.java)
             Result.success(participations)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar ranking da liga", e)
@@ -253,7 +255,7 @@ class LeagueServiceImpl constructor(
                 .get()
                 .await()
 
-            val participations = snapshot.toObjects(SeasonParticipation::class.java)
+            val participations = snapshot.toObjectsTolerant(SeasonParticipation::class.java)
             Result.success(participations)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogadores da divisao $division", e)
@@ -274,7 +276,7 @@ class LeagueServiceImpl constructor(
                 .await()
 
              val lastParticipation = allParticipations.documents.firstOrNull()
-                ?.toObject(SeasonParticipation::class.java)
+                ?.toObjectTolerant(SeasonParticipation::class.java)
 
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes

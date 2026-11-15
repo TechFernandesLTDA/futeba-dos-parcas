@@ -2213,3 +2213,25 @@ Spec: `specs/bugfix-2026-11-15-android-crash-meus-grupos-documentid.md`.
 - Alternativa descartada: trocar o modelo por `@get:Exclude` e preencher o ID em cada leitura (muda todos os
   pontos de leitura e não protege de outro tipo inesperado no documento).
 - Pendente de decisão do Renan: remover o campo `id` do único documento legado de produção.
+
+## 2026-11-15: Leitura por reflexão no Android passa pelo mapeamento tolerante (`@DocumentId`)
+
+Spec: `specs/bugfix-2026-11-15-android-documentid-leitura-tolerante.md`.
+
+- Regra: no app Android, nenhuma leitura usa `toObject`/`toObjects` direto. Fora de listener usa
+  `toObjectTolerant`; dentro de `addSnapshotListener` usa `toObjectOrNullSafely`; lista usa `toObjectsTolerant`
+  (`data/util/FirestoreSafeMapping.kt`).
+- Motivo: o mapper do Firestore lança quando o documento tem um campo gravado com o nome de uma propriedade
+  `@DocumentId`. Em produção, 8 de 105 documentos de `groups/*/members` e 1 de 13 de `users/*/groups` têm o
+  campo `id`. Corrigir modelo por modelo (#4566) deixou a subcoleção de membros de fora e o app voltou a fechar.
+- No conflito, a conversão é refeita sem o campo gravado, por `CustomClassMapper.convertToCustomClass`, que é
+  API interna do SDK. Aceito porque o teste de regressão usa o mapper real e quebra junto com o build se a
+  assinatura mudar.
+- Fora de listener, exceção que não seja o conflito continua sendo relançada. Devolver `null` faria uma
+  transação tratar documento ilegível como inexistente.
+- O `@DocumentId` continua nos modelos, para o `id` não ser gravado.
+- O não fatal do conflito não leva o caminho do documento, que pode conter UID.
+- Alternativas descartadas: tirar o `@DocumentId` dos 40 modelos (o app passaria a gravar `id` e as versões
+  instaladas fechariam); mapear campo a campo cada modelo (40 mapeadores para manter).
+- Pendente de decisão do Renan: remover o campo `id` dos documentos legados e barrar por lint o uso direto de
+  `toObject`/`toObjects`.

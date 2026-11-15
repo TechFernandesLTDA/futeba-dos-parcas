@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlin.math.*
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 /**
  * Get Nearby Locations Use Case
@@ -36,7 +37,7 @@ class GetNearbyLocationsUseCase constructor(
             .get()
             .await()
 
-        val locations = snapshot.toObjects(Location::class.java)
+        val locations = snapshot.toObjectsTolerant(Location::class.java)
 
         // Calcular distância e filtrar por raio
         return locations

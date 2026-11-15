@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.futebadosparcas.data.util.toObjectTolerant
 
 class AuthRepository constructor(
     private val auth: FirebaseAuth,
@@ -150,7 +151,7 @@ class AuthRepository constructor(
 
             if (doc.exists()) {
                 AppLogger.d(TAG) { "User document EXISTS in Firestore" }
-                var user = doc.toObject(User::class.java)
+                var user = doc.toObjectTolerant(User::class.java)
                     ?: return Result.failure(Exception("Erro ao converter usuario"))
 
                 AppLogger.d(TAG) { "User loaded successfully" }
