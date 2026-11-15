@@ -6,6 +6,7 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 /**
  * Get Top Scorers Use Case
@@ -69,7 +70,7 @@ class GetTopScorersUseCase constructor(
             .get()
             .await()
 
-        val allStats = snapshot.toObjects(Statistics::class.java)
+        val allStats = snapshot.toObjectsTolerant(Statistics::class.java)
 
         // Filtrar por mínimo de jogos se necessário
         return if (params.minGames > 0) {

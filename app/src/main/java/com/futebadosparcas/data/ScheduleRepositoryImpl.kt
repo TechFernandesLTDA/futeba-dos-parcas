@@ -12,6 +12,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectOrNullSafely
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Implementacao Android do ScheduleRepository.
@@ -44,7 +46,7 @@ class ScheduleRepositoryImpl constructor(
 
                 if (snapshot != null) {
                     val kmpSchedules = snapshot.documents.mapNotNull { document ->
-                        document.toObject(FirebaseSchedule::class.java)
+                        document.toObjectOrNullSafely(FirebaseSchedule::class.java)
                             ?.copy(id = document.id)
                             ?.toKmpSchedule()
                     }
@@ -92,7 +94,7 @@ class ScheduleRepositoryImpl constructor(
     override suspend fun getScheduleById(scheduleId: String): Result<Schedule> {
         return try {
             val snapshot = schedulesCollection.document(scheduleId).get().await()
-            val schedule = snapshot.toObject(FirebaseSchedule::class.java)
+            val schedule = snapshot.toObjectTolerant(FirebaseSchedule::class.java)
                 ?.copy(id = snapshot.id)
                 ?.toKmpSchedule()
             if (schedule != null) {

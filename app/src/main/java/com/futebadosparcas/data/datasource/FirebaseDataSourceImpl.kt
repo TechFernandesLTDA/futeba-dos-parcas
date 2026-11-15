@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.*
 import com.google.firebase.firestore.FieldPath as FirestoreFieldPath
+import com.futebadosparcas.data.util.toObjectOrNullSafely
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 /**
  * Implementação concreta do FirebaseDataSource.
@@ -73,7 +76,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            val games = snapshot.toObjects(Game::class.java)
+            val games = snapshot.toObjectsTolerant(Game::class.java)
             AppLogger.d(TAG) { "Encontrados ${games.size} jogos futuros" }
             games
         }
@@ -100,7 +103,7 @@ class FirebaseDataSourceImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val games = snapshot.toObjects(Game::class.java)
+                    val games = snapshot.toObjectsTolerant(Game::class.java)
                     AppLogger.d(TAG) { "Flow: ${games.size} jogos futuros" }
                     trySend(Result.success(games))
                 }
@@ -122,7 +125,7 @@ class FirebaseDataSourceImpl constructor(
                 throw NoSuchElementException("Jogo não encontrado: $gameId")
             }
 
-            doc.toObject(Game::class.java)
+            doc.toObjectTolerant(Game::class.java)
                 ?: throw IllegalStateException("Erro ao converter jogo: $gameId")
         }
     }
@@ -140,7 +143,7 @@ class FirebaseDataSourceImpl constructor(
                 }
 
                 if (snapshot != null && snapshot.exists()) {
-                    val game = snapshot.toObject(Game::class.java)
+                    val game = snapshot.toObjectOrNullSafely(Game::class.java)
                     if (game != null) {
                         trySend(Result.success(game))
                     } else {
@@ -162,7 +165,7 @@ class FirebaseDataSourceImpl constructor(
                 .whereEqualTo("status", ConfirmationStatus.CONFIRMED.name)
                 .get()
                 .await()
-                .toObjects(GameConfirmation::class.java)
+                .toObjectsTolerant(GameConfirmation::class.java)
 
             // 2. Buscar jogos confirmados
             val gameIds = confirmations.map { it.gameId }.distinct()
@@ -175,7 +178,7 @@ class FirebaseDataSourceImpl constructor(
             val games = BatchOperationHelper.parallelGetByIds(
                 collection = firestore.collection(COLLECTION_GAMES),
                 ids = gameIds,
-                mapper = { doc -> doc.toObject(Game::class.java) }
+                mapper = { doc -> doc.toObjectTolerant(Game::class.java) }
             )
 
             AppLogger.d(TAG) { "Encontrados ${games.size} jogos confirmados" }
@@ -194,7 +197,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            snapshot.toObjects(Game::class.java)
+            snapshot.toObjectsTolerant(Game::class.java)
         }
     }
 
@@ -214,7 +217,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            snapshot.toObjects(Game::class.java)
+            snapshot.toObjectsTolerant(Game::class.java)
         }
     }
 
@@ -265,7 +268,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            snapshot.toObjects(GameConfirmation::class.java)
+            snapshot.toObjectsTolerant(GameConfirmation::class.java)
         }
     }
 
@@ -282,7 +285,7 @@ class FirebaseDataSourceImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val confirmations = snapshot.toObjects(GameConfirmation::class.java)
+                    val confirmations = snapshot.toObjectsTolerant(GameConfirmation::class.java)
                     trySend(Result.success(confirmations))
                 }
             }
@@ -315,7 +318,7 @@ class FirebaseDataSourceImpl constructor(
                 .document(confirmationId)
                 .get()
                 .await()
-                .toObject(GameConfirmation::class.java)
+                .toObjectTolerant(GameConfirmation::class.java)
                 ?: throw NoSuchElementException("Confirmação não encontrada após callable: $confirmationId")
 
             AppLogger.d(TAG) { "Presença confirmada via callable: $confirmationId" }
@@ -392,7 +395,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            snapshot.toObjects(Team::class.java)
+            snapshot.toObjectsTolerant(Team::class.java)
         }
     }
 
@@ -409,7 +412,7 @@ class FirebaseDataSourceImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val teams = snapshot.toObjects(Team::class.java)
+                    val teams = snapshot.toObjectsTolerant(Team::class.java)
                     trySend(Result.success(teams))
                 }
             }
@@ -469,7 +472,7 @@ class FirebaseDataSourceImpl constructor(
                 return@suspendWithRetryResult UserStatistics(id = userId)
             }
 
-            doc.toObject(UserStatistics::class.java)
+            doc.toObjectTolerant(UserStatistics::class.java)
                 ?: UserStatistics(id = userId)
         }
     }
@@ -487,7 +490,7 @@ class FirebaseDataSourceImpl constructor(
                 }
 
                 if (snapshot != null && snapshot.exists()) {
-                    val stats = snapshot.toObject(UserStatistics::class.java)
+                    val stats = snapshot.toObjectOrNullSafely(UserStatistics::class.java)
                         ?: UserStatistics(id = userId)
                     trySend(Result.success(stats))
                 } else {
@@ -564,7 +567,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            snapshot.toObjects(XpLog::class.java)
+            snapshot.toObjectsTolerant(XpLog::class.java)
         }
     }
 
@@ -583,7 +586,7 @@ class FirebaseDataSourceImpl constructor(
                 throw NoSuchElementException("Usuário não encontrado: $userId")
             }
 
-            doc.toObject(User::class.java)
+            doc.toObjectTolerant(User::class.java)
                 ?: throw IllegalStateException("Erro ao converter usuário")
         }
     }
@@ -600,7 +603,7 @@ class FirebaseDataSourceImpl constructor(
             BatchOperationHelper.parallelWhereIn(
                 collection = firestore.collection(COLLECTION_USERS),
                 ids = userIds,
-                mapper = { doc -> doc.toObject(User::class.java) }
+                mapper = { doc -> doc.toObjectTolerant(User::class.java) }
             )
         }
     }
@@ -649,7 +652,7 @@ class FirebaseDataSourceImpl constructor(
                     .await()
             }
 
-            snapshot.toObjects(User::class.java)
+            snapshot.toObjectsTolerant(User::class.java)
         }
     }
 
@@ -665,7 +668,7 @@ class FirebaseDataSourceImpl constructor(
                 .get()
                 .await()
 
-            snapshot.toObjects(UserGroup::class.java)
+            snapshot.toObjectsTolerant(UserGroup::class.java)
         }
     }
 
@@ -683,7 +686,7 @@ class FirebaseDataSourceImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val groups = snapshot.toObjects(UserGroup::class.java)
+                    val groups = snapshot.toObjectsTolerant(UserGroup::class.java)
                     trySend(Result.success(groups))
                 }
             }
@@ -704,7 +707,7 @@ class FirebaseDataSourceImpl constructor(
                 throw NoSuchElementException("Grupo não encontrado: $groupId")
             }
 
-            doc.toObject(UserGroup::class.java)
+            doc.toObjectTolerant(UserGroup::class.java)
                 ?: throw IllegalStateException("Erro ao converter grupo")
         }
     }
