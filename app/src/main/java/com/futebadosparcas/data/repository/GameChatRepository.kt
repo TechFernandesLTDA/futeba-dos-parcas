@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectOrNullSafely
 
 /**
  * Repository do chat em tempo real por jogo (issue #3230, épico #3240).
@@ -49,7 +50,7 @@ class GameChatRepository constructor(
                 }
 
                 val messages = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameChatMessage::class.java)?.copy(id = doc.id)
+                    doc.toObjectOrNullSafely(GameChatMessage::class.java)?.copy(id = doc.id)
                 }?.asReversed()?.filter { it.deletedAt == null } ?: emptyList()
 
                 trySend(messages)

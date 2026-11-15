@@ -11,6 +11,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectOrNullSafely
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Implementacao do WaitlistRepository usando Firebase Firestore.
@@ -109,7 +111,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val list = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
+                doc.toObjectTolerant(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
             }
 
             Result.success(list)
@@ -135,7 +137,7 @@ class WaitlistRepositoryImpl constructor(
                 }
 
                 val list = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
+                    doc.toObjectOrNullSafely(AndroidGameWaitlist::class.java)?.toDomain(doc.id)
                 } ?: emptyList()
 
                 trySend(Result.success(list))
@@ -158,7 +160,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val entry = docs.documents.firstOrNull()
-                ?.toObject(AndroidGameWaitlist::class.java)
+                ?.toObjectTolerant(AndroidGameWaitlist::class.java)
                 ?.toDomain()
 
             Result.success(entry?.queuePosition)

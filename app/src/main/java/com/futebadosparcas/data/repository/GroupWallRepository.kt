@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 import java.util.UUID
+import com.futebadosparcas.data.util.toObjectTolerant
 
 data class GroupWallRealtimeSnapshot(
     val recentPosts: List<GroupWallPost>,
@@ -498,7 +499,7 @@ internal fun mergeWallPostTimeline(
 }
 
 private fun List<DocumentSnapshot>.toWallPosts(): List<GroupWallPost> = mapNotNull { document ->
-    document.toObject(GroupWallPost::class.java)?.copy(id = document.id)
+    document.toObjectTolerant(GroupWallPost::class.java)?.copy(id = document.id)
 }
 
 internal fun isSameTextPostIntent(

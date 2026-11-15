@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Implementacao Android do GameTemplateRepository.
@@ -55,7 +56,7 @@ class GameTemplateRepositoryImpl constructor(
 
             val templates = snapshot.documents.mapNotNull { doc ->
                 try {
-                    doc.toObject(GameTemplate::class.java)?.copy(id = doc.id)
+                    doc.toObjectTolerant(GameTemplate::class.java)?.copy(id = doc.id)
                 } catch (e: Exception) {
                     AppLogger.w(TAG) { "Erro ao parsear template ${doc.id}: ${e.message}" }
                     null
