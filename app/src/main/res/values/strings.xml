@@ -2110,6 +2110,9 @@ subir no ranking!</string>
     <string name="auth_error_invalid_email">Email inválido</string>
     <string name="auth_error_network">Sem conexão. Verifique sua internet</string>
     <string name="auth_error_generic">Erro ao autenticar. Tente novamente</string>
+    <string name="auth_error_profile_not_ready">Sua conta está sendo preparada. Tente entrar de novo em instantes.</string>
+    <string name="login_error_no_google_account">Nenhuma conta Google disponível neste aparelho. Adicione uma conta nas configurações do Android e tente de novo.</string>
+    <string name="login_error_google_unavailable">O login com Google não está disponível neste aparelho. Atualize o Google Play Services ou entre com email.</string>
 
     <!-- Auth Register (deprecated) -->
     <string name="auth_register_message">O registro agora e feito via Google Sign-In</string>
