@@ -10,7 +10,10 @@ import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.model.GroupMemberStatus
 import com.futebadosparcas.data.model.GroupStatus
 import com.futebadosparcas.data.model.UserGroup
+import com.futebadosparcas.data.util.mapDocumentsSafely
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,6 +30,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 internal fun buildPendingOwnerGroup(
     groupId: String,
@@ -57,6 +61,41 @@ internal fun buildOwnerGroupMirror(
     memberCount = 1,
     groupStatus = GroupStatus.ACTIVE.name
 )
+
+/**
+ * Monta o [UserGroup] a partir dos campos de `users/{uid}/groups/{groupId}`, sem o mapper por reflexão.
+ *
+ * O `toObjects(UserGroup::class.java)` lança `RuntimeException` quando o documento tem um campo `id`
+ * gravado, porque o modelo usa `@DocumentId` em `id`. Existe documento assim em produção e isso fechava o
+ * app ao abrir a lista de grupos. Aqui o ID vem sempre do ID do documento e um campo `id` gravado é
+ * ignorado. Campo ausente ou de tipo inesperado cai no padrão do modelo.
+ *
+ * O `@DocumentId` continua no modelo de propósito: ele mantém o `id` fora das gravações, e versões antigas
+ * do app ainda leem esses documentos com `toObjects`.
+ */
+internal fun userGroupFromFirestore(docId: String, data: Map<String, Any?>): UserGroup = UserGroup(
+    id = docId,
+    groupId = (data["group_id"] as? String)?.takeIf { it.isNotBlank() } ?: docId,
+    groupName = data["group_name"] as? String ?: "",
+    groupPhoto = data["group_photo"] as? String,
+    role = data["role"] as? String ?: GroupMemberRole.MEMBER.name,
+    memberCount = (data["member_count"] as? Number)?.toInt() ?: 0,
+    groupStatus = data["group_status"] as? String ?: GroupStatus.ACTIVE.name,
+    joinedAt = when (val joinedAt = data["joined_at"]) {
+        is Timestamp -> joinedAt.toDate()
+        is Date -> joinedAt
+        else -> null
+    }
+)
+
+/**
+ * Grupos ativos do usuário a partir dos documentos da subcoleção. Nunca lança: documento que não puder
+ * ser lido é registrado e fica fora da lista (ver [mapDocumentsSafely]).
+ */
+internal fun activeUserGroupsFrom(documents: List<DocumentSnapshot>, tag: String): List<UserGroup> =
+    documents
+        .mapDocumentsSafely(tag) { doc -> userGroupFromFirestore(doc.id, doc.data.orEmpty()) }
+        .filter { it.groupStatus == GroupStatus.ACTIVE.name }
 
 class GroupRepository constructor(
     private val firestore: FirebaseFirestore,
@@ -212,9 +251,7 @@ class GroupRepository constructor(
                 .get()
                 .await()
 
-            val groups = snapshot.toObjects(UserGroup::class.java)
-                .filter { it.groupStatus == GroupStatus.ACTIVE.name }
-            Result.success(groups)
+            Result.success(activeUserGroupsFrom(snapshot.documents, TAG))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -242,10 +279,8 @@ class GroupRepository constructor(
                             close(error)
                             return@addSnapshotListener
                         }
-                        val groups = snapshot?.toObjects(UserGroup::class.java)
-                            ?.filter { it.groupStatus == GroupStatus.ACTIVE.name }
-                            ?: emptyList()
-                        trySend(groups)
+                        // Sem toObjects aqui: uma exceção do mapper neste callback fecha o app.
+                        trySend(activeUserGroupsFrom(snapshot?.documents.orEmpty(), TAG))
                     }
             }
         }
