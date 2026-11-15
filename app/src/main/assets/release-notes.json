@@ -1,7 +1,26 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-14T12:54:02.227Z",
+  "generatedAt": "2026-11-15T15:21:40.045Z",
   "notes": [
+    {
+      "version": "1.43.2",
+      "buildNumber": 86,
+      "releaseDate": "2026-11-15",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Entrar no app voltou a funcionar, com Google ou com e-mail.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Correção do erro ao entrar no app logo depois do login.",
+        "O primeiro acesso com Google espera a sua conta ficar pronta em vez de mostrar erro.",
+        "Fechar a janela do Google não mostra mais erro, e as mensagens de erro do login ficaram mais claras.",
+        "A foto do Google não substitui mais a foto que você escolheu no perfil."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.1",
       "buildNumber": 85,

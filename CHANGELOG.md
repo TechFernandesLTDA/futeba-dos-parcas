@@ -27,6 +27,16 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.43.2][android-1.43.2] - 2026-11-15
+
+#### Corrigido
+- Leituras do Firestore sem serializador de `Any` (`get<Any?>` em `safeLong` e afins) derrubavam todo login na 1.43.1 com `SerializationException`; helpers tolerantes em `FirebaseSafeReads.kt` (#4544).
+- `getCurrentAuthUser` não cria mais `users/{uid}` no cliente (as regras negam); espera o documento da `onUserCreate` por até ~14 s e falha com `UserProfileNotReadyException` (#4563).
+- Credential Manager: cancelamento sem erro, `NoCredentialException` tenta `GetSignInWithGoogleOption`, mensagens específicas (#4563).
+- Foto do Google só preenche perfil sem foto, em melhor esforço (#4563).
+
+_PRs: #4544, #4563_
+
 ### [1.43.1][android-1.43.1] - 2026-11-14
 
 #### Mudado
@@ -3357,6 +3367,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.43.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.2.md
 [android-1.43.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.1.md
 [android-1.43.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.0.md
 [android-1.42.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.42.0.md
