@@ -2198,3 +2198,18 @@ Spec: `specs/bugfix-2026-11-15-android-login-google.md`.
 - A foto do Google só preenche perfil sem foto, em melhor esforço.
 - Alternativa descartada: relaxar as rules de create para o cliente gravar o perfil inteiro (reabre a
   auto-atribuição de `level`/XP/`auto_*` fechada no #1979).
+
+## 2026-11-15: Espelho de grupos do usuário é lido sem reflexão (crash em "Encontrar Grupo")
+
+Spec: `specs/bugfix-2026-11-15-android-crash-meus-grupos-documentid.md`.
+
+- `users/{uid}/groups/{groupId}` é lido no Android por `userGroupFromFirestore` (mapa de campos), não por
+  `toObjects(UserGroup::class.java)`. O mapper do Firestore lança quando o documento tem um campo `id` e o modelo
+  tem `@DocumentId` em `id`; dentro do `addSnapshotListener` isso fechava o app.
+- Conversão dentro de listener passa por `mapDocumentsSafely`: documento que falha vai para o Crashlytics como não
+  fatal e fica fora da lista.
+- O `@DocumentId` continua em `UserGroup`. Sem ele o Android passaria a gravar `id` nesses documentos e as versões
+  já instaladas (1.43.1, 1.43.2) fechariam ao ler.
+- Alternativa descartada: trocar o modelo por `@get:Exclude` e preencher o ID em cada leitura (muda todos os
+  pontos de leitura e não protege de outro tipo inesperado no documento).
+- Pendente de decisão do Renan: remover o campo `id` do único documento legado de produção.

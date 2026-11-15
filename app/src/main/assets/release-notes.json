@@ -1,7 +1,23 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-15T15:21:40.045Z",
+  "generatedAt": "2026-11-15T22:32:41.540Z",
   "notes": [
+    {
+      "version": "1.43.3",
+      "buildNumber": 88,
+      "releaseDate": "2026-11-15",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app não fecha mais ao abrir os seus grupos.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Correção do fechamento do app ao tocar em \"Encontrar Grupo\" ou abrir a lista de grupos."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.2",
       "buildNumber": 86,
