@@ -8,6 +8,7 @@ import com.futebadosparcas.util.FirebaseRegions
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Update Profile Use Case
@@ -104,7 +105,7 @@ class UpdateProfileUseCase constructor(
             .get()
             .await()
 
-        val updatedUser = updatedSnapshot.toObject(User::class.java)
+        val updatedUser = updatedSnapshot.toObjectTolerant(User::class.java)
             ?: throw IllegalStateException("Erro ao recuperar usuário atualizado")
 
         AppLogger.d(TAG) { "Perfil atualizado com sucesso: userId=${params.userId}" }

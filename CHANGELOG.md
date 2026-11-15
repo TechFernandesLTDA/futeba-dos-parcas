@@ -27,6 +27,13 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.43.4][android-1.43.4] - 2026-11-15
+
+#### Corrigido
+- `getGroupMembersFlow` lia `groups/{id}/members` com `toObjects(GroupMember::class.java)`; documento com o campo `id` gravado fazia o mapper do Firestore lançar (`@DocumentId`) dentro do listener e fechava o app. Todas as leituras por `toObject`/`toObjects` do app passam por `FirestoreSafeMapping` (`toObjectTolerant`, `toObjectOrNullSafely`, `toObjectsTolerant`), que refaz a conversão sem o campo em conflito (#4569).
+
+_PRs: #4569_
+
 ### [1.43.3][android-1.43.3] - 2026-11-15
 
 #### Corrigido
@@ -3374,6 +3381,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.43.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.4.md
 [android-1.43.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.3.md
 [android-1.43.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.2.md
 [android-1.43.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.1.md

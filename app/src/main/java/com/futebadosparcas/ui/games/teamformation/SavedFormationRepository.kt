@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import java.util.Date
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Repositorio para gerenciar formacoes de times salvas.
@@ -33,7 +34,7 @@ class SavedFormationRepository constructor(
                 .await()
 
             val formations = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(SavedTeamFormation::class.java)?.copy(id = doc.id)
+                doc.toObjectTolerant(SavedTeamFormation::class.java)?.copy(id = doc.id)
             }
 
             Result.success(formations)
@@ -56,7 +57,7 @@ class SavedFormationRepository constructor(
                 .await()
 
             val formations = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(SavedTeamFormation::class.java)?.copy(id = doc.id)
+                doc.toObjectTolerant(SavedTeamFormation::class.java)?.copy(id = doc.id)
             }
 
             Result.success(formations)

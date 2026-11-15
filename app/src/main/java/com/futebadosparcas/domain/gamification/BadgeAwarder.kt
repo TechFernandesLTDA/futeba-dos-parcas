@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.flowOf
 import java.util.Date
+import com.futebadosparcas.data.util.toObjectOrNullSafely
 
 /**
  * Service that listens for new badges awarded to the current user (via Cloud Functions)
@@ -43,7 +44,8 @@ class BadgeAwarder constructor(
                 }
 
                 snapshot?.documentChanges?.forEach { change ->
-                    val badge = change.document.toObject(UserBadge::class.java)
+                    val badge = change.document.toObjectOrNullSafely(UserBadge::class.java)
+                        ?: return@forEach
                     val earnedAt = badge.lastEarnedAt ?: badge.unlockedAt
 
                     // Only emit if it was earned/updated AFTER this session started

@@ -12,6 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * CachedGamesPagingSource - PagingSource com cache Room
@@ -82,7 +83,7 @@ class CachedGamesPagingSource(
             // Converter para GameWithConfirmations
             val gamesWithConfirmations = snapshot.documents.mapNotNull { doc ->
                 try {
-                    val game = doc.toObject(Game::class.java)?.copy(id = doc.id)
+                    val game = doc.toObjectTolerant(Game::class.java)?.copy(id = doc.id)
                     game?.let {
                         GameWithConfirmations(
                             game = it,
@@ -145,7 +146,7 @@ class CachedGamesPagingSource(
         // Atualizar cache com resultados
         val games = snapshot.documents.mapNotNull { doc ->
             try {
-                doc.toObject(Game::class.java)?.copy(id = doc.id)
+                doc.toObjectTolerant(Game::class.java)?.copy(id = doc.id)
             } catch (e: Exception) {
                 AppLogger.w(TAG) { "Erro ao converter documento do cache: ${doc.id}" }
                 null

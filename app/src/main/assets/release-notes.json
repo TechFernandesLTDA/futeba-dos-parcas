@@ -1,7 +1,24 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-15T22:32:41.540Z",
+  "generatedAt": "2026-11-15T23:34:05.102Z",
   "notes": [
+    {
+      "version": "1.43.4",
+      "buildNumber": 89,
+      "releaseDate": "2026-11-15",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app não fecha mais ao abrir um grupo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Correção do fechamento do app ao abrir a lista de membros de um grupo.",
+        "Leituras de dados mais resistentes: um registro em formato antigo não fecha mais o app."
+      ],
+      "issueRefs": []
+    },
     {
       "version": "1.43.3",
       "buildNumber": 88,

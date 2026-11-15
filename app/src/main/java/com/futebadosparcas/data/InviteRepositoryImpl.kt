@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 /**
  * Implementacao Android do InviteRepository.
@@ -48,7 +50,7 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Você não é membro deste grupo"))
             }
 
-            val member = memberDoc.toObject(GroupMember::class.java)
+            val member = memberDoc.toObjectTolerant(GroupMember::class.java)
             if (member?.isAdmin() != true) {
                 return Result.failure(Exception("Você não tem permissão para convidar"))
             }
@@ -88,13 +90,13 @@ class InviteRepositoryImpl constructor(
 
             // Buscar dados do convidado
             val invitedUserDoc = usersCollection.document(invitedUserId).get().await()
-            val invitedUser = invitedUserDoc.toObject(User::class.java) ?: User(id = invitedUserId, name = invitedUserDoc.getString("name") ?: "")
+            val invitedUser = invitedUserDoc.toObjectTolerant(User::class.java) ?: User(id = invitedUserId, name = invitedUserDoc.getString("name") ?: "")
             val invitedUserName = invitedUser.getDisplayName()
             val invitedUserEmail = invitedUser.email
 
             // Buscar dados do remetente
             val currentUserDoc = usersCollection.document(currentUserId).get().await()
-            val currentUser = currentUserDoc.toObject(User::class.java) ?: User(id = currentUserId, name = currentUserDoc.getString("name") ?: "")
+            val currentUser = currentUserDoc.toObjectTolerant(User::class.java) ?: User(id = currentUserId, name = currentUserDoc.getString("name") ?: "")
             val currentUserName = currentUser.getDisplayName()
 
             // Criar convite
@@ -135,7 +137,7 @@ class InviteRepositoryImpl constructor(
                 .get()
                 .await()
 
-            val invites = snapshot.toObjects(GroupInvite::class.java)
+            val invites = snapshot.toObjectsTolerant(GroupInvite::class.java)
                 .filter { it.hasExpired().not() }
 
             Result.success(invites)
@@ -183,7 +185,7 @@ class InviteRepositoryImpl constructor(
                             }
 
                             if (snapshot != null) {
-                                val invites = snapshot.toObjects(GroupInvite::class.java)
+                                val invites = snapshot.toObjectsTolerant(GroupInvite::class.java)
                                     .filter { it.hasExpired().not() }
                                     .sortedByDescending { it.createdAt }
                                 trySend(invites)
@@ -218,7 +220,7 @@ class InviteRepositoryImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val invites = snapshot.toObjects(GroupInvite::class.java)
+                    val invites = snapshot.toObjectsTolerant(GroupInvite::class.java)
                         .filter { it.hasExpired().not() }
                         .sortedByDescending { it.createdAt }
                     trySend(invites)
@@ -240,7 +242,7 @@ class InviteRepositoryImpl constructor(
                 .get()
                 .await()
 
-            val invites = snapshot.toObjects(GroupInvite::class.java)
+            val invites = snapshot.toObjectsTolerant(GroupInvite::class.java)
                 .filter { it.hasExpired().not() }
 
             Result.success(invites)
@@ -260,7 +262,7 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Convite não encontrado"))
             }
 
-            val invite = inviteDoc.toObject(GroupInvite::class.java)
+            val invite = inviteDoc.toObjectTolerant(GroupInvite::class.java)
                 ?: return Result.failure(Exception("Erro ao carregar convite"))
 
             if (invite.invitedUserId != userId) {
@@ -293,7 +295,7 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Convite não encontrado"))
             }
 
-            val invite = inviteDoc.toObject(GroupInvite::class.java)
+            val invite = inviteDoc.toObjectTolerant(GroupInvite::class.java)
                 ?: return Result.failure(Exception("Erro ao carregar convite"))
 
             if (invite.invitedUserId != userId) {
@@ -326,7 +328,7 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Convite não encontrado"))
             }
 
-            val invite = inviteDoc.toObject(GroupInvite::class.java)
+            val invite = inviteDoc.toObjectTolerant(GroupInvite::class.java)
                 ?: return Result.failure(Exception("Erro ao carregar convite"))
 
             // Verificar se é admin do grupo
@@ -340,7 +342,7 @@ class InviteRepositoryImpl constructor(
                 return Result.failure(Exception("Você não é membro deste grupo"))
             }
 
-            val member = memberDoc.toObject(GroupMember::class.java)
+            val member = memberDoc.toObjectTolerant(GroupMember::class.java)
             if (member?.isAdmin() != true) {
                 return Result.failure(Exception("Sem permissão para cancelar convite"))
             }
@@ -363,7 +365,7 @@ class InviteRepositoryImpl constructor(
             val doc = invitesCollection.document(inviteId).get().await()
 
             if (doc.exists()) {
-                val invite = doc.toObject(GroupInvite::class.java)
+                val invite = doc.toObjectTolerant(GroupInvite::class.java)
                     ?: return Result.failure(Exception("Erro ao converter convite"))
                 Result.success(invite)
             } else {

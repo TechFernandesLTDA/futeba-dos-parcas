@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Implementacao Android do SettingsRepository.
@@ -27,7 +28,7 @@ class SettingsRepositoryImpl constructor(
         try {
             // PERF_001 P2: Firestore I/O deve usar Dispatchers.IO, não Default
             val snapshot = gamificationDoc.get().await()
-            val settings = snapshot.toObject(GamificationSettings::class.java) ?: GamificationSettings()
+            val settings = snapshot.toObjectTolerant(GamificationSettings::class.java) ?: GamificationSettings()
             Result.success(settings)
         } catch (e: Exception) {
             // Retorna configurações default se falhar (graceful degradation)

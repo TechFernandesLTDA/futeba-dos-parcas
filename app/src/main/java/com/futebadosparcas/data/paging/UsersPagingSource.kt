@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Paging 3 - PagingSource for Users
@@ -71,7 +72,7 @@ class UsersPagingSource(
             // Convert to User objects
             val users = snapshot.documents.mapNotNull { doc ->
                 try {
-                    doc.toObject(User::class.java)?.copy(id = doc.id)
+                    doc.toObjectTolerant(User::class.java)?.copy(id = doc.id)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Error parsing user document ${doc.id}", e)
                     null
