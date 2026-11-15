@@ -4,7 +4,7 @@
 > **Severidade:** `CRITICAL`
 > **Autor:** Claude Code (pedido do Renan em 15/11/2026)
 > **Data:** 2026-11-15
-> **PR:** a definir
+> **PR:** #4569
 
 Continuação de `specs/bugfix-2026-11-15-android-crash-meus-grupos-documentid.md` (#4566), que tratou só o
 espelho `users/{uid}/groups`.
