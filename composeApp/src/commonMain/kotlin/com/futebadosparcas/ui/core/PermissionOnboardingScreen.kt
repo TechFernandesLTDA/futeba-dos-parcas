@@ -62,8 +62,8 @@ import org.jetbrains.compose.resources.stringResource
  * - Notificações
  * - Localização (para encontrar jogos próximos)
  *
- * Em versão multiplataforma, notificações e localização são simuladas (o iOS pede cada uma no
- * primeiro uso). O app não tem recurso de voz e a câmera não é usada aqui, então microfone e
+ * "Permitir" abre o alerta do sistema de cada permissão (no iOS, é aqui que o app pede
+ * notificações; o AppDelegate não pede mais na abertura). O app não tem recurso de voz e a câmera não é usada aqui, então microfone e
  * câmera não são pedidos (diretriz 5.1.1 da App Store).
  */
 @Composable
@@ -72,7 +72,7 @@ fun PermissionOnboardingScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // Estados das permissões (simulados)
+    // Estados das permissões, atualizados com a resposta do sistema
     var notificationGranted by remember { mutableStateOf(false) }
     var locationGranted by remember { mutableStateOf(false) }
 
@@ -116,7 +116,7 @@ fun PermissionOnboardingScreen(
                 title = stringResource(Res.string.permission_notifications_title),
                 description = stringResource(Res.string.permission_notifications_description),
                 isGranted = notificationGranted,
-                onRequest = { notificationGranted = true }
+                onRequest = { requestSystemNotificationPermission { notificationGranted = it } }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +127,7 @@ fun PermissionOnboardingScreen(
                 title = stringResource(Res.string.permission_location_title),
                 description = stringResource(Res.string.permission_location_description),
                 isGranted = locationGranted,
-                onRequest = { locationGranted = true }
+                onRequest = { requestSystemLocationPermission { locationGranted = it } }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
