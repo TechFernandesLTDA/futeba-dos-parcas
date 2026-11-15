@@ -1,5 +1,13 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
+import {
+  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  GoogleAuthProvider,
+  connectAuthEmulator,
+} from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -8,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { shouldUseFirebaseEmulators } from './firebaseEmulatorMode';
-import { runWhenEngaged } from './deferredThirdParty';
+import { runWhenEngaged, shouldDeferThirdParty } from './deferredThirdParty';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -68,7 +76,16 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export const auth = getAuth(app);
+// Na página pública vista por visitante anônimo, o Auth nasce sem o resolver de
+// popup/redirect: é ele que carrega o iframe do gapi (~130 KB) no boot em navegador
+// móvel. Mesmas persistências do getAuth(). Toda chamada de popup/redirect passa
+// `browserPopupRedirectResolver` explicitamente (AuthContext, useDeleteAccount), então
+// o login Google funciona igual depois da navegação para /login.
+export const auth = shouldDeferThirdParty()
+  ? initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+    })
+  : getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 // Firestore com cache local persistente (IndexedDB) — habilita offline reads,
 // reduz latência e custos de read em sessões repetidas. Suporta múltiplas abas

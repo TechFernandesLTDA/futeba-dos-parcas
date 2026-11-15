@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useMemo, useCallback, u
 import {
 
   User as FirebaseUser,
+  type UserCredential,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -14,6 +15,7 @@ import {
   getAdditionalUserInfo,
   linkWithPopup,
   unlink,
+  browserPopupRedirectResolver,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { doc, getDoc, getDocs, updateDoc, runTransaction, serverTimestamp, query, collection, where, limit, onSnapshot } from 'firebase/firestore';
@@ -24,6 +26,7 @@ import type { UserRole } from '../types/user';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { revealApp, setAuthHint } from '../utils/prerenderHandoff';
+import { runWhenEngaged } from '../services/deferredThirdParty';
 import { getAuthErrorMessage, AppAuthError, APP_AUTH_ERROR_CODES } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
 import { markClaimRefresh, resetClaimRefreshState } from '../utils/authRetry';
@@ -487,7 +490,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logger.debug('Não foi possível ler convite pendente do sessionStorage:', sessionErr);
     }
 
-    getRedirectResult(auth)
+    // Página pública vista por visitante anônimo: o resultado do redirect (que carrega o
+    // iframe do Auth) espera a primeira interação. O retorno do Google cai em /login ou
+    // /register, rotas do app onde isso roda na hora (services/deferredThirdParty.ts).
+    new Promise<UserCredential | null>((resolve, reject) => {
+      runWhenEngaged(() => {
+        getRedirectResult(auth, browserPopupRedirectResolver).then(resolve, reject);
+      });
+    })
       .then(async (result) => {
         try {
           sessionStorage.removeItem(PENDING_GOOGLE_INVITE_KEY);
@@ -748,7 +758,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pendingInviteRef.current = normalizedInviteCode
         ? { code: normalizedInviteCode, source: 'google_auth_observer' }
         : null;
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
       const isNewAuthUser = getAdditionalUserInfo(result)?.isNewUser === true;
 
       // Uma única leitura distingue usuário novo (sem doc) de existente.
@@ -833,7 +843,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         try {
-          await signInWithRedirect(auth, googleProvider);
+          await signInWithRedirect(auth, googleProvider, browserPopupRedirectResolver);
           // signInWithRedirect inicia a navegação para o Google. A página será
           // recarregada no retorno; getRedirectResult + onAuthStateChanged
           // processam o resultado. Retorna SEM limpar pendingInviteRef — ele
@@ -1080,7 +1090,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = firebaseUserRef.current;
     if (!currentUser) return;
     try {
-      await linkWithPopup(currentUser, googleProvider);
+      await linkWithPopup(currentUser, googleProvider, browserPopupRedirectResolver);
       // Recarrega o FirebaseUser para refletir o novo provider em providerData.
       await currentUser.reload();
       setFirebaseUser({ ...currentUser } as FirebaseUser);
