@@ -14,16 +14,20 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.AuthErrorMapper
+import com.futebadosparcas.util.GoogleCredentialErrorMapper
 import com.futebadosparcas.util.BiometricHelper
 import com.futebadosparcas.util.PreferencesManager
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
@@ -154,25 +158,32 @@ class LoginActivityCompose : AppCompatActivity() {
 
     /**
      * Inicia o fluxo de Google Sign-In usando Credential Manager.
+     *
+     * Primeiro tenta a folha de contas (GetGoogleIdOption). Se o aparelho não
+     * tiver credencial compatível (NoCredentialException), repete com o fluxo
+     * "Fazer login com o Google" (GetSignInWithGoogleOption), que deixa o
+     * usuário escolher ou adicionar a conta.
      */
-    private fun signInWithGoogle() {
+    private fun signInWithGoogle(useSignInWithGoogleFlow: Boolean = false) {
         AppLogger.d(TAG) { "=== ${getString(R.string.login_google_signin_started)} ===" }
-        AppLogger.d(TAG) { "Web Client ID: ${getString(R.string.default_web_client_id)}" }
+        val serverClientId = getString(R.string.default_web_client_id)
 
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(getString(R.string.default_web_client_id))
-            .build()
+        val credentialOption = if (useSignInWithGoogleFlow) {
+            GetSignInWithGoogleOption.Builder(serverClientId).build()
+        } else {
+            GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(false)
+                .setServerClientId(serverClientId)
+                .build()
+        }
 
         val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
+            .addCredentialOption(credentialOption)
             .build()
 
         lifecycleScope.launch {
             try {
-                AppLogger.d(TAG) { getString(R.string.login_showing_progress) }
-
-                AppLogger.d(TAG) { "Requesting credentials from CredentialManager" }
+                AppLogger.d(TAG) { "Requesting credentials (signInWithGoogleFlow=$useSignInWithGoogleFlow)" }
                 val result = credentialManager.getCredential(
                     request = request,
                     context = this@LoginActivityCompose
@@ -181,10 +192,19 @@ class LoginActivityCompose : AppCompatActivity() {
                     getString(R.string.login_credentials_received, result.credential.type)
                 }
                 handleSignInResult(result)
+            } catch (e: GetCredentialCancellationException) {
+                // O usuário fechou a folha do Google: não é erro
+                AppLogger.d(TAG) { "Google Sign-In cancelado pelo usuário" }
+                viewModel.resetState()
+            } catch (e: NoCredentialException) {
+                if (!useSignInWithGoogleFlow) {
+                    AppLogger.d(TAG) { "Sem credencial na folha de contas; usando o fluxo Sign in with Google" }
+                    signInWithGoogle(useSignInWithGoogleFlow = true)
+                } else {
+                    reportGoogleSignInError(e)
+                }
             } catch (e: GetCredentialException) {
-                AppLogger.e(TAG, "Google Sign-In failed: ${e.javaClass.simpleName} - ${e.message}", e)
-                showToast(getString(R.string.auth_error_generic))
-                viewModel.onGoogleSignInError(R.string.auth_error_generic)
+                reportGoogleSignInError(e)
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Unexpected error during sign-in: ${e.message}", e)
                 val errorResId = AuthErrorMapper.mapAuthError(e)
@@ -192,6 +212,13 @@ class LoginActivityCompose : AppCompatActivity() {
                 viewModel.onGoogleSignInError(errorResId)
             }
         }
+    }
+
+    private fun reportGoogleSignInError(e: GetCredentialException) {
+        AppLogger.e(TAG, "Google Sign-In failed: ${e.javaClass.simpleName} (${e.type}) - ${e.message}", e)
+        val errorResId = GoogleCredentialErrorMapper.map(e)
+        showToast(getString(errorResId))
+        viewModel.onGoogleSignInError(errorResId)
     }
 
     /**

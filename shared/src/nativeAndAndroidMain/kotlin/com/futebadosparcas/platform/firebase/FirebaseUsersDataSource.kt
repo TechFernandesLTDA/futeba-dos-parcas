@@ -1,5 +1,6 @@
 package com.futebadosparcas.platform.firebase
 
+import com.futebadosparcas.domain.auth.UserProfileNotReadyException
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.platform.UuidGenerator
 import dev.gitlive.firebase.Firebase
@@ -29,6 +30,12 @@ internal class FirebaseUsersDataSource(
 ) {
     companion object {
         private val exportJson = Json { prettyPrint = true }
+
+        /**
+         * Intervalos de espera pelo documento users/{uid} que a onUserCreate cria
+         * no primeiro login (~8 s no total, abaixo do limite de 20 s do login).
+         */
+        internal val PROFILE_WAIT_DELAYS_MS = listOf(500L, 750L, 1_000L, 1_500L, 2_000L, 2_500L)
 
         internal fun exportPayloadFromCallableData(data: Any?): ExportMyDataPayload {
             val complete = when (data) {
@@ -781,81 +788,41 @@ internal class FirebaseUsersDataSource(
             println("FirebaseDataSource: SUCESSO: UID = $uid")
             kotlinx.coroutines.delay(100)
 
-            println("FirebaseDataSource: Consultando Firestore para user doc: $uid")
-            val doc = firestore.collection(COLLECTION_USERS).document(uid).get()
+            // O documento users/{uid} é criado SÓ pela Cloud Function onUserCreate
+            // (as regras negam o create vindo do cliente sem role/convite). No
+            // primeiro login ele ainda não existe: espera com intervalo crescente.
+            var doc = firestore.collection(COLLECTION_USERS).document(uid).get()
+            for (waitMs in PROFILE_WAIT_DELAYS_MS) {
+                if (doc.exists) break
+                println("FirebaseDataSource: Documento ainda não existe, aguardando ${waitMs}ms")
+                kotlinx.coroutines.delay(waitMs)
+                doc = firestore.collection(COLLECTION_USERS).document(uid).get()
+            }
 
-            if (doc.exists) {
-                println("FirebaseDataSource: Documento do usuário EXISTE no Firestore")
-                var user = doc.toUserOrNull()
-                    ?: return Result.failure(Exception("Erro ao converter usuario"))
+            if (!doc.exists) {
+                println("FirebaseDataSource: FALHOU: documento do usuário não foi criado a tempo")
+                return Result.failure(UserProfileNotReadyException())
+            }
 
-                println("FirebaseDataSource: Usuário carregado: ${user.name} (${user.email})")
+            var user = doc.toUserOrNull()
+                ?: return Result.failure(Exception("Erro ao converter usuario"))
 
-                // Verifica se a foto do Google mudou e atualiza
-                val firebaseUser = auth.currentUser
-                val googlePhotoUrl = firebaseUser?.photoURL
-
-                if (googlePhotoUrl != null && googlePhotoUrl != user.photoUrl) {
-                    println("FirebaseDataSource: Atualizando URL da foto")
+            // Foto do Google só preenche perfil sem foto (não sobrescreve a foto
+            // escolhida pelo usuário). Melhor esforço: nunca derruba o login.
+            val googlePhotoUrl = auth.currentUser?.photoURL
+            if (!googlePhotoUrl.isNullOrBlank() && user.photoUrl.isNullOrBlank()) {
+                try {
                     firestore.collection(COLLECTION_USERS)
                         .document(uid)
                         .update(mapOf("photo_url" to googlePhotoUrl))
                     user = user.copy(photoUrl = googlePhotoUrl)
+                } catch (e: Exception) {
+                    println("FirebaseDataSource: Falha ao salvar foto do Google (ignorada): ${e.message}")
                 }
-
-                println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO ===")
-                Result.success(user)
-            } else {
-                println("FirebaseDataSource: Documento do usuário NÃO EXISTE - criando novo usuário")
-                // Criar usuario automaticamente se nao existir
-                val firebaseUser = auth.currentUser
-                    ?: return Result.failure(Exception("Usuário não autenticado"))
-                val newUser = User(
-                    id = uid,
-                    email = firebaseUser.email ?: "",
-                    name = firebaseUser.displayName ?: "",
-                    photoUrl = firebaseUser.photoURL
-                )
-                println("FirebaseDataSource: Criando usuário: ${newUser.name} (${newUser.email})")
-
-                // Converter User para Map (serialização manual para compatibilidade)
-                val userData = mapOf(
-                    "id" to newUser.id,
-                    "email" to newUser.email,
-                    "name" to newUser.name,
-                    "photo_url" to newUser.photoUrl,
-                    "fcm_token" to newUser.fcmToken,
-                    "is_searchable" to newUser.isSearchable,
-                    "is_profile_public" to newUser.isProfilePublic,
-                    "role" to newUser.role,
-                    "created_at" to FieldValue.serverTimestamp,
-                    "updated_at" to FieldValue.serverTimestamp,
-                    "level" to newUser.level,
-                    "experience_points" to newUser.experiencePoints,
-                    "milestones_achieved" to newUser.milestonesAchieved,
-                    "striker_rating" to newUser.strikerRating,
-                    "mid_rating" to newUser.midRating,
-                    "defender_rating" to newUser.defenderRating,
-                    "gk_rating" to newUser.gkRating,
-                    "striker_rating_set" to newUser.strikerRatingSet,
-                    "mid_rating_set" to newUser.midRatingSet,
-                    "defender_rating_set" to newUser.defenderRatingSet,
-                    "gk_rating_set" to newUser.gkRatingSet,
-                    "auto_striker_rating" to newUser.autoStrikerRating,
-                    "auto_mid_rating" to newUser.autoMidRating,
-                    "auto_defender_rating" to newUser.autoDefenderRating,
-                    "auto_gk_rating" to newUser.autoGkRating,
-                    "auto_rating_samples" to newUser.autoRatingSamples
-                )
-
-                // `set` com mapa heterogêneo não tem serializador no iOS: cria o documento
-                // com um mapa de textos e completa os campos com `updateLoose`.
-                val userRef = firestore.collection(COLLECTION_USERS).document(uid)
-                userRef.set(mapOf("id" to newUser.id))
-                userRef.updateLoose(userData - "id")
-                println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO (novo usuário criado) ===")
-                Result.success(newUser)
             }
+
+            println("FirebaseDataSource: === getCurrentAuthUser() SUCESSO ===")
+            Result.success(user)
         } catch (e: Exception) {
             println("FirebaseDataSource: === getCurrentAuthUser() EXCEÇÃO: ${e.message} ===")
             Result.failure(e)
