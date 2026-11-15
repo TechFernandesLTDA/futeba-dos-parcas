@@ -46,7 +46,18 @@
 
 ### 2.2 Causa Raiz
 
-`FirebaseUsersDataSource.getCurrentAuthUser()` lê `users/{uid}` cerca de 100 ms depois do `signInWithCredential`. Para usuário novo, a `onUserCreate` ainda não criou o documento (leva de 1,5 a 2 s), e o app tenta criá-lo no cliente com `set({id})` + `update(...)`. A regra `match /users/{userId}` (`allow create`) exige `role == 'PLAYER'`, código de convite válido e proíbe `level`, `experience_points`, `milestones_achieved` e `auto_*`. O `set` só com `id` é sempre negado, e a falha vira "Erro ao autenticar".
+**Falha vista no aparelho do Renan (Crashlytics, 15/11/2026 04:02 UTC, Android 1.43.1, Xiaomi):**
+`SerializationException: Serializer for class 'kotlin.Any' is not found` em
+`FirebaseMappingExtensions.safeLong` ← `toUserOrNull` ← `getCurrentAuthUser`. Na tag `android-v1.43.1`, o
+`safeLong` lê `get<Any?>(field)`, que não tem serializador; como `toUserOrNull` chama `safeLong("created_at")` em
+todo documento, **qualquer login** na 1.43.1 quebra logo depois de autenticar. Master já corrigiu com
+`getScalar` (#4544, commit `a71d4a75`), que não entrou na 1.43.1. A correção para o usuário é publicar uma versão
+Android a partir de master com este PR.
+
+**Primeiro acesso (corrigido neste PR):**
+
+`FirebaseUsersDataSource.getCurrentAuthUser()` lê `users/{uid}` cerca de 100 ms depois do `signInWithCredential`. Para usuário novo, a `onUserCreate` ainda não criou o documento (leva alguns segundos), e o app tenta criá-lo no cliente com `set({id})` + `update(...)`. Em prod a função levou 6 a 7 s nas contas Google de novembro, e nenhuma delas voltou a fazer login depois do
+cadastro. A regra `match /users/{userId}` (`allow create`) exige `role == 'PLAYER'`, código de convite válido e proíbe `level`, `experience_points`, `milestones_achieved` e `auto_*`. O `set` só com `id` é sempre negado, e a falha vira "Erro ao autenticar".
 
 Na tela, `LoginActivityCompose.signInWithGoogle()` trata toda `GetCredentialException` igual, sem distinguir cancelamento nem `NoCredentialException`.
 
@@ -60,7 +71,7 @@ Na tela, `LoginActivityCompose.signInWithGoogle()` trata toda `GetCredentialExce
 
 ### 3.1 Abordagem
 
-1. Remover a criação do documento no cliente. Se ele não existe, consultar de novo com espera crescente (cerca de 8 s no total, dentro do limite de 20 s do `LoginViewModel`). Se não aparecer, falhar com mensagem clara ("Sua conta está sendo preparada. Tente de novo em instantes.").
+1. Remover a criação do documento no cliente. Se ele não existe, consultar de novo com espera crescente (cerca de 14 s no total, dentro do limite de 20 s do `LoginViewModel`). Se não aparecer, falhar com mensagem clara ("Sua conta está sendo preparada. Tente de novo em instantes.").
 2. Sincronizar a foto do Google só quando o perfil está sem foto, em `try/catch` (melhor esforço).
 3. Na tela: cancelamento não mostra erro; `NoCredentialException` tenta de novo com `GetSignInWithGoogleOption`; outras falhas usam mensagens específicas.
 

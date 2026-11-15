@@ -33,9 +33,10 @@ internal class FirebaseUsersDataSource(
 
         /**
          * Intervalos de espera pelo documento users/{uid} que a onUserCreate cria
-         * no primeiro login (~8 s no total, abaixo do limite de 20 s do login).
+         * no primeiro login. Em prod (nov/2026) a função levou 6-7 s; ~14 s no total
+         * fica abaixo do limite de 20 s do login.
          */
-        internal val PROFILE_WAIT_DELAYS_MS = listOf(500L, 750L, 1_000L, 1_500L, 2_000L, 2_500L)
+        internal val PROFILE_WAIT_DELAYS_MS = listOf(500L, 1_000L, 1_500L, 2_000L, 2_500L, 3_000L, 3_500L)
 
         internal fun exportPayloadFromCallableData(data: Any?): ExportMyDataPayload {
             val complete = when (data) {
