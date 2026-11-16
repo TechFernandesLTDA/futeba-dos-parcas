@@ -11,10 +11,8 @@ import com.google.common.truth.Truth.assertWithMessage
  * bateria web (`web/e2e-bateria/pendencias.ts`).
  */
 object PendenciasBateria {
-    private const val ISSUES = "https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues"
-
-    const val DETALHE_DO_JOGO_SEM_ID =
-        "$ISSUES/4576 detalhe do jogo vem com id vazio quando o documento não tem o campo id"
+    // Sem pendências abertas. Formato de uma entrada:
+    //   const val NOME = "https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/<n> resumo do defeito"
 
     fun falhaEsperada(pendencia: String, bloco: () -> Unit) {
         val falhou = runCatching(bloco).exceptionOrNull() is AssertionError
