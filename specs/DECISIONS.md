@@ -2270,3 +2270,29 @@ Spec: `specs/bugfix-2026-11-15-android-documentid-leitura-tolerante.md`.
   instaladas fechariam); mapear campo a campo cada modelo (40 mapeadores para manter).
 - Pendente de decisão do Renan: remover o campo `id` dos documentos legados e barrar por lint o uso direto de
   `toObject`/`toObjects`.
+
+## 2026-11-15: Bateria de testes com contas fictícias (web, Android e iOS)
+
+Spec: `specs/feat-2026-11-15-bateria-de-testes.md`.
+
+- Um cenário só (`scripts/bateria/contas.ts` e `cenario.ts`): 20 jogadores, 3 donos de quadra, 1 admin, 3 grupos,
+  3 quadras, jogos em todos os estados e documentos legados com o campo `id`. O seed usa os escritores reais
+  (gatilhos e callables), para o formato dos documentos ser o do servidor.
+- Portas próprias (`firebase.bateria.json`: 19099, 18085, 15001, 19199, hub 14400, UI desligada). As padrão são do
+  runner self-hosted no mesmo Mac; disputar porta derrubou o E2E Gate do #4569.
+- Android: `BateriaTestRunner` virou o runner do módulo (o AGP aceita um `<instrumentation>` por APK) e só entra no
+  modo bateria com `-e bateria true`. O projeto demo é criado por um provider só do debug (`BateriaFirebaseProvider`,
+  propriedade `debug.futeba.bateria=1`), antes do `FirebaseInitProvider`. Descartado: apagar o app padrão
+  (`FirebaseApp.delete()` derruba o Firebase Sessions) e criar no `newApplication` (cedo demais para o App Check).
+- Android debug aceita HTTP só para `10.0.2.2`, `localhost` e `127.0.0.1`. Release não muda.
+- iOS: chave só em `#if DEBUG` (`BateriaEmulador.swift`, variável `FUTEBA_BATERIA=1`) aponta o app para o projeto demo
+  e os emuladores. O roteiro é de fumaça (build, login no emulador, app aberto sem fechar) e para na tela de
+  boas-vindas: as telas de dentro do iOS não são exercitadas até existir um XCUITest.
+- Dez arquivos de `app/src/androidTest` que não compilam na master saíram da compilação (#4575), sem apagar.
+- Defeito conhecido vira falha esperada com link de issue (`test.fail` no web, `PendenciasBateria.falhaEsperada` no
+  Android). A conferência rápida do `pre-push` recusa falha esperada sem issue.
+- Contas fictícias em produção, autorizadas pelo Renan em 15/11/2026: 24 contas `techfernandesltda+futeba-teste-NN`,
+  tudo com `isTestData: true`, só grupos privados, quadras em rascunho e jogos agendados (nada público, nenhum jogo
+  finalizado). Senhas só em `~/.config/futeba/contas-teste.env`; cadastro no Bitwarden fica com o Renan.
+- A bateria não entrou em workflow: a parte rápida roda no `pre-push` e a pesada é `scripts/bateria/rodar.sh tudo`.
+- Regra daqui em diante: defeito de produção ganha teste na bateria antes da correção.

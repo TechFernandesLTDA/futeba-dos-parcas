@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { shouldUseFirebaseEmulators } from './firebaseEmulatorMode';
+import { emulatorPorts } from './firebaseEmulatorPorts';
 import { runWhenEngaged, shouldDeferThirdParty } from './deferredThirdParty';
 
 const firebaseConfig = {
@@ -102,8 +103,8 @@ export const db = initializeFirestore(app, {
 if (shouldUseFirebaseEmulators) {
   const host = '127.0.0.1';
   try {
-    connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
-    connectFirestoreEmulator(db, host, 8085);
+    connectAuthEmulator(auth, `http://${host}:${emulatorPorts.auth}`, { disableWarnings: true });
+    connectFirestoreEmulator(db, host, emulatorPorts.firestore);
   } catch (err) {
     // Reconexão silenciosa: HMR pode re-importar o módulo
     console.warn('[firebase] emulator wiring skipped:', err);

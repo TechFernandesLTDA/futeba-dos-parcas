@@ -1,0 +1,64 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 18085
+    },
+    "auth": {
+      "port": 19099
+    },
+    "storage": {
+      "port": 19199
+    },
+    "functions": {
+      "port": 15001
+    },
+    "hub": {
+      "port": 14400
+    },
+    "logging": {
+      "port": 14500
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".npm-cache",
+        "src",
+        "test",
+        ".eslintrc.js",
+        ".npmrc",
+        "README.md",
+        "FUNCTIONS.md",
+        "OPTIMIZATION_SUMMARY.md",
+        "firestore-debug.log",
+        "install-infrastructure-deps.sh",
+        "jest.config.js",
+        "jest.integration.config.js",
+        "jest.perf.config.js",
+        "stryker.conf.json",
+        "tmpclaude-*",
+        "tsconfig.json",
+        "tsconfig.dev.json",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Só DEBUG: libera HTTP apenas para o Firebase Emulator Suite local.
+         Ver res/xml/network_security_config_debug.xml. -->
+    <application android:networkSecurityConfig="@xml/network_security_config_debug">
+
+        <!-- Só DEBUG: chave da bateria de testes (scripts/bateria). initOrder
+             acima de 100 para rodar antes do FirebaseInitProvider. Sem a
+             propriedade debug.futeba.bateria=1 não faz nada. -->
+        <provider
+            android:name="com.futebadosparcas.bateria.BateriaFirebaseProvider"
+            android:authorities="${applicationId}.bateria-firebase"
+            android:exported="false"
+            android:initOrder="200" />
+    </application>
+
+</manifest>
