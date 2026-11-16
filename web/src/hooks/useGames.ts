@@ -98,10 +98,12 @@ function buildGamesQuery(filters?: GamesFilters): Query<DocumentData> {
   const gamesRef = collection(db, 'games');
   const constraints: QueryConstraint[] = [];
 
-  // FIX #4126: soft-deleted nunca podem entrar no escopo da query (as rules
-  // avaliam a regra contra todo doc possível — sem este filtro a query
-  // inteira é negada, e com `.get()`-default ela vazava doc deletado).
-  constraints.push(where('deleted_at', '==', null));
+  // FIX #4572: NÃO filtrar `deleted_at == null` no servidor. Nenhum escritor
+  // grava `deleted_at: null` na criação (web, Android e as rules de create
+  // recusam o campo), e o Firestore não casa `== null` com campo ausente: o
+  // filtro escondia todos os jogos. Soft-deleted saem no cliente
+  // (`!game.deletedAt`, em fetchGames e no listener), como as rules de LIST
+  // de `games` já assumem.
 
   if (filters?.status) {
     constraints.push(where('status', '==', filters.status));
@@ -327,6 +329,29 @@ export function useGameDetail(gameId: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmationsError, setConfirmationsError] = useState<string | null>(null);
+  // #4573: membro ativo do grupo do jogo vê os confirmados antes de confirmar.
+  const [isGameGroupMember, setIsGameGroupMember] = useState(false);
+  const gameGroupId = game?.groupId || null;
+
+  useEffect(() => {
+    if (!gameGroupId || !currentUserId) {
+      setIsGameGroupMember(false);
+      return;
+    }
+
+    return onSnapshot(
+      doc(db, 'groups', gameGroupId, 'members', currentUserId),
+      (memberSnap) => {
+        const status = memberSnap.data()?.status;
+        setIsGameGroupMember(memberSnap.exists() && (status === undefined || status === 'ACTIVE'));
+      },
+      (err) => {
+        // Sem vínculo legível o elenco continua restrito à própria confirmação.
+        logger.warn('Error in game group membership listener:', err);
+        setIsGameGroupMember(false);
+      },
+    );
+  }, [currentUserId, gameGroupId]);
 
   useEffect(() => {
     if (!gameId) {
@@ -391,7 +416,8 @@ export function useGameDetail(gameId: string | null) {
     game && currentUserId && (
       isAdmin ||
       game.ownerId === currentUserId ||
-      ownConfirmation?.status === 'CONFIRMED'
+      ownConfirmation?.status === 'CONFIRMED' ||
+      isGameGroupMember
     ),
   );
 

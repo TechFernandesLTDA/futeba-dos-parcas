@@ -127,12 +127,14 @@ Autorizado pelo dono em 15/11/2026 ("tudo está em teste ainda"). `scripts/bater
 - Testes de tela no Android (Compose) e XCUITest no iOS.
 - Criar quadra e criar jogo pela interface (o seed cria; os testes leem e operam).
 - Smoke automático com login nas contas de produção (as contas existem; o roteiro ainda é manual).
-- Corrigir os defeitos achados (issues #4571 a #4576).
+- Corrigir os defeitos achados (issues #4571 a #4576). Os de web e regras (#4571 a #4574) foram corrigidos em
+  `specs/bugfix-2026-11-15-bateria-web-regras-4571-4574.md`.
 
 ## 5. Verificação
 
 - [x] `rodar.sh rapida` verde.
-- [x] Web: 25 testes verdes, 4 deles falha esperada (#4571, #4572, #4573, #4574).
+- [x] Web: 25 testes verdes, 4 deles falha esperada (#4571, #4572, #4573, #4574). Depois da correção: 25 verdes,
+      nenhuma falha esperada.
 - [x] Android: 8 testes verdes no AVD, 1 verificação como falha esperada (#4576).
 - [x] iOS: 3 contas no Simulador (build, login no emulador, app aberto sem fechar). Sem navegar pelas telas.
 - [x] Contas de produção criadas e conferidas; segunda execução não cria nada.

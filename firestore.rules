@@ -275,6 +275,16 @@ service cloud.firestore {
       return gameDoc != null && gameDoc.data.owner_id == userId();
     }
 
+    // #4573: membro ativo do grupo do jogo lê a lista de confirmados mesmo
+    // antes de confirmar (o contador do jogo e a lista não podem se contradizer).
+    // Jogo sem grupo continua restrito a dono, admin e confirmados.
+    function isMemberOfGameGroup(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return gameDoc != null &&
+        gameDoc.data.get('group_id', null) != null &&
+        isGroupMember(gameDoc.data.group_id);
+    }
+
     // Escalação vira parte do estado autoritativo assim que o jogo entra ao
     // vivo. Owners só podem alterar teams antes de LIVE; Admin SDK/admin global
     // continua disponível para reconciliação operacional.
@@ -1182,12 +1192,16 @@ service cloud.firestore {
                     ) ||
                     isAdmin());
 
+      // #4571: isAdmin() vem PRIMEIRO. As filas do admin (xp_reward_status,
+      // auto_close_review_required) não filtram visibility/owner_id/group_id;
+      // com o admin por último, a avaliação estourava em `group_id` antes de
+      // chegar nele e a consulta era negada.
       allow list: if isVerifiedOrGrace() && (
+                     isAdmin() ||
                      (resource.data.visibility == 'PUBLIC_OPEN' ||
                       resource.data.visibility == 'PUBLIC_CLOSED') ||
                      (resource.data.owner_id != null && resource.data.owner_id == userId()) ||
-                     (resource.data.group_id != null && isGroupMember(resource.data.group_id)) ||
-                     isAdmin());
+                     (resource.data.group_id != null && isGroupMember(resource.data.group_id)));
 
       // Profile Complete Gate: criar jogo exige CPF + telefone completos.
       // SECFIX #422: rejeita criacao de jogo com data no passado
@@ -1714,7 +1728,8 @@ service cloud.firestore {
         resource.data.user_id == userId() ||
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
-        isConfirmedPlayer(resource.data.game_id)
+        isConfirmedPlayer(resource.data.game_id) ||
+        isMemberOfGameGroup(resource.data.game_id)
       );
 
       // FASE 5 #448: confirmacao exige verified (30-day grace).
