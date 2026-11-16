@@ -7,7 +7,11 @@ import com.google.android.gms.tasks.Tasks
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +27,9 @@ import java.util.concurrent.TimeUnit
  * grava esse campo de propósito em `users/{uid}/groups/{id}` e em
  * `groups/{id}/members/{uid}` de três contas do grupo alfa. Os testes leem pelo
  * repositório real, o mesmo caminho da tela de grupos.
+ *
+ * Jogos (#4576): o seed cria os jogos no formato do web, sem o campo `id`. O detalhe e a lista de próximos
+ * jogos precisam devolver o ID do documento.
  */
 @RunWith(AndroidJUnit4::class)
 class GruposEJogosBateriaTest {
@@ -95,11 +102,38 @@ class GruposEJogosBateriaTest {
             val resultado = jogos.getGameDetails(AmbienteBateria.id(chave))
             assertWithMessage("jogo $chave: ${resultado.exceptionOrNull()}").that(resultado.isSuccess).isTrue()
             val jogo = resultado.getOrThrow()
-            // Jogo criado pelo web não grava o campo `id`, e o detalhe não preenche com o id do documento.
-            PendenciasBateria.falhaEsperada(PendenciasBateria.DETALHE_DO_JOGO_SEM_ID) {
-                assertThat(jogo.id).isEqualTo(AmbienteBateria.id(chave))
-            }
+            // O seed cria o jogo no formato do web, sem o campo `id`: o id vem do ID do documento (#4576).
+            assertWithMessage("id de $chave").that(jogo.id).isEqualTo(AmbienteBateria.id(chave))
             assertWithMessage("estado de $chave").that(jogo.status).isEqualTo(estado)
         }
+    }
+
+    @Test
+    fun detalheEmTempoRealTrazOIdDoDocumento() = runBlocking {
+        AmbienteBateria.entrar(AmbienteBateria.conta("jogador01"))
+        val idDoJogo = AmbienteBateria.id("jogo-agendado")
+        val resultado = withTimeout(ESPERA_MS) { jogos.getGameDetailsFlow(idDoJogo).first() }
+        assertWithMessage("detalhe em tempo real: ${resultado.exceptionOrNull()}").that(resultado.isSuccess).isTrue()
+        assertThat(resultado.getOrThrow().id).isEqualTo(idDoJogo)
+    }
+
+    @Test
+    fun proximosJogosTrazemOIdDoDocumentoSemJuntarJogosDiferentes() = runBlocking {
+        AmbienteBateria.entrar(AmbienteBateria.conta("jogador01"))
+        val esperados = listOf("jogo-agendado", "jogo-confirmado", "jogo-ao-vivo").map { AmbienteBateria.id(it) }
+        // A lista junta quatro consultas; espera a emissão que já traz os jogos do grupo alfa.
+        // Com o id vazio (#4576) os jogos viravam um só na lista e essa emissão nunca chegava.
+        val ids = withTimeoutOrNull(ESPERA_MS) {
+            jogos.getLiveAndUpcomingGamesFlow()
+                .map { resultado -> resultado.getOrNull().orEmpty().map { it.game.id } }
+                .first { it.containsAll(esperados) }
+        }
+        assertWithMessage("próximos jogos do jogador01 com os ids dos documentos").that(ids).isNotNull()
+        assertThat(ids).containsNoDuplicates()
+        assertThat(ids).doesNotContain("")
+    }
+
+    private companion object {
+        const val ESPERA_MS = 30_000L
     }
 }
