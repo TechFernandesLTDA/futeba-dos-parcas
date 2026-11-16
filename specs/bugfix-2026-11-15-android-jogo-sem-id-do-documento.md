@@ -4,7 +4,7 @@
 > **Severidade:** `HIGH`
 > **Autor:** Claude Code (issue #4576, aberta pela bateria de testes)
 > **Data:** 2026-11-15
-> **PR:** a definir
+> **PR:** #4579
 
 ---
 
