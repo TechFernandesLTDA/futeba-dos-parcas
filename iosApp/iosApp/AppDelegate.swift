@@ -24,6 +24,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             }
         }
 
+#if DEBUG
+        // Bateria de testes (scripts/bateria/ios.sh): projeto demo + emuladores locais.
+        // Sem push nem App Check: nada aqui alcança produção.
+        if BateriaEmulador.ativo {
+            BateriaEmulador.configurar()
+            return true
+        }
+#endif
+
         // Firebase só inicializa se GoogleService-Info.plist presente (smoke-test mode sem config)
         if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
 #if DEBUG

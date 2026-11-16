@@ -4,6 +4,10 @@ interface ImportMetaEnv {
   readonly VITE_APP_VERSION: string
   readonly VITE_APP_BUILD: string
   readonly VITE_USE_EMULATOR?: string
+  readonly VITE_EMULATOR_AUTH_PORT?: string
+  readonly VITE_EMULATOR_FIRESTORE_PORT?: string
+  readonly VITE_EMULATOR_FUNCTIONS_PORT?: string
+  readonly VITE_EMULATOR_STORAGE_PORT?: string
   readonly VITE_ADSENSE_PUBLISHER_ID?: string
   readonly VITE_ADSENSE_SLOT_BANNER?: string
   readonly VITE_ADSENSE_NON_PERSONALIZED?: string
