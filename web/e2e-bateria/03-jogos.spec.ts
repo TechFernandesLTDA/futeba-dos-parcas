@@ -5,7 +5,6 @@
  * isso rodam em série e a bateria sempre parte de um seed novo.
  */
 import { expect, test } from '@playwright/test';
-import { PENDENCIAS } from './pendencias';
 import { esperarDocumento, id, jogo, quadra, semErros, sessao } from './apoio';
 
 test.describe.configure({ mode: 'serial' });
@@ -29,9 +28,8 @@ test.describe('jogos', () => {
   });
 
   test('membro que ainda não confirmou vê quem já confirmou', async ({ browser }) => {
-    // As regras só deixam listar confirmações para dono do jogo, admin e quem
-    // já confirmou: o cabeçalho mostra 4/12 e a lista aparece vazia.
-    test.fail(true, PENDENCIAS.confirmadosParaQuemNaoConfirmou);
+    // Regressão #4573: as regras só deixavam listar confirmações para dono do
+    // jogo, admin e quem já tinha confirmado; o membro via 4/12 e lista vazia.
     const { contexto, page } = await sessao(browser, 'jogador08');
     await page.goto(`/game/${id('jogo-agendado')}`);
     await expect(page.getByRole('button', { name: 'Confirmar Presença' })).toBeVisible();
@@ -56,14 +54,14 @@ test.describe('jogos', () => {
     await contexto.close();
   });
 
-  test('aba Jogos lista os jogos do grupo do jogador', async ({ browser }) => {
-    // A consulta da lista filtra `deleted_at == null`, e nenhum escritor grava
-    // esse campo ao criar o jogo: jogo novo não entra na lista.
-    test.fail(true, PENDENCIAS.jogosForaDaAbaJogos);
+  test('aba Jogos lista o jogo público, que não tem o campo deleted_at', async ({ browser }) => {
+    // Regressão #4572: a consulta filtrava `deleted_at == null` e nenhum
+    // escritor grava esse campo, então a aba ficava vazia para todo mundo.
+    // A aba lista os jogos públicos; os do grupo aparecem na tela do grupo.
     const { contexto, page } = await sessao(browser, 'jogador01');
     await page.goto('/?tab=1');
     await expect(page.getByRole('heading', { name: 'Jogos' })).toBeVisible();
-    await expect(page.getByText(quadra('quadra-01').nome).first()).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(quadra(jogo('jogo-publico').quadra).nome).first()).toBeVisible({ timeout: 8_000 });
     await contexto.close();
   });
 

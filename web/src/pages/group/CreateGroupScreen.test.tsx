@@ -114,14 +114,15 @@ describe('CreateGroupScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/group/group-novo');
   });
 
-  it('bloqueia usuário sem permissão (só FIELD_OWNER/ADMIN criam)', async () => {
+  // #4574: as rules e o Android deixam qualquer perfil completo criar grupo.
+  it('jogador (PLAYER) também cria grupo', async () => {
     authState.role = 'PLAYER';
     const user = userEvent.setup();
     renderScreen();
     fireEvent.change(nameInput(), { target: { value: 'Pelada de Terça' } });
     await user.click(submitButton());
-    expect(createGroupState.createGroup).not.toHaveBeenCalled();
-    expect(showError).toHaveBeenCalledWith('groups.onlyOwnersCanCreate');
+    await waitFor(() => expect(createGroupState.createGroup).toHaveBeenCalled());
+    expect(mockNavigate).toHaveBeenCalledWith('/group/group-novo');
   });
 
   it('desabilita o botão durante o loading', () => {

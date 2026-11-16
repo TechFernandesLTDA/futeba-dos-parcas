@@ -2,7 +2,6 @@
  * Bateria — visão do dono de quadra e do administrador.
  */
 import { expect, test } from '@playwright/test';
-import { PENDENCIAS } from './pendencias';
 import { CONTAS, quadra, semErros, sessao } from './apoio';
 
 test.describe('dono de quadra', () => {
@@ -58,10 +57,8 @@ test.describe('administrador', () => {
   });
 
   test('fila de revisão mostra o jogo com XP retido', async ({ browser }) => {
-    // A regra de list de `games` nega a consulta do admin (isAdmin() fica
-    // depois de um ramo que dá erro de avaliação). Tirar o `fail` quando a
-    // issue fechar: o teste passa a exigir a fila carregada.
-    test.fail(true, PENDENCIAS.filaDeRevisaoDoAdmin);
+    // Regressão #4571: a regra de list de `games` negava a consulta do admin
+    // (isAdmin() ficava depois de um ramo que dava erro de avaliação).
     const { contexto, page } = await sessao(browser, 'admin');
     await page.goto('/admin/game-reviews');
     await expect(page.getByRole('heading', { name: 'Revisão de jogos' })).toBeVisible();

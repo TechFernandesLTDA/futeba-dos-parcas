@@ -3,7 +3,6 @@
  * criar grupo.
  */
 import { expect, test } from '@playwright/test';
-import { PENDENCIAS } from './pendencias';
 import { esperarDocumento, grupo, id, semErros, sessao } from './apoio';
 
 test.describe('grupos', () => {
@@ -59,10 +58,8 @@ test.describe('grupos', () => {
 
   for (const [chave, papel] of [['dono03', 'dono de quadra'], ['jogador17', 'jogador']] as const) {
     test(`${papel} cria um grupo e vira dono`, async ({ browser }) => {
-      // No web só FIELD_OWNER e ADMIN criam grupo; as regras e o Android
-      // deixam qualquer conta com perfil completo. O jogador vê o botão, o
-      // formulário e só então o erro.
-      test.fail(papel === 'jogador', PENDENCIAS.jogadorNaoCriaGrupoNoWeb);
+      // Regressão #4574: o web barrava o jogador depois de mostrar o
+      // formulário; as regras e o Android deixam qualquer perfil completo.
       const nome = `Pelada Teste Criada ${Date.now() % 100000}`;
       const { contexto, page, vigia } = await sessao(browser, chave);
       await page.goto('/group/create');

@@ -2308,3 +2308,20 @@ Spec: `specs/bugfix-2026-11-15-android-jogo-sem-id-do-documento.md`.
 - O modelo `Game` continua sem `@DocumentId`: com a anotação, um jogo que tenha o campo `id` gravado cairia no
   conflito do #4569, e o `id` deixaria de ser gravado pelo Android sem ganho para quem lê.
 - O escritor de jogos do web não muda.
+
+## 2026-11-15: Correção dos defeitos de web e regras achados pela bateria (#4571 a #4574)
+
+Spec: `specs/bugfix-2026-11-15-bateria-web-regras-4571-4574.md`.
+
+- #4572: a consulta de jogos do web deixa de filtrar `deleted_at == null` no servidor. Nenhum escritor grava o campo
+  na criação e o Firestore não casa `== null` com campo ausente. Os apagados saem no cliente, como já saíam.
+  Descartado: gravar `deleted_at: null` em toda criação mais backfill (mexe em web, Android, iOS, regras de `create`
+  e produção para manter um filtro que o cliente já aplica).
+- #4571: em regra de `list`, o operando que não depende de campo do documento vem primeiro. `isAdmin()` passou para
+  o início da regra de `list` de `games`; no fim, um erro de avaliação em `group_id` negava a consulta antes dele.
+- #4573: membro ativo do grupo do jogo lê as confirmações antes de confirmar (`isMemberOfGameGroup`). Visitante de
+  jogo público e jogo sem grupo continuam restritos, porque a confirmação carrega dados de pagamento.
+- #4574: qualquer conta com perfil completo cria grupo no web, como as regras e o Android já permitiam. A trava de
+  papel só existia no formulário.
+- As quatro falhas esperadas da bateria viraram teste normal e `PENDENCIAS` do web ficou vazio.
+- Fica aberto: a aba Jogos não lista os jogos `GROUP_ONLY` dos grupos do usuário (#4578).
