@@ -4,7 +4,7 @@
 > **Severidade:** `MEDIUM` (só testes; nenhum código do app muda)
 > **Autor:** Claude Code (issue #4575, aberta pela bateria de testes)
 > **Data:** 2026-11-15
-> **PR:** a definir
+> **PR:** #4581
 
 ---
 
@@ -104,9 +104,9 @@ O bloco `androidTestsQueNaoCompilam` saiu de `app/build.gradle.kts`.
 ## 4. Verificação
 
 - [x] `./gradlew :app:compileDebugAndroidTestKotlin` sem exclusão.
-- [x] Os 8 arquivos reescritos no AVD (API 34), com o app apontado para o projeto demo: 73 casos, todos verdes.
-- [x] `./gradlew :app:testDebugUnitTest detekt`.
-- [x] `scripts/bateria/rodar.sh android`.
+- [x] `androidTest` inteiro (fora a bateria) no AVD API 34, com o app apontado para o projeto demo: 95 casos, 92 verdes. Os 73 casos dos 8 arquivos reescritos passam; os 3 vermelhos são de outros arquivos (5.2).
+- [x] `./gradlew :app:testDebugUnitTest detekt`: 1427 testes, 0 falhas.
+- [x] `scripts/bateria/rodar.sh android`: 10 testes verdes.
 - [ ] Rodada em tablet ou tela larga (não feita: `GroupsScreen` e o cabeçalho da Home têm layout próprio nesse caso).
 
 ---
