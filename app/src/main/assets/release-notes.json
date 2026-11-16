@@ -1,7 +1,26 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-15T23:34:05.102Z",
+  "generatedAt": "2026-11-16T03:15:50.602Z",
   "notes": [
+    {
+      "version": "1.43.5",
+      "buildNumber": 91,
+      "releaseDate": "2026-11-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Jogos criados pelo site abrem certo no Android.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Jogos criados pelo site passam a abrir e a aparecer corretamente no Android.",
+        "As listas de jogos não juntam mais jogos diferentes como se fossem o mesmo."
+      ],
+      "issueRefs": [
+        4576
+      ]
+    },
     {
       "version": "1.43.4",
       "buildNumber": 89,
