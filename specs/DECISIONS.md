@@ -2235,3 +2235,15 @@ Spec: `specs/bugfix-2026-11-15-android-documentid-leitura-tolerante.md`.
   instaladas fechariam); mapear campo a campo cada modelo (40 mapeadores para manter).
 - Pendente de decisão do Renan: remover o campo `id` dos documentos legados e barrar por lint o uso direto de
   `toObject`/`toObjects`.
+
+## 2026-11-15: Jogo é lido no Android sempre com o ID do documento (#4576)
+
+Spec: `specs/bugfix-2026-11-15-android-jogo-sem-id-do-documento.md`.
+
+- Leitura de `games` no Android copia o ID do documento para `Game.id` (`toAndroidGame`, `toAndroidGameOrNull`,
+  `toAndroidGames` em `GameQueryRepositoryImpl.kt`). O campo `id` gravado no documento não é fonte: o web cria o
+  jogo sem ele e nenhum dos 8 jogos de produção o tem.
+- O ID do documento prevalece quando o campo gravado for diferente.
+- O modelo `Game` continua sem `@DocumentId`: com a anotação, um jogo que tenha o campo `id` gravado cairia no
+  conflito do #4569, e o `id` deixaria de ser gravado pelo Android sem ganho para quem lê.
+- O escritor de jogos do web não muda.

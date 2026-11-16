@@ -27,6 +27,13 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.43.5][android-1.43.5] - 2026-11-16
+
+#### Corrigido
+- O modelo `Game` do Android não tem `@DocumentId` e o web cria o jogo sem gravar o campo `id`; sete leituras de `GameQueryRepositoryImpl` (detalhe, detalhe em tempo real, próximos jogos e histórico) devolviam o jogo com `id` vazio. Todas passam por `toAndroidGame`/`toAndroidGameOrNull`/`toAndroidGames`, que usam a leitura tolerante do #4569 e copiam o ID do documento, que prevalece sobre o campo gravado (#4576).
+
+_Issues: #4576 · PRs: #4579_
+
 ### [1.43.4][android-1.43.4] - 2026-11-15
 
 #### Corrigido
@@ -3381,6 +3388,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.43.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.5.md
 [android-1.43.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.4.md
 [android-1.43.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.3.md
 [android-1.43.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.2.md
