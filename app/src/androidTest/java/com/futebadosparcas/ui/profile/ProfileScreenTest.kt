@@ -1,29 +1,35 @@
 package com.futebadosparcas.ui.profile
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.util.appString
+import com.futebadosparcas.util.assertTextoAusente
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Testes de UI para ProfileScreen usando Compose Testing.
+ * Tela de perfil (`ProfileScreen`) em cada estado, com o ViewModel substituído por um mock.
  *
- * Verifica:
- * - Estado de loading com indicador de carregamento
- * - Informacoes do usuario (nome, nivel, XP)
- * - Badges e estatisticas
- * - Estado de erro com mensagem
- *
- * Usa JUnit 4 para androidTest conforme requisitos do projeto.
+ * O conteúdo é uma lista preguiçosa: o que fica abaixo da dobra só existe depois de rolar (`rolarAte`).
  */
 @RunWith(AndroidJUnit4::class)
 class ProfileScreenTest {
@@ -31,165 +37,136 @@ class ProfileScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var mockViewModel: ProfileViewModel
-
-    // StateFlows mockados para controlar estados da UI
-    private val uiStateFlow = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
+    private lateinit var viewModel: ProfileViewModel
+    private val uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
+    private val meusLocais = MutableStateFlow<List<Location>>(emptyList())
+    private val cliques = mutableListOf<String>()
 
     @Before
     fun setup() {
-        // Configurar ViewModel mockado
-        mockViewModel = mockk(relaxed = true)
-        every { mockViewModel.uiState } returns uiStateFlow
+        viewModel = mockk(relaxed = true)
+        every { viewModel.uiState } returns uiState
+        every { viewModel.myLocations } returns meusLocais
     }
 
-    // ==========================================
-    // TESTE 1: Estado de Loading
-    // ==========================================
-
-    @Test
-    fun profileScreen_loadingState_showsLoadingIndicator() {
-        // Given - Estado Loading
-        uiStateFlow.value = ProfileUiState.Loading
-
-        // When - Renderiza a tela
+    private fun abrirTela() {
         composeTestRule.setContent {
             FutebaTheme {
                 ProfileScreen(
-                    viewModel = mockViewModel,
-                    onEditProfileClick = {},
-                    onSettingsClick = {},
-                    onNotificationsClick = {},
-                    onAboutClick = {},
-                    onSchedulesClick = {},
-                    onLogoutClick = {},
-                    onDeleteAccountClick = {}
+                    viewModel = viewModel,
+                    onEditProfileClick = { cliques += "editar" },
+                    onSettingsClick = { cliques += "configuracoes" },
+                    onNotificationsClick = { cliques += "notificacoes" },
+                    onAboutClick = { cliques += "sobre" },
+                    onSchedulesClick = { cliques += "horarios" },
+                    onLevelJourneyClick = { cliques += "jornada" },
+                    onUserManagementClick = { cliques += "usuarios" },
+                    onMyLocationsClick = { cliques += "meus-locais" },
+                    onManageLocationsClick = { cliques += "locais" },
+                    onFieldOwnerDashboardClick = { cliques += "painel-quadra" },
+                    onGamificationSettingsClick = { cliques += "liga" },
+                    onConnectedAccountsClick = { cliques += "contas" },
+                    onDeveloperMenuClick = { cliques += "dev" },
+                    onLogoutClick = { cliques += "sair" }
                 )
             }
         }
-
-        // Then - Estado de Loading deve ser renderizado sem erros
-        composeTestRule.onNodeWithText("Perfil").assertIsDisplayed()
     }
 
-    // ==========================================
-    // TESTE 2: Estado de Sucesso - Dados do Usuario
-    // ==========================================
+    /** Rola a lista do perfil até o item com o texto. */
+    private fun rolarAte(texto: String) {
+        composeTestRule.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText(texto))
+    }
+
+    private fun sucesso(user: User) =
+        ProfileUiState.Success(user = user, badges = emptyList(), statistics = null, isDevMode = false)
 
     @Test
-    fun profileScreen_successState_showsUserInfo() {
-        // Given - Estado Success com dados do usuario
-        val testUser = createTestUser(name = "João Silva")
-        val successState = ProfileUiState.Success(
-            user = testUser,
-            statistics = null,
-            badges = emptyList()
+    fun carregando_pedeOPerfilENaoMostraDadosNemErro() {
+        abrirTela()
+
+        verify { viewModel.loadProfile() }
+        composeTestRule.assertTextoAusente(JOGADOR.name)
+        composeTestRule.assertTextoAusente(appString(R.string.retry))
+    }
+
+    @Test
+    fun perfilCarregado_mostraNomeEEmail() {
+        uiState.value = sucesso(JOGADOR)
+
+        abrirTela()
+
+        composeTestRule.onNodeWithText(JOGADOR.name).assertIsDisplayed()
+        composeTestRule.onNodeWithText(JOGADOR.email).assertIsDisplayed()
+    }
+
+    @Test
+    fun perfilCarregado_editarPerfilESairChamamANavegacao() {
+        uiState.value = sucesso(JOGADOR)
+        abrirTela()
+
+        rolarAte(appString(R.string.edit_profile))
+        composeTestRule.onNodeWithText(appString(R.string.edit_profile)).performClick()
+        rolarAte(appString(R.string.logout))
+        composeTestRule.onNodeWithText(appString(R.string.logout)).performClick()
+
+        assertEquals(listOf("editar", "sair"), cliques)
+    }
+
+    @Test
+    fun jogadorComum_naoVeOSeloDePapel() {
+        uiState.value = sucesso(JOGADOR)
+
+        abrirTela()
+
+        composeTestRule.assertTextoAusente(appString(R.string.profile_role_admin))
+        composeTestRule.assertTextoAusente(appString(R.string.profile_role_organizer))
+    }
+
+    @Test
+    fun administrador_veOSeloEASecaoDeAdministracao() {
+        uiState.value = sucesso(JOGADOR.copy(role = UserRole.ADMIN.name))
+        abrirTela()
+
+        composeTestRule.onNodeWithText(appString(R.string.profile_role_admin)).assertIsDisplayed()
+        rolarAte(appString(R.string.profile_section_manage_users))
+        composeTestRule.onNodeWithText(appString(R.string.profile_section_manage_users)).performClick()
+
+        assertEquals(listOf("usuarios"), cliques)
+    }
+
+    @Test
+    fun donoDeQuadra_veOPainelMasNaoAGestaoDeUsuarios() {
+        uiState.value = sucesso(JOGADOR.copy(role = UserRole.FIELD_OWNER.name))
+        abrirTela()
+
+        composeTestRule.onNodeWithText(appString(R.string.profile_role_organizer)).assertIsDisplayed()
+        rolarAte(appString(R.string.field_owner_dashboard))
+        composeTestRule.onNodeWithText(appString(R.string.field_owner_dashboard)).performClick()
+
+        assertEquals(listOf("painel-quadra"), cliques)
+        composeTestRule.assertTextoAusente(appString(R.string.profile_section_manage_users))
+    }
+
+    @Test
+    fun erro_mostraAMensagemETentarNovamenteRecarrega() {
+        uiState.value = ProfileUiState.Error("Erro ao carregar perfil")
+        abrirTela()
+
+        composeTestRule.onNodeWithText("Erro ao carregar perfil").assertIsDisplayed()
+        composeTestRule.onNodeWithText(appString(R.string.retry)).performClick()
+
+        // Uma chamada ao abrir a tela e outra pelo botão.
+        verify(exactly = 2) { viewModel.loadProfile() }
+    }
+
+    private companion object {
+        val JOGADOR = User(
+            id = "user123",
+            email = "joao@exemplo.com",
+            name = "João Silva",
+            level = 5,
+            experiencePoints = 1200L
         )
-        uiStateFlow.value = successState
-
-        // When - Renderiza a tela
-        composeTestRule.setContent {
-            FutebaTheme {
-                ProfileScreen(
-                    viewModel = mockViewModel,
-                    onEditProfileClick = {},
-                    onSettingsClick = {},
-                    onNotificationsClick = {},
-                    onAboutClick = {},
-                    onSchedulesClick = {},
-                    onLogoutClick = {},
-                    onDeleteAccountClick = {}
-                )
-            }
-        }
-
-        // Then - Nome do usuario deve ser exibido
-        composeTestRule.onNodeWithText("João Silva").assertIsDisplayed()
     }
-
-    // ==========================================
-    // TESTE 3: Estado de Erro
-    // ==========================================
-
-    @Test
-    fun profileScreen_errorState_showsErrorMessage() {
-        // Given - Estado Error
-        val errorMessage = "Erro ao carregar perfil"
-        uiStateFlow.value = ProfileUiState.Error(errorMessage)
-
-        // When - Renderiza a tela
-        composeTestRule.setContent {
-            FutebaTheme {
-                ProfileScreen(
-                    viewModel = mockViewModel,
-                    onEditProfileClick = {},
-                    onSettingsClick = {},
-                    onNotificationsClick = {},
-                    onAboutClick = {},
-                    onSchedulesClick = {},
-                    onLogoutClick = {},
-                    onDeleteAccountClick = {}
-                )
-            }
-        }
-
-        // Then - Mensagem de erro deve ser exibida
-        composeTestRule.onNodeWithText(errorMessage).assertIsDisplayed()
-    }
-
-    // ==========================================
-    // TESTE 4: Nivel do Usuario
-    // ==========================================
-
-    @Test
-    fun profileScreen_successState_showsUserLevel() {
-        // Given - Usuario com nivel 10
-        val testUser = createTestUser(name = "Jogador", level = 10)
-        val successState = ProfileUiState.Success(
-            user = testUser,
-            statistics = null,
-            badges = emptyList()
-        )
-        uiStateFlow.value = successState
-
-        // When - Renderiza a tela
-        composeTestRule.setContent {
-            FutebaTheme {
-                ProfileScreen(
-                    viewModel = mockViewModel,
-                    onEditProfileClick = {},
-                    onSettingsClick = {},
-                    onNotificationsClick = {},
-                    onAboutClick = {},
-                    onSchedulesClick = {},
-                    onLogoutClick = {},
-                    onDeleteAccountClick = {}
-                )
-            }
-        }
-
-        // Then - Nivel deve estar visivel
-        composeTestRule.onNodeWithText("Jogador").assertIsDisplayed()
-    }
-
-    // ==========================================
-    // HELPERS - Criacao de dados de teste
-    // ==========================================
-
-    /**
-     * Cria um usuario de teste
-     */
-    private fun createTestUser(
-        name: String = "Test User",
-        level: Int = 5
-    ) = User(
-        id = "user123",
-        name = name,
-        nickname = null,
-        email = "test@test.com",
-        photoUrl = "",
-        level = level,
-        experiencePoints = 2500L,
-        createdAt = System.currentTimeMillis()
-    )
 }

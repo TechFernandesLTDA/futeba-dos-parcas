@@ -3,29 +3,28 @@ package com.futebadosparcas.ui.statistics
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.model.RankingCategory
 import com.futebadosparcas.domain.model.RankingPeriod
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.util.appString
+import com.futebadosparcas.util.assertTextoAusente
+import com.futebadosparcas.util.assertTextoVisivel
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Testes de UI para RankingScreen usando Compose Testing.
- *
- * Verifica:
- * - Estado de loading com indicador de carregamento
- * - Lista de jogadores no ranking
- * - Filtros de categoria e periodo
- * - Estado de erro com mensagem
- *
- * Usa JUnit 4 para androidTest conforme requisitos do projeto.
+ * Tela de ranking (`RankingScreen`) em cada estado, com o ViewModel substituído por um mock.
  */
 @RunWith(AndroidJUnit4::class)
 class RankingScreenTest {
@@ -33,156 +32,104 @@ class RankingScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var mockViewModel: RankingViewModel
-
-    // StateFlow mockado para controlar estado da UI
-    private val rankingStateFlow = MutableStateFlow(createTestRankingState())
+    private lateinit var viewModel: RankingViewModel
+    private val estado = MutableStateFlow(RankingUiState())
+    private val clicados = mutableListOf<String>()
 
     @Before
     fun setup() {
-        // Configurar ViewModel mockado
-        mockViewModel = mockk(relaxed = true)
-        every { mockViewModel.rankingState } returns rankingStateFlow
+        viewModel = mockk(relaxed = true)
+        every { viewModel.rankingState } returns estado
     }
 
-    // ==========================================
-    // TESTE 1: Estado de Loading
-    // ==========================================
-
-    @Test
-    fun rankingScreen_loadingState_showsLoadingIndicator() {
-        // Given - Estado Loading
-        rankingStateFlow.value = createTestRankingState(isLoading = true)
-
-        // When - Renderiza a tela
+    private fun abrirTela() {
         composeTestRule.setContent {
             FutebaTheme {
-                RankingScreen(
-                    viewModel = mockViewModel,
-                    onPlayerClick = {}
-                )
+                RankingScreen(viewModel = viewModel, onPlayerClick = { clicados += it })
             }
         }
-
-        // Then - Estado de Loading deve ser renderizado sem erros
-        composeTestRule.onNodeWithText("Ranking").assertIsDisplayed()
     }
-
-    // ==========================================
-    // TESTE 2: Estado de Sucesso - Lista de Ranking
-    // ==========================================
 
     @Test
-    fun rankingScreen_successState_showsRankingList() {
-        // Given - Estado Success com ranking
-        val players = listOf(
-            createTestPlayer(position = 1, playerName = "João Silva"),
-            createTestPlayer(position = 2, playerName = "Carlos Santos"),
-            createTestPlayer(position = 3, playerName = "Pedro Oliveira")
-        )
-        val rankingState = createTestRankingState(
-            isLoading = false,
-            players = players
-        )
-        rankingStateFlow.value = rankingState
+    fun carregando_mostraOCabecalhoSemListaNemErro() {
+        estado.value = RankingUiState(isLoading = true)
 
-        // When - Renderiza a tela
-        composeTestRule.setContent {
-            FutebaTheme {
-                RankingScreen(
-                    viewModel = mockViewModel,
-                    onPlayerClick = {}
-                )
-            }
-        }
+        abrirTela()
 
-        // Then - Jogadores devem ser exibidos (pode nao mostrar nomes dependendo layout)
-        composeTestRule.onNodeWithText("Ranking").assertIsDisplayed()
+        composeTestRule.onNodeWithText(appString(R.string.league_ranking_title)).assertIsDisplayed()
+        composeTestRule.assertTextoAusente(appString(R.string.retry))
+        composeTestRule.assertTextoAusente(appString(R.string.empty_state_no_ranking_title))
     }
-
-    // ==========================================
-    // TESTE 3: Estado de Erro
-    // ==========================================
 
     @Test
-    fun rankingScreen_errorState_showsErrorMessage() {
-        // Given - Estado com erro
-        val errorMessage = "Erro ao carregar ranking"
-        val rankingState = createTestRankingState(
-            error = errorMessage
-        )
-        rankingStateFlow.value = rankingState
+    fun comRanking_mostraOPodioEORestoDaLista() {
+        estado.value = RankingUiState(isLoading = false, rankings = jogadores())
 
-        // When - Renderiza a tela
-        composeTestRule.setContent {
-            FutebaTheme {
-                RankingScreen(
-                    viewModel = mockViewModel,
-                    onPlayerClick = {}
-                )
-            }
-        }
+        abrirTela()
 
-        // Then - Mensagem de erro deve ser exibida
-        composeTestRule.onNodeWithText(errorMessage).assertIsDisplayed()
+        composeTestRule.assertTextoVisivel("Ana Lima")
+        composeTestRule.assertTextoVisivel("Bruno Reis")
+        composeTestRule.assertTextoVisivel("Caio Dias")
+        composeTestRule.assertTextoVisivel("Davi Melo")
     }
-
-    // ==========================================
-    // TESTE 4: Filtros de Categoria
-    // ==========================================
 
     @Test
-    fun rankingScreen_showsCategoryFilters() {
-        // Given - Estado Success
-        rankingStateFlow.value = createTestRankingState(isLoading = false)
+    fun comRanking_tocarNoJogadorForaDoPodioAbreOPerfilDele() {
+        estado.value = RankingUiState(isLoading = false, rankings = jogadores())
+        abrirTela()
 
-        // When - Renderiza a tela
-        composeTestRule.setContent {
-            FutebaTheme {
-                RankingScreen(
-                    viewModel = mockViewModel,
-                    onPlayerClick = {}
-                )
-            }
-        }
+        composeTestRule.onNodeWithText("Davi Melo").performClick()
 
-        // Then - Tela deve renderizar com filtros
-        composeTestRule.onNodeWithText("Ranking").assertIsDisplayed()
+        assertEquals(listOf("u4"), clicados)
     }
 
-    // ==========================================
-    // HELPERS - Criacao de dados de teste
-    // ==========================================
+    @Test
+    fun semRanking_mostraOEstadoVazio() {
+        estado.value = RankingUiState(isLoading = false, rankings = emptyList())
 
-    /**
-     * Cria um item de ranking de teste
-     */
-    private fun createTestPlayer(
-        position: Int = 1,
-        playerName: String = "Test Player"
-    ) = PlayerRankingItem(
-        position = position,
-        playerId = "player$position",
-        playerName = playerName,
-        teamColor = "#FF5722",
-        xpCount = 5000L - (position * 100),
-        favoriteTeam = null
+        abrirTela()
+
+        composeTestRule.onNodeWithText(appString(R.string.empty_state_no_ranking_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(appString(R.string.empty_state_no_ranking_desc)).assertIsDisplayed()
+    }
+
+    @Test
+    fun erro_mostraAMensagemETentarNovamenteRecarrega() {
+        estado.value = RankingUiState(isLoading = false, error = "Erro ao carregar ranking")
+        abrirTela()
+
+        composeTestRule.onNodeWithText("Erro ao carregar ranking").assertIsDisplayed()
+        composeTestRule.onNodeWithText(appString(R.string.retry)).performClick()
+
+        verify { viewModel.loadRanking() }
+    }
+
+    @Test
+    fun filtros_trocamACategoriaEOPeriodoNoViewModel() {
+        estado.value = RankingUiState(isLoading = false, rankings = jogadores())
+        abrirTela()
+
+        composeTestRule.onNodeWithText(appString(R.string.assists)).performClick()
+        composeTestRule.onNodeWithText(appString(R.string.week)).performClick()
+
+        verify { viewModel.selectCategory(RankingCategory.ASSISTS) }
+        verify { viewModel.selectPeriod(RankingPeriod.WEEK) }
+    }
+
+    private fun jogadores() = listOf(
+        jogador(1, "u1", "Ana Lima", 12),
+        jogador(2, "u2", "Bruno Reis", 9),
+        jogador(3, "u3", "Caio Dias", 7),
+        jogador(4, "u4", "Davi Melo", 5)
     )
 
-    /**
-     * Cria um estado de ranking completo
-     */
-    private fun createTestRankingState(
-        isLoading: Boolean = false,
-        players: List<PlayerRankingItem> = emptyList(),
-        error: String? = null,
-        selectedCategory: RankingCategory = RankingCategory.XP,
-        selectedPeriod: RankingPeriod = RankingPeriod.OVERALL
-    ) = RankingState(
-        isLoading = isLoading,
-        players = players,
-        error = error,
-        selectedCategory = selectedCategory,
-        selectedPeriod = selectedPeriod
+    private fun jogador(rank: Int, userId: String, nome: String, gols: Long) = PlayerRankingItem(
+        rank = rank,
+        userId = userId,
+        playerName = nome,
+        value = gols,
+        gamesPlayed = 10,
+        average = gols / 10.0,
+        level = 3
     )
 }

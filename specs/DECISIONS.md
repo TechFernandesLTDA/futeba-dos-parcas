@@ -2325,3 +2325,16 @@ Spec: `specs/bugfix-2026-11-15-bateria-web-regras-4571-4574.md`.
   papel só existia no formulário.
 - As quatro falhas esperadas da bateria viraram teste normal e `PENDENCIAS` do web ficou vazio.
 - Fica aberto: a aba Jogos não lista os jogos `GROUP_ONLY` dos grupos do usuário (#4578).
+
+## 2026-11-15: Teste de tela no Android testa a tela do app, com textos do `strings.xml` (#4575)
+
+Spec: `specs/bugfix-2026-11-15-android-androidtest-compila.md`.
+
+- Teste em `app/src/androidTest` monta o composable do app (`LoginScreen`, `HomeScreen`...) com o ViewModel
+  substituído por mock. Teste que chama uma cópia da tela escrita dentro do próprio arquivo não vale: foi o
+  motivo para apagar `GamesScreenTest` e `LocationFlowTest` (44 casos) em vez de consertá-los.
+- O texto esperado vem do recurso (`appString(R.string...)`), não de literal.
+- Todo `StateFlow` que a tela lê é declarado no mock; item de lista preguiçosa abaixo da dobra é alcançado
+  rolando.
+- Substitui a decisão de 15/11/2026 de tirar dez arquivos da compilação: o bloco `androidTestsQueNaoCompilam`
+  saiu de `app/build.gradle.kts` e não volta. Teste que quebrar é consertado ou apagado com o motivo no PR.
