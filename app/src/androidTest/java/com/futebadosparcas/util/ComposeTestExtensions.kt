@@ -1,15 +1,20 @@
 package com.futebadosparcas.util
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.platform.app.InstrumentationRegistry
 
 /**
  * Compose Test Extensions
@@ -99,4 +104,21 @@ fun ComposeTestRule.waitUntilDisplayed(
             false
         }
     }
+}
+
+/**
+ * Texto do app pelo recurso. Os testes de tela comparam com o `strings.xml`, e não com o texto digitado no
+ * teste, para não quebrarem quando só a redação muda.
+ */
+fun appString(@StringRes id: Int, vararg args: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
+
+/** Há pelo menos um nó visível com o texto. Serve para telas que repetem o mesmo texto em dois lugares. */
+fun ComposeTestRule.assertTextoVisivel(text: String, substring: Boolean = false) {
+    onAllNodesWithText(text, substring = substring).onFirst().assertIsDisplayed()
+}
+
+/** Nenhum nó com o texto. */
+fun ComposeTestRule.assertTextoAusente(text: String, substring: Boolean = false) {
+    onAllNodesWithText(text, substring = substring).assertCountEquals(0)
 }

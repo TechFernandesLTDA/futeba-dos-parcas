@@ -1,35 +1,40 @@
 package com.futebadosparcas.ui.auth
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.futebadosparcas.compose.resources.Res
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.User
-import org.jetbrains.compose.resources.getString
-import kotlinx.coroutines.runBlocking
 import com.futebadosparcas.ui.theme.FutebaTheme
-import com.google.common.truth.Truth.assertThat
-import org.junit.Before
+import com.futebadosparcas.util.appString
+import com.futebadosparcas.util.assertTextoAusente
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Testes de UI para a tela de Login usando Jetpack Compose Testing.
+ * Tela de login (`LoginScreen`): entrada com Google, formulário de e-mail e senha, e os estados de
+ * carregamento, erro e sucesso. A tela não tem ViewModel próprio: recebe o estado e devolve as ações por
+ * callback, então o teste controla o estado direto.
  *
- * Valida:
- * - Estado inicial (Idle) mostra botao de login
- * - Estado de carregamento (Loading) mostra progress indicator
- * - Estado de erro (Error) mostra mensagem de erro
- * - Estado de sucesso (Success) dispara callback de navegacao
- * - Interacao com botao do Google
+ * A tela rola na vertical. `texto()` rola até o elemento antes de conferir ou tocar.
  */
 @RunWith(AndroidJUnit4::class)
 class LoginScreenTest {
@@ -37,505 +42,198 @@ class LoginScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var context: android.content.Context
+    private var estado by mutableStateOf<LoginState>(LoginState.Idle)
 
-    // Strings de recursos usadas na tela
-    private lateinit var appTitle: String
-    private lateinit var slogan: String
-    private lateinit var signInTitle: String
-    private lateinit var signInDescription: String
-    private lateinit var googleSignInText: String
-    private lateinit var authenticatingText: String
-    private lateinit var logoDescription: String
+    private var cliquesGoogle = 0
+    private var loginPorEmail: Pair<String, String>? = null
+    private var emailDaSenhaEsquecida: String? = null
+    private var foiParaCadastro = 0
+    private var foiParaInicio = 0
 
-    @Before
-    fun setup() {
-        context = InstrumentationRegistry.getInstrumentation().targetContext
-
-        // Carrega strings de recursos para usar nos testes
-        runBlocking {
-            appTitle = getString(Res.string.auth_title)
-            slogan = getString(Res.string.auth_slogan)
-            signInTitle = getString(Res.string.auth_sign_in_title)
-            signInDescription = getString(Res.string.auth_sign_in_description)
-            googleSignInText = getString(Res.string.auth_sign_in_google)
-            authenticatingText = getString(Res.string.auth_authenticating)
-            logoDescription = getString(Res.string.auth_logo_description)
-        }
-    }
-
-    // ==================== Testes de Estado Idle ====================
-
-    @Test
-    fun loginScreen_idleState_showsAppTitleAndSlogan() {
-        // Given - Estado inicial (Idle)
+    private fun abrirTela() {
         composeTestRule.setContent {
             FutebaTheme {
                 LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
+                    uiState = estado,
+                    versionName = VERSAO,
+                    onGoogleSignInClick = { cliquesGoogle++ },
+                    onEmailPasswordSignIn = { email, senha -> loginPorEmail = email to senha },
+                    onForgotPassword = { emailDaSenhaEsquecida = it },
+                    onNavigateToRegister = { foiParaCadastro++ },
+                    onNavigateToMain = { foiParaInicio++ }
                 )
             }
         }
+    }
 
-        // Then - Verifica titulo e slogan do app
-        composeTestRule
-            .onNodeWithText(appTitle)
-            .assertIsDisplayed()
+    private fun texto(valor: String): SemanticsNodeInteraction =
+        composeTestRule.onNodeWithText(valor).performScrollTo()
 
-        composeTestRule
-            .onNodeWithText(slogan)
-            .assertIsDisplayed()
+    /** O nome do app aparece no título e de novo no rodapé: o título é o primeiro. */
+    private fun titulo(): SemanticsNodeInteraction =
+        composeTestRule.onAllNodesWithText(appString(R.string.auth_title)).onFirst().performScrollTo()
+
+    private fun botaoGoogle() = texto(appString(R.string.auth_sign_in_google))
+
+    /** No formulário de e-mail, o título do cartão e o botão têm o mesmo texto: o botão é o que aceita clique. */
+    private fun botaoEntrar(): SemanticsNodeInteraction =
+        composeTestRule.onNode(hasText(appString(R.string.auth_sign_in_title)) and hasClickAction())
+            .performScrollTo()
+
+    private fun abrirFormularioDeEmail(email: String = "", senha: String = "") {
+        texto(appString(R.string.auth_sign_in_with_email)).performClick()
+        if (email.isNotEmpty()) texto(appString(R.string.auth_email_label)).performTextInput(email)
+        if (senha.isNotEmpty()) texto(appString(R.string.auth_password_label)).performTextInput(senha)
+    }
+
+    // --- Estado inicial ---
+
+    @Test
+    fun inicial_mostraMarcaCartaoDeEntradaEVersao() {
+        abrirTela()
+
+        composeTestRule.onNodeWithContentDescription(appString(R.string.auth_logo_description))
+            .performScrollTo().assertIsDisplayed()
+        titulo().assertIsDisplayed()
+        texto(appString(R.string.auth_slogan)).assertIsDisplayed()
+        texto(appString(R.string.auth_sign_in_title)).assertIsDisplayed()
+        texto(appString(R.string.auth_sign_in_description)).assertIsDisplayed()
+        texto(appString(R.string.auth_developed_by)).assertIsDisplayed()
+        texto(appString(R.string.auth_version, VERSAO)).assertIsDisplayed()
     }
 
     @Test
-    fun loginScreen_idleState_showsSignInCard() {
-        // Given - Estado inicial (Idle)
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+    fun inicial_botaoDoGoogleChamaOLogin() {
+        abrirTela()
 
-        // Then - Verifica conteudo do card de login
-        composeTestRule
-            .onNodeWithText(signInTitle)
-            .assertIsDisplayed()
+        botaoGoogle().assertIsEnabled().performClick()
 
-        composeTestRule
-            .onNodeWithText(signInDescription)
-            .assertIsDisplayed()
+        assertEquals(1, cliquesGoogle)
     }
 
     @Test
-    fun loginScreen_idleState_showsGoogleSignInButton() {
-        // Given - Estado inicial (Idle)
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+    fun inicial_naoTemContaVaiParaOCadastro() {
+        abrirTela()
 
-        // Then - Verifica botao de login com Google
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .assertIsDisplayed()
-            .assertIsEnabled()
+        texto(appString(R.string.auth_no_account_register)).performClick()
+
+        assertEquals(1, foiParaCadastro)
+    }
+
+    // --- Carregando, erro e sucesso ---
+
+    @Test
+    fun carregando_mostraOAvisoEEscondeOBotaoDoGoogle() {
+        estado = LoginState.Loading
+
+        abrirTela()
+
+        texto(appString(R.string.auth_authenticating)).assertIsDisplayed()
+        composeTestRule.assertTextoAusente(appString(R.string.auth_sign_in_google))
+        titulo().assertIsDisplayed()
     }
 
     @Test
-    fun loginScreen_idleState_showsVersionNumber() {
-        // Given - Estado inicial com versao especifica
-        val versionName = "1.4.0"
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = versionName,
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+    fun erro_mostraAMensagemDoRecursoEPermiteTentarDeNovo() {
+        estado = LoginState.Error(R.string.auth_error_network)
+        abrirTela()
 
-        // Then - Verifica que a versao esta exibida
-        val versionText = runBlocking { getString(Res.string.auth_version, versionName) }
-        composeTestRule
-            .onNodeWithText(versionText)
-            .assertIsDisplayed()
+        texto(appString(R.string.auth_error_network)).assertIsDisplayed()
+        botaoGoogle().performClick()
+
+        assertEquals(1, cliquesGoogle)
     }
 
     @Test
-    fun loginScreen_idleState_showsLogo() {
-        // Given - Estado inicial (Idle)
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+    fun sucesso_vaiParaATelaInicialUmaVezSo() {
+        estado = LoginState.Success(User(id = "u1", email = "maria@exemplo.com", name = "Maria Souza"))
 
-        // Then - Verifica logo do app via content description
-        composeTestRule
-            .onNodeWithContentDescription(logoDescription)
-            .assertIsDisplayed()
-    }
-
-    // ==================== Testes de Interacao ====================
-
-    @Test
-    fun loginScreen_googleSignInButtonClick_triggersCallback() {
-        // Given - Flag para verificar se callback foi chamado
-        val callbackCalled = AtomicBoolean(false)
-
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = { callbackCalled.set(true) },
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // When - Clica no botao de login
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .performClick()
-
-        // Then - Callback deve ter sido chamado
-        assertThat(callbackCalled.get()).isTrue()
-    }
-
-    // ==================== Testes de Estado Loading ====================
-
-    @Test
-    fun loginScreen_loadingState_showsProgressIndicator() {
-        // Given - Estado de carregamento
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Loading,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Verifica que texto de autenticando esta visivel
-        composeTestRule
-            .onNodeWithText(authenticatingText)
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun loginScreen_loadingState_hidesGoogleSignInButton() {
-        // Given - Estado de carregamento
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Loading,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Botao do Google nao deve estar visivel durante loading
-        // Nota: Usando assertDoesNotExist porque o AnimatedVisibility remove o node
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .assertIsNotDisplayed()
-    }
-
-    @Test
-    fun loginScreen_loadingState_stillShowsAppTitle() {
-        // Given - Estado de carregamento
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Loading,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Titulo do app ainda deve estar visivel
-        composeTestRule
-            .onNodeWithText(appTitle)
-            .assertIsDisplayed()
-    }
-
-    // ==================== Testes de Estado Error ====================
-
-    @Test
-    fun loginScreen_errorState_showsErrorMessage() {
-        // Given - Estado de erro com mensagem
-        val errorMessage = "Falha na autenticacao com Google"
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Error(errorMessage),
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Verifica que a mensagem de erro esta visivel
-        composeTestRule
-            .onNodeWithText(errorMessage)
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun loginScreen_errorState_stillShowsGoogleSignInButton() {
-        // Given - Estado de erro
-        val errorMessage = "Erro de conexao"
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Error(errorMessage),
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Botao de login ainda deve estar visivel para retry
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun loginScreen_errorState_allowsRetry() {
-        // Given - Estado de erro e flag para verificar retry
-        val retryClicked = AtomicBoolean(false)
-        val errorMessage = "Erro temporario"
-
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Error(errorMessage),
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = { retryClicked.set(true) },
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // When - Usuario clica para tentar novamente
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .performClick()
-
-        // Then - Callback de retry deve ser chamado
-        assertThat(retryClicked.get()).isTrue()
-    }
-
-    @Test
-    fun loginScreen_errorState_displaysMultipleErrorTypes() {
-        // Testa diferentes tipos de mensagens de erro
-
-        val errorMessages = listOf(
-            "Erro de rede",
-            "Token invalido",
-            "Usuario cancelou autenticacao",
-            "Conta Google desconhecida"
-        )
-
-        errorMessages.forEach { errorMessage ->
-            composeTestRule.setContent {
-                FutebaTheme {
-                    LoginScreen(
-                        uiState = LoginState.Error(errorMessage),
-                        versionName = "1.0.0",
-                        onGoogleSignInClick = {},
-                        onNavigateToMain = {}
-                    )
-                }
-            }
-
-            // Verifica que a mensagem especifica esta visivel
-            composeTestRule
-                .onNodeWithText(errorMessage)
-                .assertIsDisplayed()
-        }
-    }
-
-    // ==================== Testes de Estado Success ====================
-
-    @Test
-    fun loginScreen_successState_triggersNavigationCallback() {
-        // Given - Flag para verificar navegacao
-        val navigationCalled = AtomicBoolean(false)
-        val testUser = createTestUser()
-
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Success(testUser),
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = { navigationCalled.set(true) }
-                )
-            }
-        }
-
-        // Then - Aguarda e verifica que navegacao foi chamada
+        abrirTela()
         composeTestRule.waitForIdle()
-        assertThat(navigationCalled.get()).isTrue()
+
+        assertEquals(1, foiParaInicio)
     }
 
     @Test
-    fun loginScreen_successState_navigatesOnlyOnce() {
-        // Given - Contador de chamadas de navegacao
-        var navigationCount = 0
-        val testUser = createTestUser()
+    fun deInicialParaCarregandoParaErro_aTelaAcompanhaOEstado() {
+        abrirTela()
+        botaoGoogle().assertIsDisplayed()
 
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Success(testUser),
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = { navigationCount++ }
-                )
-            }
-        }
+        estado = LoginState.Loading
+        texto(appString(R.string.auth_authenticating)).assertIsDisplayed()
+        composeTestRule.assertTextoAusente(appString(R.string.auth_sign_in_google))
 
-        // Then - Navegacao deve ser chamada exatamente uma vez
-        composeTestRule.waitForIdle()
-        assertThat(navigationCount).isEqualTo(1)
+        estado = LoginState.Error(R.string.auth_error_invalid_credentials)
+        texto(appString(R.string.auth_error_invalid_credentials)).assertIsDisplayed()
+        botaoGoogle().assertIsDisplayed()
+        composeTestRule.assertTextoAusente(appString(R.string.auth_authenticating))
     }
 
-    // ==================== Testes de Transicao de Estado ====================
+    // --- Formulário de e-mail e senha ---
 
     @Test
-    fun loginScreen_transitionFromIdleToLoading_updatesUI() {
-        // Given - Estado inicial Idle
-        var currentState: LoginState = LoginState.Idle
+    fun formularioDeEmail_vazioDeixaEntrarEEsqueciDesabilitados() {
+        abrirTela()
 
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = currentState,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+        abrirFormularioDeEmail()
 
-        // Then - Botao Google visivel
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .assertIsDisplayed()
-
-        // When - Transicao para Loading
-        currentState = LoginState.Loading
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = currentState,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Texto de autenticando visivel, botao oculto
-        composeTestRule
-            .onNodeWithText(authenticatingText)
-            .assertIsDisplayed()
+        botaoEntrar().assertIsNotEnabled()
+        texto(appString(R.string.auth_forgot_password)).assertIsNotEnabled()
+        composeTestRule.assertTextoAusente(appString(R.string.auth_sign_in_google))
     }
 
     @Test
-    fun loginScreen_transitionFromLoadingToError_showsErrorAndButton() {
-        // Given - Estado de Loading
-        var currentState: LoginState = LoginState.Loading
-        val errorMessage = "Autenticacao falhou"
+    fun formularioDeEmail_dadosValidosEnviamEmailESenha() {
+        abrirTela()
+        abrirFormularioDeEmail(email = "maria@exemplo.com", senha = "segredo123")
 
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = currentState,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+        botaoEntrar().assertIsEnabled().performClick()
 
-        // When - Transicao para Error
-        currentState = LoginState.Error(errorMessage)
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = currentState,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
-
-        // Then - Erro e botao visiveis
-        composeTestRule
-            .onNodeWithText(errorMessage)
-            .assertIsDisplayed()
-
-        composeTestRule
-            .onNodeWithText(googleSignInText)
-            .assertIsDisplayed()
+        assertEquals("maria@exemplo.com" to "segredo123", loginPorEmail)
     }
-
-    // ==================== Testes de Footer ====================
 
     @Test
-    fun loginScreen_showsDeveloperInfo() {
-        // Given
-        composeTestRule.setContent {
-            FutebaTheme {
-                LoginScreen(
-                    uiState = LoginState.Idle,
-                    versionName = "1.0.0",
-                    onGoogleSignInClick = {},
-                    onNavigateToMain = {}
-                )
-            }
-        }
+    fun formularioDeEmail_emailInvalidoMostraOErroENaoEnvia() {
+        abrirTela()
+        abrirFormularioDeEmail(email = "maria-sem-arroba", senha = "segredo123")
 
-        // Then - Verifica informacoes do desenvolvedor
-        val developedByText = runBlocking { getString(Res.string.auth_developed_by) }
-        val developerName = runBlocking { getString(Res.string.auth_developer_name) }
+        botaoEntrar().performClick()
 
-        composeTestRule
-            .onNodeWithText(developedByText)
-            .assertIsDisplayed()
-
-        composeTestRule
-            .onNodeWithText(developerName)
-            .assertIsDisplayed()
+        texto("Email inválido").assertIsDisplayed()
+        assertNull(loginPorEmail)
     }
 
-    // ==================== Helpers ====================
+    @Test
+    fun formularioDeEmail_esqueciMinhaSenhaEnviaOEmailDigitado() {
+        abrirTela()
+        abrirFormularioDeEmail(email = "maria@exemplo.com")
 
-    /**
-     * Cria um usuario de teste para os testes de sucesso.
-     */
-    private fun createTestUser(
-        id: String = "test-user-id",
-        name: String = "Usuario Teste",
-        email: String = "teste@futebadosparcas.com"
-    ) = User(
-        id = id,
-        name = name,
-        email = email
-    )
+        texto(appString(R.string.auth_forgot_password)).performClick()
+
+        assertEquals("maria@exemplo.com", emailDaSenhaEsquecida)
+    }
+
+    @Test
+    fun formularioDeEmail_carregandoDesabilitaOEntrar() {
+        abrirTela()
+        abrirFormularioDeEmail(email = "maria@exemplo.com", senha = "segredo123")
+
+        estado = LoginState.Loading
+
+        botaoEntrar().assertIsNotEnabled()
+    }
+
+    @Test
+    fun formularioDeEmail_voltarParaGoogleMostraOBotaoDoGoogleDeNovo() {
+        abrirTela()
+        abrirFormularioDeEmail()
+
+        texto(appString(R.string.auth_back_to_google)).performClick()
+
+        botaoGoogle().assertIsDisplayed()
+    }
+
+    private companion object {
+        const val VERSAO = "1.2.3"
+    }
 }
