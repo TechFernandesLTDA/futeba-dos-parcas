@@ -119,7 +119,9 @@ Nenhum passo do CI compila o `androidTest`, e o bloco de exclusão escondia o pr
 
 ### 5.2 Pendências (fora deste PR)
 
-- [ ] Três testes de outros arquivos, que já compilavam, falham no mesmo AVD: `AppTopBarBadgeFontScaleTest.badgeLimitadoEm99NaoRecortaComFontScale2_0`, `GroupWallScreenTest.compositorPermaneceVisivelQuandoMuralEstaVazio` e `WallPostComposerTest.draftPermaneceAteConfirmacaoDeSucesso`. Não foram investigados.
+- [x] Três testes de outros arquivos, que já compilavam, falhavam no mesmo AVD: `AppTopBarBadgeFontScaleTest.badgeLimitadoEm99NaoRecortaComFontScale2_0`, `GroupWallScreenTest.compositorPermaneceVisivelQuandoMuralEstaVazio` e `WallPostComposerTest.draftPermaneceAteConfirmacaoDeSucesso`. Investigados em 16/11/2026, os três eram defeito do teste:
+  - os dois do mural comparavam com texto em português escrito no teste; o AVD está em inglês e o app tem `values-en`. Passaram a usar `appString(R.string...)`;
+  - o do badge exigia ao mesmo tempo o rótulo inteiro e o badge dentro do alvo de 48dp. Com "99+" em fontScale 2,0 o rótulo mede cerca de 55dp, então as duas condições não cabem juntas. O teste passou a aceitar, só nesse caso, os 4dp do deslocamento à esquerda, que ficam na margem do botão vizinho. O app não muda.
 - [ ] Teste de tela real para `GamesScreen`, `ManageLocationsScreen` e `LocationDetailScreen`.
 - [ ] `ValidationHelper` devolve mensagens em texto fixo, fora do `strings.xml`; os testes de login e cadastro comparam com esses textos.
 
