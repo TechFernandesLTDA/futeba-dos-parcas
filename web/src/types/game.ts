@@ -451,7 +451,7 @@ function resolvePaletteKeyColors(
 }
 
 export function canManageGame(game: Game, userId: string): boolean {
-  return game.ownerId === userId || game.coOrganizers.includes(userId);
+  return game.ownerId === userId || (game.coOrganizers?.includes(userId) ?? false);
 }
 
 export function isGameFull(game: Game): boolean {

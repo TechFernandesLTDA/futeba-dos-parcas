@@ -2376,3 +2376,18 @@ Spec: `specs/bugfix-2026-11-16-android-convites-de-grupo.md`.
   mudança de regras com spec própria; o teste de regras registra a restrição como intencional.
 - Gravação com modelo anotado com `@ServerTimestamp` e nome de campo trocado por `@get:PropertyName` saiu sem
   data no emulador. Escritor novo usa mapa explícito até os modelos serem conferidos.
+
+## 2026-11-17: Seis defeitos de permissão achados pelos testes do #4586 são corrigidos (spec bugfix-2026-11-17)
+
+Spec: `specs/bugfix-2026-11-17-permissoes-defeitos-4586.md` (APPROVED pelo Renan em 17/11/2026).
+
+- Fila de espera e confirmação de gestor (D1, D2): quem está bloqueado em `groups/{g}/blocked_players` é recusado
+  também quando o jogo é público ou quando quem confirma é gestor ou admin global. Segue `join-public-game` e
+  `confirmGamePresence`.
+- Regra de MVP (D3): só admin grava `mvp_id` direto em jogo `FINISHED`. O dono não. A votação grava pela Cloud
+  Function com Admin SDK, então nenhum fluxo de cliente muda.
+- Convite (D4): falha na checagem de membro interrompe o convite. Antes virava "não é membro" e o convite era criado.
+- Papel de membro (D5): `REMOVED`, `INACTIVE` e `BLOCKED` não têm papel ativo. Compara o status com a string bruta,
+  sem `getStatusEnum`, que cairia em `ACTIVE` para valor inválido.
+- `canManageGame` no web (D6): tolera `coOrganizers` ausente. Nenhum chamador de produção muda.
+- Os testes de `it.fails`, `test.failing` e `@Disabled` viram testes normais. Nenhuma asserção foi enfraquecida.

@@ -442,7 +442,13 @@ class GroupRepository constructor(
 
             if (memberDoc.exists()) {
                 val member = memberDoc.toObjectTolerant(GroupMember::class.java)
-                Result.success(member?.getRoleEnum())
+                // Papel só vale para membro ativo: REMOVED, INACTIVE e BLOCKED não têm papel efetivo.
+                // Compara a string bruta, não getStatusEnum(), para não mascarar status inválido.
+                if (member == null || member.status != GroupMemberStatus.ACTIVE.name) {
+                    Result.success(null)
+                } else {
+                    Result.success(member.getRoleEnum())
+                }
             } else {
                 Result.success(null)
             }

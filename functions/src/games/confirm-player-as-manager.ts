@@ -179,6 +179,27 @@ export const confirmPlayerAsManager = onCall<ConfirmPlayerAsManagerRequest>(
           );
         }
 
+        // Jogador bloqueado no grupo não é confirmado, nem pelo admin (D2).
+        const rawGroupId = game.group_id ?? game.groupId;
+        const groupId =
+          typeof rawGroupId === "string" &&
+          rawGroupId.length > 0 &&
+          rawGroupId.length <= 128 &&
+          !rawGroupId.includes("/") ?
+            rawGroupId :
+            "";
+        if (groupId) {
+          const blockedSnap = await tx.get(
+            db().doc(`groups/${groupId}/blocked_players/${payload.userId}`)
+          );
+          if (blockedSnap.exists) {
+            throw new HttpsError(
+              "permission-denied",
+              "Este jogador está bloqueado neste grupo."
+            );
+          }
+        }
+
         const status = game.status;
         if (status !== "SCHEDULED" && status !== "CONFIRMED") {
           throw new HttpsError(
