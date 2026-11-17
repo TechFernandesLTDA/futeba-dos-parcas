@@ -13,9 +13,16 @@ interface InviteRepository {
      *
      * @param groupId ID do grupo
      * @param invitedUserId ID do usuario a ser convidado
+     * @param invitedUserName Nome do convidado, quando quem chama ja o tem (a busca de jogadores
+     *   traz). As regras negam a leitura do perfil alheio com e-mail gravado, entao a
+     *   implementacao nao pode depender de ler `users/{invitedUserId}`.
      * @return Result<GroupInvite> com o convite criado ou erro
      */
-    suspend fun createInvite(groupId: String, invitedUserId: String): Result<GroupInvite>
+    suspend fun createInvite(
+        groupId: String,
+        invitedUserId: String,
+        invitedUserName: String? = null
+    ): Result<GroupInvite>
 
     /**
      * Aceita um convite de grupo.

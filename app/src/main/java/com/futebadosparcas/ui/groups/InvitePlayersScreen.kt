@@ -130,7 +130,7 @@ fun InvitePlayersScreen(
                 memberIds = memberIds.value,
                 searchQuery = searchQuery,
                 onInviteClick = { user ->
-                    viewModel.inviteUser(groupId, user.id)
+                    viewModel.inviteUser(groupId, user.id, user.getDisplayName())
                 },
                 onRetrySearch = {
                     viewModel.searchUsers(searchQuery)
