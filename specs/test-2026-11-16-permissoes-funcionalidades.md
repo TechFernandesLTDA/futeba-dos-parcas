@@ -128,7 +128,8 @@ Camadas: R = Firestore rules · F = Functions (Jest) · W = web (Vitest) · A = 
 
 | Funcionalidade | Papel | Esperado | Resultado |
 |---|---|---|---|
-| Criar convite | dono, ADMIN ativo | permitido; negado se alvo já é membro ativo/banido ou auto-convite | ✔ R, F, A |
+| Criar convite | dono | permitido; negado se alvo já é membro ativo/banido ou auto-convite | ✔ R, F, A |
+| Criar convite | ADMIN ativo (não dono) | negado: só o dono convida, como nas rules (#4589; o repositório recusa antes de gravar) | ✔ R; sem teste Android do `createInvite` (o use case ainda deixa passar ADMIN) |
 | Criar convite | membro, visitante, ADMIN de outro grupo, anônimo | negado | ✔ R, F, W |
 | Aceitar / recusar | destinatário | aceita pendente | ✔ R, F, A |
 | Aceitar / recusar | terceiro | negado | ✔ R |

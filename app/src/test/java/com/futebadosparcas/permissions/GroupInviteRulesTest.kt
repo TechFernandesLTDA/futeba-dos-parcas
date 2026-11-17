@@ -1,6 +1,7 @@
 package com.futebadosparcas.permissions
 
 import com.futebadosparcas.data.InviteRepositoryImpl
+import com.futebadosparcas.data.model.GroupInvite as FirestoreGroupInvite
 import com.futebadosparcas.domain.model.GroupInvite
 import com.futebadosparcas.domain.model.InviteStatus
 import com.futebadosparcas.domain.model.calculateGroupInviteExpirationDate
@@ -72,17 +73,32 @@ class GroupInviteRulesTest {
         expiresAt = expiresAt
     )
 
-    /** Registra o documento do convite e devolve o DocumentReference para verificações de escrita. */
+    /**
+     * Registra o documento do convite e devolve o DocumentReference para verificações de escrita.
+     * O repositório lê o documento pelo modelo do Firestore (`data.model.GroupInvite`, snake_case) e
+     * converte para o domínio, então o stub devolve o modelo do Firestore com os mesmos valores.
+     */
     private fun stubInviteDocument(id: String, invite: GroupInvite?): DocumentReference {
         val snapshot = mockk<DocumentSnapshot>()
         every { snapshot.exists() } returns (invite != null)
-        every { snapshot.toObject(GroupInvite::class.java) } returns invite
+        every { snapshot.toObject(FirestoreGroupInvite::class.java) } returns invite?.toFirestoreModel()
         val docRef = mockk<DocumentReference>()
         every { docRef.get() } returns Tasks.forResult(snapshot)
         every { docRef.update(any<Map<String, Any>>()) } returns Tasks.forResult<Void?>(null)
         every { invitesCollection.document(id) } returns docRef
         return docRef
     }
+
+    private fun GroupInvite.toFirestoreModel(): FirestoreGroupInvite = FirestoreGroupInvite(
+        id = id,
+        groupId = groupId,
+        groupName = groupName,
+        invitedUserId = invitedUserId,
+        invitedUserEmail = invitedUserEmail,
+        invitedById = invitedById,
+        status = status,
+        expiresAt = expiresAt?.let { java.util.Date(it) }
+    )
 
     // ---------- Modelo: ciclo de vida do convite ----------
 
