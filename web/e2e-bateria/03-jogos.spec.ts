@@ -57,12 +57,40 @@ test.describe('jogos', () => {
   test('aba Jogos lista o jogo público, que não tem o campo deleted_at', async ({ browser }) => {
     // Regressão #4572: a consulta filtrava `deleted_at == null` e nenhum
     // escritor grava esse campo, então a aba ficava vazia para todo mundo.
-    // A aba lista os jogos públicos; os do grupo aparecem na tela do grupo.
     const { contexto, page } = await sessao(browser, 'jogador01');
     await page.goto('/?tab=1');
     await expect(page.getByRole('heading', { name: 'Jogos' })).toBeVisible();
     await expect(page.getByText(quadra(jogo('jogo-publico').quadra).nome).first()).toBeVisible({ timeout: 8_000 });
     await contexto.close();
+  });
+
+  test('aba Jogos lista o jogo GROUP_ONLY do grupo do usuário e esconde o de grupo alheio', async ({ browser }) => {
+    // Regressão #4578: a aba só consultava jogos públicos, então quem joga em
+    // grupo privado não via o próprio jogo agendado ali.
+    // Entre os jogos em aberto, só os GROUP_ONLY do grupo alfa usam a quadra 01;
+    // o jogo público usa a quadra 02.
+    const quadraDoGrupo = quadra(jogo('jogo-agendado').quadra).nome;
+    const quadraPublica = quadra(jogo('jogo-publico').quadra).nome;
+    expect(jogo('jogo-agendado').visibilidade).toBe('GROUP_ONLY');
+    expect(quadraDoGrupo).not.toBe(quadraPublica);
+
+    // jogador08: membro do grupo alfa, fora do grupo do jogo público.
+    const membro = await sessao(browser, 'jogador08');
+    await membro.page.goto('/?tab=1');
+    await expect(membro.page.getByRole('heading', { name: 'Jogos' })).toBeVisible();
+    await expect(membro.page.getByText(quadraDoGrupo).first()).toBeVisible({ timeout: 8_000 });
+    await expect(membro.page.getByText(quadraPublica).first()).toBeVisible();
+    semErros(membro.vigia);
+    await membro.contexto.close();
+
+    // jogador13: só está no grupo beta. Vê o jogo público e não vê os do alfa.
+    const deFora = await sessao(browser, 'jogador13');
+    await deFora.page.goto('/?tab=1');
+    await expect(deFora.page.getByRole('heading', { name: 'Jogos' })).toBeVisible();
+    await expect(deFora.page.getByText(quadraPublica).first()).toBeVisible({ timeout: 8_000 });
+    await expect(deFora.page.getByText(quadraDoGrupo)).toHaveCount(0);
+    semErros(deFora.vigia);
+    await deFora.contexto.close();
   });
 
   test('dono registra gol no jogo ao vivo e finaliza', async ({ browser }) => {

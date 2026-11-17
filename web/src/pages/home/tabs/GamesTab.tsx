@@ -94,6 +94,11 @@ export function GamesTab() {
   const [genderFilter, setGenderFilter] = useState<'all' | GameGender>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const activeGamesThreshold = useMemo(() => getActiveGamesThreshold(), []);
+  const { groups, loading: groupsLoading } = useGroups();
+  // #4578: a aba junta os jogos públicos com os jogos dos grupos do usuário
+  // (inclusive os GROUP_ONLY). A chave em texto mantém o filtro estável entre
+  // renders, já que `groups` é recriado a cada busca.
+  const memberGroupIdsKey = groups.map((group) => group.id).filter(Boolean).sort().join(',');
   const gamesQueryFilters = useMemo(() => ({
     ...(statusFilter === 'all'
       ? { statuses: ACTIVE_STATUSES, startDateTime: activeGamesThreshold }
@@ -103,10 +108,11 @@ export function GamesTab() {
         }),
     limitCount: statusFilter === 'all' ? 150 : 100,
     orderDirection: statusFilter === 'FINISHED' ? 'desc' as const : 'asc' as const,
-  }), [activeGamesThreshold, statusFilter]);
+    memberGroupIds: memberGroupIdsKey ? memberGroupIdsKey.split(',') : undefined,
+  }), [activeGamesThreshold, memberGroupIdsKey, statusFilter]);
 
-  const { games, loading, error, refetch } = useGames(gamesQueryFilters);
-  const { groups, loading: groupsLoading } = useGroups();
+  // Espera os grupos para abrir a lista já completa, sem piscar só com os públicos.
+  const { games, loading, error, refetch } = useGames(gamesQueryFilters, { enabled: !groupsLoading });
   const hasGroups = groups.length > 0;
   const ownerGroups = groups.filter((group) => group.role === 'OWNER');
   const hasQualifiedOwnerGroup = ownerGroups.some((group) => (group.memberCount ?? 0) >= 5);

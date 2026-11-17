@@ -2326,6 +2326,18 @@ Spec: `specs/bugfix-2026-11-15-bateria-web-regras-4571-4574.md`.
 - As quatro falhas esperadas da bateria viraram teste normal e `PENDENCIAS` do web ficou vazio.
 - Fica aberto: a aba Jogos não lista os jogos `GROUP_ONLY` dos grupos do usuário (#4578).
 
+## 2026-11-16: Aba Jogos do web junta os jogos públicos com os dos grupos do usuário (#4578)
+
+Spec: `specs/bugfix-2026-11-16-web-aba-jogos-group-only-4578.md`.
+
+- Sem `groupId`, `useGames` soma à consulta pública uma consulta por grupo do usuário (`memberGroupIds`, até 10),
+  tira os repetidos pelo ID e reaplica ordem e limite no cliente. Mesmo desenho do Android
+  (`getLiveAndUpcomingGamesFlow`).
+- Uma consulta por grupo, e não `group_id in [...]`: a regra de LIST lê um documento de membro por grupo distinto
+  e um `in` com 10 grupos encosta no teto de leituras de regras; e um vínculo desatualizado derrubaria tudo.
+- Falha na consulta de um grupo tira só aquele grupo da lista. Falha na consulta pública continua sendo erro de tela.
+- Sem mudança de regras nem de índices.
+
 ## 2026-11-15: Teste de tela no Android testa a tela do app, com textos do `strings.xml` (#4575)
 
 Spec: `specs/bugfix-2026-11-15-android-androidtest-compila.md`.
