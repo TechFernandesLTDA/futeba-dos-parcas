@@ -242,6 +242,99 @@ describe('useGames', () => {
     expect(result.current.games).toHaveLength(1);
     expect(result.current.games[0].id).toBe('game-1');
   });
+
+  // #4578: a lista geral junta os jogos públicos com os dos grupos do usuário.
+  describe('com memberGroupIds', () => {
+    type Listener = { next: (snapshot: { docs: any[] }) => void; error: (error: Error) => void };
+    let listeners: Listener[];
+    const gameDoc = (id: string, isoDate: string) => ({
+      id,
+      data: () => ({ status: 'SCHEDULED', dateTime: new Date(isoDate) }),
+    });
+
+    beforeEach(() => {
+      listeners = [];
+      mockOnSnapshot.mockImplementation((_reference, next, error) => {
+        listeners.push({ next, error });
+        return vi.fn();
+      });
+    });
+
+    it('abre a consulta pública e uma por grupo, sem repetir grupo', () => {
+      renderHook(() => useGames({ memberGroupIds: ['g-2', 'g-1', 'g-2'] }), { wrapper: createTestWrapper() });
+
+      expect(mockOnSnapshot).toHaveBeenCalledTimes(3);
+      expect(mockWhere).toHaveBeenCalledWith('visibility', 'in', ['PUBLIC_OPEN', 'PUBLIC_CLOSED']);
+      expect(mockWhere).toHaveBeenCalledWith('group_id', '==', 'g-1');
+      expect(mockWhere).toHaveBeenCalledWith('group_id', '==', 'g-2');
+    });
+
+    it('limita a dez grupos', () => {
+      const groupIds = Array.from({ length: 14 }, (_, index) => `g-${String(index).padStart(2, '0')}`);
+      renderHook(() => useGames({ memberGroupIds: groupIds }), { wrapper: createTestWrapper() });
+      expect(mockOnSnapshot).toHaveBeenCalledTimes(11);
+    });
+
+    it('ignora memberGroupIds quando há groupId', () => {
+      renderHook(() => useGames({ groupId: 'g-1', memberGroupIds: ['g-1', 'g-2'] }), { wrapper: createTestWrapper() });
+      expect(mockOnSnapshot).toHaveBeenCalledOnce();
+    });
+
+    it('só publica depois de todas as fontes e junta sem repetir, em ordem de data', async () => {
+      const { result } = renderHook(() => useGames({ memberGroupIds: ['g-1'] }), { wrapper: createTestWrapper() });
+
+      act(() => listeners[0].next({ docs: [gameDoc('publico', '2026-03-10'), gameDoc('dos-dois', '2026-03-05')] }));
+      expect(result.current.loading).toBe(true);
+
+      act(() => listeners[1].next({ docs: [gameDoc('do-grupo', '2026-03-01'), gameDoc('dos-dois', '2026-03-05')] }));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.games.map((game) => game.id)).toEqual(['do-grupo', 'dos-dois', 'publico']);
+    });
+
+    it('respeita a ordem descendente e o limite ao juntar', async () => {
+      const { result } = renderHook(
+        () => useGames({ memberGroupIds: ['g-1'], orderDirection: 'desc', limitCount: 2 }),
+        { wrapper: createTestWrapper() },
+      );
+
+      act(() => listeners[0].next({ docs: [gameDoc('a', '2026-03-10'), gameDoc('b', '2026-03-05')] }));
+      act(() => listeners[1].next({ docs: [gameDoc('c', '2026-03-08')] }));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.games.map((game) => game.id)).toEqual(['a', 'c']);
+    });
+
+    it('erro na consulta de um grupo não derruba a lista', async () => {
+      const { result } = renderHook(() => useGames({ memberGroupIds: ['g-1'] }), { wrapper: createTestWrapper() });
+
+      act(() => listeners[0].next({ docs: [gameDoc('publico', '2026-03-10')] }));
+      act(() => listeners[1].error(new Error('permission-denied')));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.error).toBeNull();
+      expect(result.current.games.map((game) => game.id)).toEqual(['publico']);
+    });
+
+    it('erro na consulta pública continua aparecendo', async () => {
+      const { result } = renderHook(() => useGames({ memberGroupIds: ['g-1'] }), { wrapper: createTestWrapper() });
+
+      act(() => listeners[0].error(new Error('Firestore error')));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.error).toBe('Firestore error');
+    });
+
+    it('com enabled=false não abre listener e mantém loading', () => {
+      const { result } = renderHook(
+        () => useGames({ memberGroupIds: ['g-1'] }, { enabled: false }),
+        { wrapper: createTestWrapper() },
+      );
+
+      expect(mockOnSnapshot).not.toHaveBeenCalled();
+      expect(result.current.loading).toBe(true);
+    });
+  });
 });
 
 describe('useGameDetail', () => {
