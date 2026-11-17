@@ -35,6 +35,14 @@ aviso() { printf '[bateria:ios] %s\n' "$*"; }
 erro() { printf '[bateria:ios] ERRO: %s\n' "$*" >&2; exit 1; }
 porta() { node -e "console.log(require('./firebase.bateria.json').emulators['$1'].port)"; }
 
+# O CocoaPods aborta com "Unicode Normalization not appropriate for ASCII-8BIT"
+# quando o terminal não está em UTF-8 (caso de shell sem LANG, como o de agente
+# ou de hook).
+case "${LC_ALL:-${LANG:-}}" in
+  *UTF-8* | *utf8*) ;;
+  *) export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 ;;
+esac
+
 for comando in xcodebuild xcrun xcodegen pod node curl; do
   command -v "$comando" >/dev/null || erro "falta o comando $comando."
 done
@@ -56,15 +64,27 @@ desligar() {
 }
 trap desligar EXIT
 
-UDID="$(xcrun simctl list devices booted | sed -n 's/.*(\([0-9A-F-]\{36\}\)) (Booted).*/\1/p' | head -1)"
+# Com BATERIA_SIMULADOR definido, usa esse Simulador mesmo que haja outro
+# ligado (o ligado pode ser de outro projeto ou de outra sessão). Sem a
+# variável, aproveita o que já estiver ligado.
+UDID=""
+if [ -z "${BATERIA_SIMULADOR:-}" ]; then
+  UDID="$(xcrun simctl list devices booted | sed -n 's/.*(\([0-9A-F-]\{36\}\)) (Booted).*/\1/p' | head -1)"
+fi
 if [ -z "$UDID" ]; then
   NOME="${BATERIA_SIMULADOR:-iPhone}"
-  UDID="$(xcrun simctl list devices available | grep "$NOME" | sed -n 's/.*(\([0-9A-F-]\{36\}\)).*/\1/p' | head -1)"
+  LINHA="$(xcrun simctl list devices available | grep "$NOME" | head -1)"
+  UDID="$(printf '%s\n' "$LINHA" | sed -n 's/.*(\([0-9A-F-]\{36\}\)).*/\1/p')"
   [ -n "$UDID" ] || erro "nenhum Simulador disponível com \"$NOME\" no nome (defina BATERIA_SIMULADOR)."
-  aviso "ligando o Simulador $UDID"
-  xcrun simctl boot "$UDID"
-  SIMULADOR_INICIADO="$UDID"
-  xcrun simctl bootstatus "$UDID" -b >/dev/null
+  case "$LINHA" in
+    *"(Booted)"*) ;;
+    *)
+      aviso "ligando o Simulador $UDID"
+      xcrun simctl boot "$UDID"
+      SIMULADOR_INICIADO="$UDID"
+      xcrun simctl bootstatus "$UDID" -b >/dev/null
+      ;;
+  esac
 fi
 aviso "Simulador: $UDID"
 
