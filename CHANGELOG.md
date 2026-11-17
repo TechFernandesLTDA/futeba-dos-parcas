@@ -27,6 +27,13 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.43.6][android-1.43.6] - 2026-11-17
+
+#### Corrigido
+- `InviteRepositoryImpl` grava `group_invites` em snake_case com `FieldValue.serverTimestamp()`, como o web e as regras esperam, e lê com `data.model.GroupInvite` pela leitura tolerante. Não lê mais o perfil do convidado, que as regras negam. Só o dono do grupo convida (#4584).
+
+_Issues: #4584 · PRs: #4589_
+
 ### [1.43.5][android-1.43.5] - 2026-11-16
 
 #### Corrigido
@@ -3388,6 +3395,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.43.6]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.6.md
 [android-1.43.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.5.md
 [android-1.43.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.4.md
 [android-1.43.3]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.3.md

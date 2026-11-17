@@ -2247,3 +2247,17 @@ Spec: `specs/bugfix-2026-11-15-android-jogo-sem-id-do-documento.md`.
 - O modelo `Game` continua sem `@DocumentId`: com a anotação, um jogo que tenha o campo `id` gravado cairia no
   conflito do #4569, e o `id` deixaria de ser gravado pelo Android sem ganho para quem lê.
 - O escritor de jogos do web não muda.
+
+## 2026-11-16: Convite de grupo no Android usa o formato do Firestore, e só o dono convida (#4584)
+
+Spec: `specs/bugfix-2026-11-16-android-convites-de-grupo.md`.
+
+- `InviteRepositoryImpl` grava `group_invites` campo a campo, em snake_case e com `FieldValue.serverTimestamp()`
+  nas datas, igual ao web. Lê com `data.model.GroupInvite` pelo mapeamento tolerante e converte para o domínio.
+  Modelo do domínio (KMP) não vai para o mapper por reflexão do Firestore.
+- O repositório não lê o perfil do convidado para montar o convite: as regras negam a leitura do perfil alheio
+  que tem e-mail. O nome vem de quem chama; o e-mail do convidado não é mais copiado para o convite.
+- Só o dono do grupo convida, como nas regras e no web. Aceitar convite de administrador ficaria para uma
+  mudança de regras com spec própria; o teste de regras registra a restrição como intencional.
+- Gravação com modelo anotado com `@ServerTimestamp` e nome de campo trocado por `@get:PropertyName` saiu sem
+  data no emulador. Escritor novo usa mapa explícito até os modelos serem conferidos.

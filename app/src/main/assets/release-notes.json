@@ -1,7 +1,26 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-16T03:15:50.602Z",
+  "generatedAt": "2026-11-17T11:58:09.081Z",
   "notes": [
+    {
+      "version": "1.43.6",
+      "buildNumber": 93,
+      "releaseDate": "2026-11-17",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O dono do grupo volta a convidar jogadores pelo app.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Convidar um jogador para o grupo pelo Android não dá mais erro de permissão.",
+        "A lista de convites enviados volta a aparecer."
+      ],
+      "issueRefs": [
+        4584
+      ]
+    },
     {
       "version": "1.43.5",
       "buildNumber": 91,
