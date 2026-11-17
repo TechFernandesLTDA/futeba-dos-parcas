@@ -1,10 +1,10 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-17T02:07:49.088Z",
+  "generatedAt": "2026-11-17T12:00:37.556Z",
   "notes": [
     {
       "version": "1.44.0",
-      "buildNumber": 92,
+      "buildNumber": 94,
       "releaseDate": "2026-11-11",
       "type": "minor",
       "showPopup": false,
