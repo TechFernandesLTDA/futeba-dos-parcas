@@ -2338,3 +2338,14 @@ Spec: `specs/bugfix-2026-11-15-android-androidtest-compila.md`.
   rolando.
 - Substitui a decisão de 15/11/2026 de tirar dez arquivos da compilação: o bloco `androidTestsQueNaoCompilam`
   saiu de `app/build.gradle.kts` e não volta. Teste que quebrar é consertado ou apagado com o motivo no PR.
+## 2026-11-16: Cobertura de testes de funcionalidades e permissões (spec test-2026-11-16)
+
+- Decisão: adicionar testes automatizados novos (meta de 300 a 400, passando) para convites, criação e saída de grupo,
+  papéis (ADMIN, dono, membro, visitante, outro grupo), caixa, marcação de jogo, lista de espera, votação pós-jogo e
+  XP quando tocado. Spec: `specs/test-2026-11-16-permissoes-funcionalidades.md` (APPROVED).
+- Não corrigir o app nesta entrega. Defeito real vira teste de falha esperada (`it.fails`, `test.failing` ou
+  `@Ignore` no Android), com arquivo e linha no relatório. Quando o defeito for corrigido, o teste vira `it`/`test`.
+- Divisão por camada (Firestore rules, Functions Jest, Web Vitest, Android JUnit), sem dois agentes no mesmo arquivo.
+- Agentes de desenvolvimento: Haiku 5.5 (regra de 05/11). Nenhum workflow em `.github/workflows`; só emulador.
+- Motivo: as permissões ficam em três camadas e a cobertura atual não prova o conjunto. Os testes travam o
+  comportamento atual e mostram defeitos sem bloquear a entrega.
