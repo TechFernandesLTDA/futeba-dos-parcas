@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-16T03:16:36.319Z",
+  "generatedAt": "2026-11-17T02:07:49.088Z",
   "notes": [
     {
       "version": "1.44.0",
@@ -23,6 +23,58 @@
         "Os anúncios são sempre não personalizados e o app pede seu consentimento quando a lei da sua região exige."
       ],
       "fixed": [],
+      "issueRefs": []
+    },
+    {
+      "version": "1.43.5",
+      "buildNumber": 91,
+      "releaseDate": "2026-11-16",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Jogos criados pelo site abrem certo no Android.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Jogos criados pelo site passam a abrir e a aparecer corretamente no Android.",
+        "As listas de jogos não juntam mais jogos diferentes como se fossem o mesmo."
+      ],
+      "issueRefs": [
+        4576
+      ]
+    },
+    {
+      "version": "1.43.4",
+      "buildNumber": 89,
+      "releaseDate": "2026-11-15",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app não fecha mais ao abrir um grupo.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Correção do fechamento do app ao abrir a lista de membros de um grupo.",
+        "Leituras de dados mais resistentes: um registro em formato antigo não fecha mais o app."
+      ],
+      "issueRefs": []
+    },
+    {
+      "version": "1.43.3",
+      "buildNumber": 88,
+      "releaseDate": "2026-11-15",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app não fecha mais ao abrir os seus grupos.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "Correção do fechamento do app ao tocar em \"Encontrar Grupo\" ou abrir a lista de grupos."
+      ],
       "issueRefs": []
     },
     {

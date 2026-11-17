@@ -41,7 +41,9 @@ import kotlin.math.abs
  * - NENHUM ancestral o recorta (bounds recortados == bounds nao recortados) —
  *   pega tanto o circulo fixo antigo quanto um `IconButton { BadgedBox }`, cujo
  *   container de 40dp e clipado;
- * - ele cresce para dentro do slot de 48dp (nao invade a acao vizinha).
+ * - ele cresce para dentro do slot de 48dp (nao invade a acao vizinha). Excecao: rotulo mais largo
+ *   que o proprio alvo ("99+" em fontScale 2,0) pode passar 4dp a esquerda, dentro da margem do
+ *   botao vizinho.
  */
 @RunWith(AndroidJUnit4::class)
 class AppTopBarBadgeFontScaleTest {
@@ -157,9 +159,16 @@ class AppTopBarBadgeFontScaleTest {
         val slot = composeTestRule
             .onNodeWithTag(NOTIFICATION_SLOT_TEST_TAG, useUnmergedTree = true)
             .getUnclippedBoundsInRoot()
+        // Rótulo que sozinho já passa do alvo de 48dp ("99+" em fontScale 2,0 mede ~55dp): não há
+        // posição em que o badge apareça inteiro E caiba no slot. O slot cresce com o badge e o
+        // deslocamento de 4dp do canto deixa o badge 4dp para fora, à esquerda. Esses 4dp caem na
+        // margem do botão vizinho (ícone de 24dp num alvo de 48dp = 12dp de margem), sem tocar o
+        // ícone. Só nesse caso a folga à esquerda é o próprio deslocamento; nos demais continua zero.
+        val folgaEsquerda = if (minBadgeWidth + BADGE_END_OFFSET > TOUCH_TARGET) BADGE_END_OFFSET else 0.dp
         assertTrue(
-            "fontScale=$fontScale: badge ($unclipped) deve crescer para dentro do slot de 48dp ($slot)",
-            slot.contains(unclipped)
+            "fontScale=$fontScale: badge ($unclipped) deve crescer para dentro do slot de 48dp ($slot), " +
+                "folga à esquerda de $folgaEsquerda",
+            slot.contains(unclipped, folgaEsquerda)
         )
     }
 
@@ -169,8 +178,8 @@ class AppTopBarBadgeFontScaleTest {
             abs((right - other.right).value) <= TOLERANCE_DP &&
             abs((bottom - other.bottom).value) <= TOLERANCE_DP
 
-    private fun DpRect.contains(other: DpRect): Boolean =
-        other.left.value >= left.value - TOLERANCE_DP &&
+    private fun DpRect.contains(other: DpRect, folgaEsquerda: Dp = 0.dp): Boolean =
+        other.left.value >= left.value - TOLERANCE_DP - folgaEsquerda.value &&
             other.top.value >= top.value - TOLERANCE_DP &&
             other.right.value <= right.value + TOLERANCE_DP &&
             other.bottom.value <= bottom.value + TOLERANCE_DP
@@ -178,6 +187,12 @@ class AppTopBarBadgeFontScaleTest {
     private companion object {
         /** Padding horizontal interno do Badge com conteudo (M3 BadgeWithContentHorizontalPadding). */
         val BADGE_HORIZONTAL_PADDING = 4.dp
+
+        /** Deslocamento do badge em relação ao canto do slot (`offset(x = (-4).dp)` na AppTopBar). */
+        val BADGE_END_OFFSET = 4.dp
+
+        /** Alvo de toque do botão de notificações. */
+        val TOUCH_TARGET = 48.dp
 
         /** Tolerancia de arredondamento px -> dp. */
         const val TOLERANCE_DP = 0.5f

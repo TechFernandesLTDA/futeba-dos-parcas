@@ -9,8 +9,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.futebadosparcas.ui.theme.FutebaTheme
-import androidx.test.platform.app.InstrumentationRegistry
 import com.futebadosparcas.R
+import com.futebadosparcas.util.appString
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,18 +35,19 @@ class WallPostComposerTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Escreva algo para o grupo…")
-            .performTextInput("Rascunho importante")
-        composeTestRule.onNodeWithContentDescription("Publicar").performClick()
+        // Textos pelo recurso: o app tem tradução (values-en, values-es) e o aparelho de teste pode
+        // não estar em português.
+        val dica = appString(R.string.group_wall_input_hint)
+        composeTestRule.onNodeWithText(dica).performTextInput("Rascunho importante")
+        composeTestRule.onNodeWithContentDescription(appString(R.string.group_wall_send)).performClick()
         composeTestRule.onNodeWithText("Rascunho importante").assertIsDisplayed()
 
         composeTestRule.runOnIdle { clearDraftSignal.intValue++ }
-        composeTestRule.onNodeWithText("Escreva algo para o grupo…").assertIsDisplayed()
+        composeTestRule.onNodeWithText(dica).assertIsDisplayed()
     }
 
     @Test
     fun compositorOfereceSeletorUnicoDeFotoOuVideo() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
         composeTestRule.setContent {
             FutebaTheme {
                 WallPostComposer(sending = false, onSubmit = { _, _ -> })
@@ -54,7 +55,7 @@ class WallPostComposerTest {
         }
 
         composeTestRule.onNodeWithContentDescription(
-            context.getString(R.string.group_wall_add_media)
+            appString(R.string.group_wall_add_media)
         ).assertIsDisplayed()
     }
 }

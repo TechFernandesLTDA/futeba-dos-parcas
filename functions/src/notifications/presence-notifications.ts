@@ -204,7 +204,6 @@ async function createMembershipForAcceptedGroupInvite(
     }
 
     tx.set(memberRef, {
-      id: invitedUserId,
       user_id: invitedUserId,
       user_name: userName,
       user_photo_url: userPhoto || null,

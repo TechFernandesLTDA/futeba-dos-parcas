@@ -2271,6 +2271,18 @@ Spec: `specs/bugfix-2026-11-15-android-documentid-leitura-tolerante.md`.
 - Pendente de decisão do Renan: remover o campo `id` dos documentos legados e barrar por lint o uso direto de
   `toObject`/`toObjects`.
 
+## 2026-11-16: Ninguém grava `id` em membros de grupo nem no espelho de grupos do usuário (#4585)
+
+Spec: `specs/bugfix-2026-11-16-campo-id-em-membros-de-grupo.md`.
+
+- O ID de `groups/{grupo}/members/{uid}` e de `users/{uid}/groups/{grupo}` é o do documento. O web e as Cloud
+  Functions deixaram de gravar o campo `id` nesses dois caminhos. Eram quatro escritores: criação de grupo no web,
+  entrada por código, pedido aprovado e convite aceito. É o "escritor desconhecido" da pendência do #4569.
+- Regra para escritor novo: documento que o Android lê por modelo com `@DocumentId` não leva campo com o mesmo
+  nome da propriedade anotada.
+- Exceção: `teams` continua com `id` gravado, porque o Android lê esse campo (`LiveGameRepository`).
+- Documentos antigos ficam como estão. A leitura tolerante cobre, e o seed da bateria mantém exemplos de propósito.
+
 ## 2026-11-15: Bateria de testes com contas fictícias (web, Android e iOS)
 
 Spec: `specs/feat-2026-11-15-bateria-de-testes.md`.
@@ -2326,6 +2338,18 @@ Spec: `specs/bugfix-2026-11-15-bateria-web-regras-4571-4574.md`.
 - As quatro falhas esperadas da bateria viraram teste normal e `PENDENCIAS` do web ficou vazio.
 - Fica aberto: a aba Jogos não lista os jogos `GROUP_ONLY` dos grupos do usuário (#4578).
 
+## 2026-11-16: Aba Jogos do web junta os jogos públicos com os dos grupos do usuário (#4578)
+
+Spec: `specs/bugfix-2026-11-16-web-aba-jogos-group-only-4578.md`.
+
+- Sem `groupId`, `useGames` soma à consulta pública uma consulta por grupo do usuário (`memberGroupIds`, até 10),
+  tira os repetidos pelo ID e reaplica ordem e limite no cliente. Mesmo desenho do Android
+  (`getLiveAndUpcomingGamesFlow`).
+- Uma consulta por grupo, e não `group_id in [...]`: a regra de LIST lê um documento de membro por grupo distinto
+  e um `in` com 10 grupos encosta no teto de leituras de regras; e um vínculo desatualizado derrubaria tudo.
+- Falha na consulta de um grupo tira só aquele grupo da lista. Falha na consulta pública continua sendo erro de tela.
+- Sem mudança de regras nem de índices.
+
 ## 2026-11-15: Teste de tela no Android testa a tela do app, com textos do `strings.xml` (#4575)
 
 Spec: `specs/bugfix-2026-11-15-android-androidtest-compila.md`.
@@ -2349,3 +2373,17 @@ Spec: `specs/bugfix-2026-11-15-android-androidtest-compila.md`.
 - Agentes de desenvolvimento: Haiku 5.5 (regra de 05/11). Nenhum workflow em `.github/workflows`; só emulador.
 - Motivo: as permissões ficam em três camadas e a cobertura atual não prova o conjunto. Os testes travam o
   comportamento atual e mostram defeitos sem bloquear a entrega.
+
+## 2026-11-16: Convite de grupo no Android usa o formato do Firestore, e só o dono convida (#4584)
+
+Spec: `specs/bugfix-2026-11-16-android-convites-de-grupo.md`.
+
+- `InviteRepositoryImpl` grava `group_invites` campo a campo, em snake_case e com `FieldValue.serverTimestamp()`
+  nas datas, igual ao web. Lê com `data.model.GroupInvite` pelo mapeamento tolerante e converte para o domínio.
+  Modelo do domínio (KMP) não vai para o mapper por reflexão do Firestore.
+- O repositório não lê o perfil do convidado para montar o convite: as regras negam a leitura do perfil alheio
+  que tem e-mail. O nome vem de quem chama; o e-mail do convidado não é mais copiado para o convite.
+- Só o dono do grupo convida, como nas regras e no web. Aceitar convite de administrador ficaria para uma
+  mudança de regras com spec própria; o teste de regras registra a restrição como intencional.
+- Gravação com modelo anotado com `@ServerTimestamp` e nome de campo trocado por `@get:PropertyName` saiu sem
+  data no emulador. Escritor novo usa mapa explícito até os modelos serem conferidos.
