@@ -393,7 +393,7 @@ class PlayersViewModelTest {
         val groups = listOf(createTestGroup("group1", "Grupo 1", isAdmin = true))
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
         coEvery { groupRepository.getMyGroups() } returns Result.success(groups)
-        coEvery { inviteRepository.createInvite("group1", "target") } returns Result.success(
+        coEvery { inviteRepository.createInvite("group1", "target", any()) } returns Result.success(
             GroupInvite(
                 id = "invite1",
                 groupId = "group1",
@@ -415,7 +415,7 @@ class PlayersViewModelTest {
         advanceUntilIdle()
 
         // Then
-        coVerify { inviteRepository.createInvite("group1", "target") }
+        coVerify { inviteRepository.createInvite("group1", "target", any()) }
     }
 
     @Test
@@ -450,7 +450,7 @@ class PlayersViewModelTest {
         // Given
         val targetUser = createTestUser("target", "Target User", true)
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
-        coEvery { inviteRepository.createInvite("group1", "target") } returns Result.success(
+        coEvery { inviteRepository.createInvite("group1", "target", any()) } returns Result.success(
             GroupInvite(
                 id = "invite1",
                 groupId = "group1",

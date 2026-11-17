@@ -130,11 +130,11 @@ class InviteViewModel(
         }
     }
 
-    fun inviteUser(groupId: String, userId: String) {
+    fun inviteUser(groupId: String, userId: String, userName: String? = null) {
         viewModelScope.launch {
             _inviteActionState.value = InviteActionState.Loading
 
-            val result = inviteRepository.createInvite(groupId, userId)
+            val result = inviteRepository.createInvite(groupId, userId, userName)
 
             result.fold(
                 onSuccess = { invite ->
