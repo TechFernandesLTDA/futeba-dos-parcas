@@ -414,7 +414,6 @@ export function useCreateGroup() {
         batch.set(groupRef, newGroup);
 
         batch.set(memberRef, {
-          id: uid,
           user_id: uid,
           user_name: displayName,
           user_photo_url: firebaseUser?.photoURL || user?.photoUrl || null,

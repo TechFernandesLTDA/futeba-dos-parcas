@@ -2271,6 +2271,18 @@ Spec: `specs/bugfix-2026-11-15-android-documentid-leitura-tolerante.md`.
 - Pendente de decisão do Renan: remover o campo `id` dos documentos legados e barrar por lint o uso direto de
   `toObject`/`toObjects`.
 
+## 2026-11-16: Ninguém grava `id` em membros de grupo nem no espelho de grupos do usuário (#4585)
+
+Spec: `specs/bugfix-2026-11-16-campo-id-em-membros-de-grupo.md`.
+
+- O ID de `groups/{grupo}/members/{uid}` e de `users/{uid}/groups/{grupo}` é o do documento. O web e as Cloud
+  Functions deixaram de gravar o campo `id` nesses dois caminhos. Eram quatro escritores: criação de grupo no web,
+  entrada por código, pedido aprovado e convite aceito. É o "escritor desconhecido" da pendência do #4569.
+- Regra para escritor novo: documento que o Android lê por modelo com `@DocumentId` não leva campo com o mesmo
+  nome da propriedade anotada.
+- Exceção: `teams` continua com `id` gravado, porque o Android lê esse campo (`LiveGameRepository`).
+- Documentos antigos ficam como estão. A leitura tolerante cobre, e o seed da bateria mantém exemplos de propósito.
+
 ## 2026-11-15: Bateria de testes com contas fictícias (web, Android e iOS)
 
 Spec: `specs/feat-2026-11-15-bateria-de-testes.md`.

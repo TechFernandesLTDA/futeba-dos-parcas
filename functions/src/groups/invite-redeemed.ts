@@ -281,7 +281,6 @@ export const onInviteRedeemed = onDocumentUpdated(
       // único +1 (server-authoritative). Setar a flag ou incrementar aqui
       // causaria count=0 (flag suprime o trigger) ou double-count.
       tx.set(memberRef, {
-        id: userId,
         user_id: userId,
         user_name: joinerName,
         user_photo: joinerPhoto,
@@ -293,7 +292,6 @@ export const onInviteRedeemed = onDocumentUpdated(
 
       // Denormalized users/{uid}/groups/{gid} (UX: lista de grupos do user).
       tx.set(db().doc(`users/${userId}/groups/${groupId}`), {
-        id: groupId,
         group_id: groupId,
         group_name: groupName,
         group_photo: groupPhoto,
