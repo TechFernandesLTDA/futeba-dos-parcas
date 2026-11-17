@@ -339,7 +339,7 @@ class PlayersViewModel(
     fun sendInvite(groupId: String, user: User) {
         viewModelScope.launch {
             try {
-                inviteRepository.createInvite(groupId, user.id).fold(
+                inviteRepository.createInvite(groupId, user.id, user.getDisplayName()).fold(
                     onSuccess = {
                         _inviteEvent.emit(InviteUiEvent.InviteSent(user.name))
                     },
