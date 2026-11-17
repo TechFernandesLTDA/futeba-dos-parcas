@@ -161,7 +161,9 @@ describe("Test Harness #2531 — onInviteRedeemed via emulador", () => {
       expect(member.status).toBe("ACTIVE");
       expect(member.role).toBe("MEMBER");
       expect(member.user_id).toBe(s.userId);
-      expect(member.id).toBe(s.userId);
+      // #4585: o ID do membro é o ID do documento; o campo `id` não é mais gravado.
+      expect(memberSnap.id).toBe(s.userId);
+      expect(member.id).toBeUndefined();
       expect(member.joined_via_invite).toBe(s.inviteCode);
       expect(member.joined_at).toBeDefined();
       // onMemberWritten é o dono do counter — trigger NÃO seta esta flag.
@@ -354,7 +356,6 @@ describe("Test Harness #2531 — member-counter (onMemberWritten) isolado", () =
 
       // CREATE ACTIVE → onMemberWritten faz +1.
       await memberRef.set({
-        id: userId,
         user_id: userId,
         role: "MEMBER",
         status: "ACTIVE",
