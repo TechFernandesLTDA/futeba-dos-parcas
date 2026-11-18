@@ -2404,6 +2404,15 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.10.1][ios-1.10.1] - 2026-11-14
+
+#### Corrigido
+- Tela de abertura com logo em vez de branco (#4549).
+- Conquistas e Estatísticas com dados do jogador no iOS (#4548).
+- Links universais com o Team ID real da conta (#4558).
+
+_Issues: #4548, #4549 · PRs: #4548, #4549, #4558_
+
 ### [1.10.0][ios-1.10.0] - 2026-11-11
 
 #### Adicionado
@@ -3654,6 +3663,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.10.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.10.1.md
 [ios-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.10.0.md
 [ios-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.8.0.md
 [ios-1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.7.2.md
