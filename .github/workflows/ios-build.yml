@@ -91,10 +91,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run shared commonTest (JVM)
-        run: ./gradlew :shared:testDebugUnitTest --stacktrace
+        run: ./gradlew --max-workers=3 :shared:testDebugUnitTest --stacktrace
 
       - name: Run shared iOS Simulator tests
-        run: ./gradlew :shared:iosSimulatorArm64Test --stacktrace
+        run: ./gradlew --max-workers=3 :shared:iosSimulatorArm64Test --stacktrace
         continue-on-error: true
 
       - name: Upload test results
@@ -141,10 +141,10 @@ jobs:
       # no Xcode, duplicava o runtime do Kotlin/Native. O código do :shared continua
       # compilado aqui (dependência do ComposeApp) e testado no job kmp-shared-tests.
       - name: Build ComposeApp framework for iOS Simulator
-        run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+        run: ./gradlew --max-workers=3 :composeApp:linkDebugFrameworkIosSimulatorArm64
 
       - name: Build ComposeApp framework for iOS Device
-        run: ./gradlew :composeApp:linkDebugFrameworkIosArm64
+        run: ./gradlew --max-workers=3 :composeApp:linkDebugFrameworkIosArm64
 
   build-ios-app:
     name: Build iOS App
@@ -180,7 +180,7 @@ jobs:
       # necessários aqui mantém o gate determinístico e independente da cota
       # de armazenamento de artifacts do GitHub Actions.
       - name: Build simulator framework for app job
-        run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+        run: ./gradlew --max-workers=3 :composeApp:linkDebugFrameworkIosSimulatorArm64
 
       - name: Generate Xcode project and install CocoaPods
         run: |
@@ -193,7 +193,7 @@ jobs:
 
       - name: Build iOS App (Simulator)
         run: |
-          xcodebuild -workspace iosApp/iosApp.xcworkspace \
+          xcodebuild -jobs 3 -workspace iosApp/iosApp.xcworkspace \
                      -scheme iosApp \
                      -destination 'generic/platform=iOS Simulator' \
                      -configuration Debug \

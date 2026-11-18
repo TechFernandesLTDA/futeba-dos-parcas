@@ -87,7 +87,7 @@ jobs:
           GSEOF
 
       - name: Build APK de benchmark do :app
-        run: ./gradlew --max-workers=6 --no-daemon :app:assembleBenchmark
+        run: ./gradlew --max-workers=3 --no-daemon :app:assembleBenchmark
 
       - name: Executar Macrobenchmarks no emulador
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d  # v2
@@ -97,7 +97,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
-          script: ./gradlew --max-workers=6 --no-daemon :macrobenchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
+          script: ./gradlew --max-workers=3 --no-daemon :macrobenchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.profiling.mode=None -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,DEBUGGABLE
 
       - name: Upload resultados dos benchmarks
         if: always()

@@ -169,7 +169,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Run mutation testing
-        run: npm run test:mutation
+        run: npm run test:mutation -- --concurrency 2
 
       - name: Upload mutation report
         if: always()
