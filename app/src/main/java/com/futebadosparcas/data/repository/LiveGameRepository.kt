@@ -9,6 +9,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectOrNullSafely
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 class LiveGameRepository constructor(
     private val firestore: FirebaseFirestore,
@@ -65,7 +68,7 @@ class LiveGameRepository constructor(
                     return@addSnapshotListener
                 }
 
-                val score = snapshot?.toObject(LiveGameScore::class.java)
+                val score = snapshot?.toObjectOrNullSafely(LiveGameScore::class.java)
                 trySend(score)
             }
 
@@ -197,7 +200,7 @@ class LiveGameRepository constructor(
                     .get()
                     .await()
                 
-                val teams = teamsSnapshot.toObjects(Team::class.java)
+                val teams = teamsSnapshot.toObjectsTolerant(Team::class.java)
                 if (teams.size >= 2) {
                     startLiveGame(gameId, teams[0].id, teams[1].id)
                     AppLogger.d(TAG) { "Placar inicializado sob demanda para o jogo $gameId" }
@@ -209,7 +212,7 @@ class LiveGameRepository constructor(
 
         firestore.runTransaction { transaction ->
             val snapshot = transaction.get(scoreDoc)
-            val score = snapshot.toObject(LiveGameScore::class.java)
+            val score = snapshot.toObjectTolerant(LiveGameScore::class.java)
                 ?: return@runTransaction // Se ainda não existir após tentativa, aborta
 
             val (newTeam1Score, newTeam2Score) = when {
@@ -257,7 +260,7 @@ class LiveGameRepository constructor(
         firestore.runTransaction { transaction ->
             // 1. Update Live Player Stats
             val snapshot = transaction.get(statsDoc)
-            val stats = snapshot.toObject(LivePlayerStats::class.java)
+            val stats = snapshot.toObjectTolerant(LivePlayerStats::class.java)
 
             if (stats == null) {
                 // Criar nova estatística
@@ -313,7 +316,7 @@ class LiveGameRepository constructor(
 
                 // Update Live Stats - criar se não existir
                 val assistSnapshot = transaction.get(assistStatsDoc)
-                val assistStats = assistSnapshot.toObject(LivePlayerStats::class.java)
+                val assistStats = assistSnapshot.toObjectTolerant(LivePlayerStats::class.java)
                 if (assistStats != null) {
                     transaction.update(assistStatsDoc, "assists", assistStats.assists + 1)
                 } else {
@@ -356,7 +359,7 @@ class LiveGameRepository constructor(
                 }
 
                 val events = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameEvent::class.java)?.copy(id = doc.id)
+                    doc.toObjectOrNullSafely(GameEvent::class.java)?.copy(id = doc.id)
                 }?.sortedByDescending { it.createdAt ?: 0L } ?: emptyList()
 
                 trySend(events)
@@ -378,7 +381,7 @@ class LiveGameRepository constructor(
                 }
 
                 val stats = snapshot?.documents?.mapNotNull {
-                    it.toObject(LivePlayerStats::class.java)
+                    it.toObjectOrNullSafely(LivePlayerStats::class.java)
                 } ?: emptyList()
 
                 trySend(stats)
@@ -415,7 +418,7 @@ class LiveGameRepository constructor(
                 .get()
                 .await()
 
-            val stats = snapshot.documents.mapNotNull { it.toObject(LivePlayerStats::class.java) }
+            val stats = snapshot.documents.mapNotNull { it.toObjectTolerant(LivePlayerStats::class.java) }
             Result.success(stats)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar estatisticas finais", e)
@@ -458,7 +461,7 @@ class LiveGameRepository constructor(
 
             // 1. Buscar o evento antes de deletar para saber o que reverter
             val eventDoc = eventsCollection.document(eventId).get().await()
-            val event = eventDoc.toObject(GameEvent::class.java)
+            val event = eventDoc.toObjectTolerant(GameEvent::class.java)
                 ?: return Result.failure(Exception("Evento não encontrado"))
 
             val eventType = event.getEventTypeEnum()
@@ -471,7 +474,7 @@ class LiveGameRepository constructor(
                     val gameDoc = firestore.collection("games").document(gameId)
 
                     val scoreSnapshot = transaction.get(scoreDoc)
-                    val score = scoreSnapshot.toObject(LiveGameScore::class.java)
+                    val score = scoreSnapshot.toObjectTolerant(LiveGameScore::class.java)
 
                     if (score != null) {
                         if (score.team1Id == event.teamId) {
@@ -494,7 +497,7 @@ class LiveGameRepository constructor(
                     val confDoc = confirmationsCollection.document(confirmationId)
 
                     val statsSnapshot = transaction.get(statsDoc)
-                    val stats = statsSnapshot.toObject(LivePlayerStats::class.java)
+                    val stats = statsSnapshot.toObjectTolerant(LivePlayerStats::class.java)
 
                     if (stats != null) {
                         when (eventType) {
@@ -546,7 +549,7 @@ class LiveGameRepository constructor(
                     val assistConfDoc = confirmationsCollection.document(assistStatsId)
 
                     val assistSnapshot = transaction.get(assistStatsDoc)
-                    val assistStats = assistSnapshot.toObject(LivePlayerStats::class.java)
+                    val assistStats = assistSnapshot.toObjectTolerant(LivePlayerStats::class.java)
                     if (assistStats != null) {
                         transaction.update(assistStatsDoc, "assists", maxOf(0, assistStats.assists - 1))
                     }

@@ -2185,3 +2185,209 @@ Spec: `specs/feat-2026-11-09-conta-revisao-play.md`.
   `app_settings` (qualquer autenticado lê), callable admin (exige App Check e cliente admin logado) e trigger no doc de
   config (efeito automático numa escrita manual).
 - Repositório público: UID, e-mail e senha do revisor nunca entram no repo.
+
+## 2026-11-15: App Check e Analytics esperam a interação nas páginas públicas (#4196, #4539)
+
+**Contexto:** o `Lighthouse CI` reprovava `categories.performance` (0,74 a 0,76) em
+PRs do Dependabot que mexem em `web/`, como o #4539. Esses PRs rodam no runner
+hospedado `ubuntu-24.04` (o `runs-on` manda o Dependabot para fora do Mac de
+propósito), com `benchmarkIndex` ~2000, contra ~4500 no `mac-futeba-1`, onde a
+master dá 0,99. Não foi regressão: os pacotes carregados eram os mesmos, sem
+AdSense. O TBT de ~1,4 s vinha do reCAPTCHA Enterprise do App Check (~1,25 s de
+CPU), do React e do gtag do Analytics, todos no boot das páginas públicas.
+
+**Decisão:** no visitante anônimo de página prerenderizada (`#prerender` presente
+e sem `data-no-prerender`), App Check e Analytics só iniciam na primeira interação
+(toque, tecla, rolagem) ou após 15 s ociosos (`web/src/services/deferredThirdParty.ts`).
+Rotas do app e sessão conhecida continuam iniciando no boot.
+
+**Alternativas descartadas:** baixar o `minScore` ou mudar o throttling do
+`.lighthouserc.cjs` (baixa a régua); mandar o Dependabot para o runner do Mac
+(roda código de dependência nova na máquina, decisão de segurança); adiar o
+iframe do Auth (mexe no login Google; o ganho não foi necessário).
+
+**Riscos aceitos:** Firestore, Storage e Auth estão `UNENFORCED` no App Check; as
+callables que exigem App Check só são chamadas após uma ação do usuário, que já
+inicia o App Check. Visitante que sai sem interagir e antes de 15 s não gera
+`page_view` no Analytics.
+
+**Medição local (CPU 20x, ≈ runner hospedado):** antes 0,74–0,75 nas 6 páginas;
+depois 0,89–0,97.
+
+**Complemento (PR seguinte):** no runner hospedado o #4539 subiu para 0,81–0,85 (4 de 6
+páginas passando). Nas mesmas páginas o Auth passou a nascer sem o resolver de
+popup/redirect (`initializeAuth` com as persistências do `getAuth`), que carregava o
+iframe do gapi no boot em navegador móvel, e o `getRedirectResult` espera a interação.
+Toda chamada de popup/redirect passa `browserPopupRedirectResolver` explicitamente.
+Isso substitui a alternativa "adiar o iframe do Auth" descartada acima.
+
+## 2026-11-15: Cliente nunca cria `users/{uid}` (login com Google)
+
+Spec: `specs/bugfix-2026-11-15-android-login-google.md`.
+
+- O documento `users/{uid}` é criado só pela Cloud Function `onUserCreate`. As rules negam o create do cliente sem
+  `role`/convite, e o `set({id})` antigo falhava sempre no primeiro login.
+- O app espera o documento com intervalos crescentes (até ~14 s, abaixo dos 20 s do `LoginViewModel`). Em prod
+  (nov/2026) a função levou 6 a 7 s para criar o documento. Sem documento, o login falha com
+  `UserProfileNotReadyException` e mensagem própria; o usuário já existe no Auth e o próximo login encontra o doc.
+- A foto do Google só preenche perfil sem foto, em melhor esforço.
+- Alternativa descartada: relaxar as rules de create para o cliente gravar o perfil inteiro (reabre a
+  auto-atribuição de `level`/XP/`auto_*` fechada no #1979).
+
+## 2026-11-15: Espelho de grupos do usuário é lido sem reflexão (crash em "Encontrar Grupo")
+
+Spec: `specs/bugfix-2026-11-15-android-crash-meus-grupos-documentid.md`.
+
+- `users/{uid}/groups/{groupId}` é lido no Android por `userGroupFromFirestore` (mapa de campos), não por
+  `toObjects(UserGroup::class.java)`. O mapper do Firestore lança quando o documento tem um campo `id` e o modelo
+  tem `@DocumentId` em `id`; dentro do `addSnapshotListener` isso fechava o app.
+- Conversão dentro de listener passa por `mapDocumentsSafely`: documento que falha vai para o Crashlytics como não
+  fatal e fica fora da lista.
+- O `@DocumentId` continua em `UserGroup`. Sem ele o Android passaria a gravar `id` nesses documentos e as versões
+  já instaladas (1.43.1, 1.43.2) fechariam ao ler.
+- Alternativa descartada: trocar o modelo por `@get:Exclude` e preencher o ID em cada leitura (muda todos os
+  pontos de leitura e não protege de outro tipo inesperado no documento).
+- Pendente de decisão do Renan: remover o campo `id` do único documento legado de produção.
+
+## 2026-11-15: Leitura por reflexão no Android passa pelo mapeamento tolerante (`@DocumentId`)
+
+Spec: `specs/bugfix-2026-11-15-android-documentid-leitura-tolerante.md`.
+
+- Regra: no app Android, nenhuma leitura usa `toObject`/`toObjects` direto. Fora de listener usa
+  `toObjectTolerant`; dentro de `addSnapshotListener` usa `toObjectOrNullSafely`; lista usa `toObjectsTolerant`
+  (`data/util/FirestoreSafeMapping.kt`).
+- Motivo: o mapper do Firestore lança quando o documento tem um campo gravado com o nome de uma propriedade
+  `@DocumentId`. Em produção, 8 de 105 documentos de `groups/*/members` e 1 de 13 de `users/*/groups` têm o
+  campo `id`. Corrigir modelo por modelo (#4566) deixou a subcoleção de membros de fora e o app voltou a fechar.
+- No conflito, a conversão é refeita sem o campo gravado, por `CustomClassMapper.convertToCustomClass`, que é
+  API interna do SDK. Aceito porque o teste de regressão usa o mapper real e quebra junto com o build se a
+  assinatura mudar.
+- Fora de listener, exceção que não seja o conflito continua sendo relançada. Devolver `null` faria uma
+  transação tratar documento ilegível como inexistente.
+- O `@DocumentId` continua nos modelos, para o `id` não ser gravado.
+- O não fatal do conflito não leva o caminho do documento, que pode conter UID.
+- Alternativas descartadas: tirar o `@DocumentId` dos 40 modelos (o app passaria a gravar `id` e as versões
+  instaladas fechariam); mapear campo a campo cada modelo (40 mapeadores para manter).
+- Pendente de decisão do Renan: remover o campo `id` dos documentos legados e barrar por lint o uso direto de
+  `toObject`/`toObjects`.
+
+## 2026-11-16: Ninguém grava `id` em membros de grupo nem no espelho de grupos do usuário (#4585)
+
+Spec: `specs/bugfix-2026-11-16-campo-id-em-membros-de-grupo.md`.
+
+- O ID de `groups/{grupo}/members/{uid}` e de `users/{uid}/groups/{grupo}` é o do documento. O web e as Cloud
+  Functions deixaram de gravar o campo `id` nesses dois caminhos. Eram quatro escritores: criação de grupo no web,
+  entrada por código, pedido aprovado e convite aceito. É o "escritor desconhecido" da pendência do #4569.
+- Regra para escritor novo: documento que o Android lê por modelo com `@DocumentId` não leva campo com o mesmo
+  nome da propriedade anotada.
+- Exceção: `teams` continua com `id` gravado, porque o Android lê esse campo (`LiveGameRepository`).
+- Documentos antigos ficam como estão. A leitura tolerante cobre, e o seed da bateria mantém exemplos de propósito.
+
+## 2026-11-15: Bateria de testes com contas fictícias (web, Android e iOS)
+
+Spec: `specs/feat-2026-11-15-bateria-de-testes.md`.
+
+- Um cenário só (`scripts/bateria/contas.ts` e `cenario.ts`): 20 jogadores, 3 donos de quadra, 1 admin, 3 grupos,
+  3 quadras, jogos em todos os estados e documentos legados com o campo `id`. O seed usa os escritores reais
+  (gatilhos e callables), para o formato dos documentos ser o do servidor.
+- Portas próprias (`firebase.bateria.json`: 19099, 18085, 15001, 19199, hub 14400, UI desligada). As padrão são do
+  runner self-hosted no mesmo Mac; disputar porta derrubou o E2E Gate do #4569.
+- Android: `BateriaTestRunner` virou o runner do módulo (o AGP aceita um `<instrumentation>` por APK) e só entra no
+  modo bateria com `-e bateria true`. O projeto demo é criado por um provider só do debug (`BateriaFirebaseProvider`,
+  propriedade `debug.futeba.bateria=1`), antes do `FirebaseInitProvider`. Descartado: apagar o app padrão
+  (`FirebaseApp.delete()` derruba o Firebase Sessions) e criar no `newApplication` (cedo demais para o App Check).
+- Android debug aceita HTTP só para `10.0.2.2`, `localhost` e `127.0.0.1`. Release não muda.
+- iOS: chave só em `#if DEBUG` (`BateriaEmulador.swift`, variável `FUTEBA_BATERIA=1`) aponta o app para o projeto demo
+  e os emuladores. O roteiro é de fumaça (build, login no emulador, app aberto sem fechar) e para na tela de
+  boas-vindas: as telas de dentro do iOS não são exercitadas até existir um XCUITest.
+- Dez arquivos de `app/src/androidTest` que não compilam na master saíram da compilação (#4575), sem apagar.
+- Defeito conhecido vira falha esperada com link de issue (`test.fail` no web, `PendenciasBateria.falhaEsperada` no
+  Android). A conferência rápida do `pre-push` recusa falha esperada sem issue.
+- Contas fictícias em produção, autorizadas pelo Renan em 15/11/2026: 24 contas `techfernandesltda+futeba-teste-NN`,
+  tudo com `isTestData: true`, só grupos privados, quadras em rascunho e jogos agendados (nada público, nenhum jogo
+  finalizado). Senhas só em `~/.config/futeba/contas-teste.env`; cadastro no Bitwarden fica com o Renan.
+- A bateria não entrou em workflow: a parte rápida roda no `pre-push` e a pesada é `scripts/bateria/rodar.sh tudo`.
+- Regra daqui em diante: defeito de produção ganha teste na bateria antes da correção.
+
+## 2026-11-15: Jogo é lido no Android sempre com o ID do documento (#4576)
+
+Spec: `specs/bugfix-2026-11-15-android-jogo-sem-id-do-documento.md`.
+
+- Leitura de `games` no Android copia o ID do documento para `Game.id` (`toAndroidGame`, `toAndroidGameOrNull`,
+  `toAndroidGames` em `GameQueryRepositoryImpl.kt`). O campo `id` gravado no documento não é fonte: o web cria o
+  jogo sem ele e nenhum dos 8 jogos de produção o tem.
+- O ID do documento prevalece quando o campo gravado for diferente.
+- O modelo `Game` continua sem `@DocumentId`: com a anotação, um jogo que tenha o campo `id` gravado cairia no
+  conflito do #4569, e o `id` deixaria de ser gravado pelo Android sem ganho para quem lê.
+- O escritor de jogos do web não muda.
+
+## 2026-11-15: Correção dos defeitos de web e regras achados pela bateria (#4571 a #4574)
+
+Spec: `specs/bugfix-2026-11-15-bateria-web-regras-4571-4574.md`.
+
+- #4572: a consulta de jogos do web deixa de filtrar `deleted_at == null` no servidor. Nenhum escritor grava o campo
+  na criação e o Firestore não casa `== null` com campo ausente. Os apagados saem no cliente, como já saíam.
+  Descartado: gravar `deleted_at: null` em toda criação mais backfill (mexe em web, Android, iOS, regras de `create`
+  e produção para manter um filtro que o cliente já aplica).
+- #4571: em regra de `list`, o operando que não depende de campo do documento vem primeiro. `isAdmin()` passou para
+  o início da regra de `list` de `games`; no fim, um erro de avaliação em `group_id` negava a consulta antes dele.
+- #4573: membro ativo do grupo do jogo lê as confirmações antes de confirmar (`isMemberOfGameGroup`). Visitante de
+  jogo público e jogo sem grupo continuam restritos, porque a confirmação carrega dados de pagamento.
+- #4574: qualquer conta com perfil completo cria grupo no web, como as regras e o Android já permitiam. A trava de
+  papel só existia no formulário.
+- As quatro falhas esperadas da bateria viraram teste normal e `PENDENCIAS` do web ficou vazio.
+- Fica aberto: a aba Jogos não lista os jogos `GROUP_ONLY` dos grupos do usuário (#4578).
+
+## 2026-11-16: Aba Jogos do web junta os jogos públicos com os dos grupos do usuário (#4578)
+
+Spec: `specs/bugfix-2026-11-16-web-aba-jogos-group-only-4578.md`.
+
+- Sem `groupId`, `useGames` soma à consulta pública uma consulta por grupo do usuário (`memberGroupIds`, até 10),
+  tira os repetidos pelo ID e reaplica ordem e limite no cliente. Mesmo desenho do Android
+  (`getLiveAndUpcomingGamesFlow`).
+- Uma consulta por grupo, e não `group_id in [...]`: a regra de LIST lê um documento de membro por grupo distinto
+  e um `in` com 10 grupos encosta no teto de leituras de regras; e um vínculo desatualizado derrubaria tudo.
+- Falha na consulta de um grupo tira só aquele grupo da lista. Falha na consulta pública continua sendo erro de tela.
+- Sem mudança de regras nem de índices.
+
+## 2026-11-15: Teste de tela no Android testa a tela do app, com textos do `strings.xml` (#4575)
+
+Spec: `specs/bugfix-2026-11-15-android-androidtest-compila.md`.
+
+- Teste em `app/src/androidTest` monta o composable do app (`LoginScreen`, `HomeScreen`...) com o ViewModel
+  substituído por mock. Teste que chama uma cópia da tela escrita dentro do próprio arquivo não vale: foi o
+  motivo para apagar `GamesScreenTest` e `LocationFlowTest` (44 casos) em vez de consertá-los.
+- O texto esperado vem do recurso (`appString(R.string...)`), não de literal.
+- Todo `StateFlow` que a tela lê é declarado no mock; item de lista preguiçosa abaixo da dobra é alcançado
+  rolando.
+- Substitui a decisão de 15/11/2026 de tirar dez arquivos da compilação: o bloco `androidTestsQueNaoCompilam`
+  saiu de `app/build.gradle.kts` e não volta. Teste que quebrar é consertado ou apagado com o motivo no PR.
+
+## 2026-11-16: Convite de grupo no Android usa o formato do Firestore, e só o dono convida (#4584)
+
+Spec: `specs/bugfix-2026-11-16-android-convites-de-grupo.md`.
+
+- `InviteRepositoryImpl` grava `group_invites` campo a campo, em snake_case e com `FieldValue.serverTimestamp()`
+  nas datas, igual ao web. Lê com `data.model.GroupInvite` pelo mapeamento tolerante e converte para o domínio.
+  Modelo do domínio (KMP) não vai para o mapper por reflexão do Firestore.
+- O repositório não lê o perfil do convidado para montar o convite: as regras negam a leitura do perfil alheio
+  que tem e-mail. O nome vem de quem chama; o e-mail do convidado não é mais copiado para o convite.
+- Só o dono do grupo convida, como nas regras e no web. Aceitar convite de administrador ficaria para uma
+  mudança de regras com spec própria; o teste de regras registra a restrição como intencional.
+- Gravação com modelo anotado com `@ServerTimestamp` e nome de campo trocado por `@get:PropertyName` saiu sem
+  data no emulador. Escritor novo usa mapa explícito até os modelos serem conferidos.
+
+## 2026-11-17: Seis defeitos de permissão achados pelos testes do #4586 são corrigidos (spec bugfix-2026-11-17)
+
+Spec: `specs/bugfix-2026-11-17-permissoes-defeitos-4586.md` (APPROVED pelo Renan em 17/11/2026).
+
+- Fila de espera e confirmação de gestor (D1, D2): quem está bloqueado em `groups/{g}/blocked_players` é recusado
+  também quando o jogo é público ou quando quem confirma é gestor ou admin global. Segue `join-public-game` e
+  `confirmGamePresence`.
+- Regra de MVP (D3): só admin grava `mvp_id` direto em jogo `FINISHED`. O dono não. A votação grava pela Cloud
+  Function com Admin SDK, então nenhum fluxo de cliente muda.
+- Convite (D4): falha na checagem de membro interrompe o convite. Antes virava "não é membro" e o convite era criado.
+- Papel de membro (D5): `REMOVED`, `INACTIVE` e `BLOCKED` não têm papel ativo. Compara o status com a string bruta,
+  sem `getStatusEnum`, que cairia em `ACTIVE` para valor inválido.
+- `canManageGame` no web (D6): tolera `coOrganizers` ausente. Nenhum chamador de produção muda.
+- Os testes de `it.fails`, `test.failing` e `@Disabled` viram testes normais. Nenhuma asserção foi enfraquecida.

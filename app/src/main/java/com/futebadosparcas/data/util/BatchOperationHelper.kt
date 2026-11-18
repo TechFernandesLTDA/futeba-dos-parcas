@@ -22,7 +22,7 @@ import kotlinx.coroutines.tasks.await
  * val users = BatchOperationHelper.parallelWhereIn(
  *     collection = firestore.collection("users"),
  *     ids = userIds,
- *     mapper = { doc -> doc.toObject(User::class.java) }
+ *     mapper = { doc -> doc.toObjectTolerant(User::class.java) }
  * )
  * ```
  */

@@ -10,6 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.Date
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 class SeasonClosureService constructor(
     private val firestore: FirebaseFirestore,
@@ -38,7 +40,7 @@ class SeasonClosureService constructor(
                 return Result.failure(Exception("Temporada $seasonId não encontrada"))
             }
 
-            val season = seasonDoc.toObject(Season::class.java)
+            val season = seasonDoc.toObjectTolerant(Season::class.java)
             if (season == null) {
                 return Result.failure(Exception("Falha ao deserializar temporada $seasonId"))
             }
@@ -59,7 +61,7 @@ class SeasonClosureService constructor(
                 .get()
                 .await()
 
-            val participations = participationsSnapshot.toObjects(SeasonParticipation::class.java)
+            val participations = participationsSnapshot.toObjectsTolerant(SeasonParticipation::class.java)
             val notifications = mutableListOf<DomainAppNotification>()
 
             val batch = firestore.batch()

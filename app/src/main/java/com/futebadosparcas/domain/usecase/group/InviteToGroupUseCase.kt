@@ -70,7 +70,11 @@ class InviteToGroupUseCase constructor(
         }
 
         val isMemberResult = groupRepository.isUserMemberOfGroup(params.groupId, invitedUserId)
-        if (isMemberResult.isSuccess && isMemberResult.getOrDefault(false)) {
+        if (isMemberResult.isFailure) {
+            // Falha na checagem não pode virar "não é membro": o convite não é criado.
+            throw isMemberResult.exceptionOrNull() ?: Exception("Erro ao verificar se o usuário já é membro")
+        }
+        if (isMemberResult.getOrDefault(false)) {
             throw InviteToGroupException("Este usuário já é membro do grupo")
         }
 

@@ -23,7 +23,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { useCreateGroup } from '../../hooks/useGroups';
 import { GameGender } from '../../types/game';
-import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -39,7 +38,6 @@ export const CreateGroupScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.createGroup'));
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const { createGroup, loading, error } = useCreateGroup();
   const { showError } = useToast();
@@ -109,12 +107,6 @@ export const CreateGroupScreen: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!validate()) return;
-
-    // Defesa em profundidade: apenas FIELD_OWNER e ADMIN podem criar grupos
-    if (user && user.role !== 'FIELD_OWNER' && user.role !== 'ADMIN') {
-      showError(t('groups.onlyOwnersCanCreate'));
-      return;
-    }
 
     try {
       const groupId = await createGroup(formData, selectedFile);

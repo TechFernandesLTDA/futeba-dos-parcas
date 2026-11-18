@@ -77,6 +77,20 @@ if [ -d "$ROOT_DIR/functions" ]; then
 fi
 
 echo ""
+echo "── Bateria de testes: conferência rápida ──"
+# Parte rápida da bateria (sem emulador, ~2 s): contas, cenário, portas e
+# falhas esperadas coerentes. A parte pesada é scripts/bateria/rodar.sh tudo.
+if [ -x "$ROOT_DIR/scripts/bateria/rodar.sh" ] && [ -x "$ROOT_DIR/web/node_modules/.bin/tsx" ]; then
+  if (cd "$ROOT_DIR" && bash scripts/bateria/rodar.sh rapida 2>&1); then
+    pass "Bateria coerente (rode scripts/bateria/rodar.sh tudo antes de publicar versão)"
+  else
+    fail "Bateria de testes incoerente (scripts/bateria/)"
+  fi
+else
+  warn "Bateria não conferida: falta web/node_modules (rode npm ci em web/)"
+fi
+
+echo ""
 echo "── Commit Messages ──"
 LAST_COMMIT=$(git log -1 --format=%s 2>/dev/null || echo "")
 if [ -n "$LAST_COMMIT" ]; then

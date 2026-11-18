@@ -9,13 +9,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -87,24 +91,27 @@ fun LoginScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         // Background com gradiente sutil
-        Box(
+        // Tela rolável com altura mínima igual à da tela: quando o cartão cresce
+        // (mensagem de erro, formulário de e-mail, fonte grande), o conteúdo rola
+        // em vez de o título ficar escondido atrás do cartão.
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(surfaceGradient())
+                .systemBarsPadding()
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .systemBarsPadding()
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
                     .padding(AppDimensions.spacing_extraLarge),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Top Section: Logo e Título
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {

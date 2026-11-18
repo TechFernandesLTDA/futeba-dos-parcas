@@ -4,7 +4,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.util.appString
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +38,9 @@ class GroupWallScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Nenhuma publicação ainda").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Escreva algo para o grupo…").assertIsDisplayed()
+        // Textos pelo recurso: o app tem tradução (values-en, values-es) e o aparelho de teste pode
+        // não estar em português.
+        composeTestRule.onNodeWithText(appString(R.string.group_wall_empty_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(appString(R.string.group_wall_input_hint)).assertIsDisplayed()
     }
 }

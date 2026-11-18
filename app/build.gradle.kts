@@ -62,13 +62,15 @@ android {
         applicationId = "com.futebadosparcas"
         minSdk = 24
         targetSdk = 36
-        versionCode = 86
+        versionCode = 94
         versionName = "1.44.0"
 
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Igual ao AndroidJUnitRunner; só aponta o app para o Firebase Emulator Suite
+        // quando recebe `-e bateria true` (scripts/bateria/android.sh).
+        testInstrumentationRunner = "com.futebadosparcas.bateria.BateriaTestRunner"
     }
 
     signingConfigs {

@@ -7,6 +7,8 @@ import kotlinx.coroutines.tasks.await
 import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
 
 /**
  * Helper para popular o Firebase com dados de desenvolvimento/teste
@@ -518,7 +520,7 @@ object MockDataHelper {
         return try {
             // 1. Buscar dados do jogo para ver o limite
             val gameSnapshot = firestore.collection("games").document(gameId).get().await()
-            val game = gameSnapshot.toObject(Game::class.java)
+            val game = gameSnapshot.toObjectTolerant(Game::class.java)
                 ?: return Result.failure(Exception("Jogo não encontrado"))
             
             val maxPlayers = game.maxPlayers
@@ -542,7 +544,7 @@ object MockDataHelper {
                  .whereLessThan(com.google.firebase.firestore.FieldPath.documentId(), "mock_user_~")
                  .get().await()
              
-             val allMockUsers = usersSnapshot.toObjects(User::class.java)
+             val allMockUsers = usersSnapshot.toObjectsTolerant(User::class.java)
 
              if (allMockUsers.isEmpty()) return Result.failure(Exception("Nenhum usuário mock encontrado. Crie os usuários primeiro."))
 

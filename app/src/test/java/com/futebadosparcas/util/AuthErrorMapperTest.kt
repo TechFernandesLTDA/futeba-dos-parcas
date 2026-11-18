@@ -1,6 +1,7 @@
 package com.futebadosparcas.util
 
 import com.futebadosparcas.R
+import com.futebadosparcas.domain.auth.UserProfileNotReadyException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -156,5 +157,11 @@ class AuthErrorMapperTest {
     fun mapAuthError_genericThrowable_returnsGenericError() {
         val result = AuthErrorMapper.mapAuthError(RuntimeException("boom"))
         assertEquals(R.string.auth_error_generic, result)
+    }
+
+    @Test
+    fun mapAuthError_profileNotReady_returnsProfileNotReady() {
+        val result = AuthErrorMapper.mapAuthError(UserProfileNotReadyException())
+        assertEquals(R.string.auth_error_profile_not_ready, result)
     }
 }

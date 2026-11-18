@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectOrNullSafely
 
 /**
  * Repository dos comentários livres por jogo (issue #3234, épico #3240).
@@ -41,7 +42,7 @@ class GameCommentsRepository constructor(
                 }
 
                 val comments = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameComment::class.java)?.copy(id = doc.id)
+                    doc.toObjectOrNullSafely(GameComment::class.java)?.copy(id = doc.id)
                 }?.asReversed()?.filter {
                     it.deletedAt == null && it.context.ifBlank { "game" } == context
                 } ?: emptyList()

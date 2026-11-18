@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 import kotlin.math.abs
+import com.futebadosparcas.data.util.toObjectOrNullSafely
 
 class ProfileViewModel(
     private val userRepository: UserRepository,
@@ -175,7 +176,7 @@ class ProfileViewModel(
 
                 if (snapshot != null && snapshot.exists()) {
                     try {
-                        val updatedStats = snapshot.toObject(com.futebadosparcas.domain.model.Statistics::class.java)
+                        val updatedStats = snapshot.toObjectOrNullSafely(com.futebadosparcas.domain.model.Statistics::class.java)
                         if (updatedStats != null) trySend(updatedStats)
                     } catch (e: Exception) {
                         AppLogger.w(TAG) { "Erro ao parsear estatísticas: ${e.message}" }

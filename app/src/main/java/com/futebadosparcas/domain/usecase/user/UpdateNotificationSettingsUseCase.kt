@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ServerTimestamp
 import kotlinx.coroutines.tasks.await
 import java.util.Date
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Update Notification Settings Use Case
@@ -109,7 +110,7 @@ class UpdateNotificationSettingsUseCase constructor(
                 .get()
                 .await()
 
-            snapshot.toObject(NotificationSettings::class.java)
+            snapshot.toObjectTolerant(NotificationSettings::class.java)
         } catch (e: Exception) {
             AppLogger.w(TAG) {
                 "Erro ao buscar configurações atuais: ${e.message}, usando valores padrão"

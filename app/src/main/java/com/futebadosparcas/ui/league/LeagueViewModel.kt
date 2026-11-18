@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * ViewModel da tela de Liga/Ranking
@@ -266,7 +267,7 @@ class LeagueViewModel(
                         AppLogger.d(TAG) { "Recebido ${snapshot.documents.size} documentos" }
 
                         snapshot.documents.forEach { doc ->
-                            val user = doc.toObject(User::class.java)
+                            val user = doc.toObjectTolerant(User::class.java)
                             if (user != null) {
                                 _userCache[doc.id] = user
                                 AppLogger.d(TAG) { "User adicionado ao cache: ${doc.id}" }
@@ -282,7 +283,7 @@ class LeagueViewModel(
                             try {
                                 val doc = firestore.collection("users").document(userId).get().await()
                                 if (doc.exists()) {
-                                    val user = doc.toObject(User::class.java)
+                                    val user = doc.toObjectTolerant(User::class.java)
                                     if (user != null) {
                                         _userCache[userId] = user
                                         AppLogger.d(TAG) { "User buscado individualmente: $userId" }

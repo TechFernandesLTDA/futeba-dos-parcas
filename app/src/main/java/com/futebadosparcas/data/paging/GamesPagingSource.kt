@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Paging 3 - PagingSource for Games
@@ -69,7 +70,7 @@ class GamesPagingSource(
             // Convert to Game objects
             val games = snapshot.documents.mapNotNull { doc ->
                 try {
-                    doc.toObject(Game::class.java)?.copy(id = doc.id)
+                    doc.toObjectTolerant(Game::class.java)?.copy(id = doc.id)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Error parsing game document ${doc.id}", e)
                     null

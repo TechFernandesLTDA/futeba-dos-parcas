@@ -17,6 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import java.util.Date
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Use case para gerenciar confirmacoes de presenca em jogos (Issues #31-40).
@@ -370,7 +371,7 @@ class ConfirmationUseCase constructor(
                 .get()
                 .await()
 
-            val attendance = doc.toObject(PlayerAttendance::class.java)
+            val attendance = doc.toObjectTolerant(PlayerAttendance::class.java)
                 ?: PlayerAttendance(userId = userId)
 
             Result.success(attendance)
@@ -395,7 +396,7 @@ class ConfirmationUseCase constructor(
                 .get()
                 .await()
                 .documents
-                .mapNotNull { it.toObject(GameConfirmation::class.java) }
+                .mapNotNull { it.toObjectTolerant(GameConfirmation::class.java) }
 
             // Buscar cancelamentos
             val cancellations = firestore.collectionGroup("cancellations")
@@ -404,7 +405,7 @@ class ConfirmationUseCase constructor(
                 .get()
                 .await()
                 .documents
-                .mapNotNull { it.toObject(GameCancellation::class.java) }
+                .mapNotNull { it.toObjectTolerant(GameCancellation::class.java) }
 
             // STUB(#2294): PlayerAttendance.calculate() não existe no modelo KMP.
             // Cálculo feito manualmente a partir das confirmações e cancelamentos do Firestore.

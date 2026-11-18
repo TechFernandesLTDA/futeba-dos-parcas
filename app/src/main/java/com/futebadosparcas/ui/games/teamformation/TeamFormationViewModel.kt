@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.futebadosparcas.data.util.toObjectTolerant
 
 class TeamFormationViewModel(
     private val gameRepository: GameRepository,
@@ -90,7 +91,7 @@ class TeamFormationViewModel(
                     val position = PlayerPosition.fromString(conf.position)
                     val user = try {
                         firestore.collection("users").document(conf.userId).get().await()
-                            .toObject(User::class.java)
+                            .toObjectTolerant(User::class.java)
                     } catch (e: Exception) {
                         null
                     }

@@ -183,7 +183,6 @@ export const onJoinRequestApproved = onDocumentUpdated(
           freshGroup.member_count : 0;
 
       tx.set(memberRef, {
-        id: userId,
         user_id: userId,
         user_name: after.user_name,
         user_photo: after.user_photo ?? null,
@@ -200,7 +199,6 @@ export const onJoinRequestApproved = onDocumentUpdated(
       });
 
       tx.set(db().doc(`users/${userId}/groups/${groupId}`), {
-        id: groupId,
         group_id: groupId,
         group_name: groupName,
         group_photo: groupPhoto,

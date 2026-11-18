@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Data Converter
@@ -117,7 +118,7 @@ class DataConverter constructor() {
     inline fun <reified T : Any> parseDocument(document: DocumentSnapshot?): T? {
         if (document == null || !document.exists()) return null
         return try {
-            document.toObject(T::class.java)
+            document.toObjectTolerant(T::class.java)
         } catch (e: Exception) {
             AppLogger.e("DataConverter", "Error parsing document to ${T::class.java.simpleName}: ${e.message}", e)
             null
@@ -129,7 +130,7 @@ class DataConverter constructor() {
      */
     inline fun <reified T : Any> parseQueryDocument(document: QueryDocumentSnapshot): T? {
         return try {
-            document.toObject(T::class.java)
+            document.toObjectTolerant(T::class.java)
         } catch (e: Exception) {
             AppLogger.e("DataConverter", "Error parsing query document to ${T::class.java.simpleName}: ${e.message}", e)
             null

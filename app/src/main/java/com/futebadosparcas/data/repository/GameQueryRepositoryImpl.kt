@@ -33,6 +33,7 @@ import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -45,6 +46,37 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
+import com.futebadosparcas.data.util.mapDocumentsSafely
+import com.futebadosparcas.data.util.toObjectOrNullSafely
+import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.util.toObjectsTolerant
+
+private const val GAME_MAPPING_TAG = "GameQueryRepository"
+
+/*
+ * Leitura de jogo sempre com o ID do documento.
+ *
+ * O modelo `Game` do Android não usa `@DocumentId`: o `id` só vem preenchido se o documento tiver o campo
+ * `id` gravado. Os jogos de produção não têm esse campo (o web cria com `addDoc`, sem `id`), então quem lê
+ * precisa copiar o ID do documento. Sem isso o jogo chega com `id` vazio: a lista junta jogos diferentes
+ * como se fossem o mesmo e o detalhe opera sobre um ID vazio (#4576).
+ */
+
+/** Fora de listener: relança falha de conversão, como o `toObject`. */
+internal fun DocumentSnapshot.toAndroidGame(): AndroidGame? {
+    val documentId = id
+    return toObjectTolerant(AndroidGame::class.java)?.also { it.id = documentId }
+}
+
+/** Dentro de `addSnapshotListener`: nunca lança. */
+internal fun DocumentSnapshot.toAndroidGameOrNull(): AndroidGame? {
+    val documentId = id
+    return toObjectOrNullSafely(AndroidGame::class.java)?.also { it.id = documentId }
+}
+
+/** Lista de jogos de um snapshot. Nunca lança: o documento ilegível fica de fora e vira não fatal. */
+internal fun QuerySnapshot.toAndroidGames(): List<AndroidGame> =
+    documents.mapDocumentsSafely(GAME_MAPPING_TAG) { it.toAndroidGame() }
 
 /**
  * Implementacao Android do GameQueryRepository.
@@ -242,7 +274,7 @@ class GameQueryRepositoryImpl constructor(
             }
 
             val allAndroidGames = allSnapshots.flatMap { it.documents }
-                .mapNotNull { doc -> doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } }
+                .mapNotNull { doc -> doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id } }
                 .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .deduplicateSortAndLimit(
                     idSelector = { it.id },
@@ -304,7 +336,7 @@ class GameQueryRepositoryImpl constructor(
             }
 
             val allAndroidGames = allSnapshots.flatMap { it.documents }
-                .mapNotNull { doc -> doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } }
+                .mapNotNull { doc -> doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id } }
                 .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .deduplicateSortAndLimit(
                     idSelector = { it.id },
@@ -342,7 +374,7 @@ class GameQueryRepositoryImpl constructor(
                         .get()
                         .await()
                         .documents.mapNotNull { doc ->
-                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                         }
                 }
 
@@ -355,7 +387,7 @@ class GameQueryRepositoryImpl constructor(
                             .get()
                             .await()
                             .documents.mapNotNull { doc ->
-                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                             }
                     }
                 } else null
@@ -410,7 +442,7 @@ class GameQueryRepositoryImpl constructor(
                         .get()
                         .await()
                         .documents.mapNotNull { doc ->
-                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                         }
                 }
 
@@ -424,7 +456,7 @@ class GameQueryRepositoryImpl constructor(
                             .get()
                             .await()
                             .documents.mapNotNull { doc ->
-                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                             }
                     }
                 } else null
@@ -469,7 +501,7 @@ class GameQueryRepositoryImpl constructor(
                         .get()
                         .await()
                         .documents.mapNotNull { doc ->
-                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                         }
                 }
 
@@ -482,7 +514,7 @@ class GameQueryRepositoryImpl constructor(
                             .get()
                             .await()
                             .documents.mapNotNull { doc ->
-                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                             }
                     }
                 } else null
@@ -532,7 +564,7 @@ class GameQueryRepositoryImpl constructor(
                     }
                     if (snapshot != null) {
                         val androidGames = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            doc.toObjectOrNullSafely(AndroidGame::class.java)?.apply { id = doc.id }
                         }
                         trySend(androidGames)
                     }
@@ -554,7 +586,7 @@ class GameQueryRepositoryImpl constructor(
                         }
                         if (snapshot != null) {
                             val androidGames = snapshot.documents.mapNotNull { doc ->
-                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                doc.toObjectOrNullSafely(AndroidGame::class.java)?.apply { id = doc.id }
                             }
                             trySend(androidGames)
                         }
@@ -607,7 +639,7 @@ class GameQueryRepositoryImpl constructor(
                                     .await()
 
                                 snapshot.documents.mapNotNull { doc ->
-                                    doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                    doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                                 }
                             }
                         }
@@ -634,7 +666,7 @@ class GameQueryRepositoryImpl constructor(
     override suspend fun getGameDetails(gameId: String): Result<Game> {
         return try {
             val doc = gamesCollection.document(gameId).get().await()
-            val androidGame = doc.toObject(AndroidGame::class.java)
+            val androidGame = doc.toAndroidGame()
                 ?: return Result.failure(Exception("Erro ao converter jogo"))
 
             // Cache Update
@@ -705,7 +737,7 @@ class GameQueryRepositoryImpl constructor(
                             .limit(100)
                             .get()
                             .await()
-                            .toObjects(AndroidGameEvent::class.java)
+                            .toObjectsTolerant(AndroidGameEvent::class.java)
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Erro ao buscar eventos consolidados", e)
                         emptyList()
@@ -718,7 +750,7 @@ class GameQueryRepositoryImpl constructor(
                             .collection("teams")
                             .get()
                             .await()
-                            .toObjects(AndroidTeam::class.java)
+                            .toObjectsTolerant(AndroidTeam::class.java)
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Erro ao buscar times consolidados", e)
                         emptyList()
@@ -735,7 +767,7 @@ class GameQueryRepositoryImpl constructor(
                     return@coroutineScope Result.failure(Exception("Jogo não encontrado"))
                 }
 
-                val androidGame = gameSnapshot.toObject(AndroidGame::class.java)
+                val androidGame = gameSnapshot.toAndroidGame()
                     ?: return@coroutineScope Result.failure(Exception("Erro ao converter jogo consolidado"))
 
                 // Cache do jogo
@@ -769,7 +801,7 @@ class GameQueryRepositoryImpl constructor(
             }
 
             if (snapshot != null && snapshot.exists()) {
-                val androidGame = snapshot.toObject(AndroidGame::class.java)
+                val androidGame = snapshot.toAndroidGameOrNull()
                 if (androidGame != null) {
                     trySend(Result.success(androidGame.toKmpGame()))
                 } else {
@@ -895,9 +927,7 @@ class GameQueryRepositoryImpl constructor(
                 trySend(emptyList())
                 return@addSnapshotListener
             }
-            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach {
-                it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id
-            } ?: emptyList()
+            val androidGames = snap?.toAndroidGames() ?: emptyList()
             trySend(androidGames)
         }
         awaitClose { sub.remove() }
@@ -961,7 +991,7 @@ class GameQueryRepositoryImpl constructor(
                             return@addSnapshotListener
                         }
                         val androidGames = (snap?.documents?.mapNotNull { doc ->
-                            doc.toObject(AndroidGame::class.java)?.also { it.id = doc.id }
+                            doc.toObjectOrNullSafely(AndroidGame::class.java)?.also { it.id = doc.id }
                         } ?: emptyList()).filterNotSoftDeleted() // P2 #40
 
                         val result = androidGames.map { androidGame ->
@@ -1020,7 +1050,7 @@ class GameQueryRepositoryImpl constructor(
                 val publicFlow = callbackFlow {
                     val sub = publicQuery.addSnapshotListener { snap, e ->
                         if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                        val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                        val androidGames = snap?.toAndroidGames() ?: emptyList()
                         trySend(androidGames)
                     }
                     awaitClose { sub.remove() }
@@ -1030,7 +1060,7 @@ class GameQueryRepositoryImpl constructor(
                     callbackFlow {
                         val sub = groupQuery.addSnapshotListener { snap, e ->
                             if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            val androidGames = snap?.toAndroidGames() ?: emptyList()
                             trySend(androidGames)
                         }
                         awaitClose { sub.remove() }
@@ -1044,7 +1074,7 @@ class GameQueryRepositoryImpl constructor(
                     callbackFlow {
                         val sub = ownerQuery.addSnapshotListener { snap, e ->
                             if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            val androidGames = snap?.toAndroidGames() ?: emptyList()
                             trySend(androidGames)
                         }
                         awaitClose { sub.remove() }
@@ -1159,7 +1189,7 @@ class GameQueryRepositoryImpl constructor(
 
                 groupQuery.limit((pageSize + 1).toLong()).get().await()
                     .documents.mapNotNull { doc ->
-                        doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                        doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                     }
             } else {
                 emptyList()
@@ -1178,14 +1208,14 @@ class GameQueryRepositoryImpl constructor(
 
                 ownerQuery.limit((pageSize + 1).toLong()).get().await()
                     .documents.mapNotNull { doc ->
-                        doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                        doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                     }
             } else {
                 emptyList()
             }
 
             val publicGames = publicSnapshot.documents.mapNotNull { doc ->
-                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
             // Buscar confirmacoes do usuario ANTES de filtrar
@@ -1269,7 +1299,7 @@ class GameQueryRepositoryImpl constructor(
             val snapshot = query.limit((pageSize + 1).toLong()).get().await()
 
             val androidGames = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
             }.filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
 
             val hasMore = androidGames.size > pageSize
@@ -1323,7 +1353,7 @@ class GameQueryRepositoryImpl constructor(
                                     .get()
                                     .await()
                                     .documents.mapNotNull { doc ->
-                                        doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                        doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                                     }
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao buscar jogos do owner", e)
@@ -1345,7 +1375,7 @@ class GameQueryRepositoryImpl constructor(
                                         collection = gamesCollection,
                                         ids = gameIds,
                                         mapper = { doc ->
-                                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                            doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
                                         }
                                     )
                                 }
@@ -1407,7 +1437,7 @@ class GameQueryRepositoryImpl constructor(
                 .await()
 
             val androidGames = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
             }
                 .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .filter { game ->
@@ -1448,7 +1478,7 @@ class GameQueryRepositoryImpl constructor(
 
                 val now = System.currentTimeMillis()
                 val androidGames = (snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                    doc.toObjectOrNullSafely(AndroidGame::class.java)?.apply { id = doc.id }
                 } ?: emptyList())
                     .filterNotSoftDeleted() // P2 #40
                     .filter { game ->
@@ -1512,7 +1542,7 @@ class GameQueryRepositoryImpl constructor(
                 .await()
 
             val androidGames = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
             AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos abertos para solicitacoes" }
