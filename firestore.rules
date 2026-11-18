@@ -1295,8 +1295,9 @@ service cloud.firestore {
          isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
          (isConfirmedPlayer(gameId) ||
           ('group_id' in resource.data && resource.data.group_id != null && isGroupMember(resource.data.group_id))) ||
-        // Bug fix: Apenas dono do jogo ou admin pode definir MVP, e jogo deve estar FINISHED
-        ((canManageGame(resource.data) || isAdmin()) &&
+        // Bug fix: Só admin grava mvp_id direto, e jogo deve estar FINISHED.
+        // A votação grava o MVP pela Cloud Function (Admin SDK), que não passa pelas regras.
+        (isAdmin() &&
          resource.data.status == 'FINISHED' &&
          onlyAllowedFields(['mvp_id'])) ||
         // #3239: reações sociais no resultado da votação. O cliente só pode

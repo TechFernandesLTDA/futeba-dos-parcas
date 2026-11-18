@@ -114,9 +114,21 @@ export async function joinGameWaitlistHandler(
     const groupId = typeof rawGroupId === "string" ? rawGroupId.trim() : "";
     let isActiveMember = false;
     if (groupId) {
-      const memberSnap = await tx.get(
-        db.collection("groups").doc(groupId).collection("members").doc(uid)
-      );
+      const [memberSnap, blockedSnap] = await Promise.all([
+        tx.get(
+          db.collection("groups").doc(groupId).collection("members").doc(uid)
+        ),
+        tx.get(
+          db.collection("groups").doc(groupId).collection("blocked_players").doc(uid)
+        ),
+      ]);
+      // Bloqueado no grupo não entra na fila, nem gestor ou admin (decisão D1).
+      if (blockedSnap.exists) {
+        throw new HttpsError(
+          "permission-denied",
+          "Você está bloqueado neste grupo."
+        );
+      }
       if (memberSnap.exists) {
         const membership = memberSnap.data() ?? {};
         isActiveMember =

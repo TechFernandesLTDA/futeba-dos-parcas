@@ -10,6 +10,7 @@ const activeQuery = {kind: "active-query"};
 const gameRef = {kind: "game", collection: jest.fn()};
 const confirmationRef = {kind: "confirmation"};
 const memberRef = {kind: "member"};
+const blockedRef = {kind: "blocked"};
 const userRef = {get: jest.fn()};
 
 const db = {
@@ -20,7 +21,9 @@ const db = {
     if (name === "groups") {
       return {
         doc: jest.fn(() => ({
-          collection: jest.fn(() => ({doc: jest.fn(() => memberRef)})),
+          collection: jest.fn((sub: string) => ({
+            doc: jest.fn(() => (sub === "blocked_players" ? blockedRef : memberRef)),
+          })),
         })),
       };
     }
