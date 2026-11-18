@@ -1,7 +1,28 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-11-11T04:52:14.105Z",
+  "generatedAt": "2026-11-18T03:05:57.282Z",
   "notes": [
+    {
+      "version": "1.10.1",
+      "buildNumber": 30,
+      "releaseDate": "2026-11-14",
+      "type": "patch",
+      "showPopup": false,
+      "published": false,
+      "headline": "A abertura do app ficou mais bonita e as Conquistas e Estatísticas agora mostram os seus dados.",
+      "highlights": [],
+      "added": [],
+      "improved": [],
+      "fixed": [
+        "A tela de abertura mostra a logo em vez de ficar branca enquanto o app carrega.",
+        "Conquistas e Estatísticas mostram os dados do jogador no iPhone.",
+        "Links de convite abrem direto no app."
+      ],
+      "issueRefs": [
+        4548,
+        4549
+      ]
+    },
     {
       "version": "1.10.0",
       "buildNumber": 26,
