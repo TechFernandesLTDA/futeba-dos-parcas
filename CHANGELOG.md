@@ -23,6 +23,9 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 - Repositório público com ruleset na `master` (PR, squash, 5 checks), aprovação para PRs de fork e secret scanning (#4394).
 - Runners self-hosted no Mac e no prod-01; versões do projeto fixadas com mise (#4387).
 
+### Segurança
+- Atualizados `basic-ftp` (`>= 6.2.4` em `web`), `minimatch` (`>= 11.0.1` via overrides em `web`, `functions`, `firestore-rules-tests` e `archive/backend`) e `glob` (`>= 14.0.2` via override em `archive/backend`), encerrando os alertas abertos do Dependabot (`#682`, `#739`, `#740`, `#741`, `#742`, `#750`).
+
 <!-- AUTOGEN:START -->
 
 ## Android
