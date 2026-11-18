@@ -14,13 +14,17 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Assinatura "Sem anúncios": ouve renovações/reembolsos desde a abertura (StoreKit 2).
         StoreService.shared.startListening()
 
-        // Notifications (independente de Firebase — usa UserNotifications nativo)
+        // Notificações: o pedido de permissão fica no onboarding ("Permitir"), não na abertura,
+        // para o alerta não cobrir a tela de abertura. Aqui só registra para push quem já autorizou.
         UNUserNotificationCenter.current().delegate = self
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            if granted {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
                 DispatchQueue.main.async {
                     application.registerForRemoteNotifications()
                 }
+            default:
+                break
             }
         }
 
