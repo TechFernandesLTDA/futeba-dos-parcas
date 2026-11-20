@@ -83,6 +83,12 @@ class AdsController(
         publish()
     }
 
+    /**
+     * Convite único "Sem anúncios" na Home. `true` uma vez só na vida do app (a marca é gravada
+     * aqui): depois da primeira vitória, com anúncio configurado no build e nunca para assinante.
+     */
+    fun takeSubscriptionInvite(): Boolean = state.takeSubscriptionInvite(AdsConfig.unitConfigured)
+
     /** Quando uma tela de compra termina (assinou ou restaurou), reflete o novo estado. */
     fun onEntitlementChanged() = publish()
 

@@ -19,4 +19,9 @@
     <string name="remove_ads_msg_done">Done: you are ad-free.</string>
     <string name="remove_ads_msg_restored">Purchase restored: you are ad-free.</string>
     <string name="remove_ads_msg_nothing_to_restore">We could not find an active subscription on this Google Play account.</string>
+    <!-- Convite único na Home, depois da primeira vitória (sem preço: fica na tela da assinatura) -->
+    <string name="subscription_invite_title">Play without ads</string>
+    <string name="subscription_invite_body">With the yearly subscription, the banners leave the app. The price and renewal are shown on the next screen, before you decide.</string>
+    <string name="subscription_invite_open">See the subscription</string>
+    <string name="subscription_invite_dismiss">Not now</string>
 </resources>
