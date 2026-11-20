@@ -973,6 +973,8 @@ fun AppNavHost(
             val themeViewModel: com.futebadosparcas.ui.theme.ThemeViewModel = koinViewModel()
             val exportViewModel: com.futebadosparcas.ui.about.ExportMyDataViewModel = koinViewModel()
             val exportState by exportViewModel.uiState.collectAsStateWithLifecycle()
+            val adsController: com.futebadosparcas.monetization.AdsController = koinInject()
+            val adsUi by adsController.uiState.collectAsStateWithLifecycle()
             SecondaryScreenWrapper(
                 titleResId = Screen.Preferences.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -990,6 +992,10 @@ fun AppNavHost(
                     onNavigateToRemoveAds = {
                         navController.navigate(Screen.RemoveAds.route)
                     },
+                    showRemoveAds = com.futebadosparcas.domain.monetization.AdsGate.shouldOfferRemoveAds(
+                        adsFree = adsUi.adsFree,
+                        unitConfigured = com.futebadosparcas.monetization.AdsConfig.unitConfigured
+                    ),
                     exportState = exportState,
                     exportSuggestedFileName = exportViewModel::suggestedFileName,
                     onExportFileChosen = exportViewModel::onFileChosen,

@@ -54,6 +54,28 @@ val admobTestBannerUnit = "ca-app-pub-3940256099942544/9214589741"
 fun admobConfig(name: String): String =
     (localProperties.getProperty(name) ?: System.getenv(name) ?: "").trim()
 
+// Release sem AdMob sai sem banner e sem a oferta "Remover anúncios": nenhum anúncio e nenhuma
+// receita. Para não publicar isso por engano, o build de release falha sem os dois IDs. Para gerar
+// de propósito um release sem anúncios, defina ADMOB_ALLOW_EMPTY=true (local.properties ou env).
+val admobReleaseMissing: List<String> =
+    listOf("ADMOB_APP_ID", "ADMOB_BANNER_UNIT_ID").filter { admobConfig(it).isEmpty() }
+val admobAllowEmpty: Boolean = admobConfig("ADMOB_ALLOW_EMPTY").equals("true", ignoreCase = true)
+val checkAdmobReleaseConfig = tasks.register("checkAdmobReleaseConfig") {
+    group = "verification"
+    description = "Falha o release sem ADMOB_APP_ID/ADMOB_BANNER_UNIT_ID (salvo ADMOB_ALLOW_EMPTY=true)."
+    val missing = admobReleaseMissing
+    val allowEmpty = admobAllowEmpty
+    doLast {
+        if (missing.isEmpty()) return@doLast
+        val msg = "Release sem ${missing.joinToString()}: o app sai sem anúncio e sem a oferta \"Remover anúncios\"."
+        if (allowEmpty) logger.warn("AVISO: $msg (ADMOB_ALLOW_EMPTY=true)")
+        else throw GradleException("$msg Defina os IDs (local.properties ou env) ou ADMOB_ALLOW_EMPTY=true.")
+    }
+}
+tasks.configureEach {
+    if (name == "preReleaseBuild") dependsOn(checkAdmobReleaseConfig)
+}
+
 android {
     namespace = "com.futebadosparcas"
     compileSdk = 37
