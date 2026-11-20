@@ -95,6 +95,17 @@ class MainActivityCompose : AppCompatActivity() {
     // Post-game summary state — bridge entre observePostGameEvents (lifecycle) e Compose.
     private val pendingPostGameSummary = mutableStateOf<com.futebadosparcas.ui.statistics.PostGameSummary?>(null)
 
+    // Pedido de avaliação nativo (Play In-App Review): uma vez só, depois do 3º jogo com XP.
+    // O app não tem anúncio em tela cheia (só banner), então nunca cai logo após um.
+    private val reviewCoordinator by lazy {
+        com.futebadosparcas.domain.review.ReviewPromptCoordinator(
+            store = com.futebadosparcas.domain.review.PreferencesReviewStateStore(
+                com.futebadosparcas.platform.storage.PreferencesService(applicationContext)
+            ),
+            launch = com.futebadosparcas.platform.review.NativeReviewLauncher { this }::launch,
+        )
+    }
+
     // Anúncios (AdMob + consentimento UMP): só ativam depois da primeira vitória e sem assinatura.
     private val adsController: com.futebadosparcas.monetization.AdsController by inject()
 
@@ -187,7 +198,10 @@ class MainActivityCompose : AppCompatActivity() {
                 pendingPostGameSummary.value?.let { summary ->
                     com.futebadosparcas.ui.statistics.PostGameDialog(
                         summary = summary,
-                        onDismiss = { pendingPostGameSummary.value = null }
+                        onDismiss = {
+                            pendingPostGameSummary.value = null
+                            onPostGameSuccessMoment(summary)
+                        }
                     )
                 }
             }
@@ -196,6 +210,18 @@ class MainActivityCompose : AppCompatActivity() {
         observeGamificationEvents()
         observePostGameEvents()
         observeNotifications()
+    }
+
+    /**
+     * Momento de sucesso: o jogador fechou o resumo de XP de um jogo encerrado. Só conta jogo com
+     * XP; só pede em momento positivo (vitória, empate, nível novo ou marco), nunca após derrota.
+     */
+    private fun onPostGameSuccessMoment(summary: com.futebadosparcas.ui.statistics.PostGameSummary) {
+        if (summary.xpEarned <= 0L) return
+        val positive = summary.gameResult != "LOSS" || summary.leveledUp || summary.milestonesUnlocked.isNotEmpty()
+        lifecycleScope.launch {
+            reviewCoordinator.onSuccessMoment(eventId = summary.gameId, positiveMoment = positive)
+        }
     }
 
     private fun observeGamificationEvents() {
