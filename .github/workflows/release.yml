@@ -131,9 +131,17 @@ jobs:
           GSEOF
 
       - name: Build Release AAB
+        env:
+          ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
+          ADMOB_BANNER_UNIT_ID: ${{ vars.ADMOB_BANNER_UNIT_ID }}
+          ADMOB_ALLOW_EMPTY: ${{ vars.ADMOB_ALLOW_EMPTY }}
         run: ./gradlew bundleRelease
 
       - name: Build Release APK
+        env:
+          ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
+          ADMOB_BANNER_UNIT_ID: ${{ vars.ADMOB_BANNER_UNIT_ID }}
+          ADMOB_ALLOW_EMPTY: ${{ vars.ADMOB_ALLOW_EMPTY }}
         run: ./gradlew assembleRelease
 
       - name: Setup Node (guarda de 16 KB)
