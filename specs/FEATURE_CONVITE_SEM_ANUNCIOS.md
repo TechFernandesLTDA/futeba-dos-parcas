@@ -3,7 +3,7 @@
 > **Status:** `IN_REVIEW` (item 10 do plano das lojas de 20/11/2026; aprovação final do Renan no PR)
 > **Autor:** Claude Code
 > **Data:** 2026-11-20
-> **PR:** a preencher
+> **PR:** #4607 (empilhado no #4604)
 
 ---
 
