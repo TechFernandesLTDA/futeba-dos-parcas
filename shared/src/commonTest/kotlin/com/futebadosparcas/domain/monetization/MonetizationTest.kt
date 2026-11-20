@@ -78,6 +78,24 @@ class AdsGateTest {
     }
 }
 
+class RemoveAdsOfferTest {
+    @Test
+    fun semUnidadeDeAnuncioNaoOfereceAssinatura() {
+        assertFalse(AdsGate.shouldOfferRemoveAds(adsFree = false, unitConfigured = false))
+    }
+
+    @Test
+    fun comUnidadeDeAnuncioOfereceAssinatura() {
+        assertTrue(AdsGate.shouldOfferRemoveAds(adsFree = false, unitConfigured = true))
+    }
+
+    @Test
+    fun assinanteSempreVeAEntradaParaGerenciar() {
+        assertTrue(AdsGate.shouldOfferRemoveAds(adsFree = true, unitConfigured = false))
+        assertTrue(AdsGate.shouldOfferRemoveAds(adsFree = true, unitConfigured = true))
+    }
+}
+
 class AdsFreeEntitlementTest {
     private val pid = MonetizationConfig.PRODUCT_ID_SEM_ANUNCIOS_ANUAL
     private fun p(state: StorePurchaseState, suspended: Boolean = false, id: String = pid, ack: Boolean = true) =
