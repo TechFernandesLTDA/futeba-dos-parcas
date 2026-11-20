@@ -53,6 +53,7 @@ class AdsController(
     private var sdkStarted = false
     private var consentRunning = false
     private var started = false
+    private var billingMessagesShown = false
 
     /** Chamado uma vez pelo Application: passa a ouvir a primeira vitória e as compras. */
     fun start() {
@@ -85,8 +86,12 @@ class AdsController(
     /** Quando uma tela de compra termina (assinou ou restaurou), reflete o novo estado. */
     fun onEntitlementChanged() = publish()
 
-    /** Chamado quando uma Activity aparece. Só faz algo se as regras permitirem anúncio. */
+    /**
+     * Chamado quando uma Activity aparece. O aviso de pagamento recusado da Play vale para todos
+     * (inclusive o assinante); o resto só se as regras permitirem anúncio.
+     */
     fun onActivityStarted(activity: Activity) {
+        showBillingMessagesOnce(activity)
         if (!AdsGate.shouldStartAds(state.adsFree, state.firstWinReached, AdsConfig.unitConfigured)) return
         val info = UserMessagingPlatform.getConsentInformation(activity)
         // Sessão anterior já tinha consentimento resolvido: inicializa já, e atualiza em seguida.
@@ -111,6 +116,21 @@ class AdsController(
                 afterConsent(info)
             },
         )
+    }
+
+    /**
+     * Uma vez por abertura do app: mensagens transacionais da Play (cartão recusado, assinatura
+     * suspensa). Se a pessoa corrige o pagamento ali, confere a assinatura de novo na hora.
+     */
+    private fun showBillingMessagesOnce(activity: Activity) {
+        if (billingMessagesShown) return
+        billingMessagesShown = true
+        scope.launch {
+            val updated = runCatching { billing.showInAppMessages(activity) }
+                .onFailure { AppLogger.w(TAG) { "Mensagens da Play indisponíveis: ${it.message}" } }
+                .getOrDefault(false)
+            if (updated) refreshEntitlement()
+        }
     }
 
     private fun afterConsent(info: ConsentInformation) {
