@@ -52,6 +52,7 @@ fun PreferencesScreen(
     onNavigateToThemeSettings: () -> Unit = {},
     onNavigateToDeveloper: () -> Unit = {},
     onNavigateToRemoveAds: () -> Unit = {},
+    showRemoveAds: Boolean = false,
     exportState: ExportMyDataUiState = ExportMyDataUiState.Idle,
     exportSuggestedFileName: () -> String = { "" },
     onExportFileChosen: (Uri?) -> Unit = {},
@@ -80,25 +81,28 @@ fun PreferencesScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
             // ========== SEM ANÚNCIOS (assinatura) ==========
-            Card(
-                onClick = onNavigateToRemoveAds,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.remove_ads_entry_title),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold
+            // Só com anúncio configurado no build (ou para quem já assina): não vende o que não existe.
+            if (showRemoveAds) {
+                Card(
+                    onClick = onNavigateToRemoveAds,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                    Text(
-                        text = stringResource(R.string.remove_ads_entry_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.remove_ads_entry_title),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = stringResource(R.string.remove_ads_entry_subtitle),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 

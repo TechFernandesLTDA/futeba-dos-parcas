@@ -17,6 +17,13 @@ object AdsGate {
     fun shouldStartAds(adsFree: Boolean, firstWinReached: Boolean, unitConfigured: Boolean): Boolean =
         !adsFree && firstWinReached && unitConfigured
 
+    /**
+     * A entrada "Remover anúncios" só aparece quando há anúncio para remover (unidade configurada
+     * no build). Quem já assina continua vendo, para conferir e gerenciar a assinatura.
+     */
+    fun shouldOfferRemoveAds(adsFree: Boolean, unitConfigured: Boolean): Boolean =
+        unitConfigured || adsFree
+
     /** O banner aparece quando o SDK pode pedir anúncios, a tela permite e o consentimento deixa. */
     fun shouldShowBanner(
         adsFree: Boolean,

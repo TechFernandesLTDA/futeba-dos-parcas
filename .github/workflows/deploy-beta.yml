@@ -83,6 +83,10 @@ jobs:
           printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
       - name: Build Release APK
+        env:
+          ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
+          ADMOB_BANNER_UNIT_ID: ${{ vars.ADMOB_BANNER_UNIT_ID }}
+          ADMOB_ALLOW_EMPTY: ${{ vars.ADMOB_ALLOW_EMPTY }}
         run: ./gradlew assembleRelease
 
       - name: Format release notes
