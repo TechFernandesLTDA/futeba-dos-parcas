@@ -30,7 +30,7 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
-### [1.44.0][android-1.44.0] - 2026-11-11
+### [1.44.0][android-1.44.0] - 2026-11-20
 
 #### Adicionado
 - AdMob (banner adaptativo ancorado) e UMP (consentimento), com unidade e ID do app vindos da config de build (`ADMOB_APP_ID`, `ADMOB_BANNER_UNIT_ID`); debug usa IDs de teste do Google.
@@ -39,6 +39,17 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 #### Mudado
 - Permissão `AD_ID` deixa de ser removida do manifesto (necessária ao AdMob); declarar o ID de publicidade na Play Console.
+
+#### Corrigido
+- Leituras do Firestore sem serializador de `Any` (`get<Any?>` em `safeLong` e afins) derrubavam todo login na 1.43.1 com `SerializationException`; helpers tolerantes em `FirebaseSafeReads.kt` (#4544).
+- `getCurrentAuthUser` não cria mais `users/{uid}` no cliente (as regras negam); espera o documento da `onUserCreate` por até ~14 s e falha com `UserProfileNotReadyException` (#4563).
+- Credential Manager: cancelamento sem erro, `NoCredentialException` tenta `GetSignInWithGoogleOption`, mensagens específicas (#4563).
+- Foto do Google só preenche perfil sem foto, em melhor esforço (#4563).
+- Modelo `Game` sem `@DocumentId`: o ID vem do documento e prevalece sobre o campo gravado pelo web (#4566, #4569, #4576, #4579).
+- `InviteRepositoryImpl` grava `group_invites` em snake_case com `serverTimestamp()`, como o web e as regras esperam; só o dono do grupo convida (#4584, #4589).
+- Fila de espera e confirmação de gestor recusam jogador bloqueado, inclusive gestor e admin; papel REMOVED, INACTIVE ou BLOCKED não vale como papel ativo; só admin grava `mvp_id` direto em jogo FINISHED (#4599).
+
+_Issues: #4584, #4576 · PRs: #4544, #4563, #4566, #4569, #4579, #4589, #4599_
 
 ### [1.43.5][android-1.43.5] - 2026-11-16
 
