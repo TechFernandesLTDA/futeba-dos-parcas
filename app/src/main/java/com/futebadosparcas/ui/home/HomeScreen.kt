@@ -97,7 +97,9 @@ fun HomeScreen(
     onDirectMessagesClick: () -> Unit = {}, // Navegacao para mensagens diretas
     hapticManager: HapticManager? = null,
     /** ViewModel de onboarding para checklist de primeiros passos (Fase 1). */
-    onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
+    onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null,
+    /** Convite único "Sem anúncios", logo abaixo do cabeçalho. `null` = não mostra. */
+    subscriptionInvite: (@Composable () -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
@@ -172,7 +174,8 @@ fun HomeScreen(
                             onSocialFeedClick = onSocialFeedClick,
                             onNearbyPlayersClick = onNearbyPlayersClick,
                             onDirectMessagesClick = onDirectMessagesClick,
-                            onboardingViewModel = onboardingViewModel
+                            onboardingViewModel = onboardingViewModel,
+                            subscriptionInvite = subscriptionInvite
                         )
                     }
                     is HomeUiState.Error -> {
@@ -245,7 +248,8 @@ private fun HomeSuccessContent(
     onSocialFeedClick: () -> Unit,
     onNearbyPlayersClick: () -> Unit,
     onDirectMessagesClick: () -> Unit,
-    onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null
+    onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel? = null,
+    subscriptionInvite: (@Composable () -> Unit)? = null
 ) {
     // ✅ OTIMIZAÇÃO: Usar remember para estabilizar estados e evitar recomposições desnecessárias
     // Cada campo é memoizado com sua própria key para granularidade fina
@@ -385,6 +389,15 @@ private fun HomeSuccessContent(
                 onProfileClick = onShowPlayerCard,
                 onLevelClick = onLevelJourneyClick  // Abre Rumo ao Estrelato ao clicar no nível
             )
+        }
+
+        // Convite único "Sem anúncios": decidido antes da Home carregar, entra junto com o conteúdo.
+        if (subscriptionInvite != null) {
+            item(key = "subscription_invite") {
+                Box(modifier = Modifier.padding(horizontal = AppDimensions.spacing_medium)) {
+                    subscriptionInvite()
+                }
+            }
         }
 
         if (progressInsights.hasContent) {

@@ -301,9 +301,29 @@ fun AppNavHost(
         composable(Screen.Home.route) {
             val viewModel: com.futebadosparcas.ui.home.HomeViewModel = koinViewModel()
             val onboardingViewModel: com.futebadosparcas.ui.onboarding.OnboardingViewModel = koinViewModel()
+            val homeAdsController: com.futebadosparcas.monetization.AdsController = koinInject()
+            val homeAdsUi by homeAdsController.uiState.collectAsStateWithLifecycle()
+            // Convite único "Sem anúncios": decidido uma vez por entrada na Home (a marca de "já
+            // mostrado" é gravada aqui). Quem assina com o cartão na tela deixa de vê-lo.
+            var showSubscriptionInvite by androidx.compose.runtime.saveable.rememberSaveable {
+                androidx.compose.runtime.mutableStateOf(homeAdsController.takeSubscriptionInvite())
+            }
             HomeScreen(
                 viewModel = viewModel,
                 onboardingViewModel = onboardingViewModel,
+                subscriptionInvite = if (showSubscriptionInvite && !homeAdsUi.adsFree) {
+                    {
+                        com.futebadosparcas.monetization.SubscriptionInviteCard(
+                            onOpen = {
+                                showSubscriptionInvite = false
+                                navController.navigate(Screen.RemoveAds.route)
+                            },
+                            onDismiss = { showSubscriptionInvite = false },
+                        )
+                    }
+                } else {
+                    null
+                },
                 onGameClick = { gameId ->
                     navController.navigate(Screen.GameDetail.createRoute(gameId))
                 },

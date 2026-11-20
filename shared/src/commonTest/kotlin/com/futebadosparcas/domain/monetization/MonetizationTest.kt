@@ -179,3 +179,65 @@ class AdsStateTest {
         assertFalse(state.adsFree)
     }
 }
+
+class SubscriptionInviteTest {
+    private fun stateWith(firstWin: Boolean = true, adsFree: Boolean = false, shown: Boolean = false): Pair<FakeStore, AdsState> {
+        val store = FakeStore()
+        store.map[MonetizationConfig.PREF_FIRST_WIN] = firstWin
+        store.map[MonetizationConfig.PREF_ADS_FREE] = adsFree
+        store.map[MonetizationConfig.PREF_SUBSCRIPTION_INVITE_SHOWN] = shown
+        return store to AdsState(store)
+    }
+
+    @Test
+    fun aparece_depoisDaPrimeiraVitoria_eGravaAMarca() {
+        val (store, state) = stateWith()
+        assertTrue(state.takeSubscriptionInvite(unitConfigured = true))
+        assertEquals(true, store.map[MonetizationConfig.PREF_SUBSCRIPTION_INVITE_SHOWN])
+    }
+
+    @Test
+    fun aparece_umaVezSo_tambemNumaNovaAberturaDoApp() {
+        val (store, state) = stateWith()
+        assertTrue(state.takeSubscriptionInvite(unitConfigured = true))
+        assertFalse(state.takeSubscriptionInvite(unitConfigured = true))
+        // Nova abertura: outro AdsState lendo o mesmo aparelho.
+        assertFalse(AdsState(store).takeSubscriptionInvite(unitConfigured = true))
+    }
+
+    @Test
+    fun assinante_nuncaVe_eAMarcaNaoEGravada() {
+        val (store, state) = stateWith(adsFree = true)
+        assertFalse(state.takeSubscriptionInvite(unitConfigured = true))
+        assertEquals(false, store.map[MonetizationConfig.PREF_SUBSCRIPTION_INVITE_SHOWN])
+    }
+
+    @Test
+    fun semPrimeiraVitoria_naoAparece() {
+        val (_, state) = stateWith(firstWin = false)
+        assertFalse(state.takeSubscriptionInvite(unitConfigured = true))
+    }
+
+    @Test
+    fun semAnuncioConfiguradoNoBuild_naoVendeOQueNaoExiste() {
+        val (_, state) = stateWith()
+        assertFalse(state.takeSubscriptionInvite(unitConfigured = false))
+        // Quando o build passar a ter anúncio, o convite ainda pode aparecer uma vez.
+        assertTrue(state.takeSubscriptionInvite(unitConfigured = true))
+    }
+
+    @Test
+    fun jaMostrado_nuncaMais() {
+        val (_, state) = stateWith(shown = true)
+        assertFalse(state.takeSubscriptionInvite(unitConfigured = true))
+    }
+
+    @Test
+    fun gate_soComTodasAsCondicoes() {
+        assertTrue(AdsGate.shouldShowSubscriptionInvite(false, true, true, false))
+        assertFalse(AdsGate.shouldShowSubscriptionInvite(true, true, true, false))
+        assertFalse(AdsGate.shouldShowSubscriptionInvite(false, false, true, false))
+        assertFalse(AdsGate.shouldShowSubscriptionInvite(false, true, false, false))
+        assertFalse(AdsGate.shouldShowSubscriptionInvite(false, true, true, true))
+    }
+}

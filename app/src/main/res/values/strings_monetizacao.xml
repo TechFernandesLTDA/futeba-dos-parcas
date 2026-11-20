@@ -19,4 +19,9 @@
     <string name="remove_ads_msg_done">Pronto: você está sem anúncios.</string>
     <string name="remove_ads_msg_restored">Compra restaurada: você está sem anúncios.</string>
     <string name="remove_ads_msg_nothing_to_restore">Não achamos assinatura ativa nesta conta do Google Play.</string>
+    <!-- Convite único na Home, depois da primeira vitória (sem preço: fica na tela da assinatura) -->
+    <string name="subscription_invite_title">Jogue sem anúncios</string>
+    <string name="subscription_invite_body">Com a assinatura anual, os banners saem do app. O preço e a renovação aparecem na próxima tela, antes de você decidir.</string>
+    <string name="subscription_invite_open">Ver a assinatura</string>
+    <string name="subscription_invite_dismiss">Agora não</string>
 </resources>

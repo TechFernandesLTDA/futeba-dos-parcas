@@ -24,6 +24,17 @@ object AdsGate {
     fun shouldOfferRemoveAds(adsFree: Boolean, unitConfigured: Boolean): Boolean =
         unitConfigured || adsFree
 
+    /**
+     * Convite único "Sem anúncios" na Home: uma vez só na vida do app, depois da primeira vitória,
+     * só com anúncio configurado no build (não vende o que não existe) e nunca para quem assina.
+     */
+    fun shouldShowSubscriptionInvite(
+        adsFree: Boolean,
+        firstWinReached: Boolean,
+        unitConfigured: Boolean,
+        inviteAlreadyShown: Boolean,
+    ): Boolean = !adsFree && firstWinReached && unitConfigured && !inviteAlreadyShown
+
     /** O banner aparece quando o SDK pode pedir anúncios, a tela permite e o consentimento deixa. */
     fun shouldShowBanner(
         adsFree: Boolean,
