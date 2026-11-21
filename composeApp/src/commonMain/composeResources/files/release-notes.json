@@ -1,7 +1,26 @@
 {
   "platform": "ios",
-  "generatedAt": "2026-11-20T05:58:16.420Z",
+  "generatedAt": "2026-11-21T22:35:44.674Z",
   "notes": [
+    {
+      "version": "1.11.0",
+      "buildNumber": 31,
+      "releaseDate": "2026-11-21",
+      "type": "minor",
+      "showPopup": false,
+      "published": false,
+      "headline": "O app ganhou um visual novo, com desenhos do mundo da pelada nas telas vazias, nos avisos de erro e na boas-vindas.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Telas vazias e de erro ficaram mais claras e iguais no iPhone, no Android e no site.",
+        "As animações dos desenhos são curtas e somem quando o iPhone está com Reduzir Movimento ligado."
+      ],
+      "fixed": [],
+      "issueRefs": [
+        4610
+      ]
+    },
     {
       "version": "1.10.1",
       "buildNumber": 30,

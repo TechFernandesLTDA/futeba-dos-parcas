@@ -30,6 +30,19 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.45.0][android-1.45.0] - 2026-11-21
+
+#### Adicionado
+- Artes em SVG com fonte única em `shared/artes`, geradas para Compose por `scripts/artes/gerar.mjs`, com cores só dos tokens de `shared/design-tokens.json#arte` (#4609).
+- Convite único "Jogue sem anúncios" na Home depois da primeira vitória (#4607).
+- Aviso de pagamento recusado (mensagens no app da Play Billing) (#4606).
+
+#### Mudado
+- `EmptyState`, `ErrorState`, `modern/EmptyState`, estado vazio de jogos e boas-vindas usam as artes; ícone sem arte no catálogo continua como ícone (#4609).
+- A compra vende só a oferta base do plano anual (#4606).
+
+_Issues: #4610 · PRs: #4606, #4607, #4609_
+
 ### [1.44.0][android-1.44.0] - 2026-11-20
 
 #### Adicionado
@@ -489,6 +502,22 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.64.0][web-1.64.0] - 2026-11-21
+
+#### Adicionado
+- Componente `Arte` e artes geradas de `shared/artes` em `EmptyState`, `ErrorState`, boas-vindas, 404 e estados vazios (#4609).
+
+#### Mudado
+- App Check, Analytics e o iframe do Auth só carregam depois da interação nas páginas públicas (#4564, #4565).
+
+#### Corrigido
+- Aba Jogos com os jogos dos grupos do usuário (#4588); sem gravar `id` em membros e no espelho de grupos (#4587); defeitos de web e regras achados pela bateria (#4580, #4599).
+
+#### Segurança
+- Alertas do Dependabot corrigidos (#4600).
+
+_Issues: #4610 · PRs: #4564, #4565, #4580, #4587, #4588, #4599, #4600, #4609_
 
 ### [1.63.0][web-1.63.0] - 2026-11-11
 
@@ -2418,6 +2447,16 @@ _Issues: #1465, #1479, #1421, #1420 · PRs: #1465, #1479, #1421, #1420, #1417_
 
 ## iOS
 
+### [1.11.0][ios-1.11.0] - 2026-11-21
+
+#### Adicionado
+- Artes em SVG com fonte única em `shared/artes`, geradas para Compose Multiplatform, com renderizador gêmeo do Android e teste de igualdade (#4609).
+
+#### Mudado
+- Estados vazios e de erro e a boas-vindas do `composeApp` usam as artes (#4609).
+
+_Issues: #4610 · PRs: #4609_
+
 ### [1.10.1][ios-1.10.1] - 2026-11-14
 
 #### Corrigido
@@ -3460,6 +3499,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.45.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.45.0.md
 [android-1.44.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.44.0.md
 [android-1.43.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.5.md
 [android-1.43.4]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.4.md
@@ -3496,6 +3536,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.64.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.64.0.md
 [web-1.63.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.63.0.md
 [web-1.61.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.1.md
 [web-1.61.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.0.md
@@ -3677,6 +3718,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [web-1.26.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.2.md
 [web-1.26.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.1.md
 [web-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.26.0.md
+[ios-1.11.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.11.0.md
 [ios-1.10.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.10.1.md
 [ios-1.10.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.10.0.md
 [ios-1.8.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/ios/1.8.0.md
