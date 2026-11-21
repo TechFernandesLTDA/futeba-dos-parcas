@@ -47,7 +47,7 @@ Plano anual: desconto equivalente a dois meses [proposta].
 
 ## 4. Anúncios e "Sem anúncios"
 
-**Hoje** [lido]: faixa do AdMob nas abas principais, só depois da primeira vitória, sempre não personalizada; AdSense na web; assinatura "Sem anúncios" a R$ 9,90 por ano pelo Play e pela App Store, com o direito guardado só no aparelho, sem validação no servidor. As fichas das lojas foram revisadas hoje (#4550) e a política de privacidade 2.1 acabou de sair (#4553).
+**Hoje** [lido]: faixa do AdMob nas abas principais, só depois da primeira vitória, sempre não personalizada; AdSense na web; assinatura "Sem anúncios" a R$ 9,99 por ano pelo Play e R$ 9,90 pela App Store, com o direito guardado só no aparelho, sem validação no servidor. As fichas das lojas foram revisadas hoje (#4550) e a política de privacidade 2.1 acabou de sair (#4553).
 
 **Proposta**
 
