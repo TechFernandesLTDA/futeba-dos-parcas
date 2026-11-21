@@ -60,17 +60,26 @@ const ATRIBUTOS_ACEITOS = new Set([
 
 // ─── XML mínimo ──────────────────────────────────────────────────────────────
 
+/** Remove todo trecho entre `abre` e `fecha`; trecho sem fechamento vai até o fim do texto. */
+function removerTrechos(texto, abre, fecha) {
+  let saida = '';
+  let pos = 0;
+  for (;;) {
+    const ini = texto.indexOf(abre, pos);
+    if (ini === -1) return saida + texto.slice(pos);
+    saida += texto.slice(pos, ini);
+    const fim = texto.indexOf(fecha, ini + abre.length);
+    if (fim === -1) return saida;
+    pos = fim + fecha.length;
+  }
+}
+
 /** Lê o SVG das fontes (formato controlado: aspas duplas, sem CDATA). */
 export function lerXml(texto, origem = 'svg') {
   const raiz = { nome: '#raiz', atributos: {}, filhos: [] };
   const pilha = [raiz];
-  // Repete a remoção até estabilizar: um comentário aninhado ("<!<!---->--") não deixa sobra
-  let limpo = texto;
-  let anterior;
-  do {
-    anterior = limpo;
-    limpo = limpo.replace(/<!--[\s\S]*?-->/g, '').replace(/<\?xml[\s\S]*?\?>/g, '');
-  } while (limpo !== anterior);
+  // Corta comentários e a declaração XML por varredura, sem regex de substituição
+  const limpo = removerTrechos(removerTrechos(texto, '<!--', '-->'), '<?xml', '?>');
   const reTag = /<(\/?)([a-zA-Z][\w:-]*)((?:\s+[\w:-]+="[^"]*")*)\s*(\/?)>/g;
   let m;
   let fim = 0;
