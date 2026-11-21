@@ -2391,3 +2391,17 @@ Spec: `specs/bugfix-2026-11-17-permissoes-defeitos-4586.md` (APPROVED pelo Renan
   sem `getStatusEnum`, que cairia em `ACTIVE` para valor inválido.
 - `canManageGame` no web (D6): tolera `coOrganizers` ausente. Nenhum chamador de produção muda.
 - Os testes de `it.fails`, `test.failing` e `@Disabled` viram testes normais. Nenhuma asserção foi enfraquecida.
+
+## 2026-11-21: Artes da pelada com fonte SVG única e papéis de cor (spec FEAT_2026-11-21_ARTES_DA_PELADA)
+
+Spec: `specs/FEAT_2026-11-21_ARTES_DA_PELADA.md` (APPROVED pelo Renan em 21/11/2026, sobre o plano com amostras).
+
+- Traço "giz de campo", só objetos (sem pessoas), sem texto dentro da arte. Poppins e paleta continuam.
+- Cada arte tem um SVG em `shared/artes/`. Um gerador sem dependências cria os dados para Kotlin (`:shared`,
+  sem Compose) e TypeScript; cada plataforma tem um renderizador pequeno. Assim web, Android e iOS desenham a
+  mesma coisa e o tema escuro sai do mesmo arquivo.
+- Cores das artes são papéis (`grama`, `giz`, `ouro`...) definidos em `shared/design-tokens.json#arte` com
+  valores que já eram tokens. A arte não segue o tema de cor escolhido pelo usuário: é identidade fixa, só
+  muda entre claro e escuro.
+- Compose desenha as artes em Canvas (não `ImageVector`) porque precisa de traço tracejado e animação;
+  pictogramas, que são só traço, viram `ImageVector` para entrar em `Icon`.

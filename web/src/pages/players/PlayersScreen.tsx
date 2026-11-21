@@ -292,6 +292,7 @@ export const PlayersScreen: React.FC = () => {
           <PageContainer maxWidth="list">
             {members.length === 0 ? (
               <EmptyState
+                arte="banco_vazio"
                 icon={<PersonIcon sx={{ fontSize: 64 }} />}
                 title={t('empty.noMembers')}
                 description={t('empty.noMembersDesc')}

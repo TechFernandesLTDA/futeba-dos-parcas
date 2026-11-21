@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography, Button, useTheme, Chip } from '@mui/material';
-import { SentimentDissatisfied as NotFoundIcon } from '@mui/icons-material';
+import { Arte } from '../../components/artes/Arte';
 import { logError } from '../../utils/errorLogger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ErrorDetailsButton } from '../../components/common/ErrorDetailsButton';
@@ -58,7 +58,7 @@ export const NotFoundScreen: React.FC = () => {
       role="main"
       aria-labelledby="not-found-title"
     >
-      <NotFoundIcon sx={{ fontSize: 80, color: theme.palette.text.disabled }} />
+      <Arte id="bola_na_trave" larguraMaxima={240} sx={{ mb: 1, '@media (max-height: 520px)': { maxWidth: 140 } }} />
       <Typography id="not-found-title" variant="h4" fontWeight={700} color={theme.palette.text.primary}>
         404 — Página não encontrada
       </Typography>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" data-descricao="Bola">
+  <circle cx="12" cy="12" r="9"/>
+  <path d="M12 8.8l3.04 2.21-1.16 3.58h-3.76l-1.16-3.58z"/>
+  <path d="M12 8.8V3M15.04 11.01l5.52-1.79M13.88 14.59l3.41 4.69M10.12 14.59l-3.41 4.69M8.96 11.01L3.44 9.22"/>
+</svg>

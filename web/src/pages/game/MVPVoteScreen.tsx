@@ -584,7 +584,7 @@ export const MVPVoteScreen: React.FC = () => {
                         );
                       })}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER' && p.userId !== currentUser?.uid).length === 0 && (
-                      <EmptyState icon={<PersonOffIcon />} title={t('empty.noGoalkeeper')} description={t('empty.noGoalkeeperDesc')} animate={false} />
+                      <EmptyState arte="banco_vazio" icon={<PersonOffIcon />} title={t('empty.noGoalkeeper')} description={t('empty.noGoalkeeperDesc')} animate={false} />
                     )}
                   </List>
                 </RadioGroup>

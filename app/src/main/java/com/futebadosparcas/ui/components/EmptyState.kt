@@ -19,6 +19,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.ui.components.artes.ArteDeEstado
+import com.futebadosparcas.ui.components.artes.arteDoIcone
 
 @Deprecated(
     message = "Use modern/EmptyState instead",
@@ -36,7 +39,9 @@ sealed class EmptyStateType {
         val description: String,
         val icon: ImageVector = Icons.Default.Inbox,
         val actionLabel: String? = null,
-        val onAction: (() -> Unit)? = null
+        val onAction: (() -> Unit)? = null,
+        /** Arte da pelada; sem ela, vem do [icon] (spec ARTES_DA_PELADA). */
+        val arte: ArteId? = null
     ) : EmptyStateType()
 
     /**
@@ -96,6 +101,7 @@ fun EmptyState(
         when (type) {
             is EmptyStateType.NoData -> EmptyStateContent(
                 icon = type.icon,
+                arte = type.arte ?: arteDoIcone(type.icon),
                 title = type.title,
                 description = type.description,
                 iconTint = MaterialTheme.colorScheme.primary,
@@ -103,8 +109,10 @@ fun EmptyState(
                 onAction = type.onAction
             )
 
+            // Ícone próprio sem arte (ex.: cadeado de permissão) continua como ícone
             is EmptyStateType.Error -> EmptyStateContent(
                 icon = type.icon,
+                arte = arteDoIcone(type.icon),
                 title = type.title,
                 description = type.description,
                 iconTint = MaterialTheme.colorScheme.error,
@@ -114,6 +122,7 @@ fun EmptyState(
 
             is EmptyStateType.NoConnection -> EmptyStateContent(
                 icon = type.icon,
+                arte = arteDoIcone(type.icon),
                 title = type.title ?: stringResource(R.string.empty_state_no_connection_title),
                 description = type.description ?: stringResource(R.string.empty_state_no_connection_desc),
                 iconTint = MaterialTheme.colorScheme.tertiary,
@@ -123,6 +132,7 @@ fun EmptyState(
 
             is EmptyStateType.NoResults -> EmptyStateContent(
                 icon = type.icon,
+                arte = arteDoIcone(type.icon) ?: ArteId.LUPA,
                 title = type.title ?: stringResource(R.string.empty_state_no_results_title),
                 description = type.description,
                 iconTint = MaterialTheme.colorScheme.secondary,
@@ -139,6 +149,7 @@ fun EmptyState(
 @Composable
 private fun EmptyStateContent(
     icon: ImageVector,
+    arte: ArteId?,
     title: String,
     description: String,
     iconTint: Color,
@@ -153,15 +164,19 @@ private fun EmptyStateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Ícone
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(96.dp),
-            tint = iconTint.copy(alpha = 0.7f)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+        // Arte da pelada (ou o ícone, quando a tela não tem arte no catálogo)
+        if (arte != null) {
+            ArteDeEstado(id = arte)
+            Spacer(modifier = Modifier.height(20.dp))
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(96.dp),
+                tint = iconTint.copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Título
         Text(

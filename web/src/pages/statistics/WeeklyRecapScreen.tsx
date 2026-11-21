@@ -221,6 +221,7 @@ export const WeeklyRecapScreen: React.FC = () => {
   if (!weeklyStats) {
     return (
       <EmptyState
+        arte="placar_zerado"
         icon={<TimelineIcon />}
         title={t('weeklyRecap.noDataAvailable')}
       />
@@ -350,6 +351,7 @@ export const WeeklyRecapScreen: React.FC = () => {
             </Typography>
             {recentGames.length === 0 ? (
               <EmptyState
+                arte="prancheta_vazia"
                 icon={<CalendarIcon />}
                 title={t('weeklyRecap.noGamesThisWeek')}
                 description={t('weeklyRecap.startPlayingPrompt')}

@@ -317,6 +317,7 @@ export function GamesTab() {
           ))
         ) : filteredGames.length === 0 ? (
           <EmptyState
+            arte={hasActiveFilters ? 'lupa' : hasQualifiedOwnerGroup ? 'prancheta_vazia' : 'coletes_varal'}
             icon={hasActiveFilters || hasQualifiedOwnerGroup ? <SportsSoccer /> : <People />}
             title={
               hasActiveFilters

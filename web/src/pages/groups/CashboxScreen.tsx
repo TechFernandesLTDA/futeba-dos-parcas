@@ -546,6 +546,7 @@ export const CashboxScreen: React.FC = () => {
             <LoadingState shimmerCount={3} itemType="LIST" />
           ) : !monthlyFinance.period ? (
             <EmptyState
+              arte="vaquinha"
               icon={<PaymentsIcon />}
               title="Mensalidade ainda não calculada"
               description={isAdminOrOwner
@@ -650,6 +651,7 @@ export const CashboxScreen: React.FC = () => {
           <LoadingState shimmerCount={5} itemType="LIST" />
         ) : transactions.length === 0 ? (
           <EmptyState
+            arte="vaquinha"
             icon={<HistoryIcon />}
             title={t('empty.noTransaction')}
             description={canManageCashbox ? t('cashbox.emptyAdminDesc') : t('cashbox.emptyMemberDesc')}
@@ -674,6 +676,7 @@ export const CashboxScreen: React.FC = () => {
           />
         ) : displayedTransactions.length === 0 ? (
           <EmptyState
+            arte="vaquinha"
             icon={<HistoryIcon />}
             title={t('cashbox.noFilteredTransactions')}
             description={t('cashbox.noFilteredTransactionsDesc')}

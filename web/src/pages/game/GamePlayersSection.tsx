@@ -91,6 +91,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
         <TabPanel value={tabValue} index={0}>
           {confirmedPlayers.length === 0 ? (
             <EmptyState
+              arte="banco_vazio"
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
               title={t('empty.noConfirmedPlayers')}
               description={t('empty.noConfirmedPlayersDesc')}
@@ -133,6 +134,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
         <TabPanel value={tabValue} index={1}>
           {goalkeepers.length === 0 ? (
             <EmptyState
+              arte="banco_vazio"
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
               title={t('empty.noGoalkeeper')}
               description={t('empty.noGoalkeeperConfirmed')}
@@ -170,6 +172,7 @@ export const GamePlayersSection: React.FC<GamePlayersSectionProps> = ({
             <Alert severity="error">{waitlistError}</Alert>
           ) : waitlist.length === 0 ? (
             <EmptyState
+              arte="banco_vazio"
               icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
               title={t('empty.noWaitlist')}
               description={t('empty.noWaitlistDesc')}

@@ -59,6 +59,7 @@ export const SocialFeedScreen: React.FC = () => {
 
         {!loading && !error && !hasGroups && (
           <EmptyState
+            arte="coletes_varal"
             icon={<GroupsIcon />}
             title={t('socialFeed.emptyGroupsTitle')}
             description={t('socialFeed.emptyGroupsDesc')}

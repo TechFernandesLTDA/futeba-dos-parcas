@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" data-descricao="Cones de treino e a bola no gramado">
+  <circle cx="110" cy="84" r="66" fill="var(--a-fundo)"/>
+  <rect x="16" y="126" width="188" height="12" rx="6" fill="var(--a-grama)"/>
+  <path d="M34 112Q54 92 74 108T116 104T156 108" fill="none" stroke="var(--a-contorno)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/>
+  <g transform="translate(66 126) scale(1.25)"><use href="#cone"/></g>
+  <g transform="translate(116 126)"><use href="#cone"/></g>
+  <g transform="translate(156 126) scale(.8)"><use href="#cone"/></g>
+  <ellipse cx="190" cy="127" rx="10" ry="2.6" fill="var(--a-sombra)"/>
+  <g class="m-quicar" transform="translate(190 114) scale(1.25)"><use href="#bola"/></g>
+</svg>

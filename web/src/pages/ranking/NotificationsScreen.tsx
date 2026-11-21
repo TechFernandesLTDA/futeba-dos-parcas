@@ -356,6 +356,7 @@ export const NotificationsScreen: React.FC = () => {
           ))
         ) : filteredNotifications.length === 0 ? (
           <EmptyState
+            arte="apito"
             icon={<NotificationIcon />}
             title={t('empty.noNotifications')}
             description={activeFilter !== 'ALL' ? t('empty.noNotificationsFilter') : t('empty.noNotificationsWelcome')}

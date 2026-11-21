@@ -1,7 +1,35 @@
 {
   "platform": "web",
-  "generatedAt": "2026-11-20T05:58:16.419Z",
+  "generatedAt": "2026-11-21T22:35:44.673Z",
   "notes": [
+    {
+      "version": "1.64.0",
+      "buildNumber": null,
+      "releaseDate": "2026-11-21",
+      "type": "minor",
+      "showPopup": false,
+      "published": true,
+      "headline": "O site ganhou um visual novo, com desenhos do mundo da pelada nas telas vazias, nos avisos de erro, na boas-vindas e na página não encontrada.",
+      "highlights": [
+        {
+          "icon": "sports_soccer",
+          "title": "Artes da pelada",
+          "description": "Prancheta, coletes no varal, pódio, apito e outros desenhos mostram o que fazer quando ainda não há jogos, grupos ou ranking."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "As páginas públicas abrem mais rápido.",
+        "As animações dos desenhos são curtas e somem quando o sistema está com movimento reduzido."
+      ],
+      "fixed": [
+        "A aba Jogos lista os jogos dos grupos de que você participa.",
+        "Correções de permissão em grupos, jogos e membros."
+      ],
+      "issueRefs": [
+        4610
+      ]
+    },
     {
       "version": "1.63.0",
       "buildNumber": null,

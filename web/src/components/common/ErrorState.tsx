@@ -4,13 +4,10 @@ import {
   Typography,
   Button,
   Collapse,
-  useTheme,
-  alpha,
 } from '@mui/material';
-import { iconSizes } from '../../theme/iconSizes';
+import { Arte } from '../artes/Arte';
 import { componentMaxWidth } from '../../theme/pageTokens';
 import {
-  ErrorOutline as ErrorIcon,
   Refresh as RefreshIcon,
   Code as CodeIcon,
 } from '@mui/icons-material';
@@ -28,7 +25,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
   retryLabel = 'Tentar novamente',
 }) => {
-  const theme = useTheme();
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -44,22 +40,10 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         textAlign: 'center',
       }}
     >
-      <Box
-        sx={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          bgcolor: alpha(theme.palette.error.main, 0.1),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 2,
-        }}
-      >
-        <ErrorIcon sx={{ fontSize: iconSizes.lg, color: 'error.main' }} />
-      </Box>
+      {/* Bola na trave: erro leve, a arte acalma; o texto explica. */}
+      <Arte id="bola_na_trave" larguraMaxima={200} sx={{ mb: 2.5, '@media (max-height: 520px)': { maxWidth: 120 } }} />
 
-      <Typography variant="h6" color="text.secondary" gutterBottom>
+      <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }} gutterBottom>
         Ops! Algo deu errado
       </Typography>
 

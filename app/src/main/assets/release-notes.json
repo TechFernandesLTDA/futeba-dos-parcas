@@ -1,7 +1,35 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-20T05:58:16.416Z",
+  "generatedAt": "2026-11-21T22:35:44.668Z",
   "notes": [
+    {
+      "version": "1.45.0",
+      "buildNumber": 95,
+      "releaseDate": "2026-11-21",
+      "type": "minor",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app ganhou um visual novo, com desenhos do mundo da pelada nas telas vazias, nos avisos de erro e na boas-vindas.",
+      "highlights": [
+        {
+          "icon": "sports_soccer",
+          "title": "Artes da pelada",
+          "description": "Prancheta, coletes no varal, pódio, apito e outros desenhos mostram o que fazer quando ainda não há jogos, grupos ou ranking."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Telas vazias e de erro ficaram mais claras e iguais no app, no iPhone e no site.",
+        "As animações dos desenhos são curtas e somem quando o celular está com movimento reduzido.",
+        "Depois da sua primeira vitória, a Home mostra uma vez o convite para jogar sem anúncios, sem atrapalhar o toque."
+      ],
+      "fixed": [
+        "Quem estiver com o pagamento da assinatura recusado recebe o aviso da Google Play para corrigir."
+      ],
+      "issueRefs": [
+        4610
+      ]
+    },
     {
       "version": "1.44.0",
       "buildNumber": 94,

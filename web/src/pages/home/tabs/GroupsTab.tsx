@@ -194,6 +194,7 @@ export function GroupsTab() {
           // #2268: usa o componente EmptyState padrão (ícone circular + fade-in)
           searchQuery ? (
             <EmptyState
+              arte="coletes_varal"
               icon={<People />}
               title={t('groups.noResultsSearch')}
               description={t('groups.tryDifferentSearch')}
@@ -203,6 +204,7 @@ export function GroupsTab() {
             />
           ) : (
             <EmptyState
+              arte="coletes_varal"
               icon={<People />}
               title={t('groups.noResults')}
               description={t('groups.emptyFirstGroupDesc')}

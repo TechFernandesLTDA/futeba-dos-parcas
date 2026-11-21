@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" data-descricao="Coletes verde e azul pendurados no varal, com uma vaga livre">
+  <circle cx="110" cy="88" r="66" fill="var(--a-fundo)"/>
+  <path d="M14 34Q110 54 206 34" fill="none" stroke="var(--a-contorno)" stroke-width="2"/>
+  <circle cx="14" cy="34" r="3" fill="var(--a-contorno)"/><circle cx="206" cy="34" r="3" fill="var(--a-contorno)"/>
+  <g transform="translate(62 41.5) rotate(-5)">
+    <use href="#colete" style="color:var(--a-verde)"/>
+    <rect x="-15" y="-6" width="5" height="12" rx="1.5" fill="var(--a-bronze)"/><rect x="10" y="-6" width="5" height="12" rx="1.5" fill="var(--a-bronze)"/>
+  </g>
+  <g transform="translate(110 44) rotate(2)">
+    <use href="#colete" style="color:var(--a-azul)"/>
+    <rect x="-15" y="-6" width="5" height="12" rx="1.5" fill="var(--a-bronze)"/><rect x="10" y="-6" width="5" height="12" rx="1.5" fill="var(--a-bronze)"/>
+  </g>
+  <g transform="translate(158 41.5) rotate(5)">
+    <path d="M-24 0H-11A11 9 0 0 0 11 0H24L27 16L21 20V60Q0 66 -21 60V20L-27 16Z" fill="none" stroke="var(--a-contorno)" stroke-width="2" stroke-dasharray="4 4"/>
+    <path d="M0 26V44M-9 35H9" fill="none" stroke="var(--a-laranja)" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

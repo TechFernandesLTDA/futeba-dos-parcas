@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" data-descricao="Par de chuteiras com presença confirmada">
+  <circle cx="110" cy="86" r="66" fill="var(--a-fundo)"/>
+  <ellipse cx="104" cy="140" rx="72" ry="5" fill="var(--a-sombra)"/>
+  <g transform="translate(40 118)"><use href="#chuteira" style="color:var(--a-verde)"/></g>
+  <path d="M44 118V92Q44 80 56 80H70Q76 80 78 86L82 94Q104 94 116 102Q124 108 122 118Z" fill="var(--a-sombra)" opacity=".5"/>
+  <g transform="translate(62 132)"><use href="#chuteira" style="color:var(--a-verde)"/></g>
+  <g class="m-piscar" transform="translate(170 50)">
+    <circle r="19" fill="var(--a-grama)"/>
+    <path d="M-9 0L-3 6L10 -7" fill="none" stroke="var(--a-giz)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g fill="var(--a-ouro)">
+    <g transform="translate(140 30) scale(.7)"><use href="#brilho4"/></g>
+    <g transform="translate(198 78) scale(.6)"><use href="#brilho4"/></g>
+  </g>
+</svg>

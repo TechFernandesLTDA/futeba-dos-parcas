@@ -83,6 +83,50 @@
     "grass": "#388E3C"
   },
 
+  "arte": {
+    "description": "Papéis de cor das artes da pelada (shared/artes). Valores são tokens desta mesma folha, às vezes com transparência (#RRGGBBAA). Nenhuma cor nova. Consumido por scripts/artes/gerar.mjs.",
+    "claro": {
+      "fundo": "#00852A14",
+      "grama": "#00852A",
+      "giz": "#FFFFFF",
+      "branco": "#FFFFFF",
+      "tinta": "#0F172A",
+      "contorno": "#0F172A8C",
+      "sup": "#FFFFFF",
+      "neutro": "#0F172A0F",
+      "verde": "#00852A",
+      "azul": "#005FCC",
+      "laranja": "#FF6D00",
+      "ouro": "#FFD700",
+      "prata": "#E0E0E0",
+      "bronze": "#CD7F32",
+      "amarelo": "#FDD835",
+      "vidro": "#005FCC1A",
+      "sombra": "#0F172A24",
+      "brilho": "#FFFFFF66"
+    },
+    "escuro": {
+      "fundo": "#4ADE8014",
+      "grama": "#2E7D32",
+      "giz": "#FFFFFF",
+      "branco": "#FFFFFF",
+      "tinta": "#0F172A",
+      "contorno": "#FFFFFF8C",
+      "sup": "#1E293B",
+      "neutro": "#FFFFFF0F",
+      "verde": "#4ADE80",
+      "azul": "#5CC8FF",
+      "laranja": "#FF9E40",
+      "ouro": "#FFD700",
+      "prata": "#E0E0E0",
+      "bronze": "#E8924A",
+      "amarelo": "#FDD835",
+      "vidro": "#5CC8FF1F",
+      "sombra": "#0F172A99",
+      "brilho": "#FFFFFF2E"
+    }
+  },
+
   "gameStatus": {
     "scheduled": "#388E3C",
     "inProgress": "#1976D2",

@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.core
 
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.ui.artes.ArteDeEstado
 import com.futebadosparcas.compose.di.koinViewModelOrNull
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,10 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -341,13 +341,8 @@ private fun GamesEmptyState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.EventNote,
-            contentDescription = null,
-            modifier = Modifier.size(96.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+        ArteDeEstado(id = ArteId.PRANCHETA_VAZIA)
+        Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = stringResource(Res.string.games_empty_title),
             style = MaterialTheme.typography.headlineSmall,
@@ -395,13 +390,8 @@ private fun GamesErrorState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        ArteDeEstado(id = ArteId.BOLA_NA_TRAVE)
+        Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = stringResource(Res.string.games_error_title),
             style = MaterialTheme.typography.headlineSmall,
