@@ -64,7 +64,13 @@ const ATRIBUTOS_ACEITOS = new Set([
 export function lerXml(texto, origem = 'svg') {
   const raiz = { nome: '#raiz', atributos: {}, filhos: [] };
   const pilha = [raiz];
-  const limpo = texto.replace(/<!--[\s\S]*?-->/g, '').replace(/<\?xml[\s\S]*?\?>/g, '');
+  // Repete a remoção até estabilizar: um comentário aninhado ("<!<!---->--") não deixa sobra
+  let limpo = texto;
+  let anterior;
+  do {
+    anterior = limpo;
+    limpo = limpo.replace(/<!--[\s\S]*?-->/g, '').replace(/<\?xml[\s\S]*?\?>/g, '');
+  } while (limpo !== anterior);
   const reTag = /<(\/?)([a-zA-Z][\w:-]*)((?:\s+[\w:-]+="[^"]*")*)\s*(\/?)>/g;
   let m;
   let fim = 0;
