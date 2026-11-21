@@ -4,7 +4,7 @@
 > **Autor:** Claude Code (sessão de redefinição visual)
 > **Data:** 2026-11-21
 > **Plano com amostras:** https://claude.ai/artifact/MLowzGubYZunMSfL7Nop1U
-> **PR:** a preencher
+> **PR:** https://github.com/TechFernandesLTDA/futeba-dos-parcas/pull/4609
 
 ---
 
