@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" data-descricao="Pote da vaquinha com moedas e o selo da bola">
+  <circle cx="100" cy="88" r="64" fill="var(--a-fundo)"/>
+  <ellipse cx="100" cy="148" rx="44" ry="5" fill="var(--a-sombra)"/>
+  <path d="M66 52H134A10 10 0 0 1 144 62V130A14 14 0 0 1 130 144H70A14 14 0 0 1 56 130V62A10 10 0 0 1 66 52Z" fill="var(--a-vidro)"/>
+  <path d="M57 118Q80 104 100 112Q122 102 143 116V130A13 13 0 0 1 130 143H70A13 13 0 0 1 57 130Z" fill="var(--a-ouro)"/>
+  <g fill="var(--a-ouro)" stroke="var(--a-bronze)" stroke-width="1.5"><ellipse cx="76" cy="116" rx="10" ry="4"/><ellipse cx="100" cy="111" rx="10" ry="4"/><ellipse cx="124" cy="114" rx="10" ry="4"/><ellipse cx="88" cy="126" rx="10" ry="4"/><ellipse cx="114" cy="125" rx="10" ry="4"/></g>
+  <path d="M66 52H134A10 10 0 0 1 144 62V130A14 14 0 0 1 130 144H70A14 14 0 0 1 56 130V62A10 10 0 0 1 66 52Z" fill="none" stroke="var(--a-contorno)" stroke-width="2"/>
+  <path d="M68 64V112" fill="none" stroke="var(--a-brilho)" stroke-width="5" stroke-linecap="round"/>
+  <rect x="62" y="38" width="76" height="16" rx="5" fill="var(--a-laranja)"/>
+  <rect x="62" y="38" width="76" height="6" rx="3" fill="var(--a-branco)" opacity=".22"/>
+  <rect x="86" y="43" width="28" height="5" rx="2.5" fill="var(--a-sombra)"/>
+  <circle cx="100" cy="84" r="16" fill="var(--a-sup)" stroke="var(--a-contorno)" stroke-width="1.5"/>
+  <g transform="translate(100 84) scale(1.25)"><use href="#bola"/></g>
+  <g class="m-cair">
+    <circle cx="100" cy="20" r="9" fill="var(--a-ouro)" stroke="var(--a-bronze)" stroke-width="1.5"/>
+    <circle cx="100" cy="20" r="5" fill="none" stroke="var(--a-bronze)" stroke-width="1.5"/>
+  </g>
+  <path d="M90 6V2M100 4V0M110 6V2" fill="none" stroke="var(--a-contorno)" stroke-width="2" stroke-linecap="round"/>
+</svg>

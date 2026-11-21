@@ -255,6 +255,7 @@ export const PublicGamesMapScreen: React.FC = () => {
           <LoadingState shimmerCount={6} itemType="GAME" />
         ) : filteredGames.length === 0 ? (
           <EmptyState
+            arte="prancheta_vazia"
             icon={<SoccerIcon />}
             title={t('empty.noPublicGame')}
             description={t('empty.noPublicGameDesc')}

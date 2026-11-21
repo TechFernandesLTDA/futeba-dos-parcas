@@ -21,6 +21,7 @@ const WaitlistTab: React.FC<WaitlistTabProps> = ({ waitlist }) => {
   if (waitlist.length === 0) {
     return (
       <EmptyState
+        arte="banco_vazio"
         icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
         title={t('empty.noWaitlist')}
         description={t('empty.noWaitlistDesc')}

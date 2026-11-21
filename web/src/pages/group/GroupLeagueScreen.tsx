@@ -179,6 +179,7 @@ export const GroupLeagueScreen: React.FC = () => {
           />
         ) : standings.length === 0 ? (
           <EmptyState
+            arte="podio"
             icon={<TrophyIcon />}
             title={t('empty.leagueNotStarted')}
             description={t('empty.leagueNotStartedDesc')}

@@ -69,6 +69,7 @@ export const WeeklyRankingScreen: React.FC = () => {
 
       {!isLoading && (!data || !data.rankings || data.rankings.length === 0) && (
         <EmptyState
+          arte="podio"
           icon={<TrophyIcon />}
           title={t("ranking.weekly.empty")}
           description={t("ranking.weekly.emptyDesc")}

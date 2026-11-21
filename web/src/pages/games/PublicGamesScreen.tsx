@@ -133,6 +133,7 @@ export const PublicGamesScreen: React.FC = () => {
 
       {!isLoading && !error && (!filteredGames || filteredGames.length === 0) && (
         <EmptyState
+          arte="prancheta_vazia"
           icon={<SoccerIcon />}
           title={t('games.public.empty')}
           description={t('games.public.emptyDesc')}

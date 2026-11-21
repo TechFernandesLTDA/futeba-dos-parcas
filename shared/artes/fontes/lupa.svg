@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" data-descricao="Lupa sobre o gramado, sem a bola à vista">
+  <circle cx="100" cy="84" r="64" fill="var(--a-fundo)"/>
+  <ellipse cx="100" cy="130" rx="72" ry="13" fill="var(--a-grama)"/>
+  <path d="M48 128L51 120L54 128M70 136L73 128L76 136M124 136L127 128L130 136M146 126L149 118L152 126M96 140L99 132L102 140" fill="none" stroke="var(--a-branco)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".4"/>
+  <path d="M118 104L146 132" fill="none" stroke="var(--a-laranja)" stroke-width="13" stroke-linecap="round"/>
+  <path d="M121 103L145 127" fill="none" stroke="var(--a-brilho)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M112 98L120 106" fill="none" stroke="var(--a-prata)" stroke-width="11"/>
+  <circle cx="90" cy="76" r="34" fill="var(--a-vidro)"/>
+  <circle cx="90" cy="76" r="34" fill="none" stroke="var(--a-prata)" stroke-width="8"/>
+  <circle cx="90" cy="76" r="38" fill="none" stroke="var(--a-contorno)" stroke-width="1.5"/>
+  <circle cx="90" cy="76" r="30" fill="none" stroke="var(--a-contorno)" stroke-width="1.5"/>
+  <circle cx="90" cy="80" r="11" fill="none" stroke="var(--a-contorno)" stroke-width="2" stroke-dasharray="3 3"/>
+  <path d="M68 62A26 26 0 0 1 82 50" fill="none" stroke="var(--a-branco)" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+</svg>

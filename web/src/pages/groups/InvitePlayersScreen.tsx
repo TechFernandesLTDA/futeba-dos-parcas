@@ -289,6 +289,7 @@ export const InvitePlayersScreen: React.FC = () => {
         {hasSearched && !searching && searchResults.length === 0 && (
           <Box sx={{ mb: 2 }}>
             <EmptyState
+              arte="banco_vazio"
               icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title={t('empty.noPlayerFound')}
               description={t('empty.noPlayerFoundDesc', { query: searchQuery })}

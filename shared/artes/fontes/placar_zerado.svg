@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" data-descricao="Placar zerado, zero a zero">
+  <circle cx="110" cy="84" r="66" fill="var(--a-fundo)"/>
+  <ellipse cx="110" cy="142" rx="66" ry="4" fill="var(--a-sombra)"/>
+  <rect x="70" y="110" width="8" height="32" rx="2" fill="var(--a-contorno)"/><rect x="142" y="110" width="8" height="32" rx="2" fill="var(--a-contorno)"/>
+  <rect x="34" y="34" width="152" height="80" rx="10" fill="var(--a-tinta)" stroke="var(--a-contorno)" stroke-width="2"/>
+  <path d="M44 34H176A10 10 0 0 1 186 44V48H34V44A10 10 0 0 1 44 34Z" fill="var(--a-branco)" opacity=".08"/>
+  <rect x="50" y="40" width="48" height="5" rx="2.5" fill="var(--a-verde)"/>
+  <rect x="122" y="40" width="48" height="5" rx="2.5" fill="var(--a-azul)"/>
+  <rect x="50" y="52" width="48" height="50" rx="6" fill="var(--a-branco)" opacity=".06"/>
+  <rect x="122" y="52" width="48" height="50" rx="6" fill="var(--a-branco)" opacity=".06"/>
+  <rect x="63" y="60" width="22" height="34" rx="10" fill="none" stroke="var(--a-amarelo)" stroke-width="6"/>
+  <rect x="135" y="60" width="22" height="34" rx="10" fill="none" stroke="var(--a-amarelo)" stroke-width="6"/>
+  <circle cx="110" cy="70" r="3" fill="var(--a-amarelo)"/><circle cx="110" cy="84" r="3" fill="var(--a-amarelo)"/>
+  <ellipse cx="184" cy="141" rx="9" ry="2.4" fill="var(--a-sombra)"/>
+  <g transform="translate(184 130) scale(1.15)"><use href="#bola"/></g>
+</svg>

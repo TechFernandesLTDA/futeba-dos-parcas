@@ -1,10 +1,17 @@
 package com.futebadosparcas.ui.core
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.domain.artes.PictogramaId
+import com.futebadosparcas.ui.artes.ArteDaPelada
+import com.futebadosparcas.ui.artes.rememberPictograma
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -13,11 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.QueryStats
-import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -69,19 +71,14 @@ fun WelcomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically)
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.SportsSoccer,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .size(72.dp)
-                )
-            }
+            // Arte do campo (spec ARTES_DA_PELADA): o campo da pelada abre o app
+            ArteDaPelada(
+                id = ArteId.CAMPO,
+                modifier = Modifier
+                    .widthIn(max = 340.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = 180.dp)
+            )
 
             Text(
                 text = stringResource(Res.string.welcome_onboarding_app_name),
@@ -105,19 +102,19 @@ fun WelcomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     WelcomeFeatureItem(
-                        icon = Icons.Filled.SportsSoccer,
+                        pictograma = PictogramaId.BOLA,
                         text = stringResource(Res.string.welcome_onboarding_feature_matches)
                     )
                     WelcomeFeatureItem(
-                        icon = Icons.Filled.Groups,
+                        pictograma = PictogramaId.COLETE,
                         text = stringResource(Res.string.welcome_onboarding_feature_groups)
                     )
                     WelcomeFeatureItem(
-                        icon = Icons.Filled.QueryStats,
+                        pictograma = PictogramaId.PLACAR,
                         text = stringResource(Res.string.welcome_onboarding_feature_stats)
                     )
                     WelcomeFeatureItem(
-                        icon = Icons.Filled.FavoriteBorder,
+                        pictograma = PictogramaId.CHUTEIRA,
                         text = stringResource(Res.string.welcome_onboarding_feature_identity)
                     )
                 }
@@ -141,7 +138,7 @@ fun WelcomeScreen(
 
 @Composable
 private fun WelcomeFeatureItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    pictograma: PictogramaId,
     text: String
 ) {
     Row(
@@ -151,12 +148,19 @@ private fun WelcomeFeatureItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = rememberPictograma(pictograma),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(22.dp)
+            )
+        }
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,

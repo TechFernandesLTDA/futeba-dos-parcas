@@ -555,6 +555,7 @@ export const LiveEventsScreen: React.FC = () => {
           <LoadingState shimmerCount={6} itemType="LIST" />
         ) : events.length === 0 && !eventsError ? (
           <EmptyState
+            arte="prancheta_vazia"
             icon={<SoccerIcon />}
             title={t('empty.noEvent')}
             description={t('empty.noEventDesc')}

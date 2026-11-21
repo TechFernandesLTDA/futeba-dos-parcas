@@ -530,6 +530,7 @@ export const LocationsMapScreen: React.FC = () => {
           <LoadingState shimmerCount={6} itemType="CARD" />
         ) : filteredLocations.length === 0 ? (
           <EmptyState
+            arte="mapa_campo"
             icon={<LocationIcon />}
             title={t('empty.noFieldFound')}
             description={t('empty.noFieldFoundDesc')}

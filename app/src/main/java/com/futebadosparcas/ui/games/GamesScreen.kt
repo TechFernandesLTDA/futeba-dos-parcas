@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -35,7 +34,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.domain.artes.ArteId
 import com.futebadosparcas.ui.components.AnimatedStateContainer
+import com.futebadosparcas.ui.components.artes.ArteDeEstado
 import com.futebadosparcas.ui.components.StateType
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameGender
@@ -654,12 +655,8 @@ private fun GamesEmptyState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.EventNote,
-            contentDescription = null,
-            modifier = Modifier.size(AppDimensions.avatar_extraLarge),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
+        // Prancheta vazia: mesma arte do estado sem jogos no web e no iOS
+        ArteDeEstado(id = ArteId.PRANCHETA_VAZIA)
 
         Spacer(modifier = Modifier.height(AppDimensions.spacing_extraLarge))
 

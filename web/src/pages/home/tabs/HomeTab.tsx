@@ -58,6 +58,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { iconSizes } from '../../../theme/iconSizes';
+import { Arte } from '../../../components/artes/Arte';
 import { pageSpacing } from '../../../theme/pageTokens';
 import { sxPresets } from '../../../theme/sxPresets';
 import { useGamificationColors } from '../../../hooks/useGamificationColors';
@@ -229,7 +230,9 @@ function NextGameWidget() {
       >
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <CalendarMonth sx={{ fontSize: iconSizes.xl, color: 'text.disabled' }} />
+            <Box sx={{ width: 72, flexShrink: 0 }}>
+              <Arte id="prancheta_vazia" animar={false} />
+            </Box>
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" fontWeight={600}>
                 {t('games.noGameScheduled')}
@@ -297,6 +300,10 @@ function NextGameWidget() {
       }}
     >
       <CardActionArea onClick={() => navigate(`/game/${nextGame.id}`)}>
+        {/* Topo do cartão: o campo da pelada. Decorativo; as informações estão no texto. */}
+        <Box sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), px: 2, pt: 1.5, pb: 0.5 }}>
+          <Arte id="campo" larguraMaxima={300} />
+        </Box>
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>

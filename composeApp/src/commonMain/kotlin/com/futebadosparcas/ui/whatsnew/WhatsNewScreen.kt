@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.whatsnew
 
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.ui.artes.ArteDeEstado
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,17 +15,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -254,13 +253,8 @@ private fun WhatsNewEmptyState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = Icons.Default.NewReleases,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-        )
-        Spacer(Modifier.height(16.dp))
+        ArteDeEstado(id = ArteId.APITO)
+        Spacer(Modifier.height(20.dp))
         Text(
             text = stringResource(Res.string.whats_new_empty_title),
             style = MaterialTheme.typography.titleMedium,
@@ -289,13 +283,8 @@ private fun WhatsNewErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error,
-        )
-        Spacer(Modifier.height(16.dp))
+        ArteDeEstado(id = ArteId.BOLA_NA_TRAVE)
+        Spacer(Modifier.height(20.dp))
         Text(
             text = stringResource(Res.string.whats_new_error_body),
             style = MaterialTheme.typography.bodyMedium,

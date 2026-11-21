@@ -22,9 +22,13 @@ import {
   PeopleAlt as ConfirmationsIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { Arte, type ArteId } from '../artes/Arte';
 
 interface EmptyStateProps {
-  icon: React.ReactNode;
+  /** Ícone simples. Ignorado quando há `arte`. */
+  icon?: React.ReactNode;
+  /** Arte da pelada (shared/artes). Decorativa: o título já diz o que acontece. */
+  arte?: ArteId;
   title: string;
   description?: string;
   actionLabel?: string;
@@ -41,6 +45,7 @@ interface EmptyStateProps {
 
 const EmptyStateBase = React.memo(function EmptyState({
   icon,
+  arte,
   title,
   description,
   actionLabel,
@@ -70,6 +75,9 @@ const EmptyStateBase = React.memo(function EmptyState({
       role="status"
       aria-label={title}
     >
+      {arte ? (
+        <Arte id={arte} larguraMaxima={200} sx={{ mb: 2.5, '@media (max-height: 520px)': { maxWidth: 120 } }} />
+      ) : icon ? (
       <Box sx={{
         mb: 2,
         width: 80,
@@ -84,7 +92,12 @@ const EmptyStateBase = React.memo(function EmptyState({
       }}>
         {icon}
       </Box>
-      <Typography variant="h6" color="text.secondary" sx={{ mb: 0.5 }}>
+      ) : null}
+      <Typography
+        variant="h6"
+        color={arte ? 'text.primary' : 'text.secondary'}
+        sx={{ mb: 0.5, ...(arte && { fontWeight: 600 }) }}
+      >
         {title}
       </Typography>
       {description && (
@@ -141,33 +154,34 @@ interface EmptyStateType extends React.NamedExoticComponent<EmptyStateProps> {
   Confirmations: ContextualVariant;
 }
 
-const defaultProps = {
-  Games: { icon: GamesIcon, titleKey: 'empty.games' },
-  Groups: { icon: GroupsIcon, titleKey: 'empty.groups' },
-  Players: { icon: NoPlayersIcon, titleKey: 'empty.players' },
-  Notifications: { icon: NotificationsIcon, titleKey: 'empty.notifications' },
-  Search: { icon: SearchIcon, titleKey: 'empty.search' },
-  Ranking: { icon: TrophyIcon, titleKey: 'empty.ranking' },
-  Badges: { icon: NoBadgesIcon, titleKey: 'empty.badges' },
-  League: { icon: TrophyIcon, titleKey: 'empty.league' },
-  Schedules: { icon: NoScheduleIcon, titleKey: 'empty.schedules' },
-  Locations: { icon: MapIcon, titleKey: 'empty.locations' },
-  Challenges: { icon: StarIcon, titleKey: 'empty.challenges' },
+// Cada variante tem a arte da pelada correspondente (mesmo mapa do Android e do iOS).
+const defaultProps: Record<string, { icon: typeof GamesIcon; arte: ArteId; titleKey: string }> = {
+  Games: { icon: GamesIcon, arte: 'prancheta_vazia', titleKey: 'empty.games' },
+  Groups: { icon: GroupsIcon, arte: 'coletes_varal', titleKey: 'empty.groups' },
+  Players: { icon: NoPlayersIcon, arte: 'banco_vazio', titleKey: 'empty.players' },
+  Notifications: { icon: NotificationsIcon, arte: 'apito', titleKey: 'empty.notifications' },
+  Search: { icon: SearchIcon, arte: 'lupa', titleKey: 'empty.search' },
+  Ranking: { icon: TrophyIcon, arte: 'podio', titleKey: 'empty.ranking' },
+  Badges: { icon: NoBadgesIcon, arte: 'medalha', titleKey: 'empty.badges' },
+  League: { icon: TrophyIcon, arte: 'podio', titleKey: 'empty.league' },
+  Schedules: { icon: NoScheduleIcon, arte: 'prancheta_vazia', titleKey: 'empty.schedules' },
+  Locations: { icon: MapIcon, arte: 'mapa_campo', titleKey: 'empty.locations' },
+  Challenges: { icon: StarIcon, arte: 'cones', titleKey: 'empty.challenges' },
   // #2197: paridade com Android (mesmos ícones Material por categoria)
-  Cashbox: { icon: CashboxIcon, titleKey: 'empty.cashbox' },
-  Members: { icon: MembersIcon, titleKey: 'empty.members' },
-  Activities: { icon: ActivitiesIcon, titleKey: 'empty.activities' },
-  XpLogs: { icon: XpLogsIcon, titleKey: 'empty.xpLogs' },
-  Statistics: { icon: StatisticsIcon, titleKey: 'empty.statistics' },
-  Confirmations: { icon: ConfirmationsIcon, titleKey: 'empty.confirmations' },
-} as const;
+  Cashbox: { icon: CashboxIcon, arte: 'vaquinha', titleKey: 'empty.cashbox' },
+  Members: { icon: MembersIcon, arte: 'coletes_varal', titleKey: 'empty.members' },
+  Activities: { icon: ActivitiesIcon, arte: 'placar_zerado', titleKey: 'empty.activities' },
+  XpLogs: { icon: XpLogsIcon, arte: 'medalha', titleKey: 'empty.xpLogs' },
+  Statistics: { icon: StatisticsIcon, arte: 'placar_zerado', titleKey: 'empty.statistics' },
+  Confirmations: { icon: ConfirmationsIcon, arte: 'chuteiras', titleKey: 'empty.confirmations' },
+};
 
 function createEmptyVariant(
-  key: keyof typeof defaultProps,
+  key: keyof EmptyStateType & keyof typeof defaultProps,
   defaultDescriptionKey: string,
   defaultActionLabelKey: string,
 ): ContextualVariant {
-  const { icon: Icon, titleKey } = defaultProps[key];
+  const { icon: Icon, arte, titleKey } = defaultProps[key];
   const Component = React.memo(function VariantEmpty({
     onAction,
     actionLabel,
@@ -178,6 +192,7 @@ function createEmptyVariant(
     return (
       <EmptyStateBase
         icon={<Icon />}
+        arte={arte}
         title={t(titleKey)}
         description={description || t(defaultDescriptionKey)}
         actionLabel={actionLabel || t(defaultActionLabelKey)}

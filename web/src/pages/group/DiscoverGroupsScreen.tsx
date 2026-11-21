@@ -230,6 +230,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
 
       {!officialLoading && !officialError && filteredByTab.length === 0 && (
         <EmptyState
+          arte="lupa"
           icon={<GroupIcon />}
           title={searchQuery
             ? t('groups.matchmaking.emptySearch')

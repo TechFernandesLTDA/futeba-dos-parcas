@@ -95,6 +95,9 @@ jobs:
       - name: Badges parity (web/Android vs shared/badges-catalog.json)
         run: node scripts/check-badges-parity.js
 
+      - name: Artes da pelada (dados gerados em dia e renderizadores gêmeos)
+        run: node scripts/artes/gerar.mjs --verificar && node --test scripts/artes/gerar.test.js
+
       - name: Requisitos do Google Play (targetSdk minimo e guarda de 16 KB)
         run: node --test scripts/ci/play-requirements-contract.test.js scripts/ci/check-16kb-alignment.test.js
 

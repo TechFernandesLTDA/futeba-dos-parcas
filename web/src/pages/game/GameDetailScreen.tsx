@@ -260,6 +260,7 @@ const CheckInSocialPanel: React.FC<{
 
         {checkedInPlayers.length === 0 ? (
           <EmptyState
+            arte="mapa_campo"
             icon={<PlaceIcon sx={{ fontSize: 48 }} />}
             title={t('checkinSocial.emptyTitle')}
             description={t('checkinSocial.emptyDesc')}
@@ -755,6 +756,7 @@ export const GameDetailScreen: React.FC = () => {
     return (
       <PageContainer maxWidth="detail">
         <EmptyState
+          arte="prancheta_vazia"
           icon={<SoccerIcon sx={{ fontSize: 64 }} />}
           title={t('games.notFound')}
           description={t('games.detail.notFoundDesc')}

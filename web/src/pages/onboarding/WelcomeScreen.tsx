@@ -1,9 +1,9 @@
 import { Box, Typography, Button, Link, useTheme, alpha } from '@mui/material';
-import { ArrowForward as ArrowForwardIcon, SportsSoccer as SoccerIcon } from '@mui/icons-material';
+import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
-import { iconSizes } from '../../theme/iconSizes';
+import { Arte } from '../../components/artes/Arte';
 
 export const WelcomeScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -24,20 +24,8 @@ export const WelcomeScreen: React.FC = () => {
         p: 3,
       }}
     >
-      <Box
-        sx={{
-          width: 120,
-          height: 120,
-          borderRadius: '50%',
-          bgcolor: alpha(theme.palette.common.white, 0.2),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 4,
-        }}
-      >
-        <SoccerIcon sx={{ fontSize: iconSizes.hero }} />
-      </Box>
+      {/* Campo de society: a cena de abertura da pelada, na paleta escura sobre o verde da marca. */}
+      <Arte id="campo" tema="escuro" larguraMaxima={340} sx={{ mb: 3, '@media (max-height: 640px)': { maxWidth: 220, mb: 2 } }} />
 
       <Typography variant="h3" fontWeight={700} gutterBottom sx={{ textAlign: 'center' }}>
         {t('common.appName')}

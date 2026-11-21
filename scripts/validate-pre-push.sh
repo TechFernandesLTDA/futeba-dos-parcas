@@ -37,6 +37,16 @@ if command -v node &>/dev/null && [ -f "$ROOT_DIR/web/package.json" ]; then
 fi
 
 echo ""
+echo "── Artes da pelada: dados gerados e gêmeos Compose ──"
+if command -v node &>/dev/null; then
+  if (cd "$ROOT_DIR" && node scripts/artes/gerar.mjs --verificar && node --test scripts/artes/gerar.test.js >/dev/null 2>&1); then
+    pass "Artes em dia com shared/artes e renderizadores gêmeos"
+  else
+    fail "Artes desatualizadas ou gêmeos divergentes: rode node scripts/artes/gerar.mjs e node --test scripts/artes/gerar.test.js"
+  fi
+fi
+
+echo ""
 echo "── Web: TypeScript ──"
 if [ -d "$ROOT_DIR/web" ]; then
   if (cd "$ROOT_DIR/web" && npx tsc --noEmit --project tsconfig.dev.json 2>&1); then

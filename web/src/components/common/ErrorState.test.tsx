@@ -51,8 +51,10 @@ describe('ErrorState', () => {
     expect(screen.queryByText('Tentar novamente')).not.toBeInTheDocument();
   });
 
-  it('renderiza ícone de erro', () => {
-    renderWithTheme(<ErrorState />);
-    expect(screen.getByTestId('ErrorOutlineIcon')).toBeInTheDocument();
+  it('renderiza a arte da bola na trave, oculta para leitor de tela', () => {
+    const { container } = renderWithTheme(<ErrorState />);
+    const arte = container.querySelector('svg[data-arte="bola_na_trave"]');
+    expect(arte).toBeInTheDocument();
+    expect(arte).toHaveAttribute('aria-hidden', 'true');
   });
 });

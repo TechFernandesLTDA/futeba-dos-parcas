@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" data-descricao="Medalha de conquista com fita verde e azul">
+  <circle cx="80" cy="88" r="62" fill="var(--a-fundo)"/>
+  <path d="M50 10H70L92 74H72Z" fill="var(--a-verde)"/>
+  <path d="M110 10H90L68 74H88Z" fill="var(--a-azul)"/>
+  <path d="M88 10H90L68 74H66Z" fill="var(--a-sombra)"/>
+  <rect x="68" y="66" width="24" height="9" rx="3" fill="var(--a-ouro)" stroke="var(--a-contorno)" stroke-width="1.2"/>
+  <circle cx="80" cy="104" r="30" fill="var(--a-ouro)" stroke="var(--a-contorno)" stroke-width="1.5"/>
+  <path d="M101.2 82.8A30 30 0 0 1 58.8 125.2Z" fill="var(--a-sombra)" opacity=".35"/>
+  <circle cx="80" cy="104" r="22" fill="none" stroke="var(--a-sombra)" stroke-width="3"/>
+  <path d="M80 92L82.94 99.95L91.41 100.29L84.76 105.55L87.05 113.71L80 109L72.95 113.71L75.24 105.55L68.59 100.29L77.06 99.95Z" fill="var(--a-branco)" opacity=".75"/>
+  <g fill="var(--a-ouro)">
+    <g class="m-piscar" transform="translate(36 98)"><use href="#brilho4"/></g>
+    <g class="m-piscar" transform="translate(126 82) scale(.8)"><use href="#brilho4"/></g>
+    <g class="m-piscar" transform="translate(120 142) scale(.6)"><use href="#brilho4"/></g>
+  </g>
+</svg>

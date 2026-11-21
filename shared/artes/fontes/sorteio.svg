@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" data-descricao="Sorteio de times: colete verde, colete azul e a bola trocando de lado">
+  <circle cx="120" cy="88" r="66" fill="var(--a-fundo)"/>
+  <ellipse cx="66" cy="132" rx="26" ry="4" fill="var(--a-sombra)"/><ellipse cx="174" cy="132" rx="26" ry="4" fill="var(--a-sombra)"/>
+  <g transform="translate(64 58) rotate(-8)"><use href="#colete" style="color:var(--a-verde)"/></g>
+  <g transform="translate(176 58) rotate(8)"><use href="#colete" style="color:var(--a-azul)"/></g>
+  <g fill="none" stroke="var(--a-laranja)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M96 70Q120 50 144 70"/><path d="M141.6 61.3L144 70L135 69.3"/>
+    <path d="M144 116Q120 136 96 116"/><path d="M98.4 124.7L96 116L105 116.75"/>
+  </g>
+  <ellipse cx="120" cy="111" rx="12" ry="3" fill="var(--a-sombra)"/>
+  <g class="m-quicar" transform="translate(120 92) scale(1.7)"><use href="#bola"/></g>
+  <g fill="var(--a-ouro)">
+    <g class="m-piscar" transform="translate(120 34)"><use href="#brilho4"/></g>
+    <g class="m-piscar" transform="translate(30 30) scale(.7)"><use href="#brilho4"/></g>
+    <g class="m-piscar" transform="translate(212 34) scale(.8)"><use href="#brilho4"/></g>
+  </g>
+</svg>

@@ -60,9 +60,9 @@ describe('NotFoundScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
-  it('renderiza ícone de insatisfação', () => {
-    renderWithTheme(<NotFoundScreen />);
-    expect(screen.getByTestId('SentimentDissatisfiedIcon')).toBeInTheDocument();
+  it('renderiza a arte da bola na trave', () => {
+    const { container } = renderWithTheme(<NotFoundScreen />);
+    expect(container.querySelector('svg[data-arte="bola_na_trave"]')).toBeInTheDocument();
   });
 
   it('tem aria-labelledby no main', () => {
