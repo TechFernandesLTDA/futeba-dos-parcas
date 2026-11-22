@@ -1,6 +1,6 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-21T22:35:44.668Z",
+  "generatedAt": "2026-11-21T23:38:05.985Z",
   "notes": [
     {
       "version": "1.45.0",
@@ -42,7 +42,7 @@
         {
           "icon": "block",
           "title": "Sem anúncios",
-          "description": "Em Preferências, assine por R$ 9,90 por ano para tirar os banners. Dá para restaurar a compra e cancelar quando quiser."
+          "description": "Em Preferências, assine por R$ 9,99 por ano para tirar os banners. Dá para restaurar a compra e cancelar quando quiser."
         }
       ],
       "added": [],

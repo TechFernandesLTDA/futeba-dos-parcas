@@ -14,7 +14,18 @@ App `com.futebadosparcas`. Salvo na ficha principal (pt-BR) e enviado para revis
 
 O ícone não mudou (sem defeito).
 
-A descrição não fala de anúncios nem de assinatura porque a produção Android é a 1.43.0, que não tem. Quando a 1.44.0 for publicada, acrescentar o parágrafo dos banners e da assinatura "Sem anúncios", igual ao da App Store.
+A descrição não fala de anúncios nem de assinatura porque a produção Android é a 1.43.6, que não tem. A primeira versão com banners e assinatura na produção é a 1.45.0. Quando ela chegar a 100%, acrescentar à `textos/descricao-completa.txt` e à ficha:
+
+```
+Banners discretos aparecem nas telas principais. Se preferir, assine "Sem anúncios" e tire os banners.
+
+ASSINATURA "SEM ANÚNCIOS" (opcional)
+- Assinatura anual com renovação automática: R$ 9,99 por ano.
+- O pagamento é cobrado na sua conta Google ao confirmar a compra.
+- Para gerenciar ou cancelar: Play Store, seu perfil, Pagamentos e assinaturas.
+```
+
+A assinatura `sem_anuncios_anual` (plano básico `anual`) existe e está ativa desde 21/11/2026. No Brasil custa BRL 9,99: a Play arredondou e não aceitou 9,90 (na App Store continua R$ 9,90). O app mostra o preço que a loja devolve.
 
 ## Não aplicado
 
