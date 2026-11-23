@@ -785,4 +785,45 @@ describe('useInvitePlayers', () => {
     await expect(act(async () => { await result.current.joinByInviteCode('INVALID'); }))
       .rejects.toThrow('Código de convite inválido ou expirado');
   });
+
+  it('joinByInviteCode com código já usado por outra pessoa diz que ele já foi usado (#4629)', async () => {
+    mockDoc.mockImplementation((...segments: unknown[]) => makeDocRef(...segments));
+    const update = vi.fn();
+    mockRunTransaction.mockImplementation(async (_db: unknown, callback: (tx: { get: (ref: { path: string }) => Promise<unknown>; update: (ref: { path: string }, data: unknown) => void }) => Promise<string>) => {
+      return callback({
+        get: async () => ({
+          exists: () => true,
+          data: () => ({
+            group_id: 'group-1',
+            used: true,
+            used_by: 'outra-pessoa',
+            expires_at: { toMillis: () => Date.now() + 86400000 },
+          }),
+        }),
+        update,
+      });
+    });
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
+    await expect(act(async () => { await result.current.joinByInviteCode('ABC123'); }))
+      .rejects.toThrow('Este convite já foi utilizado. Peça um novo ao organizador.');
+    expect(update).not.toHaveBeenCalled();
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('joinByInviteCode traduz a recusa das regras em vez de mostrar a mensagem em inglês', async () => {
+    mockRunTransaction.mockRejectedValue(
+      Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' }),
+    );
+    const { result } = renderHook(() => useInvitePlayers(), { wrapper: createTestWrapper() });
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await result.current.joinByInviteCode('ABC123');
+      } catch (err) {
+        caught = err;
+      }
+    });
+    expect((caught as Error).message).toBe('Missing or insufficient permissions.');
+    expect(result.current.error).toBe('Sem permissão para realizar esta ação');
+  });
 });

@@ -612,8 +612,13 @@ export function useInvitePlayers() {
           }
 
           const inviteData = inviteSnap.data();
-          if (!inviteData || inviteData.used === true) {
+          if (!inviteData) {
             throw new Error(t('feedback.groups.invalidInviteCode'));
+          }
+          // #4629: o código vale para uma pessoa. Quem chega depois precisa
+          // saber que ele já foi usado, não que é inválido.
+          if (inviteData.used === true) {
+            throw new Error(t('feedback.invite.alreadyUsed'));
           }
 
           if (inviteData.expires_at && (inviteData.expires_at as Timestamp).toMillis() < Date.now()) {
@@ -722,7 +727,11 @@ export function useInvitePlayers() {
         return groupId;
       } catch (err) {
         logger.error('Error joining group:', err);
-        const message = (err as Error).message || t('feedback.groups.joinError');
+        // Erro do Firestore (regra negou, rede) vem com code e mensagem em
+        // inglês; os erros lançados acima já têm o texto para a pessoa.
+        const message = (err as { code?: string })?.code
+          ? getFirestoreErrorMessage(err, t('feedback.groups.joinError'))
+          : (err as Error).message || t('feedback.groups.joinError');
         setError(message);
         showError(message);
         setLoading(false);
