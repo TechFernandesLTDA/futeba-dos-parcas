@@ -195,7 +195,10 @@ describe("onJoinRequestApproved", () => {
   });
 
   it("idempotente: se member ja existe, nao reprocessa", async () => {
-    mockMemberGet.mockResolvedValue({exists: true});
+    mockMemberGet.mockResolvedValue({
+      exists: true,
+      data: () => ({user_id: "u1", status: "ACTIVE"}),
+    });
 
     const event = makeEvent(
       {user_id: "u1", status: "PENDING"},

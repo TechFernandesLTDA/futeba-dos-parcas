@@ -1757,7 +1757,9 @@
       "transferConfirm": "Are you sure you want to transfer ownership of the group \"{{groupName}}\" to {{name}}? You will become an Admin of the group.",
       "transferOwnership": "Transfer Ownership",
       "transferring": "Transferring..."
-    }
+    },
+    "requestAgain": "Request again",
+    "requestNotAllowed": "The organizer ended your membership in this group, so you can't request to join."
   },
   "groupDetail": {
     "closedDesc": "The group is no longer active.",

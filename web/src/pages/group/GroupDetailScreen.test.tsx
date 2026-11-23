@@ -11,6 +11,9 @@ const screenState = vi.hoisted(() => ({
   error: null as string | null,
   group: null as Record<string, unknown> | null,
   members: [] as Array<Record<string, unknown>>,
+  joinRequest: null as Record<string, unknown> | null,
+  blockedFromRequest: false,
+  canRequest: true,
 }));
 
 vi.mock('../../services/firebase', () => ({
@@ -46,8 +49,10 @@ vi.mock('../../hooks/useCashboxSummary', () => ({
 
 vi.mock('../../hooks/useJoinRequests', () => ({
   useMyJoinRequest: () => ({
-    request: null,
+    request: screenState.joinRequest,
     submitting: false,
+    blockedFromRequest: screenState.blockedFromRequest,
+    canRequest: screenState.canRequest,
     requestJoin: vi.fn(),
     cancelRequest: vi.fn(),
   }),
@@ -191,5 +196,41 @@ describe('GroupDetailScreen — render principal', () => {
     renderScreen();
     expect(screen.getByText('groupDetail.notFound')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'common.back' })).toBeInTheDocument();
+  });
+});
+
+// #4629 item 22: quem não é membro ativo de grupo público vê o pedido de entrada.
+describe('GroupDetailScreen — pedir para entrar de novo', () => {
+  beforeEach(() => {
+    screenState.loading = false;
+    screenState.error = null;
+    screenState.group = mockGroup;
+    // admin-user saiu do grupo: não é membro ativo, então a tela mostra o pedido.
+    screenState.members = [ownerMember];
+    screenState.joinRequest = null;
+    screenState.blockedFromRequest = false;
+    screenState.canRequest = true;
+  });
+
+  it('pedido recusado mostra o aviso e o botão Pedir de novo', () => {
+    screenState.joinRequest = { id: 'admin-user', status: 'REJECTED' };
+    renderScreen();
+    expect(screen.getByText('group.requestRejected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /group\.requestAgain/ })).toBeInTheDocument();
+  });
+
+  it('quem saiu depois de aprovado vê o botão Pedir entrada', () => {
+    screenState.joinRequest = { id: 'admin-user', status: 'APPROVED' };
+    renderScreen();
+    expect(screen.getByRole('button', { name: /group\.requestJoin/ })).toBeInTheDocument();
+  });
+
+  it('participação encerrada pelo organizador mostra o aviso, sem botão', () => {
+    screenState.joinRequest = { id: 'admin-user', status: 'APPROVED' };
+    screenState.blockedFromRequest = true;
+    screenState.canRequest = false;
+    renderScreen();
+    expect(screen.getByText('group.requestNotAllowed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /group\.request(Join|Again)/ })).not.toBeInTheDocument();
   });
 });

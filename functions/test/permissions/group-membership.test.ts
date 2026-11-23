@@ -220,3 +220,65 @@ describe("integração leve: entrada por pedido e contagem", () => {
     expect(read(`groups/${GROUP}/members/${USER}`)).toMatchObject({status: "ACTIVE"});
   });
 });
+
+// #4629 item 22: quem saiu do grupo pede de novo e é aprovado.
+describe("onJoinRequestApproved - volta de quem saiu do grupo", () => {
+  const MEMBER = `groups/${GROUP}/members/${USER}`;
+
+  beforeEach(() => {
+    resetFakeDb();
+    jest.clearAllMocks();
+    seedGroup({member_count: 3});
+    seed(`groups/${GROUP}/join_requests/${USER}`, pending);
+  });
+
+  it("ex-membro INACTIVE volta como MEMBER ACTIVE, sem herdar papel nem campos antigos", async () => {
+    seed(MEMBER, {user_id: USER, role: "ADMIN", status: "INACTIVE", left_at: "2026-11-01"});
+
+    await approve(pending, approvedBy("admin-1"));
+
+    const member = read(MEMBER) as Record<string, unknown>;
+    expect(member).toMatchObject({role: "MEMBER", status: "ACTIVE", invited_by: "admin-1"});
+    expect(member.left_at).toBeUndefined();
+    expect(member._counted_by_join_request).toBeUndefined();
+    // Quem soma é o onMemberWritten (REACTIVATED); a aprovação não mexe no contador.
+    expect(read(`groups/${GROUP}`)).toMatchObject({member_count: 3});
+    expect(read(`users/${USER}/groups/${GROUP}`)).toMatchObject({role: "MEMBER"});
+  });
+
+  it("aprovação seguida do contador soma 1 uma vez só na volta", async () => {
+    const left = {user_id: USER, role: "MEMBER", status: "INACTIVE"};
+    seed(MEMBER, left);
+
+    await approve(pending, approvedBy("admin-1"));
+    await onMemberWritten({
+      id: "evt-volta-1",
+      params: {groupId: GROUP, memberId: USER},
+      data: {
+        before: {data: () => ({...left})},
+        after: {data: () => read(MEMBER)},
+      },
+    });
+
+    expect(read(`groups/${GROUP}`)).toMatchObject({member_count: 4});
+  });
+
+  it("segunda entrega da aprovação não altera o membro já reativado", async () => {
+    seed(MEMBER, {user_id: USER, role: "MEMBER", status: "INACTIVE"});
+
+    await approve(pending, approvedBy("admin-1"));
+    const first = read(MEMBER);
+    await approve(pending, approvedBy("owner-1"));
+
+    expect(read(MEMBER)).toEqual(first);
+  });
+
+  it.each(["REMOVED", "BLOCKED", "BANNED"])("membro %s continua fora mesmo com pedido aprovado", async (status) => {
+    seed(MEMBER, {user_id: USER, role: "MEMBER", status});
+
+    await approve(pending, approvedBy("admin-1"));
+
+    expect(read(MEMBER)).toMatchObject({status});
+    expect(read(`groups/${GROUP}`)).toMatchObject({member_count: 3});
+  });
+});

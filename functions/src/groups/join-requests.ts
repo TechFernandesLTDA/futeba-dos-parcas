@@ -3,7 +3,8 @@
  *
  * Quando owner/admin aprova um request (status: PENDING -> APPROVED),
  * automaticamente:
- *  1. Cria membro em groups/{gid}/members/{uid}
+ *  1. Cria membro em groups/{gid}/members/{uid} (ou reativa quem saiu,
+ *     status INACTIVE; #4629 item 22)
  *  2. Incrementa group.member_count
  *  3. Cria denormalized users/{uid}/groups/{gid}
  *  4. Envia push notification ao requester (best-effort)
@@ -45,6 +46,15 @@ function isJoinRequestShape(data: unknown): data is JoinRequestData {
     typeof data.user_id === "string" &&
     typeof data.status === "string"
   );
+}
+
+/**
+ * #4629 item 22: só o ex-membro que saiu (INACTIVE) pode voltar pelo pedido.
+ * @param {unknown} data dados do documento de membro
+ * @return {boolean} true se o membro pode ser reativado
+ */
+function isReactivatable(data: unknown): boolean {
+  return isRecord(data) && data.status === "INACTIVE";
 }
 
 export const onJoinRequestApproved = onDocumentUpdated(
@@ -95,7 +105,7 @@ export const onJoinRequestApproved = onDocumentUpdated(
     const memberRef = db().doc(`groups/${groupId}/members/${userId}`);
     const blockedRef = db().doc(`groups/${groupId}/blocked_players/${userId}`);
     const memberSnap = await memberRef.get();
-    if (memberSnap.exists) {
+    if (memberSnap.exists && !isReactivatable(memberSnap.data())) {
       logger.info("join_request already member, skipping member creation", {
         groupId,
         userId,
@@ -131,7 +141,12 @@ export const onJoinRequestApproved = onDocumentUpdated(
       // mas só esta checagem garante atomicidade contra retries do Cloud
       // Functions scheduler / restart de instância.
       const txMemberSnap = await tx.get(memberRef);
-      if (txMemberSnap.exists) {
+      // #4629 item 22: quem saiu do grupo (INACTIVE) volta pelo pedido
+      // aprovado. Os outros estados (ACTIVE, REMOVED, BLOCKED, BANNED) seguem
+      // fora: ACTIVE é entrega repetida, os demais a regra de create já barra.
+      const reactivating =
+        txMemberSnap.exists && isReactivatable(txMemberSnap.data());
+      if (txMemberSnap.exists && !reactivating) {
         logger.info("join_request member already exists (idempotent retry)", {
           groupId,
           userId,
@@ -182,7 +197,9 @@ export const onJoinRequestApproved = onDocumentUpdated(
         typeof freshGroup.member_count === "number" ?
           freshGroup.member_count : 0;
 
-      tx.set(memberRef, {
+      // set sem merge: na volta, o ex-membro entra do zero, como MEMBER,
+      // sem herdar papel ou campos de antes de sair.
+      const memberData: Record<string, unknown> = {
         user_id: userId,
         user_name: after.user_name,
         user_photo: after.user_photo ?? null,
@@ -190,13 +207,18 @@ export const onJoinRequestApproved = onDocumentUpdated(
         status: "ACTIVE",
         joined_at: FieldValue.serverTimestamp(),
         invited_by: after.responded_by,
-        _counted_by_join_request: true,
-      });
-
-      tx.update(groupRef, {
-        member_count: FieldValue.increment(1),
-        updated_at: FieldValue.serverTimestamp(),
-      });
+      };
+      if (reactivating) {
+        // INACTIVE -> ACTIVE: quem soma 1 em member_count é o onMemberWritten
+        // (REACTIVATED). Somar aqui contaria a pessoa duas vezes.
+        tx.set(memberRef, memberData);
+      } else {
+        tx.set(memberRef, {...memberData, _counted_by_join_request: true});
+        tx.update(groupRef, {
+          member_count: FieldValue.increment(1),
+          updated_at: FieldValue.serverTimestamp(),
+        });
+      }
 
       tx.set(db().doc(`users/${userId}/groups/${groupId}`), {
         group_id: groupId,
