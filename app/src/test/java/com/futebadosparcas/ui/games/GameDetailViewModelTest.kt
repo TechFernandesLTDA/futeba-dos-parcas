@@ -25,13 +25,16 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import io.mockk.coVerify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -505,6 +508,91 @@ class GameDetailViewModelTest {
 
             val clearedState = viewModel.uiState.value as? GameDetailUiState.Success
             assertNull(clearedState?.userMessage)
+        }
+    }
+
+    @Nested
+    @DisplayName("Atualização depois de mudar a presença (pelada pública)")
+    inner class RefreshAfterPresenceTests {
+
+        private val permissionDenied: Result<List<GameConfirmation>> =
+            Result.failure(IllegalStateException("PERMISSION_DENIED"))
+
+        private fun confirmationsWithUser() = Result.success(
+            testConfirmations + GameConfirmation(
+                gameId = "game-1", userId = "user-1", userName = "Maria", status = "CONFIRMED"
+            )
+        )
+
+        @Test
+        @DisplayName("confirmar reabre o listener negado e mostra a presença na hora")
+        fun confirmPresence_listenerNegadoAntes_reabreEMostraConfirmado() = runTest(testDispatcher) {
+            setupGameFlows()
+            // Antes de confirmar, quem não é do grupo não lê as confirmações; depois, lê.
+            every { gameRepository.getGameConfirmationsFlow("game-1") } returnsMany listOf(
+                flowOf(permissionDenied),
+                flowOf(confirmationsWithUser())
+            )
+            coEvery {
+                gameRepository.confirmPresence(any<String>(), any<String>(), any<Boolean>())
+            } returns Result.success(mockk(relaxed = true))
+            viewModel = createViewModel()
+            viewModel.loadGameDetails("game-1")
+            advanceUntilIdle()
+            assertFalse((viewModel.uiState.value as GameDetailUiState.Success).isUserConfirmed)
+
+            val states = mutableListOf<GameDetailUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { states += it }
+            }
+            viewModel.toggleConfirmation("game-1")
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as GameDetailUiState.Success
+            assertTrue(state.isUserConfirmed)
+            assertEquals(3, state.confirmations.size)
+            assertFalse(state.isPresenceSubmitting)
+            // Reabrir os listeners não pisca o carregamento na tela.
+            assertTrue(states.none { it is GameDetailUiState.Loading })
+            verify(exactly = 2) { gameRepository.getGameConfirmationsFlow("game-1") }
+        }
+
+        @Test
+        @DisplayName("cancelar reabre o listener e tira a presença mesmo sem leitura")
+        fun cancelPresence_leituraNegadaDepois_mostraNaoConfirmado() = runTest(testDispatcher) {
+            setupGameFlows()
+            every { gameRepository.getGameConfirmationsFlow("game-1") } returnsMany listOf(
+                flowOf(confirmationsWithUser()),
+                flowOf(permissionDenied)
+            )
+            coEvery { gameRepository.cancelConfirmation("game-1") } returns Result.success(Unit)
+            viewModel = createViewModel()
+            viewModel.loadGameDetails("game-1")
+            advanceUntilIdle()
+            assertTrue((viewModel.uiState.value as GameDetailUiState.Success).isUserConfirmed)
+
+            viewModel.toggleConfirmation("game-1")
+            advanceUntilIdle()
+
+            assertFalse((viewModel.uiState.value as GameDetailUiState.Success).isUserConfirmed)
+        }
+
+        @Test
+        @DisplayName("falha ao confirmar não reabre os listeners")
+        fun confirmPresence_falha_naoReabre() = runTest(testDispatcher) {
+            setupGameFlows()
+            coEvery {
+                gameRepository.confirmPresence(any<String>(), any<String>(), any<Boolean>())
+            } returns Result.failure(IllegalStateException("erro"))
+            viewModel = createViewModel()
+            viewModel.loadGameDetails("game-1")
+            advanceUntilIdle()
+
+            viewModel.toggleConfirmation("game-1")
+            advanceUntilIdle()
+
+            verify(exactly = 1) { gameRepository.getGameConfirmationsFlow("game-1") }
+            assertTrue((viewModel.uiState.value as GameDetailUiState.Success).canRetryLastMutation)
         }
     }
 
