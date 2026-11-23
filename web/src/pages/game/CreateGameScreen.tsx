@@ -76,6 +76,7 @@ import {
   normalizeHourlyPriceForGame,
   resolveGamePricingForSave,
 } from '../../utils/gamePricing';
+import { gameCoordinatesForSave } from '../../utils/gameCoordinates';
 import { calculateNextOccurrence } from './recurringGameHelpers';
 import {
   buildConflictResult,
@@ -815,6 +816,9 @@ export const CreateGameScreen: React.FC = () => {
       ...prev,
       locationId: game.locationId,
       locationName: game.locationName,
+      // Coordenadas do jogo duplicado, não as do local escolhido antes (#4629, item 9).
+      locationLat: game.locationLat,
+      locationLng: game.locationLng,
       fieldId: game.fieldId || '',
       fieldName: game.fieldName || '',
       fieldType: (game.fieldType as FieldType) || prev.fieldType,
@@ -856,6 +860,8 @@ export const CreateGameScreen: React.FC = () => {
         locationId: data.locationId || '',
         locationName: data.locationName,
         locationAddress: data.locationAddress,
+        // Sem estas coordenadas o check-in por GPS recusa (#4629, item 9).
+        ...gameCoordinatesForSave(data.locationLat, data.locationLng),
         fieldId: data.fieldId || '',
         fieldName: data.fieldName,
         fieldType: data.fieldType,

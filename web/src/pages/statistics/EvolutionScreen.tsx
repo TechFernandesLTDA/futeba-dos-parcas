@@ -1,6 +1,6 @@
 import { PageContainer } from '../../components/common/PageContainer';
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
@@ -33,6 +33,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { normalizePlayerStats } from '../../utils/playerStats';
 
 const logger = createLogger('EvolutionScreen');
 
@@ -56,15 +57,10 @@ interface StatsSummary {
 }
 
 // #2276: interfaces tipadas para os docs lidos (substituem Record<string, any>).
-interface RawUserStats {
+interface RawUserName {
   name?: string;
   displayName?: string;
   nickname?: string;
-  gamesPlayed?: number;
-  wins?: number;
-  goals?: number;
-  assists?: number;
-  mvpCount?: number;
 }
 interface RawMonthlyStats {
   month?: string;
@@ -79,6 +75,7 @@ export const EvolutionScreen: React.FC = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('page.title.evolution'));
   const goBack = useNavigateBack();
+  const navigate = useNavigate();
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
@@ -96,6 +93,7 @@ export const EvolutionScreen: React.FC = () => {
   const [breadcrumbUserName, setBreadcrumbUserName] = useState<string | null>(null);
 
   const targetUserId = userId || currentUser?.id;
+  const isOwnProfile = !!targetUserId && targetUserId === currentUser?.id;
   useBreadcrumbEntityLabel(
     'user',
     targetUserId,
@@ -115,26 +113,32 @@ export const EvolutionScreen: React.FC = () => {
 
     const fetchData = async () => {
       try {
-        const userDoc = await getDoc(doc(db, 'users', targetUserId));
-        if (userDoc.exists() && !cancelled) {
-          const data = snakeToCamel<RawUserStats>(userDoc.data());
+        // Os números ficam em statistics/{uid}, gravado pelo processamento de XP;
+        // users/{uid} serve de reserva para contas antigas e para o nome (#4629, item 12).
+        const [userDoc, statsDoc] = await Promise.all([
+          getDoc(doc(db, 'users', targetUserId)),
+          getDoc(doc(db, 'statistics', targetUserId)),
+        ]);
+        if (!cancelled && userDoc.exists()) {
+          const data = snakeToCamel<RawUserName>(userDoc.data());
           const loadedName = [data.name, data.displayName, data.nickname]
             .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
           setBreadcrumbUserName(loadedName ?? null);
-          const totalGames = data.gamesPlayed || 0;
-          const totalWins = data.wins || 0;
-          const totalGoals = data.goals || 0;
-          const totalAssists = data.assists || 0;
-          const totalMvps = data.mvpCount || 0;
-
+        }
+        if (!cancelled && (userDoc.exists() || statsDoc.exists())) {
+          const stats = normalizePlayerStats(
+            statsDoc.exists() ? statsDoc.data() : undefined,
+            userDoc.exists() ? userDoc.data() : undefined,
+            targetUserId,
+          );
           setSummary({
-            totalGames,
-            totalWins,
-            totalGoals,
-            totalAssists,
-            totalMvps,
-            avgGoalsPerGame: totalGames > 0 ? totalGoals / totalGames : 0,
-            winRate: totalGames > 0 ? (totalWins / totalGames) * 100 : 0,
+            totalGames: stats.totalGames,
+            totalWins: stats.totalWins,
+            totalGoals: stats.totalGoals,
+            totalAssists: stats.totalAssists,
+            totalMvps: stats.mvpCount,
+            avgGoalsPerGame: stats.avgGoalsPerGame,
+            winRate: stats.winRate * 100,
           });
         }
 
@@ -212,6 +216,16 @@ export const EvolutionScreen: React.FC = () => {
             arte="placar_zerado"
             icon={<TimelineIcon />}
             title={t('empty.noDataAvailable')}
+          />
+        ) : summary.totalGames === 0 ? (
+          // Sem jogo finalizado, a tela só teria zeros: diz o que fazer.
+          <EmptyState
+            arte="placar_zerado"
+            icon={<TimelineIcon />}
+            title={t('statistics.evolutionEmptyTitle')}
+            description={t(isOwnProfile ? 'statistics.evolutionEmptyDesc' : 'statistics.evolutionEmptyOtherDesc')}
+            actionLabel={isOwnProfile ? t('statistics.evolutionEmptyAction') : undefined}
+            onAction={isOwnProfile ? () => navigate('/public-games') : undefined}
           />
         ) : (
           <>
@@ -336,12 +350,11 @@ export const EvolutionScreen: React.FC = () => {
                     Últimos 12 Meses
                   </Typography>
                   {evolutionData.length === 0 ? (
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                      <TrendingUpIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        Sem dados suficientes
-                      </Typography>
-                    </Box>
+                    <EmptyState
+                      icon={<TrendingUpIcon />}
+                      title={t('statistics.evolutionMonthlyEmptyTitle')}
+                      description={t('statistics.evolutionMonthlyEmptyDesc')}
+                    />
                   ) : (
                     <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
                       {evolutionData.slice(0, 12).reverse().map((data, _index) => (

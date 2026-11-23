@@ -15,6 +15,29 @@ vi.mock('../../../hooks/useGroups', () => ({
   useGroups: () => groupsState,
 }));
 
+// Contagem de jogos finalizados por grupo, no servidor (#4629, item 13).
+const countState = vi.hoisted(() => ({
+  byGroup: {} as Record<string, number | Error>,
+  where: [] as Array<[string, string, unknown]>,
+}));
+
+vi.mock('../../../services/firebase', () => ({ db: {} }));
+
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(() => ({})),
+  where: vi.fn((field: string, op: string, value: unknown) => {
+    countState.where.push([field, op, value]);
+    return { field, op, value };
+  }),
+  query: vi.fn((_ref: unknown, ...filters: Array<{ field: string; value: unknown }>) => ({ filters })),
+  getCountFromServer: vi.fn(async (q: { filters: Array<{ field: string; value: unknown }> }) => {
+    const groupId = q.filters.find((f) => f.field === 'group_id')?.value as string;
+    const result = countState.byGroup[groupId];
+    if (result instanceof Error) throw result;
+    return { data: () => ({ count: result ?? 0 }) };
+  }),
+}));
+
 vi.mock('../../../components/common/PullToRefresh', () => ({
   PullToRefresh: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -25,7 +48,8 @@ vi.mock('../../../components/layout', () => ({
 
 vi.mock('react-i18next', () => {
   // Match the real hook's stable translator identity across renders.
-  const t = (key: string) => key;
+  const t = (key: string, opts?: { count?: number }) =>
+    key === 'groups.gamesCount' ? `${key}:${opts?.count}` : key;
   return { useTranslation: () => ({ t }) };
 });
 
@@ -75,6 +99,9 @@ describe('GroupsTab', () => {
     groupsState.loading = false;
     groupsState.error = null;
     groupsState.refetch.mockClear();
+    countState.byGroup = {};
+    countState.where = [];
+    queryClient.clear();
   });
 
   it('renderiza a lista de grupos do usuário', () => {
@@ -120,5 +147,24 @@ describe('GroupsTab', () => {
     renderScreen();
     expect(screen.getByText('groups.noResults')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'groups.createGroup' }).length).toBeGreaterThan(0);
+  });
+
+  it('conta os jogos finalizados do grupo em vez de total_games_played', async () => {
+    countState.byGroup = { g1: 13, g2: 0 };
+    renderScreen();
+    expect(await screen.findByText('groups.gamesCount:13')).toBeInTheDocument();
+    expect(screen.getByText('groups.gamesCount:0')).toBeInTheDocument();
+    // O campo do grupo (30) não é atualizado por nenhuma função.
+    expect(screen.queryByText('groups.gamesCount:30')).not.toBeInTheDocument();
+    expect(countState.where).toContainEqual(['group_id', '==', 'g1']);
+    expect(countState.where).toContainEqual(['status', '==', 'FINISHED']);
+  });
+
+  it('esconde o número quando a contagem do grupo falha', async () => {
+    countState.byGroup = { g1: 5, g2: new Error('permission-denied') };
+    renderScreen();
+    expect(await screen.findByText('groups.gamesCount:5')).toBeInTheDocument();
+    expect(screen.queryByText('groups.gamesCount:0')).not.toBeInTheDocument();
+    expect(screen.queryByText('groups.gamesCount:10')).not.toBeInTheDocument();
   });
 });

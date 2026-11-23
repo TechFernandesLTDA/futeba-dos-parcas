@@ -17,7 +17,7 @@ const translations: Record<string, string> = {
 const translateMock = (key: string) => translations[key] || key;
 
 vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(() => ({})),
+  doc: vi.fn((_db: unknown, col: string, id: string) => ({ col, id })),
   getDoc: (...args: unknown[]) => getDocMock(...args),
   collection: vi.fn(() => ({})),
   query: vi.fn(() => ({})),
@@ -64,7 +64,12 @@ vi.mock('../../components/common/ErrorState', () => ({
 }));
 
 vi.mock('../../components/common/EmptyState', () => ({
-  EmptyState: ({ title }: { title: string }) => <div data-testid="empty-state">{title}</div>,
+  EmptyState: ({ title, actionLabel }: { title: string; actionLabel?: string }) => (
+    <div data-testid="empty-state">
+      {title}
+      {actionLabel ? <button type="button">{actionLabel}</button> : null}
+    </div>
+  ),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -93,6 +98,17 @@ function deferred<T>() {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+type FakeDoc = { exists: () => boolean; data: () => Record<string, unknown> };
+const fakeDoc = (data?: Record<string, unknown>): FakeDoc => ({
+  exists: () => data !== undefined,
+  data: () => data ?? {},
+});
+
+/** getDoc por coleção: users/{uid} e statistics/{uid}. */
+function mockDocs(byCollection: Record<string, Record<string, unknown> | undefined>) {
+  getDocMock.mockImplementation((ref: { col: string }) => Promise.resolve(fakeDoc(byCollection[ref.col])));
 }
 
 describe('EvolutionScreen', () => {
@@ -136,5 +152,32 @@ describe('EvolutionScreen', () => {
     expect(screen.getByRole('heading', { name: 'Evolução' })).toBeInTheDocument();
     expect(screen.getByLabelText('Voltar')).toBeInTheDocument();
     expect(showErrorMock).toHaveBeenCalledWith('Erro ao carregar evolução');
+  });
+
+  it('resumo lê statistics/{uid}, não os campos zerados de users/{uid}', async () => {
+    mockDocs({
+      users: { name: 'Renan', gamesPlayed: 0, goals: 0, wins: 0 },
+      statistics: { totalGames: 13, totalGoals: 9, totalAssists: 4, gamesWon: 7 },
+    });
+    getDocsMock.mockResolvedValue({ docs: [] });
+
+    renderWithTheme(<EvolutionScreen />);
+
+    expect(await screen.findByText('13')).toBeInTheDocument();
+    expect(screen.getByText('9')).toBeInTheDocument();
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText('53.8%')).toBeInTheDocument();
+  });
+
+  it('sem jogo finalizado mostra estado vazio com ação', async () => {
+    mockDocs({ users: { name: 'Renan' }, statistics: undefined });
+    getDocsMock.mockResolvedValue({ docs: [] });
+
+    renderWithTheme(<EvolutionScreen />);
+
+    const empty = await screen.findByTestId('empty-state');
+    expect(empty).toHaveTextContent('statistics.evolutionEmptyTitle');
+    expect(screen.getByRole('button', { name: 'statistics.evolutionEmptyAction' })).toBeInTheDocument();
   });
 });
