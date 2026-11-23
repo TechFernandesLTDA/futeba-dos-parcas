@@ -405,6 +405,11 @@ describe("join_requests — pedir de novo depois de recusado ou de sair", () => 
     });
   });
 
+  it("quem nunca foi membro lê o próprio vínculo inexistente sem erro", async () => {
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_B}`).get());
+  });
+
   it("sobrescrever o pedido recusado com PENDING é negado (o que o app fazia)", async () => {
     await seedOldRequest(UID_PLAYER_B, "REJECTED");
     const db = asPlayerB(testEnv);
