@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.splash
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,8 @@ class SplashActivityCompose : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Instala a splash screen do sistema (Android 12+)
         installSplashScreen()
+        // Edge-to-edge em todas as versões, como nas outras Activities (no Android 15+ já é o padrão).
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val randomQuote = SPLASH_QUOTES[Random.nextInt(SPLASH_QUOTES.size)]
