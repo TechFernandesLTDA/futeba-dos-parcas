@@ -15,6 +15,7 @@ const mockBatchSet = vi.fn();
 const mockBatchUpdate = vi.fn();
 const mockBatchCommit = vi.fn();
 const mockWriteBatch = vi.fn();
+const mockGetDoc = vi.fn();
 
 vi.mock('firebase/firestore', () => {
   class MockTimestamp {
@@ -44,6 +45,7 @@ vi.mock('firebase/firestore', () => {
     query: (...args: any[]) => mockQuery(...args),
     where: vi.fn((...args: any[]) => args),
     onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+    getDoc: (...args: any[]) => mockGetDoc(...args),
     serverTimestamp: () => SERVER_TIMESTAMP,
     writeBatch: (...args: any[]) => mockWriteBatch(...args),
     Timestamp: MockTimestamp,
@@ -151,6 +153,7 @@ beforeEach(() => {
     return vi.fn();
   });
   setupBatchMock();
+  mockGetDoc.mockResolvedValue({ exists: () => false });
   mockAuthReturn = {
     user: { id: 'test-user-id', name: 'Test User', photoUrl: null, nickname: null, level: 5 },
     firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
@@ -365,6 +368,36 @@ describe('useGameRides — saveRide', () => {
     const [, payload, opts] = rideSet as any[];
     expect(opts).toEqual({ merge: true });
     expect(payload.created_at).toBeUndefined();
+  });
+
+  it('reativa carona cancelada com merge:true e sem created_at novo (#4629 item 21)', async () => {
+    // A lista só traz ACTIVE; o documento cancelado continua no Firestore.
+    mockGetDoc.mockResolvedValue({ exists: () => true });
+    const { result } = renderHook(() => useGameRides(GAME, true), { wrapper: createTestWrapper() });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.currentUserRide).toBeNull();
+    await act(async () => {
+      expect(await result.current.saveRide({ ...OFFER, type: 'REQUEST' })).toBe(true);
+    });
+    expect(mockGetDoc).toHaveBeenCalledWith(expect.objectContaining({ path: 'game_rides/game-1_test-user-id' }));
+    const rideSet = mockBatchSet.mock.calls.find(([ref]) => (ref as any).path === 'game_rides/game-1_test-user-id');
+    const [, payload, opts] = rideSet as any[];
+    expect(opts).toEqual({ merge: true });
+    expect(payload.created_at).toBeUndefined();
+    expect(payload).toMatchObject({ status: 'ACTIVE', type: 'REQUEST', seats: null });
+  });
+
+  it('com carona ativa não consulta o documento antes de gravar', async () => {
+    mockOnSnapshot.mockImplementation((_q: any, onNext: any) => {
+      onNext(makeSnapshot([rideDoc('mine', { user_id: 'test-user-id', type: 'OFFER' })]));
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useGameRides(GAME, true), { wrapper: createTestWrapper() });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.saveRide(OFFER);
+    });
+    expect(mockGetDoc).not.toHaveBeenCalled();
   });
 
   it('grava seats=null em REQUEST', async () => {

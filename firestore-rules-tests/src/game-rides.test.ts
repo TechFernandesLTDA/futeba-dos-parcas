@@ -217,3 +217,61 @@ describe("game_rides", () => {
     );
   });
 });
+
+// #4629 item 21: depois de cancelar, a pessoa pede ou oferece carona de novo.
+describe("game_rides: carona cancelada volta a valer", () => {
+  const UID_REATIVA = "uid-rides-reativa";
+  const RIDE_ID_REATIVA = `${GAME_ID}_${UID_REATIVA}`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, `confirmations/${GAME_ID}_${UID_REATIVA}`, {
+      game_id: GAME_ID,
+      user_id: UID_REATIVA,
+      status: "CONFIRMED",
+    });
+    await seedDoc(testEnv, `game_rides/${RIDE_ID_REATIVA}`, {
+      ...createRide(UID_REATIVA),
+      status: "CANCELLED",
+    });
+  });
+
+  it("recriar por cima da cancelada, com created_at novo, continua negado", async () => {
+    // Era o que o web fazia: set sem merge vira update que troca created_at.
+    await assertFails(
+      asUser(testEnv, UID_REATIVA).doc(`game_rides/${RIDE_ID_REATIVA}`).set({
+        ...createRide(UID_REATIVA),
+        type: "REQUEST",
+        seats: null,
+      })
+    );
+  });
+
+  it("reativar com merge, sem created_at, é permitido (pedido de carona)", async () => {
+    const {created_at: _createdAt, ...payload} = createRide(UID_REATIVA);
+    await assertSucceeds(
+      asUser(testEnv, UID_REATIVA).doc(`game_rides/${RIDE_ID_REATIVA}`).set(
+        {...payload, type: "REQUEST", seats: null, status: "ACTIVE"},
+        {merge: true}
+      )
+    );
+  });
+
+  it("quem não está mais confirmado não reativa a própria carona", async () => {
+    const UID_SAIU = "uid-rides-saiu";
+    await seedDoc(testEnv, `confirmations/${GAME_ID}_${UID_SAIU}`, {
+      game_id: GAME_ID,
+      user_id: UID_SAIU,
+      status: "CANCELLED",
+    });
+    await seedDoc(testEnv, `game_rides/${GAME_ID}_${UID_SAIU}`, {
+      ...createRide(UID_SAIU),
+      status: "CANCELLED",
+    });
+    await assertFails(
+      asUser(testEnv, UID_SAIU).doc(`game_rides/${GAME_ID}_${UID_SAIU}`).update({
+        status: "ACTIVE",
+        updated_at: serverTimestamp(),
+      })
+    );
+  });
+});
