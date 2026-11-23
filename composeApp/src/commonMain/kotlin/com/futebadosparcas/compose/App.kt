@@ -96,6 +96,7 @@ import com.futebadosparcas.compose.monetization.MonetizationHolder
 import com.futebadosparcas.compose.monetization.MonetizationUiState
 import com.futebadosparcas.compose.monetization.PlatformAdBanner
 import com.futebadosparcas.compose.monetization.RemoveAdsScreen
+import com.futebadosparcas.compose.review.createReviewPromptCoordinator
 import com.futebadosparcas.domain.monetization.AdsGate
 import com.futebadosparcas.domain.monetization.AdsState
 import com.futebadosparcas.domain.monetization.PreferencesAdsStateStore
@@ -1393,6 +1394,18 @@ private fun PostGameReportRoute(
     var retryKey by remember { mutableIntStateOf(0) }
     var state by remember(gameId, dataSource, retryKey) {
         mutableStateOf<RealtimeRouteState<PostGameReport>>(RealtimeRouteState.Loading)
+    }
+
+    // Pedido de avaliação nativo: ver o resultado de um jogo encerrado é um momento de sucesso
+    // (uma vez só, 3º jogo; a regra e a marca "já pediu" ficam em ReviewPromptCoordinator).
+    val reviewPreferences: PreferencesService? = koinInjectOrNull<PreferencesService>()
+    val reviewCoordinator = remember(reviewPreferences) {
+        reviewPreferences?.let { createReviewPromptCoordinator(it) }
+    }
+    LaunchedEffect(state, gameId) {
+        if (!gameId.isNullOrBlank() && state is RealtimeRouteState.Success) {
+            reviewCoordinator?.onSuccessMoment(eventId = gameId)
+        }
     }
 
     LaunchedEffect(gameId, dataSource, retryKey) {

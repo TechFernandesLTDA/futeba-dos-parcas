@@ -103,6 +103,9 @@ kotlin {
 
                 // AndroidX Security Crypto (para SecureStorage)
                 implementation("androidx.security:security-crypto:1.1.0")
+
+                // Play In-App Review (pedido de avaliação nativo, uma vez só)
+                implementation("com.google.android.play:review:2.0.1")
             }
         }
 
