@@ -68,6 +68,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.resetModules();
 
+  // Sem times por padrão; os testes de placar dos times definem os seus.
+  mockTeamsGet.mockResolvedValue({docs: []});
   mockCollection.mockImplementation((collectionName: string) => ({
     doc: jest.fn((id: string) => makeDocRef(collectionName, id)),
     where: jest.fn(() => makeQuery(collectionName)),
@@ -421,6 +423,94 @@ describe("game lifecycle callables", () => {
         lifecycle_update_source: "callable",
       })
     );
+  });
+
+  describe("placar nos documentos de teams (bugfix-2026-11-23-placar-chega-aos-times)", () => {
+    function setupFinish(liveScore: Record<string, unknown>, teamIds: string[]) {
+      const txUpdate = jest.fn();
+      const gameState: Record<string, unknown> = {owner_id: "owner1", status: "LIVE"};
+      mockEventsGet.mockResolvedValue({size: 0, docs: []});
+      mockLiveScoreGet.mockResolvedValue({exists: true, data: () => liveScore});
+      mockTeamsGet.mockResolvedValue({
+        docs: teamIds.map((id) => ({id, data: () => ({game_id: "game1"})})),
+      });
+      mockRunTransaction.mockImplementation(async (callback: any) => callback({
+        get: jest.fn(async (ref: {path: string}) => ref.path.startsWith("teams/") ?
+          {exists: ref.path !== "teams/apagado", data: () => ({game_id: "game1"})} :
+          {exists: true, data: () => ({...gameState})}),
+        update: jest.fn((ref: {path: string}, updates: Record<string, unknown>) => {
+          txUpdate(ref, updates);
+          if (ref.path === "games/game1") Object.assign(gameState, updates);
+        }),
+        set: jest.fn(),
+      }));
+      return {txUpdate};
+    }
+
+    const teamWrite = (txUpdate: jest.Mock, teamId: string) =>
+      txUpdate.mock.calls.find(([ref]: [{path: string}]) => ref.path === `teams/${teamId}`)?.[1];
+
+    test("grava o placar final em cada time, na mesma transação do FINISHED", async () => {
+      const {txUpdate} = setupFinish(
+        {scores: {teamA: 3, teamB: 1}, team1_id: "teamA", team2_id: "teamB", team1_score: 3, team2_score: 1},
+        ["teamA", "teamB"],
+      );
+
+      const {finishGameLifecycle} = require("../src/games/lifecycle");
+      const result = await finishGameLifecycle(makeRequest());
+
+      expect(result).toMatchObject({status: "FINISHED", team1Score: 3, team2Score: 1});
+      expect(teamWrite(txUpdate, "teamA")).toMatchObject({score: 3});
+      expect(teamWrite(txUpdate, "teamB")).toMatchObject({score: 1});
+      expect(txUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({path: "games/game1"}),
+        expect.objectContaining({status: "FINISHED", team1_score: 3, team2_score: 1}),
+      );
+    });
+
+    test("jogo de 3 times recebe o placar de cada um pelo mapa scores", async () => {
+      const {txUpdate} = setupFinish(
+        {scores: {teamA: 2, teamB: 0, teamC: 4}, team1_id: "teamA", team2_id: "teamB"},
+        ["teamA", "teamB", "teamC"],
+      );
+
+      const {finishGameLifecycle} = require("../src/games/lifecycle");
+      await finishGameLifecycle(makeRequest());
+
+      expect(teamWrite(txUpdate, "teamC")).toMatchObject({score: 4});
+    });
+
+    test("time apagado durante o jogo não é recriado", async () => {
+      const {txUpdate} = setupFinish(
+        {scores: {teamA: 1, apagado: 0}, team1_id: "teamA", team2_id: "apagado"},
+        ["teamA", "apagado"],
+      );
+
+      const {finishGameLifecycle} = require("../src/games/lifecycle");
+      await finishGameLifecycle(makeRequest());
+
+      expect(teamWrite(txUpdate, "teamA")).toMatchObject({score: 1});
+      expect(teamWrite(txUpdate, "apagado")).toBeUndefined();
+    });
+  });
+
+  test("finalTeamScores: ids legados e live_scores antigo sem ids", () => {
+    const {finalTeamScores} = require("../src/games/lifecycle");
+    expect([...finalTeamScores(
+      ["t1", "t2", "outro"],
+      new Map(),
+      {team1Id: "t1", team2Id: "t2", team1Score: 2, team2Score: 5},
+    )]).toEqual([["t1", 2], ["t2", 5]]);
+    expect([...finalTeamScores(
+      ["zeta", "alfa"],
+      new Map(),
+      {team1Id: "", team2Id: "", team1Score: 1, team2Score: 0},
+    )]).toEqual([["alfa", 1], ["zeta", 0]]);
+    expect([...finalTeamScores(
+      ["a", "b", "c"],
+      new Map(),
+      {team1Id: "", team2Id: "", team1Score: 1, team2Score: 0},
+    )]).toEqual([]);
   });
 
   test("finish não recria confirmação ausente nem atualiza cancelada", async () => {

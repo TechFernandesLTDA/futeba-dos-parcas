@@ -137,6 +137,46 @@ export function teamsFromGameRoster(
 }
 
 /**
+ * Placar final de cada documento de `teams` do jogo.
+ *
+ * Usa o mapa canônico de `live_scores` (#3942) e, para times fora dele, os ids
+ * legados team1/team2. Sem nenhum id em `live_scores`, dois times recebem o
+ * placar na ordem do id do documento, a mesma do início do jogo. Spec
+ * bugfix-2026-11-23-placar-chega-aos-times.
+ *
+ * @param {string[]} teamIds Ids dos documentos de `teams` do jogo.
+ * @param {Map<string, number>} scoresMap Placar por time de `live_scores`.
+ * @param {object} legacy team1/team2 com id e placar.
+ * @return {Map<string, number>} Placar por id de time (só os conhecidos).
+ */
+export function finalTeamScores(
+  teamIds: string[],
+  scoresMap: Map<string, number>,
+  legacy: {team1Id: string; team2Id: string; team1Score: number; team2Score: number}
+): Map<string, number> {
+  const result = new Map<string, number>();
+  const hasIds = Boolean(legacy.team1Id || legacy.team2Id || scoresMap.size > 0);
+  if (!hasIds) {
+    const sorted = [...teamIds].sort();
+    if (sorted.length === 2) {
+      result.set(sorted[0], legacy.team1Score);
+      result.set(sorted[1], legacy.team2Score);
+    }
+    return result;
+  }
+  for (const teamId of teamIds) {
+    if (scoresMap.has(teamId)) {
+      result.set(teamId, scoresMap.get(teamId) ?? 0);
+    } else if (teamId === legacy.team1Id) {
+      result.set(teamId, legacy.team1Score);
+    } else if (teamId === legacy.team2Id) {
+      result.set(teamId, legacy.team2Score);
+    }
+  }
+  return result;
+}
+
+/**
  * Agrega eventos oficiais por jogador antes de finalizar o jogo.
  *
  * @param {FirebaseFirestore.QueryDocumentSnapshot[]} docs Eventos do jogo.
@@ -431,12 +471,15 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
     };
 
     try {
-      const [eventsSnap, liveScoreSnap] = await Promise.all([
+      const [eventsSnap, liveScoreSnap, teamsSnap] = await Promise.all([
         db().collection("game_events")
           .where("game_id", "==", gameId)
           .limit(501)
           .get(),
         liveScoreRef.get(),
+        db().collection("teams")
+          .where("game_id", "==", gameId)
+          .get(),
       ]);
       if (eventsSnap.size > 500) {
         throw new HttpsError(
@@ -489,6 +532,19 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
           });
         }
       }
+      // Placar também nos documentos de `teams`: ranking semanal, confronto
+      // direto e o card do time no app leem `teams.score`.
+      const teamScores = finalTeamScores(
+        teamsSnap.docs.map((doc) => doc.id),
+        scoresMap,
+        {team1Id, team2Id, team1Score, team2Score},
+      );
+      const teamScoreEntries = [...teamScores.entries()].map(
+        ([teamId, score]) => ({
+          score,
+          ref: db().collection("teams").doc(teamId),
+        })
+      );
       const aggregatedEntries = [...aggregated.entries()].map(
         ([playerId, stats]) => ({
           stats,
@@ -498,10 +554,13 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
       );
 
       result = await db().runTransaction(async (tx) => {
-        const [gameSnap, ...confirmationSnaps] = await Promise.all([
+        const [gameSnap, ...otherSnaps] = await Promise.all([
           tx.get(gameRef),
           ...aggregatedEntries.map(({ref}) => tx.get(ref)),
+          ...teamScoreEntries.map(({ref}) => tx.get(ref)),
         ]);
+        const confirmationSnaps = otherSnaps.slice(0, aggregatedEntries.length);
+        const teamSnaps = otherSnaps.slice(aggregatedEntries.length);
         const game = gameSnap.data();
         if (
           !gameSnap.exists ||
@@ -522,6 +581,16 @@ export const finishGameLifecycle = onCall<GameLifecycleRequest>(
           ) {
             const {ref, stats} = aggregatedEntries[index];
             tx.set(ref, stats, {merge: true});
+          }
+        }
+
+        for (let index = 0; index < teamScoreEntries.length; index += 1) {
+          if (teamSnaps[index]?.exists) {
+            const {ref, score} = teamScoreEntries[index];
+            tx.update(ref, {
+              score,
+              updated_at: FieldValue.serverTimestamp(),
+            });
           }
         }
 
