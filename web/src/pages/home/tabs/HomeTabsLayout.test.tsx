@@ -103,7 +103,6 @@ function scheduledGame(): Game {
     maxGoalkeepers: 2,
     playersCount: 4,
     goalkeepersCount: 1,
-    players: [],
     gameType: 'FUTSAL',
     fieldType: 'FUTSAL',
     recurrence: 'none',

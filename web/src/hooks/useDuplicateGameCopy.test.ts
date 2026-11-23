@@ -237,7 +237,8 @@ describe('useDuplicateGameCopy', () => {
     expect(payload.status).toBe('SCHEDULED');
     expect(payload.players_count).toBe(0);
     expect(payload.goalkeepers_count).toBe(0);
-    expect(payload.players).toEqual([]);
+    // #4629 item 28: ninguém lê games.players; o campo não é mais gravado.
+    expect(payload).not.toHaveProperty('players');
     expect(payload.team1_score).toBe(0);
     expect(payload.team2_score).toBe(0);
     expect(payload.co_organizers).toEqual([]);

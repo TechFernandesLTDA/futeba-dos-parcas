@@ -823,6 +823,8 @@ describe('useCreateGame', () => {
         players_count: 0,
       })
     );
+    // #4629 item 28: ninguém lê games.players; o campo não é mais gravado.
+    expect(mockAddDoc.mock.calls[0][1]).not.toHaveProperty('players');
     expect(mockTrackEvent).toHaveBeenCalledWith('game_created', {
       fieldType: 'UNKNOWN',
       groupId: 'group-qualified',

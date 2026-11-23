@@ -385,7 +385,6 @@ function buildRecurringGame(
     team2_name: "Time 2",
     players_count: 0,
     goalkeepers_count: 0,
-    players: [],
     team1_score: 0,
     team2_score: 0,
     xp_processed: false,

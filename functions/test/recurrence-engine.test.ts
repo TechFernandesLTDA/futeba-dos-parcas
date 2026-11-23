@@ -434,6 +434,12 @@ describe("onGameFinishedCreateRecurrence", () => {
     })
 
     expect(txSet).toHaveBeenCalledTimes(5)
+    // #4629 item 28: ninguém lê games.players; o filho não grava mais o campo.
+    const childData = txSet.mock.calls.find(
+      ([ref]: [{id?: string}]) => ref?.id === "recurring_game-1_2"
+    )?.[1]
+    expect(childData).toBeDefined()
+    expect(childData).not.toHaveProperty("players")
     expect(txSet).toHaveBeenCalledWith(
       expect.objectContaining({id: "recurring_game-1_2"}),
       expect.objectContaining({
