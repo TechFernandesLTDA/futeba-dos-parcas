@@ -4093,6 +4093,8 @@ subir no ranking!</string>
     <string name="join_request_pending">Aguardando aprovação do organizador</string>
     <string name="join_request_approved">Pedido aprovado!</string>
     <string name="join_request_rejected">Seu pedido foi recusado</string>
+    <string name="join_request_action_request_again">Pedir de novo</string>
+    <string name="join_request_not_allowed">O organizador encerrou sua participação neste grupo, então não dá para pedir para entrar.</string>
     <string name="join_request_pending_section_title">Solicitações pendentes (%1$d)</string>
 
     <!-- DiscoverGroupsScreen (issue #517 Phase 1.b) -->

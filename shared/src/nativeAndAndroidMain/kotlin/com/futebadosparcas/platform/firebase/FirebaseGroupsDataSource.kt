@@ -607,11 +607,28 @@ internal class FirebaseGroupsDataSource(
                 "status" to "PENDING",
                 "requested_at" to FieldValue.serverTimestamp,
             )
-            firestore.collection(COLLECTION_GROUPS)
-                .document(groupId)
-                .collection("join_requests")
-                .document(userId)
-                .set(data)
+            val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
+            val requestRef = groupRef.collection("join_requests").document(userId)
+            // #4629 item 22: quem foi recusado ou saiu do grupo pode pedir de novo.
+            // A regra deixa ler o próprio vínculo e o próprio pedido. Se uma leitura
+            // falhar, conta como ausente e a regra de create decide, como no web.
+            val memberStatus = runCatching {
+                val memberSnap = groupRef.collection("members").document(userId).get()
+                if (memberSnap.exists) memberSnap.get<String?>("status") ?: "ACTIVE" else null
+            }.getOrNull()
+            val requestStatus = runCatching {
+                val requestSnap = requestRef.get()
+                if (requestSnap.exists) requestSnap.get<String?>("status") ?: "PENDING" else null
+            }.getOrNull()
+            when (planJoinRequestWrite(memberStatus, requestStatus)) {
+                JoinRequestWritePlan.NOT_ALLOWED -> return Result.failure(GroupJoinRequestNotAllowedException())
+                JoinRequestWritePlan.ALREADY_PENDING,
+                JoinRequestWritePlan.APPROVAL_IN_PROGRESS -> return Result.success(Unit)
+                // A regra não deixa o dono do pedido atualizar: apaga o antigo e cria um novo.
+                JoinRequestWritePlan.REPLACE -> requestRef.delete()
+                JoinRequestWritePlan.CREATE -> Unit
+            }
+            requestRef.set(data)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.groups
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GroupJoinRequest
+import com.futebadosparcas.domain.model.GroupJoinRequestNotAllowedException
 import com.futebadosparcas.domain.model.GroupJoinRequestStatus
 import com.futebadosparcas.domain.repository.GroupRepository
 import com.futebadosparcas.util.AppLogger
@@ -24,6 +25,9 @@ sealed class MyJoinRequestState {
     data class Pending(val request: GroupJoinRequest) : MyJoinRequestState()
     data class Approved(val request: GroupJoinRequest) : MyJoinRequestState()
     data class Rejected(val request: GroupJoinRequest) : MyJoinRequestState()
+
+    /** Vínculo REMOVED, BLOCKED ou BANNED: não dá para pedir (#4629 item 22). */
+    data object NotAllowed : MyJoinRequestState()
     data class Error(val message: String) : MyJoinRequestState()
 }
 
@@ -104,10 +108,13 @@ class JoinRequestViewModel(
             _isSubmitting.value = true
             try {
                 val result = groupRepository.createJoinRequest(groupId)
-                if (result.isFailure) {
-                    _myRequestState.value = MyJoinRequestState.Error(
-                        result.exceptionOrNull()?.message ?: "Erro ao enviar pedido"
-                    )
+                val error = result.exceptionOrNull()
+                if (error != null) {
+                    _myRequestState.value = if (error is GroupJoinRequestNotAllowedException) {
+                        MyJoinRequestState.NotAllowed
+                    } else {
+                        MyJoinRequestState.Error(error.message ?: "Erro ao enviar pedido")
+                    }
                 }
             } finally {
                 _isSubmitting.value = false
