@@ -51,6 +51,7 @@ vi.mock('react-i18next', () => {
 });
 
 import { JoinByInviteScreen } from './JoinByInviteScreen';
+import { useToast } from '../../contexts/ToastContext';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const theme = createTheme();
@@ -116,6 +117,19 @@ describe('JoinByInviteScreen', () => {
     renderScreen();
     await user.click(await screen.findByRole('button', { name: 'Aceitar e entrar' }));
     await waitFor(() => expect(mockJoinByInviteCode).toHaveBeenCalledWith('CODE123'));
+  });
+
+  it('quando a entrada falha, não soma um aviso genérico ao motivo mostrado pelo hook (#4629)', async () => {
+    mockGetDoc.mockResolvedValue({ exists: () => true, data: () => validInviteData() });
+    mockJoinByInviteCode.mockRejectedValue(new Error('Este convite já foi utilizado. Peça um novo ao organizador.'));
+    const { showError } = useToast();
+    vi.mocked(showError).mockClear();
+    const user = userEvent.setup();
+    renderScreen();
+    await user.click(await screen.findByRole('button', { name: 'Aceitar e entrar' }));
+    await waitFor(() => expect(mockJoinByInviteCode).toHaveBeenCalledWith('CODE123'));
+    expect(showError).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('mostra estado de convite expirado', async () => {

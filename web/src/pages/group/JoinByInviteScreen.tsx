@@ -26,7 +26,6 @@ import { useToast } from '../../contexts/ToastContext';
 import { useInvitePlayers } from '../../hooks/useGroups';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
-import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('JoinByInviteScreen');
@@ -137,9 +136,10 @@ export const JoinByInviteScreen: React.FC = () => {
     try {
       await joinByInviteCode(code);
       navigate(`/group/${preview.groupId}`, { replace: true });
-    } catch (err) {
-      logger.error('Erro ao entrar no grupo:', err);
-      showError(getFunctionsErrorMessage(err, 'joinGroup', 'Erro ao entrar no grupo'));
+    } catch {
+      // useInvitePlayers já registra o erro e mostra o motivo (código usado,
+      // expirado, já é membro, bloqueado). Um segundo aviso genérico aqui
+      // escondia esse motivo.
     }
   };
 
