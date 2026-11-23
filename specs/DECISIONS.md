@@ -2474,3 +2474,14 @@ Contexto: a regra de create do chat lia `games/{id}.date_time`, campo que nenhum
 - A regra lê `dateTime` e cai para `date_time` em documento antigo.
 - Jogo sem data gravada não arquiva, como em `isFutureGameDate`; data em texto nega.
 - Os fixtures do teste usam o formato real.
+
+## 2026-11-23: Início do jogo cria os times a partir do roster do jogo (spec bugfix-2026-11-23-times-do-web-iniciam-jogo)
+
+Contexto: o web grava os times só em `team1_players`/`team2_players` do jogo, e o `startGameLifecycle` só lia
+documentos em `teams`, então todo jogo com times formados no web era recusado ao iniciar.
+
+- Sem nenhum documento em `teams`, o `startGameLifecycle` cria `teams/{gameId}_team1` e `_team2` a partir do
+  roster do jogo, na mesma transação do início, e segue para `LIVE`.
+- A correção ficou no servidor porque o web deixa co-organizador formar times e a regra de `teams` só deixa o
+  dono gravar; mexer na regra para isso seria afrouxar além do necessário.
+- Com documentos em `teams` já gravados pelo app, o comportamento é o de antes.

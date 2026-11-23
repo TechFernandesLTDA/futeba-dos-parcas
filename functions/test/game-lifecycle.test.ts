@@ -183,6 +183,110 @@ describe("game lifecycle callables", () => {
     );
   });
 
+  describe("times formados no web (bugfix-2026-11-23-times-do-web-iniciam-jogo)", () => {
+    function setupStart(game: Record<string, unknown>, teamDocs: unknown[] = []) {
+      const txUpdate = jest.fn();
+      const txSet = jest.fn();
+      mockTeamsGet.mockResolvedValue({docs: teamDocs});
+      mockRunTransaction.mockImplementation(async (callback: any) => callback({
+        get: jest.fn(async (ref: {path?: string}) => ref.path === "games/game1" ? {
+          exists: true,
+          data: () => ({owner_id: "owner1", status: "CONFIRMED", ...game}),
+        } : mockTeamsGet()),
+        update: txUpdate,
+        set: txSet,
+      }));
+      return {txUpdate, txSet};
+    }
+
+    test("sem documentos em teams, cria os dois times de team1_players/team2_players e inicia", async () => {
+      const {txUpdate, txSet} = setupStart({
+        team1_players: ["u1", "u2", "u3"],
+        team2_players: ["u4", "u5", "u6"],
+        team1_name: "Time A",
+        team2_name: "Time B",
+      });
+
+      const {startGameLifecycle} = require("../src/games/lifecycle");
+      const result = await startGameLifecycle(makeRequest());
+
+      expect(result).toEqual({
+        success: true,
+        status: "LIVE",
+        team1Id: "game1_team1",
+        team2Id: "game1_team2",
+      });
+      expect(txSet).toHaveBeenCalledWith(
+        expect.objectContaining({path: "teams/game1_team1"}),
+        expect.objectContaining({
+          id: "game1_team1", game_id: "game1", name: "Time A",
+          player_ids: ["u1", "u2", "u3"], score: 0,
+        })
+      );
+      expect(txSet).toHaveBeenCalledWith(
+        expect.objectContaining({path: "teams/game1_team2"}),
+        expect.objectContaining({
+          id: "game1_team2", game_id: "game1", name: "Time B",
+          player_ids: ["u4", "u5", "u6"], score: 0,
+        })
+      );
+      expect(txSet).toHaveBeenCalledWith(
+        expect.objectContaining({path: "live_scores/game1"}),
+        expect.objectContaining({
+          scores: {game1_team1: 0, game1_team2: 0},
+          team1_id: "game1_team1",
+          team2_id: "game1_team2",
+        })
+      );
+      expect(txUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({path: "games/game1"}),
+        expect.objectContaining({status: "LIVE"})
+      );
+    });
+
+    test("com documentos em teams, usa os do app e não cria outros", async () => {
+      const {txSet} = setupStart(
+        {team1_players: ["u1"], team2_players: ["u2"]},
+        [
+          {id: "teamA", data: () => ({name: "Azul"})},
+          {id: "teamB", data: () => ({name: "Laranja"})},
+        ]
+      );
+
+      const {startGameLifecycle} = require("../src/games/lifecycle");
+      const result = await startGameLifecycle(makeRequest());
+
+      expect(result.team1Id).toBe("teamA");
+      const teamWrites = txSet.mock.calls.filter(
+        ([ref]: [{path: string}]) => ref.path.startsWith("teams/")
+      );
+      expect(teamWrites).toHaveLength(0);
+    });
+
+    test("sem jogador num dos lados continua recusando", async () => {
+      const {txUpdate, txSet} = setupStart({team1_players: ["u1", "u2"], team2_players: []});
+
+      const {startGameLifecycle} = require("../src/games/lifecycle");
+      await expect(startGameLifecycle(makeRequest())).rejects.toMatchObject({
+        code: "failed-precondition",
+      });
+      expect(txUpdate).not.toHaveBeenCalled();
+      expect(txSet).not.toHaveBeenCalled();
+    });
+  });
+
+  test("teamsFromGameRoster limpa ids vazios e repetidos e usa nomes padrão", () => {
+    const {teamsFromGameRoster} = require("../src/games/lifecycle");
+    expect(teamsFromGameRoster("g", {
+      team1_players: ["u1", "", "u1", 7, "u2"],
+      team2_players: ["u2", "u3"],
+    })).toEqual([
+      {id: "g_team1", name: "Time A", playerIds: ["u1", "u2"]},
+      {id: "g_team2", name: "Time B", playerIds: ["u3"]},
+    ]);
+    expect(teamsFromGameRoster("g", {team1_players: ["u1"]})).toEqual([]);
+  });
+
   test("start revalida os times na mesma transação do status LIVE", async () => {
     const txUpdate = jest.fn();
     mockTeamsGet.mockResolvedValue({
