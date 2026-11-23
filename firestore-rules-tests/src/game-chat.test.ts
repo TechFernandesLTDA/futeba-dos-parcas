@@ -19,6 +19,11 @@ const GAME_ID_CONFIRMED = "game-chat-confirmed";
 const GAME_ID_NOT_CONFIRMED = "game-chat-not-confirmed";
 const GAME_ID_ARCHIVED = "game-chat-archived";
 const GAME_ID_GROUP_ONLY = "game-chat-group-only";
+// Formatos antigos e o jogo criado pelo web antes da correção do dateTime.
+const GAME_ID_LEGACY_RECENT = "game-chat-legacy-recent";
+const GAME_ID_LEGACY_ARCHIVED = "game-chat-legacy-archived";
+const GAME_ID_NO_DATE = "game-chat-no-date";
+const GAME_ID_STRING_DATE = "game-chat-string-date";
 const UID_OUTSIDER = "uid-chat-outsider";
 const UID_GROUP_ADMIN = "uid-chat-group-admin";
 const UID_COORGANIZER = "uid-chat-coorganizer";
@@ -43,7 +48,7 @@ beforeAll(async () => {
     co_organizers: [UID_COORGANIZER],
     status: "SCHEDULED",
     visibility: "PUBLIC",
-    date_time: recentDate,
+    dateTime: recentDate,
   });
   await seedDoc(testEnv, `confirmations/${GAME_ID_CONFIRMED}_${UID_PLAYER_A}`, {
     game_id: GAME_ID_CONFIRMED,
@@ -55,14 +60,14 @@ beforeAll(async () => {
     owner_id: UID_PLAYER_B,
     status: "SCHEDULED",
     visibility: "PUBLIC",
-    date_time: recentDate,
+    dateTime: recentDate,
   });
 
   await seedDoc(testEnv, `games/${GAME_ID_ARCHIVED}`, {
     owner_id: UID_PLAYER_B,
     status: "FINISHED",
     visibility: "PUBLIC",
-    date_time: archivedDate,
+    dateTime: archivedDate,
   });
   await seedDoc(testEnv, `confirmations/${GAME_ID_ARCHIVED}_${UID_PLAYER_A}`, {
     game_id: GAME_ID_ARCHIVED,
@@ -76,7 +81,7 @@ beforeAll(async () => {
     status: "SCHEDULED",
     visibility: "GROUP_ONLY",
     group_id: GROUP_ID,
-    date_time: recentDate,
+    dateTime: recentDate,
   });
   await seedDoc(testEnv, `groups/${GROUP_ID}`, {
     owner_id: UID_PLAYER_B,
@@ -247,7 +252,7 @@ describe("games/{gameId}/chat", () => {
     );
   });
 
-  it("rejeita criar mensagem em jogo arquivado (date_time + 7d < now)", async () => {
+  it("rejeita criar mensagem em jogo arquivado (dateTime + 7d < now)", async () => {
     await assertFails(
       asPlayerA(testEnv).doc(`games/${GAME_ID_ARCHIVED}/chat/msg-archived`).set({
         ...baseMessage,
@@ -360,6 +365,69 @@ describe("games/{gameId}/chat", () => {
       asAdmin(testEnv).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-admin`).set({
         ...baseMessage,
         sender_id: UID_PLAYER_A,
+        created_at: serverTimestamp(),
+      })
+    );
+  });
+});
+
+describe("games/{gameId}/chat — data do jogo (bugfix-2026-11-23)", () => {
+  const msg = () => ({ ...baseMessage, sender_id: UID_PLAYER_A, created_at: serverTimestamp() });
+
+  beforeAll(async () => {
+    const jogos: Array<[string, Record<string, unknown>]> = [
+      [GAME_ID_LEGACY_RECENT, { date_time: recentDate }],
+      [GAME_ID_LEGACY_ARCHIVED, { date_time: archivedDate }],
+      [GAME_ID_NO_DATE, { date: "2026-11-30", time: "20:00" }],
+      [GAME_ID_STRING_DATE, { dateTime: "2026-11-30T20:00:00" }],
+    ];
+    for (const [id, data] of jogos) {
+      await seedDoc(testEnv, `games/${id}`, {
+        owner_id: UID_PLAYER_B,
+        status: "SCHEDULED",
+        visibility: "PUBLIC",
+        ...data,
+      });
+      await seedDoc(testEnv, `confirmations/${id}_${UID_PLAYER_A}`, {
+        game_id: id,
+        user_id: UID_PLAYER_A,
+        status: "CONFIRMED",
+      });
+    }
+  });
+
+  it("confirmado escreve no jogo com dateTime (formato gravado pelos apps)", async () => {
+    await assertSucceeds(
+      asPlayerA(testEnv).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-datetime`).set(msg())
+    );
+  });
+
+  it("documento antigo só com date_time continua valendo", async () => {
+    await assertSucceeds(
+      asPlayerA(testEnv).doc(`games/${GAME_ID_LEGACY_RECENT}/chat/msg-legacy`).set(msg())
+    );
+    await assertFails(
+      asPlayerA(testEnv).doc(`games/${GAME_ID_LEGACY_ARCHIVED}/chat/msg-legacy-old`).set(msg())
+    );
+  });
+
+  it("jogo sem data gravada (web antigo) não arquiva", async () => {
+    await assertSucceeds(
+      asPlayerA(testEnv).doc(`games/${GAME_ID_NO_DATE}/chat/msg-no-date`).set(msg())
+    );
+  });
+
+  it("data em texto não abre o chat", async () => {
+    await assertFails(
+      asPlayerA(testEnv).doc(`games/${GAME_ID_STRING_DATE}/chat/msg-string-date`).set(msg())
+    );
+  });
+
+  it("quem não está confirmado continua sem escrever, mesmo com dateTime", async () => {
+    await assertFails(
+      asUser(testEnv, UID_OUTSIDER).doc(`games/${GAME_ID_CONFIRMED}/chat/msg-outsider-dt`).set({
+        ...baseMessage,
+        sender_id: UID_OUTSIDER,
         created_at: serverTimestamp(),
       })
     );
