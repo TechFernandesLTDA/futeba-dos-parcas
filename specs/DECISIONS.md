@@ -2405,3 +2405,23 @@ Spec: `specs/FEAT_2026-11-21_ARTES_DA_PELADA.md` (APPROVED pelo Renan em 21/11/2
   muda entre claro e escuro.
 - Compose desenha as artes em Canvas (não `ImageVector`) porque precisa de traço tracejado e animação;
   pictogramas, que são só traço, viram `ImageVector` para entrar em `Icon`.
+
+## 2026-11-23: R8 sem regras amplas de bibliotecas, e Splash de ponta a ponta
+
+Contexto: a Play Console apontou na 1.45.0 (96) três ações: R8 com taxas baixas de otimização (29%),
+ofuscação (30%) e redução (30%); edge-to-edge que pode não aparecer para todos; e uso de
+`Window.setStatusBarColor`/`setNavigationBarColor`.
+
+- R8 já estava ligado (full mode). O que prendia o código eram regras `-keep class <biblioteca>.** { *; }`
+  para Firebase, Google Play services, Compose, Room, WorkManager e SQLDelight, mais `-keepnames` de todo
+  `Parcelable`/`Serializable`. As bibliotecas trazem as próprias regras, então essas saíram. No relatório local
+  do R8 (`configanalyzer.html`), redução, otimização e ofuscação passaram de ~48% para ~88%; o APK de release
+  caiu de 19,8 MB para 16,3 MB e o dex de 32,2 MB para 20,1 MB. A taxa da Play só muda no próximo pacote enviado.
+- Ficam as regras de reflexão do app: modelos de `domain.model` e `data.model` (lidos por `toObject()` do
+  Firestore, ver #4410), `NotificationSettings`, `data.remote` (Gson), Retrofit e o nome dos Workers (o
+  WorkManager grava o nome da classe no banco entre versões).
+- A Splash era a única Activity sem `enableEdgeToEdge()`; agora chama e afasta o conteúdo das barras.
+- As chamadas a `setStatusBarColor`/`setNavigationBarColor` apontadas pela Play (`ar1.b`, `cr1.b`, `xq1.b`,
+  `yq1.b`) são `androidx.activity.EdgeToEdgeApi23/26/29/35`, ou seja, o próprio `enableEdgeToEdge()` que a
+  Play recomenda. Continuam em activity 1.13.0 e 1.14.0-alpha03 e também em `WindowCompat.enableEdgeToEdge`
+  do androidx.core. Não há o que mudar no app; o aviso deve sair quando o AndroidX deixar de chamar essas APIs.

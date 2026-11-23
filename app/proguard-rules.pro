@@ -33,9 +33,9 @@
 -keep class com.futebadosparcas.data.model.** { *; }
 -keep class com.futebadosparcas.data.remote.** { *; }
 
-# Firebase
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
+# Firebase e Google Play services: as bibliotecas trazem as próprias regras (consumer rules).
+# As antigas `-keep class com.google.firebase.** { *; }` e `com.google.android.gms.** { *; }`
+# prendiam mais de 30% do app e derrubavam as taxas de otimização do R8 apontadas pela Play.
 -dontwarn com.google.android.libraries.places.internal.**
 -dontwarn com.google.android.gms.internal.location.**
 -dontwarn com.google.android.libraries.places.internal.zzbpg
@@ -44,32 +44,20 @@
 -dontwarn com.google.android.libraries.places.internal.zzbou
 -dontwarn com.google.android.gms.internal.location.zze
 
-# Navigation Component Safe Args
--keepnames class * extends android.os.Parcelable
--keepnames class * extends java.io.Serializable
+# Parcelable/Serializable do app mantêm o nome (estado salvo e argumentos de navegação).
+# Restrito ao pacote do app: o padrão `class *` impedia a ofuscação de bibliotecas inteiras.
+-keepnames class com.futebadosparcas.** extends android.os.Parcelable
+-keepnames class com.futebadosparcas.** extends java.io.Serializable
 
-# Room - Complete rules to prevent crashes
--keep class * extends androidx.room.RoomDatabase
--keep class androidx.room.** { *; }
--keep @androidx.room.Entity class *
--keep @androidx.room.Dao class *
+# Room: a biblioteca já mantém o construtor das classes geradas (*_Impl). Aqui só o
+# banco do app, que é instanciado por reflexão a partir do nome.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
 -dontwarn androidx.room.paging.**
 
-# Room Database implementations (generated classes like *_Impl)
--keep class **_Impl { *; }
--keepclassmembers class **_Impl {
-    <init>();
-}
-
-# WorkManager - Required for Hilt WorkManager integration
--keep class * extends androidx.work.Worker
--keep class * extends androidx.work.InputMerger
--keep class androidx.work.** { *; }
--keep class androidx.work.impl.** { *; }
--keep class androidx.work.impl.WorkDatabase { *; }
--keep class androidx.work.impl.WorkDatabase_Impl { *; }
-
-# WorkManager Factory (KoinWorkerFactory). Regras do Hilt removidas: o projeto usa Koin.
+# WorkManager: a biblioteca mantém os construtores dos Workers. O nome da classe do
+# Worker fica gravado no banco do WorkManager entre versões do app, então não pode mudar.
+-keepnames class * extends androidx.work.ListenableWorker
+# WorkerFactory do Koin (KoinWorkerFactory).
 -keep class * extends androidx.work.WorkerFactory
 
 # Silence benign R8 warnings from third-party libraries
@@ -121,9 +109,7 @@
     volatile <fields>;
 }
 
-# Jetpack Compose
--keep class androidx.compose.runtime.** { *; }
--keep class androidx.compose.ui.** { *; }
+# Jetpack Compose: as bibliotecas trazem as próprias regras.
 -dontwarn androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 
 # Kotlin Serialization (for KMP)
@@ -147,7 +133,6 @@
 -keep class com.futebadosparcas.domain.model.** { *; }
 # Única classe fora de data.model/domain.model passada a toObject() (UpdateNotificationSettingsUseCase).
 -keep class com.futebadosparcas.domain.usecase.user.NotificationSettings { *; }
--keep class app.cash.sqldelight.** { *; }
 
 # ViewBinding
 -keep class * implements androidx.viewbinding.ViewBinding {
