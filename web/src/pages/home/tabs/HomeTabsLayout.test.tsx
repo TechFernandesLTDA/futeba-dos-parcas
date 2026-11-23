@@ -52,6 +52,10 @@ vi.mock('../../../hooks/useGroups', () => ({
   useGroups: () => ({ groups, loading: false, error: null, refetch: vi.fn() }),
 }));
 
+vi.mock('../../../hooks/useGroupFinishedGameCounts', () => ({
+  useGroupFinishedGameCounts: () => ({ data: {} }),
+}));
+
 vi.mock('../../../hooks/useDebounce', () => ({
   useDebounce: (value: string) => value,
 }));

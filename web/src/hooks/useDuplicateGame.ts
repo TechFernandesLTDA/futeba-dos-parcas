@@ -9,6 +9,9 @@ export interface RecentGame {
   id: string;
   locationId: string;
   locationName: string;
+  /** Coordenadas do local, para o check-in por GPS do jogo duplicado. */
+  locationLat?: number;
+  locationLng?: number;
   fieldId?: string;
   fieldName?: string;
   date: string;
@@ -62,6 +65,8 @@ export function useDuplicateGame() {
           id: d.id,
           locationId: (raw.locationId as string) || '',
           locationName: (raw.locationName as string) || '',
+          locationLat: typeof raw.locationLat === 'number' ? raw.locationLat : undefined,
+          locationLng: typeof raw.locationLng === 'number' ? raw.locationLng : undefined,
           fieldId: raw.fieldId as string | undefined,
           fieldName: raw.fieldName as string | undefined,
           date: (raw.date as string) || '',

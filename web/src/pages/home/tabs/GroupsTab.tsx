@@ -34,6 +34,7 @@ import {
   ArrowForward,
 } from '@mui/icons-material';
 import { useGroups } from '../../../hooks/useGroups';
+import { useGroupFinishedGameCounts } from '../../../hooks/useGroupFinishedGameCounts';
 import { iconSizes } from '../../../theme/iconSizes';
 import { pageSpacing } from '../../../theme/pageTokens';
 import { PullToRefresh } from '../../../components/common/PullToRefresh';
@@ -53,6 +54,9 @@ export function GroupsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { groups, loading, error, refetch } = useGroups();
+  // #4629 item 13: `total_games_played` não é atualizado; conta os jogos finalizados.
+  const groupIds = useMemo(() => (groups ?? []).map((g) => g.id), [groups]);
+  const { data: finishedGameCounts } = useGroupFinishedGameCounts(groupIds);
 
   const handleRefresh = useCallback(async () => { await refetch(); }, [refetch]);
 
@@ -243,16 +247,29 @@ export function GroupsTab() {
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                          {/* Até duas linhas: com nomes parecidos, cortar em uma linha
+                              deixava os cards iguais (#4629, item 13). */}
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight="bold"
+                            title={group.name}
+                            sx={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              wordBreak: 'break-word',
+                            }}
+                          >
                             {group.name}
                           </Typography>
                           {/* #2213: ícone transmite estado (público/privado) — usar role="img"
                               para expor o aria-label a leitores de tela (SvgIcon sem role não
                               é anunciado de forma confiável). */}
                           {group.type === 'PUBLIC' ? (
-                            <Public fontSize="small" color="action" role="img" aria-label={t('groups.publicGroupLabel')} />
+                            <Public fontSize="small" color="action" role="img" aria-label={t('groups.publicGroupLabel')} sx={{ flexShrink: 0 }} />
                           ) : (
-                            <Lock fontSize="small" color="action" role="img" aria-label={t('groups.privateGroupLabel')} />
+                            <Lock fontSize="small" color="action" role="img" aria-label={t('groups.privateGroupLabel')} sx={{ flexShrink: 0 }} />
                           )}
                         </Box>
 
@@ -296,9 +313,11 @@ export function GroupsTab() {
                           {t('groups.membersCount', { count: group.memberCount || 0 })}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('groups.gamesCount', { count: group.totalGamesPlayed || 0 })}
-                      </Typography>
+                      {finishedGameCounts?.[group.id] !== undefined && (
+                        <Typography variant="body2" color="text.secondary">
+                          {t('groups.gamesCount', { count: finishedGameCounts[group.id] })}
+                        </Typography>
+                      )}
                     </Box>
 
                     {/* Próximo jogo */}

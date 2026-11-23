@@ -3597,7 +3597,13 @@
     "yourStats": "Your Statistics",
     "streakGames_one": "{{count}} game",
     "streakGames_other": "{{count}} games",
-    "streakGames_zero": "{{count}} games"
+    "streakGames_zero": "{{count}} games",
+    "evolutionEmptyTitle": "Your progress shows up after your first game",
+    "evolutionEmptyDesc": "Join a game and, once it ends, your goals, wins and assists will show up here.",
+    "evolutionEmptyOtherDesc": "This player has no finished games yet.",
+    "evolutionEmptyAction": "See public games",
+    "evolutionMonthlyEmptyTitle": "No month-by-month progress yet",
+    "evolutionMonthlyEmptyDesc": "The monthly summary isn't available yet. Your totals are under Overview."
   },
   "teamFormation": {
     "concurrentUpdateError": "The teams changed somewhere else. Reload the screen before saving again.",

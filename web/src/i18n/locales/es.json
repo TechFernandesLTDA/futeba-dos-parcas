@@ -3597,7 +3597,13 @@
     "yourStats": "Tus Estadísticas",
     "streakGames_one": "{{count}} partido",
     "streakGames_other": "{{count}} partidos",
-    "streakGames_zero": "{{count}} partidos"
+    "streakGames_zero": "{{count}} partidos",
+    "evolutionEmptyTitle": "Tu evolución aparece después del primer partido",
+    "evolutionEmptyDesc": "Confirma tu asistencia a un partido y, cuando termine, tus goles, victorias y asistencias aparecerán aquí.",
+    "evolutionEmptyOtherDesc": "Esta persona todavía no tiene partidos terminados.",
+    "evolutionEmptyAction": "Ver partidos públicos",
+    "evolutionMonthlyEmptyTitle": "Todavía sin evolución mes a mes",
+    "evolutionMonthlyEmptyDesc": "El resumen de cada mes todavía no está disponible. Los totales están en Visión general."
   },
   "teamFormation": {
     "concurrentUpdateError": "Los equipos cambiaron en otro lugar. Recarga la pantalla antes de volver a guardar.",
