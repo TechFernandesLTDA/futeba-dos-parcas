@@ -103,7 +103,6 @@ class GameRepositoryImpl constructor(
         game.recurrenceCount?.let { map["recurrence_count"] = it }
         game.recurrenceEndDate?.let { map["recurrence_end_date"] = it }
         map["visibility"] = game.visibility
-        map["players"] = emptyList<String>()
         map["team1_score"] = game.team1Score
         map["team2_score"] = game.team2Score
         map["team1_name"] = game.team1Name

@@ -11,6 +11,7 @@ import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.repository.GameTeamRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.firestore.FieldPath
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -153,10 +154,13 @@ class GameTeamRepositoryImpl(
         }
     }
 
+    // #4629: ordem pelo id do documento, a mesma que o servidor usa para time 1 e time 2
+    // (startGameLifecycle e finalTeamScores); sem isso a ordem dependia do padrão do Firestore.
     override suspend fun getGameTeams(gameId: String): Result<List<Team>> {
         return try {
             val snapshot = teamsCollection
                 .where { "game_id" equalTo gameId }
+                .orderBy(FieldPath.documentId)
                 .limit(10)
                 .get()
 
@@ -170,6 +174,7 @@ class GameTeamRepositoryImpl(
     override fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> = flow {
         teamsCollection
             .where { "game_id" equalTo gameId }
+            .orderBy(FieldPath.documentId)
             .limit(10)
             .snapshots
             .catch { e -> emit(Result.failure(e)) }
