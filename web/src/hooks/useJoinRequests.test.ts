@@ -435,6 +435,13 @@ describe('useMyJoinRequest: pedir de novo', () => {
     expect(result.current.blockedFromRequest).toBe(false);
   });
 
+  it('aprovado e o vínculo ainda não existe: não oferece pedir (a aprovação está em andamento)', async () => {
+    mockDocs({ request: { user_id: 'test-user-id', status: 'APPROVED' } });
+    const result = await render();
+    expect(result.current.canRequest).toBe(false);
+    expect(result.current.blockedFromRequest).toBe(false);
+  });
+
   it('sem pedido antigo: cria sem apagar nada', async () => {
     const result = await render();
     await act(async () => {

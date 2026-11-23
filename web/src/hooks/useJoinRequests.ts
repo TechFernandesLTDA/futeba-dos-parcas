@@ -46,7 +46,8 @@ export interface JoinRequest {
  *  - status: PENDING/APPROVED/REJECTED ou null se nao tem request
  *  - memberStatus: status do proprio documento de membro (null se nao existe)
  *  - canRequest: pode pedir agora (sem pedido, recusado ou aprovado e depois
- *    saiu do grupo), a menos que o vinculo seja REMOVED/BLOCKED/BANNED
+ *    saiu do grupo, com vinculo INACTIVE), a menos que o vinculo seja
+ *    REMOVED/BLOCKED/BANNED
  *  - loading: carregando estado inicial
  *  - submitting: ação em curso (criar/cancelar)
  *
@@ -176,10 +177,14 @@ export function useMyJoinRequest(groupId: string | undefined) {
   }, [groupId, uid, showSuccess, showError, t]);
 
   const blockedFromRequest = memberStatus !== null && NO_REQUEST_MEMBER_STATUSES.has(memberStatus);
+  // Aprovado sem vinculo ainda: o onJoinRequestApproved esta criando o membro.
+  // Pedir de novo nessa hora apagaria a aprovacao, entao so INACTIVE (saiu depois) pede.
   const canRequest =
     !blockedFromRequest &&
     memberStatus !== 'ACTIVE' &&
-    (request === null || request.status === 'REJECTED' || request.status === 'APPROVED');
+    (request === null ||
+      request.status === 'REJECTED' ||
+      (request.status === 'APPROVED' && memberStatus === 'INACTIVE'));
 
   return {
     request,

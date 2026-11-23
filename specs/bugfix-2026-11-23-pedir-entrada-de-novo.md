@@ -31,8 +31,10 @@ já pode apagá-lo. Os testes novos provam que apagar e criar de novo funciona.
 - Para pedir de novo, apaga o pedido antigo (`REJECTED` ou `APPROVED`) e cria um `PENDING` novo, em duas
   escritas separadas.
 - Lê o próprio documento de membro, que a regra deixa ler:
-  - sem pedido, recusado, ou aprovado com vínculo `INACTIVE` ou ausente: botão para pedir ("Pedir de novo"
-    depois de recusado);
+  - sem pedido, recusado, ou aprovado com vínculo `INACTIVE`: botão para pedir ("Pedir de novo" depois de
+    recusado);
+  - aprovado sem vínculo ainda: sem botão. O `onJoinRequestApproved` está criando o membro, e pedir de novo
+    nessa hora apagaria a aprovação;
   - vínculo `REMOVED`, `BLOCKED` ou `BANNED`: aviso de que o organizador encerrou a participação, sem botão
     (a regra de create recusa esses casos).
 
@@ -63,7 +65,7 @@ já pode apagá-lo. Os testes novos provam que apagar e criar de novo funciona.
   - `REMOVED`, `BLOCKED` e `BANNED` continuam fora.
 - `web/src/hooks/useJoinRequests.test.ts`:
   - recusado apaga e cria, nessa ordem;
-  - aprovado com vínculo `INACTIVE` pode pedir;
+  - aprovado com vínculo `INACTIVE` pode pedir; aprovado sem vínculo ainda não pode;
   - `PENDING` e `ACTIVE` não oferecem o botão;
   - `REMOVED`, `BLOCKED` e `BANNED` bloqueiam.
 - `firestore-rules-tests/src/join-requests.test.ts`:
