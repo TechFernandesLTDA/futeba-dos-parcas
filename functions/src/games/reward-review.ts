@@ -143,6 +143,19 @@ export const reviewHeldGameRewards = onCall<
           );
         }
 
+        // Aprovar libera também os jogadores marcados como sobreposição
+        // neste jogo. Sem isso o reprocessamento os exclui de novo
+        // (filterAndClampConfirmations) e o XP continua zerado.
+        // Spec: specs/bugfix-2026-11-23-xp-retido-aprovado.md
+        const overlapSnap =
+          action === "APPROVE" ?
+            await tx.get(
+              db().collection("confirmations")
+                .where("game_id", "==", gameId)
+                .where("suspicious_overlap", "==", true)
+            ) :
+            null;
+
         const nextStatus =
           action === "APPROVE" ?
             "ELIGIBLE" :
@@ -151,6 +164,15 @@ export const reviewHeldGameRewards = onCall<
           action === "APPROVE" ?
             "APPROVED" :
             "REJECTED";
+
+        for (const confirmation of overlapSnap?.docs ?? []) {
+          tx.update(confirmation.ref, {
+            suspicious_overlap: false,
+            suspicious_overlap_cleared_at:
+              FieldValue.serverTimestamp(),
+            suspicious_overlap_cleared_by: uid,
+          });
+        }
 
         tx.update(gameRef, {
           xp_reward_status: nextStatus,
@@ -172,6 +194,7 @@ export const reviewHeldGameRewards = onCall<
         return {
           previousStatus: "HELD_FOR_REVIEW",
           nextStatus,
+          overlapCleared: overlapSnap?.size ?? 0,
         };
       }
     );
@@ -183,6 +206,7 @@ export const reviewHeldGameRewards = onCall<
         adminUid: uid,
         action,
         nextStatus: result.nextStatus,
+        overlapCleared: result.overlapCleared,
       }
     );
 
