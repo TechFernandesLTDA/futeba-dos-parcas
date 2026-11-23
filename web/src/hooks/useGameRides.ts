@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   serverTimestamp,
@@ -172,7 +173,12 @@ export function useGameRides(game: Game | null, enabled: boolean) {
         updated_at: serverTimestamp(),
       };
 
-      if (currentUserRide) {
+      // A lista só traz caronas ACTIVE. Quem cancelou ainda tem o documento
+      // (CANCELLED), e recriar com created_at novo é recusado pela regra de
+      // update (#4629, item 21). Por isso, sem carona ativa, confere se o
+      // documento existe antes de decidir entre reativar e criar.
+      const rideExists = currentUserRide !== null || (await getDoc(rideRef)).exists();
+      if (rideExists) {
         batch.set(rideRef, ridePayload, { merge: true });
       } else {
         batch.set(rideRef, {
