@@ -48,7 +48,8 @@ que o web já usa):
 
 **Idempotência:** cada escrita roda numa transação que relê o documento e só age se ele ainda está no
 estado de antes. A promoção da fila usa uma claim em `notif_dedup` pelo id do evento e do jogo, para uma
-segunda entrega não chamar duas pessoas.
+segunda entrega não chamar duas pessoas. A promoção roda antes de apagar a entrada `NOTIFIED`: se ela falha,
+a entrada continua lá e a nova entrega do evento tenta de novo.
 
 **Regras e clientes:** não mudam. O web continua cancelando as `CONFIRMED` no mesmo lote da saída; o trigger
 encontra essas já canceladas e segue. As consultas são só de igualdade (`group_id` com `status in`, e
@@ -67,6 +68,8 @@ jogar uma pelada pública do grupo entra de novo pelo fluxo público.
 - confirmação já cancelada e entrada da fila já expirada ficam como estão;
 - `WAITING` sai da fila sem promover ninguém; `NOTIFIED` sai e promove o próximo uma vez só, mesmo com o
   evento entregue duas vezes;
+- se a promoção falha, a entrada `NOTIFIED` fica e a nova entrega promove; promoção já concluída não se
+  repete;
 - segunda entrega não muda nada;
 - merge de contas não cancela;
 - entrada no grupo, volta de quem saiu, edição de quem continua ativo e troca entre estados inativos são

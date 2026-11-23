@@ -136,6 +136,31 @@ describe("onMemberDepartedCleanupGames - saída do grupo limpa os jogos futuros"
     expect(promoteWaitlistOnVacancy).toHaveBeenCalledWith("fechado");
   });
 
+  it("se a promoção falha, a entrada NOTIFIED fica e a nova entrega promove uma vez", async () => {
+    seed(`games/fechado/waitlist/${USER}`, {user_id: USER, status: "NOTIFIED", queue_position: 1});
+    promoteWaitlistOnVacancy.mockRejectedValueOnce(new Error("UNAVAILABLE"));
+
+    await expect(memberEvent(active, {...active, status: "REMOVED"})).rejects.toThrow("UNAVAILABLE");
+    expect(read(`games/fechado/waitlist/${USER}`)).toMatchObject({status: "NOTIFIED"});
+
+    await memberEvent(active, {...active, status: "REMOVED"});
+    await memberEvent(active, {...active, status: "REMOVED"});
+
+    expect(read(`games/fechado/waitlist/${USER}`)).toBeUndefined();
+    expect(promoteWaitlistOnVacancy).toHaveBeenCalledTimes(2);
+    expect(await promoteWaitlistOnVacancy.mock.results[1].value).toBeUndefined();
+  });
+
+  it("promoção já feita numa entrega anterior não se repete", async () => {
+    seed(`games/fechado/waitlist/${USER}`, {user_id: USER, status: "NOTIFIED", queue_position: 1});
+    seed("notif_dedup/member_departed:evt-1:fechado", {status: "completed"});
+
+    await memberEvent(active, {...active, status: "REMOVED"});
+
+    expect(promoteWaitlistOnVacancy).not.toHaveBeenCalled();
+    expect(read(`games/fechado/waitlist/${USER}`)).toBeUndefined();
+  });
+
   it("entrada da fila já expirada fica como está", async () => {
     seed(`games/futuro/waitlist/${USER}`, {user_id: USER, status: "EXPIRED"});
 

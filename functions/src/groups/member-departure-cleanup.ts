@@ -107,20 +107,20 @@ export async function cleanupDepartedMemberGames(
     }
 
     const waitlistRef = firestore.doc(`games/${gameId}/waitlist/${userId}`);
-    const removedStatus = await firestore.runTransaction(async (tx) => {
-      const fresh = await tx.get(waitlistRef);
-      const status = fresh.exists ? String(fresh.data()?.status) : null;
-      if (!status || !WAITLIST_ACTIVE_STATUSES.has(status)) return null;
-      tx.delete(waitlistRef);
-      return status;
-    });
-    if (removedStatus) result.waitlistRemoved += 1;
+    const waitlistSnap = await waitlistRef.get();
+    const waitlistStatus = waitlistSnap.exists ?
+      String(waitlistSnap.data()?.status) :
+      null;
+    if (!waitlistStatus || !WAITLIST_ACTIVE_STATUSES.has(waitlistStatus)) {
+      continue;
+    }
 
     // Quem foi chamado (NOTIFIED) segurava a vaga até o prazo. Sem a
     // entrada, a varredura de prazo vencido não acha ninguém, então a vaga
-    // passa agora para o próximo da fila. A claim evita promover duas
-    // pessoas se o evento for entregue de novo.
-    if (removedStatus === "NOTIFIED") {
+    // passa para o próximo da fila ANTES de apagar a entrada: se a
+    // promoção falhar, a entrada continua NOTIFIED e a nova entrega do
+    // evento tenta de novo. A claim evita promover duas pessoas.
+    if (waitlistStatus === "NOTIFIED") {
       const claimId = `member_departed:${eventId}:${gameId}`;
       if (await claimNotificationEventOnce(claimId)) {
         try {
@@ -133,6 +133,15 @@ export async function cleanupDepartedMemberGames(
         result.promotions += 1;
       }
     }
+
+    const removed = await firestore.runTransaction(async (tx) => {
+      const fresh = await tx.get(waitlistRef);
+      const status = fresh.exists ? String(fresh.data()?.status) : null;
+      if (!status || !WAITLIST_ACTIVE_STATUSES.has(status)) return false;
+      tx.delete(waitlistRef);
+      return true;
+    });
+    if (removed) result.waitlistRemoved += 1;
   }
 
   return result;
