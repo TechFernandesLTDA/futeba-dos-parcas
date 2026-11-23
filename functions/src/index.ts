@@ -964,6 +964,9 @@ export {generateGroupInviteCode} from "./groups/generate-invite-code";
 // escalation e desbloqueia join-via-invite no web)
 export * from "./groups/member-counter";
 
+// #4629: quem sai ou é removido do grupo sai dos jogos futuros do grupo
+export {onMemberDepartedCleanupGames} from "./groups/member-departure-cleanup";
+
 // Infrastructure & Monitoring
 export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";
