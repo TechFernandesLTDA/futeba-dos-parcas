@@ -14,19 +14,32 @@ function resolveLocale(locale?: string): string {
 }
 
 /**
+ * Dia do jogo a partir de "DD/MM/AAAA" ou "AAAA-MM-DD", no dia local.
+ * `new Date('2026-11-25')` seria meia-noite UTC, que no Brasil ainda é o dia 24.
+ */
+function parseGameDay(dateStr: string): Date | null {
+  let date: Date;
+  const isoDay = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (dateStr.includes('/')) {
+    const [day, month, year] = dateStr.split('/');
+    date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  } else if (isoDay) {
+    date = new Date(Number(isoDay[1]), Number(isoDay[2]) - 1, Number(isoDay[3]));
+  } else {
+    date = new Date(dateStr);
+  }
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+/**
  * Formata uma data string (DD/MM/YYYY ou YYYY-MM-DD) para exibição amigável.
  * Retorna a tradução de "Hoje", "Amanhã" ou a data formatada no locale ativo.
  */
 export function formatGameDate(dateStr: string | undefined, locale?: string): string {
   if (!dateStr) return '';
 
-  let date: Date;
-  if (dateStr.includes('/')) {
-    const [day, month, year] = dateStr.split('/');
-    date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-  } else {
-    date = new Date(dateStr);
-  }
+  const date = parseGameDay(dateStr);
+  if (!date) return dateStr;
 
   const today = new Date();
   const tomorrow = new Date(today);
@@ -44,13 +57,8 @@ export function formatGameDate(dateStr: string | undefined, locale?: string): st
 export function formatGameDateLong(dateStr: string | undefined, locale?: string): string {
   if (!dateStr) return '';
 
-  let date: Date;
-  if (dateStr.includes('/')) {
-    const [day, month, year] = dateStr.split('/');
-    date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-  } else {
-    date = new Date(dateStr);
-  }
+  const date = parseGameDay(dateStr);
+  if (!date) return dateStr;
 
   const today = new Date();
   const tomorrow = new Date(today);

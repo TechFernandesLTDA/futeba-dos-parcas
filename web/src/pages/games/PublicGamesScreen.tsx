@@ -34,6 +34,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Game, FIELD_TYPE_LABELS, GameGender } from '../../types/game';
 import { useTranslation } from 'react-i18next';
+import { formatGameDate } from '../../utils/dateFormatters';
 
 export const PublicGamesScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -158,7 +159,7 @@ export const PublicGamesScreen: React.FC = () => {
                         {game.locationAddress || ''}
                       </Typography>
                       <Stack direction="row" spacing={1} mt={1} flexWrap="wrap" useFlexGap>
-                        <Chip icon={<CalendarIcon />} label={game.date} size="small" variant="outlined" />
+                        <Chip icon={<CalendarIcon />} label={formatGameDate(game.date)} size="small" variant="outlined" />
                         <Chip icon={<TimerIcon />} label={game.time} size="small" variant="outlined" />
                         <Chip
                           icon={<SoccerIcon />}

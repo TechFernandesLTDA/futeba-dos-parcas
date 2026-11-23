@@ -42,7 +42,8 @@ describe('GameInfoPanel', () => {
     renderWithProviders(<GameInfoPanel game={paidGame} />);
 
     // resolveExpectedPayment: totalCost 210 / 14 jogadores = R$ 15,00
-    expect(screen.getByText('R$ 15.00 por jogador')).toBeInTheDocument();
+    // Formato brasileiro, com vírgula (antes saía "R$ 15.00").
+    expect(screen.getByText(/^R\$\s15,00 por jogador$/)).toBeInTheDocument();
     expect(screen.getByText(/Pix: pix@parcas\.com/)).toBeInTheDocument();
   });
 

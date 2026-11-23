@@ -69,6 +69,11 @@ import { getNearBadgeInsights, getNearLevelInsight } from '../../../utils/gamifi
 
 const logger = createLogger('ProfileTab');
 
+/** Nota de 0 a 5 com vírgula ("1,6"), como o resto do texto em pt-BR. */
+function formatRating(value: number): string {
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
 // #2272: função pura movida para fora do componente — não precisa ser recriada
 // a cada render.
 function getInitials(name: string): string {
@@ -582,11 +587,11 @@ export function ProfileTab() {
                   </Box>
                   <Box>
                     <Typography variant="body2" fontWeight={600} color={pos.color}>
-                      {pos.value.toFixed(1)}
+                      {formatRating(pos.value)}
                     </Typography>
                     {pos.autoValue > 0 && (
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'right' }}>
-                        Auto: {pos.autoValue.toFixed(1)}
+                        {t('profile.autoRatingValue', { value: formatRating(pos.autoValue) })}
                       </Typography>
                     )}
                   </Box>
@@ -606,6 +611,11 @@ export function ProfileTab() {
                 />
               </Box>
             ))}
+            {positionRatings.some((pos) => pos.autoValue > 0) && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+                {t('profile.autoRatingExplain')}
+              </Typography>
+            )}
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'right' }}>
               {t('profile.scaleLabel')}
             </Typography>

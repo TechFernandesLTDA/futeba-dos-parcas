@@ -126,7 +126,9 @@ describe('BadgesScreen', () => {
 
   it('mostra raridade das badges', () => {
     renderWithTheme(<BadgesScreen />);
-    expect(screen.getAllByText('COMUM').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('RARO').length).toBeGreaterThan(0);
+    // Rótulo com acento e sem caixa alta (#4629, item 19)
+    expect(screen.getAllByText('Comum').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Raro').length).toBeGreaterThan(0);
+    expect(screen.queryByText('COMUM')).not.toBeInTheDocument();
   });
 });

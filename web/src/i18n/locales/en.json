@@ -1504,7 +1504,8 @@
         "sentSuccess": "{{name}} was summoned to reinforce the game.",
         "title": "Request reinforcement by position"
       },
-      "yesCancel": "Yes, cancel"
+      "yesCancel": "Yes, cancel",
+      "pricePerPlayer": "{{price}} per player"
     },
     "empty": {
       "clearFilters": "Clear Filters",
@@ -3266,7 +3267,9 @@
     "genderNone": "Not informed",
     "autoRatingBasedOn": "Based on {{count}} automatically rated game(s)",
     "autoRatingNote": "Note: automatic ratings are calculated based on your last 50 games. The more games, the more confident the calculation.",
-    "autoRatingPrefix": "Auto"
+    "autoRatingPrefix": "Auto",
+    "autoRatingValue": "From games: {{value}}",
+    "autoRatingExplain": "The larger number is the rating you set. \"From games\" is calculated from your match performance."
   },
   "ranking": {
     "categoriesAria": "Ranking categories",
@@ -3589,7 +3592,10 @@
     "winRate": "Win Rate",
     "wins": "Wins",
     "yellow": "Yellow",
-    "yourStats": "Your Statistics"
+    "yourStats": "Your Statistics",
+    "streakGames_one": "{{count}} game",
+    "streakGames_other": "{{count}} games",
+    "streakGames_zero": "{{count}} games"
   },
   "teamFormation": {
     "concurrentUpdateError": "The teams changed somewhere else. Reload the screen before saving again.",
@@ -3732,7 +3738,13 @@
     "title": "Weekly Recap",
     "weekStats": "Week Stats",
     "wins": "Wins",
-    "xp": "XP"
+    "xp": "XP",
+    "goalsCount_one": "{{count}} goal",
+    "goalsCount_other": "{{count}} goals",
+    "assistsCount_one": "{{count}} assist",
+    "assistsCount_other": "{{count}} assists",
+    "goalsCount_zero": "{{count}} goals",
+    "assistsCount_zero": "{{count}} assists"
   },
   "welcome": {
     "documentTitle": "Welcome",

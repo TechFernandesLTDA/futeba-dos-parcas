@@ -1504,7 +1504,8 @@
         "sentSuccess": "{{name}} fue convocado para reforzar el partido.",
         "title": "Pedir refuerzo por posición"
       },
-      "yesCancel": "Sí, cancelar"
+      "yesCancel": "Sí, cancelar",
+      "pricePerPlayer": "{{price}} por jugador"
     },
     "empty": {
       "clearFilters": "Limpiar Filtros",
@@ -3266,7 +3267,9 @@
     "genderNone": "No informado",
     "autoRatingBasedOn": "Basado en {{count}} partido(s) evaluado(s) automáticamente",
     "autoRatingNote": "Nota: las calificaciones automáticas se calculan en base a tus últimos 50 partidos. Cuantos más partidos, más confiable será el cálculo.",
-    "autoRatingPrefix": "Auto"
+    "autoRatingPrefix": "Auto",
+    "autoRatingValue": "Por partidos: {{value}}",
+    "autoRatingExplain": "El número mayor es la nota que indicaste. \"Por partidos\" se calcula con tu rendimiento en los partidos."
   },
   "ranking": {
     "categoriesAria": "Categorías del ranking",
@@ -3589,7 +3592,10 @@
     "winRate": "Tasa de Victoria",
     "wins": "Victorias",
     "yellow": "Amarillas",
-    "yourStats": "Tus Estadísticas"
+    "yourStats": "Tus Estadísticas",
+    "streakGames_one": "{{count}} partido",
+    "streakGames_other": "{{count}} partidos",
+    "streakGames_zero": "{{count}} partidos"
   },
   "teamFormation": {
     "concurrentUpdateError": "Los equipos cambiaron en otro lugar. Recarga la pantalla antes de volver a guardar.",
@@ -3732,7 +3738,13 @@
     "title": "Resumen Semanal",
     "weekStats": "Estadísticas de la semana",
     "wins": "Victorias",
-    "xp": "XP"
+    "xp": "XP",
+    "goalsCount_one": "{{count}} gol",
+    "goalsCount_other": "{{count}} goles",
+    "assistsCount_one": "{{count}} asistencia",
+    "assistsCount_other": "{{count}} asistencias",
+    "goalsCount_zero": "{{count}} goles",
+    "assistsCount_zero": "{{count}} asistencias"
   },
   "welcome": {
     "documentTitle": "Bienvenido",
