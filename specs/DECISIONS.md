@@ -2500,3 +2500,16 @@ Contexto: a simulação de uso (#4621) mostrou que aprovar um jogo retido não d
 - Recusar não muda as confirmações.
 - Ficam para depois: reavaliar a sobreposição quando o jogo é remarcado, ler `date` + `time` no fuso da
   quadra em `getGameWindow` (depende do #4624) e dar a aprovação ao dono do grupo ou aos apps.
+
+## 2026-11-23: `dateTime` do jogo preenchido no servidor a partir de `date` e `time` (spec bugfix-2026-11-23-jogo-do-web-sem-datetime)
+
+Contexto: o web e o Android criavam jogos só com `date` e `time` em texto, e a edição do Android mudava a
+data sem tocar em `dateTime`. Sem o campo, o jogo some das listas, dos lembretes e do fechamento automático.
+
+- O web passa a gravar `dateTime` na criação (hora local do navegador) e recusa data impossível.
+- O trigger `onGameWrittenFillDateTime` preenche ou recalcula `dateTime` quando o cliente não o fez, no fuso
+  da quadra (padrão America/Sao_Paulo). Vale para os apps já instalados. Quando o cliente grava `dateTime`,
+  o valor dele vale.
+- O aviso "Jogo atualizado" deixa de contar o preenchimento como remarcação e deduplica por local, data e
+  hora. Mudar só o horário passa a avisar.
+- Os jogos antigos ganham o campo pelo script `backfill-game-datetime.js`, que o Renan roda em produção.

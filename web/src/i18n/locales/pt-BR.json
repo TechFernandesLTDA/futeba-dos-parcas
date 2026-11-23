@@ -1289,6 +1289,7 @@
       "errorEndTimeBeforeStart": "O horário de término deve ser após o horário de início",
       "errorGroupRequiredForVisibility": "Selecione um grupo para usar esta visibilidade",
       "errorQualifiedOwnerGroupRequired": "Selecione um grupo seu com pelo menos 5 membros para criar o jogo.",
+      "errorInvalidDateTime": "Confira a data e a hora do jogo.",
       "errorActiveFieldRequired": "Este local precisa ter uma quadra ativa para criar jogo",
       "errorSelectField": "Selecione uma quadra",
       "errorSelectLocation": "Selecione um local",

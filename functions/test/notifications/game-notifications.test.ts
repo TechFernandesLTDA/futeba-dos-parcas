@@ -691,6 +691,107 @@ describe("Game Notifications", () => {
       expect(mockTransactionUpdate).not.toHaveBeenCalled();
     });
 
+    it("preencher dateTime (ausente -> presente) não avisa ninguém", async () => {
+      mockTransactionGet.mockResolvedValue({
+        exists: true,
+        data: () => ({
+          date: "2024-01-15", time: "19:00", location_id: "loc1",
+          dateTime: { toMillis: () => 1705356000000 },
+        }),
+      });
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ data: () => ({ user_id: "user1" }) }],
+        size: 1,
+      });
+
+      await onGameUpdatedNotification({
+        id: "evt-fill-datetime",
+        data: {
+          before: { data: () => ({ status: "SCHEDULED", date: "2024-01-15", time: "19:00", location_id: "loc1" }) },
+          after: {
+            data: () => ({
+              status: "SCHEDULED", date: "2024-01-15", time: "19:00", location_id: "loc1",
+              dateTime: { toMillis: () => 1705356000000 },
+            }),
+            ref: { id: "game1" },
+          },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      mockCollectionGet.mockReset();
+    });
+
+    it("mudar só o horário avisa os confirmados", async () => {
+      mockTransactionGet.mockResolvedValue({
+        exists: true,
+        data: () => ({ date: "2024-01-15", time: "20:30", location_id: "loc1" }),
+      });
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ data: () => ({ user_id: "user1" }) }],
+        size: 1,
+      });
+
+      await onGameUpdatedNotification({
+        id: "evt-updated-time",
+        data: {
+          before: { data: () => ({ status: "SCHEDULED", date: "2024-01-15", time: "19:00", location_id: "loc1" }) },
+          after: {
+            data: () => ({ status: "SCHEDULED", date: "2024-01-15", time: "20:30", location_id: "loc1" }),
+            ref: { id: "game1" },
+          },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
+        ["user1"],
+        expect.objectContaining({ title: "Jogo atualizado" }),
+      );
+      mockCollectionGet.mockReset();
+    });
+
+    it("recálculo de dateTime depois de uma remarcação já avisada não avisa de novo", async () => {
+      mockCollectionGet.mockResolvedValue({
+        docs: [{ data: () => ({ user_id: "user1" }) }],
+        size: 1,
+      });
+      mockTransactionGet.mockResolvedValue({
+        exists: true,
+        data: () => ({
+          date: "2024-01-15", time: "20:30", location_id: "loc1",
+          dateTime: { toMillis: () => 1705361400000 },
+          last_game_update_notification_key: "loc1|2024-01-15|20:30",
+        }),
+      });
+
+      await onGameUpdatedNotification({
+        id: "evt-recompute-datetime",
+        data: {
+          before: {
+            data: () => ({
+              status: "SCHEDULED", date: "2024-01-15", time: "20:30", location_id: "loc1",
+              dateTime: { toMillis: () => 1705356000000 },
+            }),
+          },
+          after: {
+            data: () => ({
+              status: "SCHEDULED", date: "2024-01-15", time: "20:30", location_id: "loc1",
+              dateTime: { toMillis: () => 1705361400000 },
+            }),
+            ref: { id: "game1" },
+          },
+        },
+        params: { gameId: "game1" },
+      });
+
+      expect(mockSendNotificationToUsers).not.toHaveBeenCalled();
+      expect(mockTransactionUpdate).not.toHaveBeenCalled();
+      mockCollectionGet.mockReset();
+    });
+
     it("nao notifica quando nao ha confirmados", async () => {
       mockCollectionGet.mockResolvedValue({ docs: [], size: 0 });
 
