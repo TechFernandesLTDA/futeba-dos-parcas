@@ -2523,3 +2523,16 @@ confronto direto do web e o card do time no app leem `teams.score` e viam todo j
   `live_scores.scores` e, como alternativa, dos ids legados team1/team2.
 - Os jogos antigos ganham o placar pelo script `backfill-team-scores.js`, que o Renan roda em produção.
 - Os leitores não mudaram: corrigir a fonte resolve os três de uma vez.
+
+## 2026-11-23: Saída do grupo limpa os jogos futuros no servidor, com backfill pela mesma função (spec bugfix-2026-11-23-saida-limpa-presencas)
+
+Contexto: quem saía ou era removido do grupo continuava nos jogos futuros. O web cancelava só `CONFIRMED`, os
+apps não cancelavam nada, e ninguém limpava a fila de espera.
+
+- O trigger `onMemberDepartedCleanupGames` (#4639) cancela `CONFIRMED`, `PENDING` e `WAITLIST` e tira a pessoa
+  da fila, repassando a vaga de quem estava `NOTIFIED`. O merge de contas fica de fora.
+- Quem saiu antes do deploy passa pelo script `backfill-departed-member-games`, que chama a mesma função do
+  trigger em vez de copiar a lógica. Por isso o script fica em `functions/src/scripts`.
+- Em jogo aberto ao público, o backfill só desfaz o que é anterior à data da saída, porque quem saiu pode ter
+  entrado de novo como avulso. Sem data de saída (saída pelo Android), o item de jogo público fica.
+- O Renan roda o backfill em produção, depois do deploy do trigger.

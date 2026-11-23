@@ -47,6 +47,58 @@ export interface DepartureCleanupResult {
   confirmationsCancelled: number;
   waitlistRemoved: number;
   promotions: number;
+  /** Backfill: itens de jogo aberto ao público deixados de lado. */
+  publicSkipped: number;
+}
+
+export interface DepartureCleanupOptions {
+  /**
+   * Só conta o que seria feito, sem escrever nada (nem a claim da
+   * promoção). Usado pelo dry-run do backfill.
+   */
+  dryRun?: boolean;
+  /**
+   * Backfill de quem saiu antes do trigger existir. Em jogo aberto ao
+   * público, quem saiu pode entrar de novo como avulso, e isso não deve ser
+   * desfeito: só entra o que foi criado até `departedAt`, que é o que o
+   * trigger teria visto no momento da saída. Sem a data, nada de jogo
+   * público entra. O trigger não passa esta opção.
+   */
+  backfill?: {departedAt: Date | null};
+}
+
+/**
+ * Mesmo critério das callables joinPublicGame e joinGameWaitlist para jogo
+ * que aceita quem não é do grupo.
+ *
+ * @param {Record<string, unknown>} game dados do jogo
+ * @return {boolean} se o jogo aceita participantes de fora do grupo
+ */
+function isOpenToPublic(game: Record<string, unknown>): boolean {
+  return game.visibility === "PUBLIC_OPEN" ||
+    (game.is_public === true && !game.visibility);
+}
+
+/**
+ * Converte Timestamp, Date, número ou texto em milissegundos.
+ *
+ * @param {unknown} value valor de data do Firestore
+ * @return {number | null} milissegundos, ou null se não houver data
+ */
+export function toMillis(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.getTime();
+  }
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  const maybe = value as {toMillis?: () => number; toDate?: () => Date};
+  if (typeof maybe.toMillis === "function") return maybe.toMillis();
+  if (typeof maybe.toDate === "function") return maybe.toDate().getTime();
+  return null;
 }
 
 /**
@@ -56,19 +108,37 @@ export interface DepartureCleanupResult {
  * @param {string} groupId grupo de onde a pessoa saiu
  * @param {string} userId quem saiu
  * @param {string} eventId CloudEvent id, para a promoção da fila não repetir
+ * @param {DepartureCleanupOptions} options dry-run e corte do backfill
  * @return {Promise<DepartureCleanupResult>} contadores do que foi feito
  */
 export async function cleanupDepartedMemberGames(
   groupId: string,
   userId: string,
   eventId: string,
+  options: DepartureCleanupOptions = {},
 ): Promise<DepartureCleanupResult> {
   const firestore = db();
+  const dryRun = options.dryRun === true;
   const result: DepartureCleanupResult = {
     games: 0,
     confirmationsCancelled: 0,
     waitlistRemoved: 0,
     promotions: 0,
+    publicSkipped: 0,
+  };
+
+  // No backfill, item de jogo público só entra se for anterior à saída.
+  const cutoffMs = options.backfill ?
+    toMillis(options.backfill.departedAt) :
+    null;
+  const keepsPublicItem = (
+    game: Record<string, unknown>,
+    createdAt: unknown,
+  ): boolean => {
+    if (!options.backfill || !isOpenToPublic(game)) return true;
+    const createdMs = toMillis(createdAt);
+    if (cutoffMs === null || createdMs === null) return false;
+    return createdMs <= cutoffMs;
   };
 
   const gamesSnap = await firestore
@@ -76,21 +146,33 @@ export async function cleanupDepartedMemberGames(
     .where("group_id", "==", groupId)
     .where("status", "in", ACTIVE_GAME_STATUSES)
     .get();
-  const gameIds = gamesSnap.docs
-    .filter((gameDoc) => {
-      const game = gameDoc.data() as Record<string, unknown>;
-      return !game.deleted_at && !game.deletedAt;
-    })
-    .map((gameDoc) => gameDoc.id);
-  result.games = gameIds.length;
+  const games = gamesSnap.docs
+    .map((gameDoc) => ({
+      id: gameDoc.id,
+      data: gameDoc.data() as Record<string, unknown>,
+    }))
+    .filter(({data}) => !data.deleted_at && !data.deletedAt);
+  result.games = games.length;
 
-  for (const gameId of gameIds) {
+  for (const {id: gameId, data: game} of games) {
     const confirmationsSnap = await firestore
       .collection("confirmations")
       .where("game_id", "==", gameId)
       .where("user_id", "==", userId)
       .get();
     for (const confirmation of confirmationsSnap.docs) {
+      const current = confirmation.data() as Record<string, unknown>;
+      if (!CANCELLABLE_CONFIRMATION_STATUSES.has(String(current.status))) {
+        continue;
+      }
+      if (!keepsPublicItem(game, current.created_at)) {
+        result.publicSkipped += 1;
+        continue;
+      }
+      if (dryRun) {
+        result.confirmationsCancelled += 1;
+        continue;
+      }
       const cancelled = await firestore.runTransaction(async (tx) => {
         const fresh = await tx.get(confirmation.ref);
         const status = fresh.exists ? fresh.data()?.status : undefined;
@@ -108,10 +190,20 @@ export async function cleanupDepartedMemberGames(
 
     const waitlistRef = firestore.doc(`games/${gameId}/waitlist/${userId}`);
     const waitlistSnap = await waitlistRef.get();
-    const waitlistStatus = waitlistSnap.exists ?
-      String(waitlistSnap.data()?.status) :
-      null;
+    const waitlistData = waitlistSnap.exists ?
+      (waitlistSnap.data() as Record<string, unknown>) :
+      undefined;
+    const waitlistStatus = waitlistData ? String(waitlistData.status) : null;
     if (!waitlistStatus || !WAITLIST_ACTIVE_STATUSES.has(waitlistStatus)) {
+      continue;
+    }
+    if (!keepsPublicItem(game, waitlistData?.added_at)) {
+      result.publicSkipped += 1;
+      continue;
+    }
+    if (dryRun) {
+      if (waitlistStatus === "NOTIFIED") result.promotions += 1;
+      result.waitlistRemoved += 1;
       continue;
     }
 
