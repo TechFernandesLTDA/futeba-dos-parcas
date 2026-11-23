@@ -324,6 +324,149 @@ describe("groups/members — invariantes de identidade e saída", () => {
 });
 
 // ============================================================
+// Saída voluntária por update (spec bugfix-2026-11-23-membro-sai-do-grupo).
+// Web (useGroups.removeGroupMembershipArtifacts), Android
+// (GroupRepository.leaveGroup) e shared (FirebaseGroupsDataSource.leaveGroup)
+// saem marcando o próprio vínculo como INACTIVE, não com delete.
+// ============================================================
+
+describe("groups/members — saída voluntária por update", () => {
+  const GRUPO = "group-self-leave";
+  const DONO = "uid-leave-owner";
+  const MEMBRO = "uid-leave-member";
+  const ADMIN_GRUPO = "uid-leave-admin";
+  const BANIDO = "uid-leave-banned";
+  const REMOVIDO = "uid-leave-removed";
+  const SEM_STATUS = "uid-leave-legacy";
+  const membro = (uid: string) => `groups/${GRUPO}/members/${uid}`;
+
+  beforeAll(async () => {
+    await seedDoc(testEnv, `groups/${GRUPO}`, {
+      name: "Saída voluntária",
+      owner_id: DONO,
+      is_public: false,
+      status: "ACTIVE",
+    });
+    const vinculo = (uid: string, role: string, status?: string) =>
+      seedDoc(testEnv, membro(uid), {
+        user_id: uid,
+        role,
+        ...(status ? { status } : {}),
+        joined_at: new Date("2026-08-01T12:00:00Z"),
+      });
+    await vinculo(DONO, "OWNER", "ACTIVE");
+    await vinculo(ADMIN_GRUPO, "ADMIN", "ACTIVE");
+    await vinculo(BANIDO, "MEMBER", "BANNED");
+    await vinculo(REMOVIDO, "MEMBER", "REMOVED");
+    await vinculo(SEM_STATUS, "MEMBER");
+  });
+
+  // Cada caso que deve passar usa um vínculo novo, para não depender da ordem.
+  async function membroAtivo(uid: string): Promise<void> {
+    await seedDoc(testEnv, membro(uid), {
+      user_id: uid,
+      role: "MEMBER",
+      status: "ACTIVE",
+      joined_at: new Date("2026-08-01T12:00:00Z"),
+    });
+    await seedDoc(testEnv, `users/${uid}/groups/${GRUPO}`, {
+      group_id: GRUPO,
+      group_name: "Saída voluntária",
+      role: "MEMBER",
+    });
+  }
+
+  it("membro sai com o lote do web (status + updated_at e apaga o espelho)", async () => {
+    await membroAtivo(MEMBRO);
+    const db = asUser(testEnv, MEMBRO);
+    const lote = db.batch();
+    lote.update(db.doc(membro(MEMBRO)), { status: "INACTIVE", updated_at: serverTimestamp() });
+    lote.delete(db.doc(`users/${MEMBRO}/groups/${GRUPO}`));
+    await assertSucceeds(lote.commit());
+  });
+
+  it("membro sai com a transação do Android (só status e apaga o espelho)", async () => {
+    const uid = "uid-leave-member-android";
+    await membroAtivo(uid);
+    const db = asUser(testEnv, uid);
+    await assertSucceeds(
+      db.runTransaction(async (tx) => {
+        tx.update(db.doc(membro(uid)), { status: "INACTIVE" });
+        tx.delete(db.doc(`users/${uid}/groups/${GRUPO}`));
+      })
+    );
+  });
+
+  it("admin que não é dono também pode sair", async () => {
+    await assertSucceeds(
+      asUser(testEnv, ADMIN_GRUPO).doc(membro(ADMIN_GRUPO)).update({ status: "INACTIVE" })
+    );
+  });
+
+  it("vínculo antigo sem status conta como ativo e pode sair", async () => {
+    await assertSucceeds(
+      asUser(testEnv, SEM_STATUS).doc(membro(SEM_STATUS)).update({ status: "INACTIVE" })
+    );
+  });
+
+  it("dono NÃO pode sair sem transferir o grupo", async () => {
+    await assertFails(asUser(testEnv, DONO).doc(membro(DONO)).update({ status: "INACTIVE" }));
+  });
+
+  it("banido NÃO pode trocar o próprio status para INACTIVE", async () => {
+    await assertFails(asUser(testEnv, BANIDO).doc(membro(BANIDO)).update({ status: "INACTIVE" }));
+  });
+
+  it("removido NÃO pode trocar o próprio status para INACTIVE", async () => {
+    await assertFails(asUser(testEnv, REMOVIDO).doc(membro(REMOVIDO)).update({ status: "INACTIVE" }));
+  });
+
+  it("membro NÃO pode se reativar nem ir para outro status", async () => {
+    const uid = "uid-leave-member-status";
+    await membroAtivo(uid);
+    const db = asUser(testEnv, uid);
+    await assertFails(db.doc(membro(uid)).update({ status: "REMOVED" }));
+    await assertFails(db.doc(membro(uid)).update({ status: "BANNED" }));
+  });
+
+  it("membro NÃO pode mudar o próprio papel ao sair", async () => {
+    const uid = "uid-leave-member-role";
+    await membroAtivo(uid);
+    await assertFails(
+      asUser(testEnv, uid).doc(membro(uid)).update({ status: "INACTIVE", role: "ADMIN" })
+    );
+  });
+
+  it("membro NÃO pode gravar outros campos junto com a saída", async () => {
+    const uid = "uid-leave-member-extra";
+    await membroAtivo(uid);
+    await assertFails(
+      asUser(testEnv, uid).doc(membro(uid)).update({ status: "INACTIVE", level: 99 })
+    );
+  });
+
+  it("updated_at precisa ser a hora do servidor", async () => {
+    const uid = "uid-leave-member-clock";
+    await membroAtivo(uid);
+    await assertFails(
+      asUser(testEnv, uid).doc(membro(uid)).update({
+        status: "INACTIVE",
+        updated_at: new Date("2020-01-01T00:00:00Z"),
+      })
+    );
+  });
+
+  it("membro NÃO pode tirar outra pessoa do grupo", async () => {
+    const alvo = "uid-leave-member-target";
+    await membroAtivo(alvo);
+    await membroAtivo("uid-leave-member-actor");
+    await assertFails(
+      asUser(testEnv, "uid-leave-member-actor").doc(membro(alvo)).update({ status: "INACTIVE" })
+    );
+  });
+});
+
+// ============================================================
 // BLOCKED_PLAYERS — leitura do próprio doc
 // O fluxo de entrada por convite (#3391) e o self-create em grupo
 // público (#2153) leem blocked_players/{self} ANTES de haver

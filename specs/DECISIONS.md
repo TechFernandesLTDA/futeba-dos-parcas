@@ -2451,3 +2451,17 @@ então nem a leitura documento a documento serviria.
   separado de `users`, ou nome denormalizado nas estatísticas).
 - O ranking do módulo compartilhado deixou de quebrar a busca em lotes de 10 (limite do `whereIn`): cada
   lote agora é uma chamada à função, que tem limite de 50 chamadas por minuto por usuário.
+
+## 2026-11-23: Membro sai do grupo por update do próprio vínculo (spec bugfix-2026-11-23-membro-sai-do-grupo)
+
+Contexto: a simulação de uso no emulador (#4621) mostrou que "Sair do grupo" dava `PERMISSION_DENIED` para
+membro comum e admin não dono, no web, no Android e no shared. Os três apps marcam o próprio vínculo como
+`INACTIVE` com um update, e a regra de update de `groups/{gid}/members/{uid}` não tinha ramo para isso; só o
+delete permitia sair.
+
+- A regra ganhou um ramo de saída voluntária: o próprio membro, papel `MEMBER` ou `ADMIN`, não dono, papel
+  inalterado, status de `ACTIVE` (ou ausente) para `INACTIVE`, e só `status` e `updated_at` (hora do servidor).
+- Corrigir na regra, e não trocar os apps para delete, vale para todas as versões já instaladas e mantém o
+  histórico do vínculo.
+- Banido e removido continuam sem poder mudar o próprio status.
+- A falha do lote do web quando falta uma confirmação de jogo futuro é outro defeito e tem PR próprio.
