@@ -178,7 +178,6 @@ export interface Game {
   maxGoalkeepers: number;
   playersCount: number;
   goalkeepersCount: number;
-  players: string[];
   
   // Type
   gameType: string;

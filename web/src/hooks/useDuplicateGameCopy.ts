@@ -105,7 +105,6 @@ export function useDuplicateGameCopy() {
           status: 'SCHEDULED',
           players_count: 0,
           goalkeepers_count: 0,
-          players: [],
           team1_score: 0,
           team2_score: 0,
           voting_concluded: false,

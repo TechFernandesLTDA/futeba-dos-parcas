@@ -46,7 +46,6 @@ const mockGame: Game = {
   maxGoalkeepers: 2,
   playersCount: 14,
   goalkeepersCount: 1,
-  players: [],
   gameType: 'regular',
   fieldType: 'SOCIETY',
   recurrence: 'weekly',
