@@ -2,6 +2,7 @@ package com.futebadosparcas.data
 
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.model.RankingCategory
+import com.futebadosparcas.platform.firebase.PublicPlayerProjection
 import com.futebadosparcas.domain.model.RankingPeriod
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.XpEvolution
@@ -380,7 +381,7 @@ class RankingRepositoryImpl(
         // 3. Buscar usuários faltantes em paralelo
         return try {
             coroutineScope {
-                val deferredResults = idsToFetch.chunked(10).map { chunk ->
+                val deferredResults = idsToFetch.chunked(PublicPlayerProjection.MAX_IDS_PER_CALL).map { chunk ->
                     async {
                         try {
                             firebaseDataSource.getUsersByIds(chunk).getOrNull() ?: emptyList()

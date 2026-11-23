@@ -363,20 +363,35 @@ internal class FirebaseUsersDataSource(
 
     suspend fun getUsersByIds(userIds: List<String>): Result<List<User>> {
         return try {
-            if (userIds.isEmpty()) return Result.success(emptyList())
+            val requestedIds = userIds.filter { it.isNotBlank() }.distinct()
+            if (requestedIds.isEmpty()) return Result.success(emptyList())
 
-            val chunks = userIds.chunked(10)
-            val allUsers = mutableListOf<User>()
+            // O próprio perfil vem do documento (a regra libera GET do dono), com todos os
+            // campos; os outros vêm da projeção pública da callable (#3691), porque LIST em
+            // `users` é só de admin.
+            val selfId = auth.currentUser?.uid
+            val self = if (selfId != null && selfId in requestedIds) {
+                getUserById(selfId).getOrNull()
+            } else {
+                null
+            }
+            val othersIds = requestedIds.filter { it != selfId }
 
-            for (chunk in chunks) {
-                val snapshot = firestore.collection(COLLECTION_USERS)
-                    .where { FieldPath.documentId inArray chunk }
-                    .get()
-                allUsers.addAll(snapshot.documents.mapNotNull { doc -> doc.toUserOrNull() })
+            val others = othersIds.chunked(PublicPlayerProjection.MAX_IDS_PER_CALL).flatMap { chunk ->
+                val response = Firebase.functions(FUNCTIONS_REGION)
+                    .httpsCallable(PublicPlayerProjection.CALLABLE_NAME)
+                    .invoke(PublicPlayerProjection.request(chunk))
+                    // O decodificador do GitLive não é de JSON: `data<JsonElement>()` lança
+                    // exceção, por isso a resposta é lida numa classe @Serializable.
+                    .data(PublicPlayerProjection.LeaguePlayersResponse.serializer())
+                PublicPlayerProjection.usersFromResponse(response)
             }
 
-            Result.success(allUsers)
+            val byId = (others + listOfNotNull(self)).associateBy { it.id }
+            Result.success(requestedIds.mapNotNull { byId[it] })
         } catch (e: Exception) {
+            // Quem chama costuma trocar a falha por lista vazia; sem este log o erro some.
+            println("FirebaseDataSource: getUsersByIds falhou: ${e::class.simpleName}: ${e.message}")
             Result.failure(e)
         }
     }
