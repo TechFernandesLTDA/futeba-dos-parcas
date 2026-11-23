@@ -9,6 +9,7 @@ import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpAppNotifications
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,10 +55,10 @@ class GameDetailViewModel(
     private val mutationCoordinator = GameDetailMutationCoordinator(
         scope = viewModelScope,
         gameRepository = gameRepository,
-        uiState = _uiState
+        uiState = _uiState,
+        onPresenceChanged = { refreshAfterPresenceChange() }
     )
 
-    @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun loadGameDetails(id: String) {
         if (id.isEmpty()) {
             _uiState.value = GameDetailUiState.Error("ID do jogo inválido")
@@ -65,11 +66,32 @@ class GameDetailViewModel(
         }
         if (gameId == id && gameDetailsJob?.isActive == true) return
         gameId = id
+        observeGameDetails(id, showLoading = true)
+    }
 
+    /**
+     * Reabre os listeners do jogo depois que a presença do usuário mudou.
+     *
+     * Em pelada pública, quem não é do grupo não tem permissão de ler a lista de
+     * confirmações antes de confirmar: o listener recebe PERMISSION_DENIED e o SDK o
+     * encerra. Depois de confirmar, a regra passa a liberar a leitura, mas o listener
+     * já morreu, e a contagem e o botão ficavam com o estado antigo até reabrir a tela.
+     * O mesmo vale ao cancelar (a leitura volta a ser negada). Reabrir sem estado de
+     * carregamento mantém a tela como está até chegarem os dados novos.
+     */
+    private fun refreshAfterPresenceChange() {
+        val id = gameId ?: return
+        observeGameDetails(id, showLoading = false)
+    }
+
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    private fun observeGameDetails(id: String, showLoading: Boolean) {
         // Cancelar job anterior para evitar coleções concorrentes
         gameDetailsJob?.cancel()
         gameDetailsJob = viewModelScope.launch {
-            _uiState.value = GameDetailUiState.Loading
+            if (showLoading || _uiState.value !is GameDetailUiState.Success) {
+                _uiState.value = GameDetailUiState.Loading
+            }
 
             try {
                 val currentUserResult = authRepository.getCurrentUser()
@@ -189,6 +211,10 @@ class GameDetailViewModel(
                         userMessageResId = previousState?.userMessageResId
                     )
                 }
+            } catch (e: CancellationException) {
+                // Cancelamento ao reabrir os listeners não é erro: sem isto a tela
+                // passava por Error e Loading antes dos dados novos.
+                throw e
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao observar detalhes do jogo", e)
                 _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo", R.string.game_detail_error_load)
@@ -1275,7 +1301,8 @@ private sealed class GameDetailMutation {
 private class GameDetailMutationCoordinator(
     private val scope: CoroutineScope,
     private val gameRepository: GameRepository,
-    private val uiState: MutableStateFlow<GameDetailUiState>
+    private val uiState: MutableStateFlow<GameDetailUiState>,
+    private val onPresenceChanged: () -> Unit
 ) {
     private var presenceJob: Job? = null
     private val removalJobs = mutableMapOf<String, Job>()
@@ -1316,6 +1343,7 @@ private class GameDetailMutationCoordinator(
                 updateSuccessState {
                     it.copy(isPresenceSubmitting = false, canRetryLastMutation = false)
                 }
+                onPresenceChanged()
             } else {
                 AppLogger.e(TAG, "Falha na mutação de presença", result.exceptionOrNull())
                 lastFailedMutation = mutation

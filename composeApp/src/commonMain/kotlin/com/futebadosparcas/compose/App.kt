@@ -1236,6 +1236,29 @@ private fun GameDetailRoute(
     var actionInProgress by remember { mutableStateOf(false) }
     var actionFeedback by remember { mutableStateOf<String?>(null) }
     val actionScope = rememberCoroutineScope()
+    // Muda a cada presença confirmada ou cancelada. Em pelada pública, quem não é do
+    // grupo não lê a lista antes de confirmar: o listener recebe PERMISSION_DENIED e
+    // termina. Reabrir os listeners da lista depois da mudança faz a contagem e o botão
+    // refletirem a presença na hora, sem recarregar a tela inteira.
+    var presenceKey by remember(gameId, dataSource, retryKey) { mutableIntStateOf(0) }
+
+    LaunchedEffect(gameId, dataSource, retryKey, presenceKey) {
+        if (gameId.isNullOrBlank() || dataSource == null) return@LaunchedEffect
+        launch {
+            dataSource.getGameConfirmationsFlow(gameId).collect { result ->
+                // Erro de listener aqui é falta de permissão para ler a lista: mostrar
+                // a lista antiga deixaria o usuário como confirmado depois de cancelar.
+                confirmations = result.getOrDefault(emptyList())
+            }
+        }
+        launch {
+            dataSource.getGameWaitlistFlow(gameId).collect { result ->
+                if (result.isSuccess) {
+                    waitlistEntries = result.getOrDefault(emptyList())
+                }
+            }
+        }
+    }
 
     LaunchedEffect(gameId, dataSource, retryKey) {
         if (gameId.isNullOrBlank()) {
@@ -1245,20 +1268,6 @@ private fun GameDetailRoute(
         if (dataSource == null) {
             state = RealtimeRouteState.Error(getString(Res.string.route_game_unavailable_env))
             return@LaunchedEffect
-        }
-        launch {
-            dataSource.getGameConfirmationsFlow(gameId).collect { result ->
-                if (result.isSuccess) {
-                    confirmations = result.getOrDefault(emptyList())
-                }
-            }
-        }
-        launch {
-            dataSource.getGameWaitlistFlow(gameId).collect { result ->
-                if (result.isSuccess) {
-                    waitlistEntries = result.getOrDefault(emptyList())
-                }
-            }
         }
         dataSource.getGameByIdFlow(gameId).collect { result ->
             state = if (result.isSuccess) {
@@ -1306,7 +1315,10 @@ private fun GameDetailRoute(
                             isCasualPlayer = false
                         )
                         actionInProgress = false
-                        if (result.isSuccess) MonetizationHolder.onFirstWin()
+                        if (result.isSuccess) {
+                            MonetizationHolder.onFirstWin()
+                            presenceKey += 1
+                        }
                         actionFeedback = if (result.isSuccess) {
                             "Presença confirmada com sucesso!"
                         } else {
@@ -1325,6 +1337,7 @@ private fun GameDetailRoute(
                     actionScope.launch {
                         val result = dataSource.cancelConfirmation(current.data.id, uid)
                         actionInProgress = false
+                        if (result.isSuccess) presenceKey += 1
                         actionFeedback = if (result.isSuccess) {
                             "Presença cancelada."
                         } else {
