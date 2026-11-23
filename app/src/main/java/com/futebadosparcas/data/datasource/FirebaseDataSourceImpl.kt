@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.datasource
 
 import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.platform.firebase.PublicPlayerProjection
 import com.futebadosparcas.data.util.BatchOperationHelper
 import com.futebadosparcas.domain.util.RetryPolicy
 import com.futebadosparcas.domain.util.suspendWithRetryResult
@@ -595,16 +596,32 @@ class FirebaseDataSourceImpl constructor(
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
             AppLogger.d(TAG) { "Buscando ${userIds.size} usuários em batch" }
 
-            if (userIds.isEmpty()) {
+            val requestedIds = userIds.filter { it.isNotBlank() }.distinct()
+            if (requestedIds.isEmpty()) {
                 return@suspendWithRetryResult emptyList()
             }
 
-            // Busca paralela em chunks de 10 (limite do whereIn)
-            BatchOperationHelper.parallelWhereIn(
-                collection = firestore.collection(COLLECTION_USERS),
-                ids = userIds,
-                mapper = { doc -> doc.toObjectTolerant(User::class.java) }
-            )
+            // LIST em `users` é só de admin desde o #3691: os outros jogadores vêm da
+            // projeção pública da callable `getLeaguePlayers`, como na web. O próprio
+            // perfil vem do documento (GET do dono), com todos os campos.
+            val selfId = auth.currentUser?.uid
+            val self = if (selfId != null && selfId in requestedIds) {
+                getUserById(selfId).getOrNull()
+            } else {
+                null
+            }
+            val others = requestedIds
+                .filter { it != selfId }
+                .chunked(PublicPlayerProjection.MAX_IDS_PER_CALL)
+                .flatMap { chunk ->
+                    val response = functions.getHttpsCallable(PublicPlayerProjection.CALLABLE_NAME)
+                        .call(PublicPlayerProjection.request(chunk))
+                        .await()
+                    PublicPlayerProjection.usersFromCallableData(response.getData())
+                }
+
+            val byId = (others + listOfNotNull(self)).associateBy { it.id }
+            requestedIds.mapNotNull { byId[it] }
         }
     }
 

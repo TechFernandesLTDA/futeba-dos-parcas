@@ -2425,3 +2425,26 @@ ofuscação (30%) e redução (30%); edge-to-edge que pode não aparecer para to
   `yq1.b`) são `androidx.activity.EdgeToEdgeApi23/26/29/35`, ou seja, o próprio `enableEdgeToEdge()` que a
   Play recomenda. Continuam em activity 1.13.0 e 1.14.0-alpha03 e também em `WindowCompat.enableEdgeToEdge`
   do androidx.core. Não há o que mudar no app; o aviso deve sair quando o AndroidX deixar de chamar essas APIs.
+
+## 2026-11-23: Android e iOS leem outros jogadores pela projeção pública (`getLeaguePlayers`)
+
+Contexto: o ranking do Android mostrava "Jogador" no lugar do nome. Desde o #3691 (spec
+`2026-07-14_public-player-search-projection`), a regra de `users` só libera LIST para admin, porque uma
+consulta LIST não garante que nenhum documento traga e-mail ou outro campo pessoal. A web passou a usar a
+callable `getLeaguePlayers` com `userIds`; o Android e o iOS ficaram no `whereIn` em `users`, que é negado.
+Em produção, 58 dos 59 documentos de `users` ainda têm `email` (contagem por agregação, sem ler valores),
+então nem a leitura documento a documento serviria.
+
+- `getUsersByIds` (módulo compartilhado, usado no Android e no iOS, e o data source do `:app`) busca os
+  outros jogadores pela mesma callable da web, em lotes de até 500. O mapeamento fica em
+  `PublicPlayerProjection` (`shared/commonMain`), para as duas implementações lerem o mesmo contrato.
+- O próprio perfil continua vindo do documento (GET do dono), com todos os campos, para o cache local do
+  usuário atual não ser trocado por um perfil sem e-mail.
+- Quem não está na projeção (perfil não pesquisável, excluído ou mesclado) fica de fora do resultado, como
+  na web. A regra não mudou e nenhum campo novo ficou visível.
+- Limite que fica: a projeção segue a spec do #3691 e só traz perfis pesquisáveis. Em produção são 33 de 59;
+  os outros 26 marcaram `is_searchable = false` e continuam como "Jogador" no ranking do Android e do iOS (a
+  web nem os lista). Mostrar o nome deles no ranking é decisão de produto e pede spec própria (perfil público
+  separado de `users`, ou nome denormalizado nas estatísticas).
+- O ranking do módulo compartilhado deixou de quebrar a busca em lotes de 10 (limite do `whereIn`): cada
+  lote agora é uma chamada à função, que tem limite de 50 chamadas por minuto por usuário.
