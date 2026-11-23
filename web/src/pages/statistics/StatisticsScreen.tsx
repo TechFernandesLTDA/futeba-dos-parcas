@@ -310,7 +310,7 @@ export const StatisticsScreen: React.FC = () => {
                       </Box>
                       <Box>
                         <Typography variant="h4" fontWeight={700}>
-                          {stats.currentStreak} {t('statistics.totalGames').toLowerCase()}
+                          {t('statistics.streakGames', { count: stats.currentStreak })}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {t('statistics.currentStreak')} &bull; {t('statistics.bestStreak')}: {stats.bestStreak}

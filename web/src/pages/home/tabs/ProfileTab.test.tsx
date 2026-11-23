@@ -44,6 +44,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
       midRating: 4.0,
       defenderRating: 2.0,
       gkRating: 1.0,
+      autoStrikerRating: 1.6,
     },
     firebaseUser: {
       uid: 'user-1',
@@ -176,6 +177,14 @@ describe('ProfileTab', () => {
   it('renderiza o nome do usuário', () => {
     renderProfileTab();
     expect(screen.getByText('Carlos Teste')).toBeInTheDocument();
+  });
+
+  it('explica a nota calculada pelos jogos em vez de "Auto:"', () => {
+    renderProfileTab();
+    expect(screen.getByText('Pelos jogos: 1,6')).toBeInTheDocument();
+    expect(screen.getByText('3,5')).toBeInTheDocument();
+    expect(screen.getByText(/"Pelos jogos" é calculado pelo seu desempenho/)).toBeInTheDocument();
+    expect(screen.queryByText(/Auto:/)).not.toBeInTheDocument();
   });
 
   it('renderiza as iniciais no avatar', () => {

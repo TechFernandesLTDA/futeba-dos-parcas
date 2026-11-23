@@ -22,6 +22,7 @@ import {
 import { generateGoogleCalendarUrl, downloadIcsFile, generateOutlookCalendarUrl } from '../../utils/calendarLinks';
 import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
+import { formatBRL } from '../../utils/formatCurrency';
 
 interface GameShareData {
   gameId: string;
@@ -54,7 +55,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, game })
     '',
     `📅 ${game.date} — ${game.time}${game.endTime ? ` às ${game.endTime}` : ''}`,
     `📍 ${game.locationName}${game.fieldName ? ` — ${game.fieldName}` : ''}`,
-    `👥 ${game.maxPlayers} vagas${game.dailyPrice > 0 ? ` — R$ ${game.dailyPrice.toFixed(2)} por jogador` : ''}`,
+    `👥 ${game.maxPlayers} vagas${game.dailyPrice > 0 ? ` — ${t('games.detail.pricePerPlayer', { price: formatBRL(game.dailyPrice) })}` : ''}`,
     '',
     `Confirme sua presença: ${gameUrl}`,
   ].join('\n');

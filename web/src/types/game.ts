@@ -386,9 +386,9 @@ export const CONFIRMATION_STATUS_CONFIG: Record<ConfirmationStatus, { label: str
 
 export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; paletteKey: ConfirmationPaletteKey }> = {
   PAID: { label: 'Pago', paletteKey: 'success' },
-  PENDING: { label: 'Pendente', paletteKey: 'warning' },
+  PENDING: { label: 'Pagamento pendente', paletteKey: 'warning' },
   EXEMPT: { label: 'Isento', paletteKey: 'default' },
-  PARTIAL: { label: 'Parcial', paletteKey: 'info' },
+  PARTIAL: { label: 'Pagamento parcial', paletteKey: 'info' },
 };
 
 /**

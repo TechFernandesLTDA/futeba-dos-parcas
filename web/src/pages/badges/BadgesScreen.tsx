@@ -42,6 +42,7 @@ import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
 import { ErrorState } from '../../components/common/ErrorState';
 import { BADGE_DEFINITIONS, getDynamicBadgeDefinition, BadgeDefinition } from '../../types/gamification';
+import { rarityLabel } from '../../utils/rarityLabel';
 import { rarityColors, rarityColorsDark } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageContainer } from '../../components/common/PageContainer';
@@ -266,7 +267,7 @@ const BadgeItem = React.memo(function BadgeItem({
             {badge.name}
           </Typography>
           <Chip
-            label={badge.rarity}
+            label={rarityLabel(badge.rarity)}
             size="small"
             sx={{
               mt: 0.5,
@@ -370,7 +371,7 @@ function BadgeDetailDialog({
 
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2 }}>
           <Chip
-            label={badge.rarity}
+            label={rarityLabel(badge.rarity)}
             size="small"
             sx={{
               bgcolor: alpha(rarityColor, 0.15),

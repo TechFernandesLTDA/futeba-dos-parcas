@@ -42,6 +42,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { useBreadcrumbEntityLabel } from '../../contexts/BreadcrumbEntityContext';
 import { useHideMobileTopBar } from '../../hooks/useMobileTopBarVisibility';
+import { isInLastWeek, resolveWeeklyGameDate } from './weeklyRecapUtils';
 
 const logger = createLogger('WeeklyRecapScreen');
 
@@ -71,6 +72,8 @@ interface RawWeeklyGameDoc {
   team1Players?: string[];
   team2Players?: string[];
   date?: { toDate?: () => Date } | string;
+  dateTime?: { toDate?: () => Date };
+  time?: string;
   winnerTeam?: 'A' | 'B';
   goals?: Record<string, number>;
   assists?: Record<string, number>;
@@ -118,8 +121,7 @@ export const WeeklyRecapScreen: React.FC = () => {
     let cancelled = false; // #2278: evita setState após unmount
     const fetchData = async () => {
       try {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const now = new Date();
 
         const statsDoc = await getDoc(doc(db, 'weekly_stats', targetUserId));
         if (cancelled) return;
@@ -163,12 +165,8 @@ export const WeeklyRecapScreen: React.FC = () => {
           .filter((gameSnap) => gameSnap.exists())
           .sort((left, right) => {
             const toMillis = (gameSnap: typeof right) => {
-              const raw = gameSnap.data() as RawWeeklyGameDoc | undefined;
-              const dateField = raw?.date;
-              const parsed = (typeof dateField === 'object' && dateField?.toDate)
-                ? (dateField.toDate() as Date).getTime()
-                : (typeof dateField === 'string' ? new Date(dateField).getTime() : 0);
-              return Number.isFinite(parsed) ? parsed : 0;
+              const raw = snakeToCamel<RawWeeklyGameDoc>(gameSnap.data() ?? {});
+              return resolveWeeklyGameDate(raw)?.getTime() ?? 0;
             };
             return toMillis(right) - toMillis(left);
           })
@@ -178,10 +176,9 @@ export const WeeklyRecapScreen: React.FC = () => {
         sortedGameDocs.forEach((d) => {
           const data = snakeToCamel<RawWeeklyGameDoc>(d.data());
           const userTeam = data.team1Players?.includes(targetUserId) ? 'A' : data.team2Players?.includes(targetUserId) ? 'B' : null;
-          const dateField = data.date;
-          const gameDate = (typeof dateField === 'object' && dateField?.toDate)
-            ? dateField.toDate()
-            : (typeof dateField === 'string' ? new Date(dateField) : new Date(0));
+          const gameDate = resolveWeeklyGameDate(data);
+          // Resumo da semana: só jogos dos últimos 7 dias.
+          if (!gameDate || !isInLastWeek(gameDate, now)) return;
           gamesData.push({
             id: d.id,
             date: gameDate,
@@ -389,7 +386,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={game.date.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
-                        secondary={`${game.goals} gols • ${game.assists} assists`}
+                        secondary={`${t('weeklyRecap.goalsCount', { count: game.goals })} • ${t('weeklyRecap.assistsCount', { count: game.assists })}`}
                       />
                       {game.isMvp && (
                         <Chip icon={<StarIcon />} label="MVP" size="small" color="warning" />

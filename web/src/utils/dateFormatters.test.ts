@@ -32,6 +32,18 @@ describe('formatGameDate', () => {
   it('retorna string vazia para string vazia', () => {
     expect(formatGameDate('')).toBe('');
   });
+
+  it('lê AAAA-MM-DD no dia local, não meia-noite UTC', () => {
+    expect(formatGameDate('2026-03-14')).toBe('Hoje');
+    expect(formatGameDate('2026-03-15')).toBe('Amanhã');
+    const esperado = new Date(2026, 2, 20).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+    expect(formatGameDate('2026-03-20')).toBe(esperado);
+  });
+
+  it('não mostra a string crua nem "Invalid Date" para AAAA-MM-DD com hora', () => {
+    const esperado = new Date(2026, 10, 25).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+    expect(formatGameDate('2026-11-25 02:48')).toBe(esperado);
+  });
 });
 
 describe('formatGameDateLong', () => {

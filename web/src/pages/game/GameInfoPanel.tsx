@@ -18,6 +18,8 @@ import { getStatusChipColors } from '../../types/game';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import type { Game } from '../../types/game';
 import { resolveExpectedPayment } from '../../utils/gamePayment';
+import { formatBRL } from '../../utils/formatCurrency';
+import { useTranslation } from 'react-i18next';
 
 interface GameInfoPanelProps {
   game: Game;
@@ -25,6 +27,7 @@ interface GameInfoPanelProps {
 
 export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const expectedPayment = resolveExpectedPayment(game);
 
   return (
@@ -91,7 +94,7 @@ export const GameInfoPanel: React.FC<GameInfoPanelProps> = ({ game }) => {
                 <PaymentIcon color="primary" />
                 <Box>
                   <Typography variant="subtitle1">
-                    R$ {expectedPayment.toFixed(2)} por jogador
+                    {t('games.detail.pricePerPlayer', { price: formatBRL(expectedPayment) })}
                   </Typography>
                   {game.pixKey && (
                     <Typography variant="body2" color="text.secondary">
