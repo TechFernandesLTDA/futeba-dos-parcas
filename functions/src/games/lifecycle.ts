@@ -91,6 +91,52 @@ function normalizeTeams(
 }
 
 /**
+ * Lê uma lista de ids de jogador gravada no jogo (`team1_players` etc.).
+ *
+ * @param {unknown} value Valor do campo.
+ * @return {string[]} Ids não vazios, sem repetição.
+ */
+function readPlayerIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(
+    value.filter((id): id is string => typeof id === "string" && id.trim() !== "")
+  )];
+}
+
+/**
+ * Times montados a partir de `team1_players`/`team2_players` do jogo.
+ *
+ * O web (TeamFormationScreen) grava os times só no próprio jogo, porque um
+ * co-organizador pode formar times e a regra de `teams` só deixa o dono gravar.
+ * Sem documentos em `teams`, o início do jogo era recusado. Spec
+ * bugfix-2026-11-23-times-do-web-iniciam-jogo.
+ *
+ * Só entram jogadores com presença confirmada no jogo: o roster do jogo é
+ * gravado pelo cliente, e `teams.player_ids` alimenta ranking e liga.
+ *
+ * @param {string} gameId Id do jogo.
+ * @param {FirebaseFirestore.DocumentData} game Dados do jogo.
+ * @param {Set<string>} confirmedIds Jogadores com confirmação CONFIRMED.
+ * @return {Array<object>} Os dois times, ou lista vazia se faltar jogador.
+ */
+export function teamsFromGameRoster(
+  gameId: string,
+  game: FirebaseFirestore.DocumentData,
+  confirmedIds: Set<string>
+): Array<{id: string; name: string; playerIds: string[]}> {
+  const team1 = readPlayerIds(game.team1_players).filter((id) => confirmedIds.has(id));
+  const team2 = readPlayerIds(game.team2_players)
+    .filter((id) => confirmedIds.has(id) && !team1.includes(id));
+  if (team1.length === 0 || team2.length === 0) return [];
+  const name = (value: unknown, fallback: string): string =>
+    typeof value === "string" && value.trim() ? value.trim() : fallback;
+  return [
+    {id: `${gameId}_team1`, name: name(game.team1_name, "Time A"), playerIds: team1},
+    {id: `${gameId}_team2`, name: name(game.team2_name, "Time B"), playerIds: team2},
+  ];
+}
+
+/**
  * Agrega eventos oficiais por jogador antes de finalizar o jogo.
  *
  * @param {FirebaseFirestore.QueryDocumentSnapshot[]} docs Eventos do jogo.
@@ -221,7 +267,35 @@ export const startGameLifecycle = onCall<GameLifecycleRequest>(
         );
       }
 
-      const teams = normalizeTeams(teamsSnap);
+      let teams = normalizeTeams(teamsSnap);
+      if (teams.length === 0) {
+        // Times formados no web ficam só em team1_players/team2_players:
+        // cria os documentos de `teams` aqui, no formato do app nativo.
+        const confirmationsSnap = await tx.get(
+          db().collection("confirmations")
+            .where("game_id", "==", gameId)
+            .where("status", "==", "CONFIRMED")
+        );
+        const confirmedIds = new Set(
+          confirmationsSnap.docs
+            .map((doc) => doc.data().user_id)
+            .filter((id): id is string => typeof id === "string" && id !== "")
+        );
+        const fromRoster = teamsFromGameRoster(gameId, game, confirmedIds);
+        for (const team of fromRoster) {
+          tx.set(db().collection("teams").doc(team.id), {
+            id: team.id,
+            game_id: gameId,
+            name: team.name,
+            color: "",
+            player_ids: team.playerIds,
+            score: 0,
+            created_at: FieldValue.serverTimestamp(),
+            created_by: "startGameLifecycle",
+          });
+        }
+        teams = fromRoster.map(({id, name}) => ({id, name}));
+      }
       if (teams.length < 2) {
         throw new HttpsError(
           "failed-precondition",
