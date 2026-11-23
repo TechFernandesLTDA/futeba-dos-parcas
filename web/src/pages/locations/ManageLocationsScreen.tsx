@@ -1339,6 +1339,7 @@ const getVenueAccountStatusColor = (status?: string | null): 'success' | 'warnin
           <LoadingState shimmerCount={6} itemType="CARD" />
         ) : (loading || error) ? null : filteredLocations.length === 0 ? (
           <EmptyState
+            arte="mapa_campo"
             icon={<LocationIcon />}
             title={activeCount > 0 ? t('locations.noLocationsFound') : t('locations.noLocations')}
             description={

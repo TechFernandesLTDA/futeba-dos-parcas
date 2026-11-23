@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.components.artes.ArteDeEstado
+import com.futebadosparcas.ui.components.artes.arteDoIcone
 import androidx.compose.ui.res.stringResource
 /**
  * Empty state moderno com ilustração, mensagem e CTA
@@ -45,13 +47,18 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Ícone ilustrativo
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
+        // Arte da pelada (ou o ícone, quando a tela não tem arte no catálogo)
+        val arte = arteDoIcone(icon)
+        if (arte != null) {
+            ArteDeEstado(id = arte)
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(120.dp),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

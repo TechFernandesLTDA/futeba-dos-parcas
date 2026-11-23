@@ -6,7 +6,7 @@
 > - [Material Design 3 no Compose](https://developer.android.com/develop/ui/compose/designsystems/material3)
 > - [Material 3 Guidelines](https://m3.material.io/)
 
-**IMPORTANTE**: Este documento é a referência principal para implementação de UI no projeto. Sempre consulte estas diretrizes antes de criar ou modificar componentes Compose.
+**Importante**: Este documento é a referência principal para implementação de UI no projeto. Consulte estas diretrizes antes de criar ou modificar componentes Compose, para as telas seguirem o mesmo padrão visual.
 
 ---
 

@@ -209,6 +209,7 @@ export const EvolutionScreen: React.FC = () => {
           <ErrorState message={error} onRetry={() => setReloadKey((k) => k + 1)} />
         ) : !summary ? (
           <EmptyState
+            arte="placar_zerado"
             icon={<TimelineIcon />}
             title={t('empty.noDataAvailable')}
           />

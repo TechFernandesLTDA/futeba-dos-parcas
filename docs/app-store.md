@@ -99,3 +99,10 @@ Build 29 processado (VALID) e ligado à versão 1.10.0 (`PREPARE_FOR_SUBMISSION`
 - Archive Release (AdMob real, sem `NSUserTrackingUsageDescription`), `codesign` com `aps-environment=production`, App Attest e os 3 domínios; upload por `exportArchive` com a chave da API. Build `8e13a610-c63c-4ee7-b127-901011341162` VALID.
 - Versão `6fa6bbd2-bf44-4793-8af9-c7fb05a8659c` (liberação automática após aprovação, como a 1.10.0), metadados e notas de revisão copiados da 1.10.0. Enviada à revisão: `reviewSubmission` `51a447a7-ab7d-49b7-a04f-77e39e1ec374` (WAITING_FOR_REVIEW).
 - Simulador (Debug): abertura mostra a logo e depois o onboarding. Conquistas e Estatísticas não conferidas (exigem login; a senha da conta de revisor falhou antes no Firebase).
+
+## Versão 1.11.0 (build 31, 21/11/2026)
+
+- Conteúdo: artes da pelada nos estados vazios, nos erros e na boas-vindas (#4609, merge `21b0eb9d`).
+- Archive Release do commit `aed1fb6e` (o merge só mudou `scripts/artes/gerar.mjs`, fora do app), AdMob real, sem `NSUserTrackingUsageDescription` e sem `NSMicrophoneUsageDescription`; `codesign` com `aps-environment=production`, App Attest e os 3 domínios. Upload por `exportArchive` com a chave da API, de primeira. Build `5bedbd48` VALID, criptografia isenta.
+- Versão `0cfe6d61-810a-4fce-a032-6df605e72824` (liberação automática após aprovação), novidades em pt-BR escritas a partir de `release-notes/ios/1.11.0.md`, notas e conta de revisão copiadas da 1.10.1. Enviada à revisão: `reviewSubmission` `464c1365-cffd-40e6-ab1b-20cf0817557f` (WAITING_FOR_REVIEW).
+- Simulador: só a boas-vindas foi conferida (sem `GoogleService-Info.plist` no Debug). As telas depois do login não têm captura.

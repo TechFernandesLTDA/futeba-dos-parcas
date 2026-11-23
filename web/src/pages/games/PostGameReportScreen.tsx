@@ -319,6 +319,7 @@ export const PostGameReportScreen: React.FC = () => {
   if (!stats) {
     return (
       <EmptyState
+        arte="placar_zerado"
         icon={<ReportIcon />}
         title={t('empty.noReportAvailable')}
         description={t('empty.noReportAvailableDesc')}

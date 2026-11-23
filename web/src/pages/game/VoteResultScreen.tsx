@@ -358,6 +358,7 @@ export const VoteResultScreen: React.FC = () => {
 
         {!voteResult?.mvp && !voteResult?.bestGoalkeeper && !voteResult?.bolaMurcha && (
           <EmptyState
+            arte="medalha"
             icon={<StarIcon />}
             title={t('mvp.notHeldYet')}
           />

@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.core
 
+import com.futebadosparcas.ui.artes.ArteDeEstado
+import com.futebadosparcas.ui.artes.arteDoIcone
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -170,13 +172,19 @@ private fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        val arte = arteDoIcone(icon)
+        if (arte != null) {
+            ArteDeEstado(id = arte)
+            Spacer(modifier = Modifier.height(20.dp))
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,

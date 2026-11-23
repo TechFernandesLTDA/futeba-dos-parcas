@@ -26,6 +26,25 @@ class AdsState(private val store: AdsStateStore) {
         if (!firstWinReached) store.putBoolean(MonetizationConfig.PREF_FIRST_WIN, true)
     }
 
+    val subscriptionInviteShown: Boolean
+        get() = store.getBoolean(MonetizationConfig.PREF_SUBSCRIPTION_INVITE_SHOWN)
+
+    /**
+     * Decide o convite "Sem anúncios" e, se for a hora, já grava que ele apareceu. A marca é
+     * gravada quando o convite aparece, não quando a pessoa fecha: matar o app não traz de volta.
+     * Retorna `true` uma vez só na vida do app.
+     */
+    fun takeSubscriptionInvite(unitConfigured: Boolean): Boolean {
+        val show = AdsGate.shouldShowSubscriptionInvite(
+            adsFree = adsFree,
+            firstWinReached = firstWinReached,
+            unitConfigured = unitConfigured,
+            inviteAlreadyShown = subscriptionInviteShown,
+        )
+        if (show) store.putBoolean(MonetizationConfig.PREF_SUBSCRIPTION_INVITE_SHOWN, true)
+        return show
+    }
+
     fun apply(decision: EntitlementDecision) {
         when (decision) {
             EntitlementDecision.GRANT -> store.putBoolean(MonetizationConfig.PREF_ADS_FREE, true)

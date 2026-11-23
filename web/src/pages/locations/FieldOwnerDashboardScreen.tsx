@@ -1127,6 +1127,7 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
         {locations.length === 0 ? (
           <Stack spacing={2.5}>
             <EmptyState
+              arte="mapa_campo"
               icon={<LocationIcon />}
               title={t('fieldOwner.guidedEmptyTitle')}
               description={t('fieldOwner.guidedEmptyDescription')}

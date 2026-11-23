@@ -7,6 +7,8 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.InAppMessageParams
+import com.android.billingclient.api.InAppMessageResult
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -15,6 +17,8 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.futebadosparcas.domain.monetization.AdsFreeEntitlement
 import com.futebadosparcas.domain.monetization.MonetizationConfig
+import com.futebadosparcas.domain.monetization.PlayOfferCandidate
+import com.futebadosparcas.domain.monetization.PlayOfferSelection
 import com.futebadosparcas.domain.monetization.StoreAnswer
 import com.futebadosparcas.domain.monetization.StorePurchase
 import com.futebadosparcas.domain.monetization.StorePurchaseState
@@ -107,14 +111,19 @@ class PlayBillingManager(context: Context) {
         val product = withTimeoutOrNull(PRAZO_LOJA_MS) { done.await() }
             ?.firstOrNull { it.productId == MonetizationConfig.PRODUCT_ID_SEM_ANUNCIOS_ANUAL }
             ?: return null
-        val offer = product.subscriptionOfferDetails
-            ?.firstOrNull { it.basePlanId == MonetizationConfig.PLAY_BASE_PLAN_ANUAL && it.offerId == null }
-            ?: product.subscriptionOfferDetails?.firstOrNull { it.basePlanId == MonetizationConfig.PLAY_BASE_PLAN_ANUAL }
-            ?: return null
-        val price = offer.pricingPhases.pricingPhaseList.lastOrNull()?.formattedPrice ?: return null
+        // Só a oferta base do plano anual (regra em PlayOfferSelection, testada no shared).
+        val candidates = product.subscriptionOfferDetails.orEmpty().map {
+            PlayOfferCandidate(
+                basePlanId = it.basePlanId,
+                offerId = it.offerId,
+                offerToken = it.offerToken,
+                lastPhasePrice = it.pricingPhases.pricingPhaseList.lastOrNull()?.formattedPrice,
+            )
+        }
+        val offer = PlayOfferSelection.choose(candidates) ?: return null
         productDetails = product
         offerToken = offer.offerToken
-        return SubscriptionOffer(price)
+        return SubscriptionOffer(offer.price)
     }
 
     /** Abre a tela de compra da Play. O resultado vem em [purchaseEvents]. */
@@ -151,6 +160,25 @@ class PlayBillingManager(context: Context) {
             .map { (id, purchase) -> toStorePurchase(id, purchase) }
         purchases.forEach { acknowledgeIfNeeded(it) }
         return StoreAnswer.Answered(mapped)
+    }
+
+    /**
+     * Mensagens da Play no app (categoria TRANSACTIONAL): a quem tem a assinatura em carência ou
+     * suspensa, a Play mostra por cima do app o aviso de pagamento recusado, com o atalho para
+     * trocar o cartão. Sem nada a avisar, não aparece nada. Sem prazo: o aviso fica aberto o quanto
+     * a pessoa quiser. `true` = a pessoa corrigiu o pagamento ali (vale conferir a assinatura de novo).
+     */
+    suspend fun showInAppMessages(activity: Activity): Boolean {
+        if (!ensureConnected()) return false
+        val params = InAppMessageParams.newBuilder()
+            .addInAppMessageCategoryToShow(InAppMessageParams.InAppMessageCategoryId.TRANSACTIONAL)
+            .build()
+        val done = CompletableDeferred<Boolean>()
+        val started = client.showInAppMessages(activity, params) { result ->
+            done.complete(result.responseCode == InAppMessageResult.InAppMessageResponseCode.SUBSCRIPTION_STATUS_UPDATED)
+        }
+        if (started.responseCode != BillingClient.BillingResponseCode.OK) return false
+        return done.await()
     }
 
     private fun handlePurchases(purchases: List<Purchase>) {

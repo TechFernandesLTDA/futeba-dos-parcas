@@ -170,6 +170,7 @@ export const GroupChallengesScreen: React.FC = () => {
 
       {!isLoading && !error && (!challenges || challenges.length === 0) && (
         <EmptyState
+          arte="cones"
           icon={<SportsSoccer />}
           title={t("challenges.emptyTitle")}
           description={t("challenges.emptyDesc")}

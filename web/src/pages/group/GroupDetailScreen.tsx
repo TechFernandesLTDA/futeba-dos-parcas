@@ -509,6 +509,7 @@ const GamesPanel: React.FC<{
   if (games.length === 0) {
     return (
       <EmptyState
+        arte="prancheta_vazia"
         icon={<SoccerIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
         title={t('groupDetail.noGames')}
         description={t('groupDetail.noGamesDesc')}
@@ -762,6 +763,7 @@ export const GroupDetailScreen: React.FC = () => {
     return (
       <PageContainer maxWidth="detail">
         <EmptyState
+          arte="coletes_varal"
           icon={<GroupIcon sx={{ fontSize: iconSizes.hero }} />}
           title={t('groupDetail.closedTitle')}
           description={t('groupDetail.closedDesc')}
@@ -792,6 +794,7 @@ export const GroupDetailScreen: React.FC = () => {
     return (
       <PageContainer maxWidth="detail">
         <EmptyState
+          arte="coletes_varal"
           icon={<GroupIcon sx={{ fontSize: iconSizes.hero }} />}
           title={t('groupDetail.notFound')}
           description={t('groupDetail.notFoundDesc')}
@@ -1217,6 +1220,7 @@ export const GroupDetailScreen: React.FC = () => {
             </CardContent>
             {members.length === 0 ? (
               <EmptyState
+                arte="banco_vazio"
                 icon={<PersonIcon sx={{ fontSize: iconSizes.xxl, color: 'text.disabled' }} />}
                 title={t('groupDetail.noMembers')}
                 description={t('groupDetail.noMembersDesc')}

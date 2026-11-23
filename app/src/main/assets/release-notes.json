@@ -1,20 +1,48 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-18T03:05:57.277Z",
+  "generatedAt": "2026-11-21T23:38:05.985Z",
   "notes": [
+    {
+      "version": "1.45.0",
+      "buildNumber": 96,
+      "releaseDate": "2026-11-21",
+      "type": "minor",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app ganhou um visual novo, com desenhos do mundo da pelada nas telas vazias, nos avisos de erro e na boas-vindas.",
+      "highlights": [
+        {
+          "icon": "sports_soccer",
+          "title": "Artes da pelada",
+          "description": "Prancheta, coletes no varal, pódio, apito e outros desenhos mostram o que fazer quando ainda não há jogos, grupos ou ranking."
+        }
+      ],
+      "added": [],
+      "improved": [
+        "Telas vazias e de erro ficaram mais claras e iguais no app, no iPhone e no site.",
+        "As animações dos desenhos são curtas e somem quando o celular está com movimento reduzido.",
+        "Depois da sua primeira vitória, a Home mostra uma vez o convite para jogar sem anúncios, sem atrapalhar o toque."
+      ],
+      "fixed": [
+        "Quem estiver com o pagamento da assinatura recusado recebe o aviso da Google Play para corrigir."
+      ],
+      "issueRefs": [
+        4610
+      ]
+    },
     {
       "version": "1.44.0",
       "buildNumber": 94,
-      "releaseDate": "2026-11-11",
+      "releaseDate": "2026-11-20",
       "type": "minor",
       "showPopup": false,
-      "published": false,
+      "published": true,
       "headline": "Agora você pode tirar os anúncios do app com a assinatura anual Sem anúncios.",
       "highlights": [
         {
           "icon": "block",
           "title": "Sem anúncios",
-          "description": "Em Preferências, assine por R$ 9,90 por ano para tirar os banners. Dá para restaurar a compra e cancelar quando quiser."
+          "description": "Em Preferências, assine por R$ 9,99 por ano para tirar os banners. Dá para restaurar a compra e cancelar quando quiser."
         }
       ],
       "added": [],
@@ -22,8 +50,18 @@
         "Um banner discreto aparece só nas telas principais, depois da sua primeira presença confirmada ou do seu primeiro jogo criado. Nunca aparece em pagamento, caixa, jogo ao vivo, login ou erros.",
         "Os anúncios são sempre não personalizados e o app pede seu consentimento quando a lei da sua região exige."
       ],
-      "fixed": [],
-      "issueRefs": []
+      "fixed": [
+        "Entrar com Google voltou a funcionar, e o primeiro acesso espera a sua conta ficar pronta em vez de mostrar erro.",
+        "Fechar a janela do Google não mostra mais erro, e as mensagens de login ficaram mais claras.",
+        "A foto do Google não substitui mais a foto que você escolheu no perfil.",
+        "O dono do grupo volta a convidar jogadores pelo Android.",
+        "Jogos criados pelo site abrem e aparecem corretamente no Android.",
+        "Jogador bloqueado no grupo não entra mais na fila de espera nem é confirmado como gestor."
+      ],
+      "issueRefs": [
+        4584,
+        4576
+      ]
     },
     {
       "version": "1.43.5",

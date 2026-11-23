@@ -37,6 +37,7 @@ import { InteractiveCard } from './InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 import { TeamBadge } from '../team/TeamBadge';
 import { DemoDataChip } from './DemoDataChip';
+import { Arte, type ArteId } from '../artes/Arte';
 
 interface GameCardProps {
   game: Game;
@@ -592,13 +593,15 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
  */
 export const EmptyState: React.FC<{
   icon?: React.ReactNode;
+  /** Arte da pelada no lugar do ícone (spec FEAT_2026-11-21_ARTES_DA_PELADA). */
+  arte?: ArteId;
   title: string;
   description?: string;
   action?: {
     label: string;
     onClick: () => void;
   };
-}> = ({ icon, title, description, action }) => {
+}> = ({ icon, arte, title, description, action }) => {
   return (
     <Box
       sx={{
@@ -611,8 +614,12 @@ export const EmptyState: React.FC<{
         textAlign: 'center',
       }}
     >
-      {icon || <SoccerIcon sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />}
-      <Typography variant="h6" color="text.secondary" gutterBottom>
+      {arte ? (
+        <Arte id={arte} larguraMaxima={200} sx={{ mb: 2.5, '@media (max-height: 520px)': { maxWidth: 120 } }} />
+      ) : (
+        icon || <SoccerIcon sx={{ fontSize: iconSizes.hero, color: 'text.disabled', mb: 2 }} />
+      )}
+      <Typography variant="h6" color={arte ? 'text.primary' : 'text.secondary'} fontWeight={arte ? 600 : undefined} gutterBottom>
         {title}
       </Typography>
       {description && (

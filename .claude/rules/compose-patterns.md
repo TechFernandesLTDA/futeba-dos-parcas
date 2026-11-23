@@ -31,7 +31,7 @@ private fun FeatureContent(
 
 ## Performance
 
-- **NUNCA** aninhar LazyVerticalGrid dentro de LazyColumn
+- Não aninhar LazyVerticalGrid dentro de LazyColumn: duas listas lazy com rolagem no mesmo eixo quebram a medição e o app fecha
 - Usar `FlowRow` para grids dentro de LazyColumn
 - Adicionar `@OptIn(ExperimentalLayoutApi::class)` para FlowRow
 - Evitar recomposições desnecessárias com `derivedStateOf`
@@ -73,7 +73,7 @@ val colorScheme = when {
 }
 ```
 
-### Cores - NUNCA Hardcode
+### Cores - sem hardcode (cor fixa quebra o tema escuro e a cor dinâmica)
 
 ```kotlin
 // CORRETO

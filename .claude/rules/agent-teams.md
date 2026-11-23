@@ -1,10 +1,10 @@
 # Agent Teams - Padrões para Futeba dos Parças
 
-Guia para uso de Agent Teams (Opus 4.6) neste projeto.
+Guia para uso de Agent Teams do Claude Code neste projeto. Modelos atuais: Opus 5.5 (`claude-opus-5-5`, alias `opus`), Sonnet 5.5 (`claude-sonnet-5-5`, alias `sonnet`) e Haiku 5.5 (`claude-haiku-5-5`, alias `haiku`).
 
 ## Quando Usar Agent Teams
 
-**SIM - Use agent teams:**
+**Use agent teams para:**
 - Features cross-layer (Compose + Functions + Rules)
 - Trabalho KMP multi-plataforma (commonMain + androidMain + iosMain)
 - Auditorias de segurança (3 ângulos em paralelo)
@@ -12,7 +12,7 @@ Guia para uso de Agent Teams (Opus 4.6) neste projeto.
 - Debugging com hipóteses concorrentes
 - Pesquisa exploratória (libs, patterns, alternativas)
 
-**NÃO - Use single session ou subagents:**
+**Prefira sessão única ou subagents para:**
 - Edições no mesmo arquivo
 - Tarefas sequenciais com dependências
 - Bugfixes simples em 1-2 arquivos
@@ -34,7 +34,7 @@ Exija aprovação de plano antes de implementar.
 - UI: `app/src/main/java/com/futebadosparcas/ui/<feature>/`
 - Functions: `functions/src/<feature>/`
 - Rules: `firestore.rules` + `functions/src/validation/`
-- NENHUM teammate deve editar arquivo de outro
+- Nenhum teammate edita arquivo de outro: dois agentes no mesmo arquivo geram conflito de merge e uma edição apaga a outra
 
 ### 2. KMP Multi-Plataforma (3 teammates)
 
@@ -43,7 +43,7 @@ Crie um agent team para adicionar [MODEL/REPO] ao KMP:
 - Teammate 1 (Common): Interface em shared/src/commonMain/
 - Teammate 2 (Android): Impl em shared/src/androidMain/
 - Teammate 3 (iOS): Impl em shared/src/iosMain/
-Teammate 1 deve terminar a interface ANTES dos outros começarem.
+Teammate 1 termina a interface antes de os outros começarem, porque Android e iOS implementam essa interface.
 ```
 
 **Dependência:** Common finaliza primeiro (use task dependencies).
@@ -80,12 +80,12 @@ Cada um deve gerar relatório independente.
 
 ## Regras de Ouro
 
-1. **Ownership de arquivos**: Cada teammate edita APENAS seus arquivos designados
+1. **Ownership de arquivos**: Cada teammate edita só os arquivos designados a ele, para não haver conflito de merge
 2. **Delegate mode**: Use Shift+Tab para impedir o lead de implementar
-3. **Plan approval**: Sempre exija para features que tocam Firestore ou segurança
+3. **Plan approval**: Exija em toda feature que toca Firestore ou segurança, porque um erro nas regras expõe dados de usuários
 4. **5-6 tasks por teammate**: Mantém throughput alto e permite rebalanceamento
-5. **Sonnet para teammates**: Use Sonnet para tasks paralelas, Opus para o lead
-6. **Cleanup**: Sempre peça ao lead para fazer cleanup quando terminar
+5. **Sonnet para teammates**: Use Sonnet 5.5 (`sonnet`) nas tasks paralelas e Opus 5.5 (`opus`) no lead
+6. **Cleanup**: Ao terminar, peça ao lead para fazer o cleanup do time, para não sobrarem teammates rodando
 
 ## Mapeamento de Arquivos por Domínio
 
@@ -109,4 +109,4 @@ Cada um deve gerar relatório independente.
 - **Time de 5+ para tarefa simples** - Overhead de coordenação > benefício
 - **Sem plan approval em Firestore** - Risco de security rules inconsistentes
 - **Lead implementando ao invés de delegando** - Use delegate mode
-- **Teammates sem contexto suficiente** - Sempre inclua detalhes específicos no spawn prompt
+- **Teammates sem contexto suficiente** - Inclua detalhes específicos no spawn prompt: o teammate só sabe o que está nele

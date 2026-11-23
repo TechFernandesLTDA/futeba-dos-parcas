@@ -67,10 +67,9 @@ describe('WelcomeScreen', () => {
     expect(btn).toBeInTheDocument();
   });
 
-  it('renderiza ícone do soccer', () => {
+  it('renderiza a arte do campo', () => {
     renderWithProviders(<WelcomeScreen />);
-    const icon = document.querySelector('[data-testid="SportsSoccerIcon"]');
-    expect(icon).toBeInTheDocument();
+    expect(document.querySelector('svg[data-arte="campo"]')).toBeInTheDocument();
   });
 
   it('não crasha ao renderizar', () => {

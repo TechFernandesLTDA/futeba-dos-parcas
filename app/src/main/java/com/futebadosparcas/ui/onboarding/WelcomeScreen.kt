@@ -1,7 +1,15 @@
 package com.futebadosparcas.ui.onboarding
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,9 +31,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.ui.components.design.AppLogo
-import com.futebadosparcas.ui.components.design.AppLogoShape
-import com.futebadosparcas.ui.components.design.AppLogoSize
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.domain.artes.PictogramaId
+import com.futebadosparcas.ui.components.artes.ArteDaPelada
+import com.futebadosparcas.ui.components.artes.rememberPictograma
 import com.futebadosparcas.ui.theme.AppDimensions
 /**
  * Tela de boas-vindas do onboarding.
@@ -48,11 +57,13 @@ fun WelcomeScreen(
         ) {
             Spacer(modifier = Modifier.weight(0.5f))
 
-            // Logo do app — componente padronizado AppLogo
-            AppLogo(
-                size = AppLogoSize.XLarge,
-                shape = AppLogoShape.Rounded,
-                contentDescription = null
+            // Arte do campo (spec ARTES_DA_PELADA): o campo da pelada abre o app
+            ArteDaPelada(
+                id = ArteId.CAMPO,
+                modifier = Modifier
+                    .widthIn(max = 340.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = 180.dp)
             )
 
             Spacer(modifier = Modifier.height(AppDimensions.spacing_huge))
@@ -80,19 +91,19 @@ fun WelcomeScreen(
 
             // Features
             WelcomeFeatureItem(
-                emoji = "\u26BD",
+                pictograma = PictogramaId.BOLA,
                 text = stringResource(R.string.welcome_feature_games)
             )
             WelcomeFeatureItem(
-                emoji = "\uD83C\uDFC6",
+                pictograma = PictogramaId.ARTILHARIA,
                 text = stringResource(R.string.welcome_feature_ranking)
             )
             WelcomeFeatureItem(
-                emoji = "\uD83D\uDCCA",
+                pictograma = PictogramaId.PLACAR,
                 text = stringResource(R.string.welcome_feature_stats)
             )
             WelcomeFeatureItem(
-                emoji = "\uD83E\uDD1D",
+                pictograma = PictogramaId.SORTEIO,
                 text = stringResource(R.string.welcome_feature_balance)
             )
 
@@ -119,15 +130,33 @@ fun WelcomeScreen(
 
 @Composable
 private fun WelcomeFeatureItem(
-    emoji: String,
+    pictograma: PictogramaId,
     text: String
 ) {
-    Text(
-        text = "$emoji  $text",
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurface,
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = AppDimensions.spacing_small, horizontal = AppDimensions.spacing_medium)
-    )
+            .padding(vertical = AppDimensions.spacing_small, horizontal = AppDimensions.spacing_medium),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = rememberPictograma(pictograma),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(AppDimensions.spacing_medium))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
 }

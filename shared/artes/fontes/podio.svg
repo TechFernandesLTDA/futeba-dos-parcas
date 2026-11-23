@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" data-descricao="Pódio com taça no primeiro lugar">
+  <circle cx="120" cy="84" r="66" fill="var(--a-fundo)"/>
+  <ellipse cx="122" cy="148" rx="86" ry="5" fill="var(--a-sombra)"/>
+  <g fill="var(--a-sup)" stroke="var(--a-contorno)" stroke-width="1.5">
+    <rect x="44" y="90" width="52" height="56" rx="4"/>
+    <rect x="96" y="68" width="52" height="78" rx="4"/>
+    <rect x="148" y="106" width="52" height="40" rx="4"/>
+  </g>
+  <rect x="44.75" y="90.75" width="50.5" height="9" rx="3" fill="var(--a-prata)"/>
+  <rect x="96.75" y="68.75" width="50.5" height="9" rx="3" fill="var(--a-ouro)"/>
+  <rect x="148.75" y="106.75" width="50.5" height="9" rx="3" fill="var(--a-bronze)"/>
+  <g fill="none" stroke="var(--a-contorno)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M118 102L122 99V121"/>
+    <path d="M65 118Q65 113 70 113Q75 113 75 118Q75 122 65 132H75"/>
+    <path d="M169 124Q174 119 178 124Q180 129 174 130Q181 131 179 137Q176 142 169 139"/>
+  </g>
+  <rect x="108" y="56" width="28" height="12" rx="2" fill="var(--a-ouro)" stroke="var(--a-contorno)" stroke-width="1.2"/>
+  <rect x="108" y="56" width="28" height="12" rx="2" fill="var(--a-sombra)" opacity=".5"/>
+  <rect x="118" y="46" width="8" height="11" fill="var(--a-ouro)"/>
+  <path d="M104 22H98A8 8 0 0 0 106 36M140 22H146A8 8 0 0 1 138 36" fill="none" stroke="var(--a-ouro)" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M104 16H140V28A18 18 0 0 1 104 28Z" fill="var(--a-ouro)" stroke="var(--a-contorno)" stroke-width="1.2"/>
+  <path d="M122 16H140V28A18 18 0 0 1 122 46Z" fill="var(--a-sombra)" opacity=".45"/>
+  <g fill="var(--a-branco)" transform="translate(114 26) scale(.75)"><use href="#brilho4"/></g>
+  <g fill="var(--a-ouro)">
+    <g class="m-piscar" transform="translate(80 40)"><use href="#brilho4"/></g>
+    <g class="m-piscar" transform="translate(166 30) scale(.8)"><use href="#brilho4"/></g>
+    <g class="m-piscar" transform="translate(182 64) scale(.6)"><use href="#brilho4"/></g>
+  </g>
+</svg>

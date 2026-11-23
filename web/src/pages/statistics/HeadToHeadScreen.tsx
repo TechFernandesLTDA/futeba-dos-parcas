@@ -334,6 +334,7 @@ export const HeadToHeadScreen: React.FC = () => {
 
         {canCompare && !loading && !error && !stats && (
           <EmptyState
+            arte="prancheta_vazia"
             icon={<SoccerIcon />}
             title={t('empty.selectTwoPlayers')}
             description={t('empty.selectTwoPlayersDesc')}
@@ -352,6 +353,7 @@ export const HeadToHeadScreen: React.FC = () => {
 
         {canCompare && stats && stats.totalGames === 0 && (
           <EmptyState
+            arte="prancheta_vazia"
             icon={<SoccerIcon />}
             title={t('empty.noCommonGames')}
             description={t('empty.noCommonGamesDesc')}

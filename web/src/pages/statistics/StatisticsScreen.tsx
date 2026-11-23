@@ -165,6 +165,7 @@ export const StatisticsScreen: React.FC = () => {
           <ErrorState message={error} onRetry={retry} retryLabel={t('statistics.retry')} />
         ) : !stats ? (
           <EmptyState
+            arte="placar_zerado"
             icon={<SportsSoccer sx={{ fontSize: 64, color: 'text.disabled' }} />}
             title={t('statistics.noStatsYet')}
             description={t('statistics.noStatsYetDesc')}

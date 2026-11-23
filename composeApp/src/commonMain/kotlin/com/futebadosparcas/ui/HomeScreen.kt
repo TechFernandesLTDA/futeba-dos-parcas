@@ -1,5 +1,9 @@
 package com.futebadosparcas.ui
 
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.ui.artes.ArteDaPelada
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -233,6 +237,15 @@ private fun HomeHeroCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Arte do campo no topo do card principal (spec ARTES_DA_PELADA)
+            ArteDaPelada(
+                id = ArteId.CAMPO,
+                modifier = Modifier
+                    .widthIn(max = 360.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = 160.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
             Text(
                 text = stringResource(Res.string.home_welcome),
                 style = MaterialTheme.typography.headlineMedium,

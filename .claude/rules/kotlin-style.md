@@ -35,5 +35,5 @@ Regras de estilo para código Kotlin no projeto Futeba dos Parças.
 
 ## Strings
 
-- **SEMPRE** usar `strings.xml` - nunca hardcode strings no código
+- Usar `strings.xml` para todo texto, sem strings fixas no código, para o texto poder ser traduzido e revisado num lugar só
 - Formato: `@string/screen_element_description`

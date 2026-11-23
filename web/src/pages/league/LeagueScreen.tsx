@@ -802,6 +802,7 @@ export const LeagueScreen: React.FC<LeagueScreenProps> = ({ embedded = false, ac
           </Box>
         ) : filteredAndSorted.length === 0 ? (
           <EmptyState
+            arte="podio"
             icon={<MilitaryTechIcon />}
             title={selectedDivision
               ? t('league.emptyDivisionTitle')

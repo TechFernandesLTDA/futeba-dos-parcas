@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" data-descricao="Mapa dobrado com um caminho até o campo marcado">
+  <circle cx="110" cy="86" r="66" fill="var(--a-fundo)"/>
+  <ellipse cx="110" cy="146" rx="76" ry="5" fill="var(--a-sombra)"/>
+  <g stroke="var(--a-contorno)" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M40 40L86 30V130L40 140Z" fill="var(--a-sup)"/>
+    <path d="M86 30L134 40V140L86 130Z" fill="var(--a-sup)"/>
+    <path d="M134 40L180 30V130L134 140Z" fill="var(--a-sup)"/>
+  </g>
+  <path d="M86 30L134 40V140L86 130Z" fill="var(--a-neutro)"/>
+  <path d="M86 30L134 40V140L86 130Z" fill="var(--a-sombra)" opacity=".35"/>
+  <path d="M44 62L82 54M44 84L82 78M90 70L130 78M138 66L176 58" fill="none" stroke="var(--a-contorno)" stroke-width="1" opacity=".35"/>
+  <path d="M54 122Q70 96 98 108T144 102Q150 100 152 96" fill="none" stroke="var(--a-laranja)" stroke-width="2.5" stroke-dasharray="4 4" stroke-linecap="round"/>
+  <circle cx="54" cy="122" r="4" fill="var(--a-laranja)"/>
+  <rect x="142" y="92" width="30" height="24" rx="2" fill="var(--a-grama)"/>
+  <g fill="none" stroke="var(--a-giz)" stroke-width="1.2" opacity=".9"><rect x="145" y="95" width="24" height="18" rx="1"/><path d="M157 95V113"/><circle cx="157" cy="104" r="3"/></g>
+  <g class="m-quicar">
+    <path d="M157 46A14 14 0 0 1 171 60C171 70 157 84 157 84C157 84 143 70 143 60A14 14 0 0 1 157 46Z" fill="var(--a-verde)" stroke="var(--a-contorno)" stroke-width="1.2"/>
+    <circle cx="157" cy="60" r="8" fill="var(--a-branco)"/>
+    <g transform="translate(157 60) scale(.62)"><use href="#bola"/></g>
+  </g>
+</svg>

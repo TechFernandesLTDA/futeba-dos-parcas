@@ -4,23 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## ⚠️ SPEC-DRIVEN DEVELOPMENT (SDD) - REGRAS OBRIGATÓRIAS
+## Spec-Driven Development (SDD)
 
-> **LEIA ISTO PRIMEIRO.** Estas regras são inegociáveis.
+As regras abaixo valem para todo trabalho no repositório.
 
-### Regra #1: NUNCA implementar sem SPEC aprovada
+### Regra #1: Spec quando a mudança é de produto, dados ou fluxo
 
-- Toda feature ou bugfix DEVE ter uma spec em `/specs/` **antes** de escrever código
-- Copie o template apropriado: `_TEMPLATE_FEATURE_MOBILE.md` ou `_TEMPLATE_BUGFIX_MOBILE.md`
-- Status da spec deve ser `APPROVED` antes de iniciar implementação
+Pede spec em `/specs/`, com status `APPROVED` antes de escrever código:
+- Funcionalidade nova
+- Mudança de dados: modelo ou campos no Firestore, `firestore.rules`, índices, contratos de Cloud Functions, XP e rankings
+- Mudança de fluxo: o caminho do usuário, permissões, navegação, login, compra
+- Correção que muda dados, regras ou fluxo (por exemplo, permissões, ID do documento, formato de convite): usa o template de bugfix
 
-### Regra #2: Fases obrigatórias
+Não pede spec: correção que não muda dados nem fluxo, ajuste visual, texto, manutenção (dependências, CI, refactor, testes, docs, release). Basta o PR explicar o que mudou e por quê.
+
+Templates: `_TEMPLATE_FEATURE_MOBILE.md`, `_TEMPLATE_BUGFIX_MOBILE.md`, `_TEMPLATE_SCREEN_UI.md`. Na dúvida, escreva a spec: ela custa menos que desfazer uma mudança de dados em produção.
+
+### Regra #2: Fases de uma spec
 
 ```
 REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY
 ```
 
-Não pule fases. Cada uma existe por um motivo.
+Quando a mudança tem spec, siga as fases nessa ordem: cada uma pega um tipo de erro antes de ele virar código.
 
 ### Regra #3: Sempre propor plano antes de editar código
 
@@ -66,7 +72,7 @@ sealed class UiState {
 ./gradlew compileDebugKotlin               # Fast compile check (use this often!)
 
 # Build (KMP - iOS Framework) - Requires macOS
-# O app iOS linka só o ComposeApp.framework, que embute o :shared (#4427)
+# O app iOS linka só o ComposeApp.framework, que embute o :shared
 ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64  # iOS Simulator (M1/M2 Mac)
 ./gradlew :composeApp:linkDebugFrameworkIosArm64           # iOS Device
 
@@ -85,7 +91,7 @@ sealed class UiState {
 cd functions && npm install                # Install deps
 npm run build                              # Compile TypeScript
 npm run lint                               # ESLint (same as CI)
-npx jest --no-coverage                     # All tests (~20 test files, run `ls test/*.test.ts | wc -l` for current)
+npx jest --no-coverage                     # All tests (functions/test/**/*.test.ts)
 npx jest path/to/file.test.ts              # Single test file
 npx jest --testNamePattern="test name"     # Single test by name
 firebase emulators:start                   # Local testing
@@ -99,8 +105,9 @@ firebase deploy --only functions           # Deploy
 # Decisão #1356 (2026-05-19): web/Android/iOS usam Firestore + Cloud Functions
 # direto. Sem consumidor, CI, testes ou deploy. Não desenvolva aqui sem spec SDD.
 
-# iOS App (CocoaPods + KMP framework consumer)
-cd iosApp && ./build_shared.sh             # Build shared KMP framework first
+# iOS App (XcodeGen + CocoaPods + KMP framework consumer)
+cd iosApp && ./build_shared.sh             # Build ComposeApp.framework first
+cd iosApp && xcodegen generate             # Generate .xcodeproj from project.yml (before pod install)
 cd iosApp && pod install                   # Install CocoaPods deps
 # Open iosApp/iosApp.xcworkspace in Xcode to build/run
 # See iosApp/SETUP.md for first-time setup
@@ -120,7 +127,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 | App entry point (Android) | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
 | Navigation graph & routes (Android) | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` |
 | App entry & navigation (iOS / CMP) | `composeApp/src/commonMain/kotlin/com/futebadosparcas/compose/App.kt` |
-| Koin DI modules | `app/src/main/java/com/futebadosparcas/di/koin/` (14 Koin modules) |
+| Koin DI modules | `app/src/main/java/com/futebadosparcas/di/koin/` (aggregated in `KoinModules.kt`) |
 | Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
 | Cloud Functions | `functions/src/index.ts` (main entry) |
@@ -128,7 +135,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 | Mobile DoD checklist | `specs/_CHECKLIST_MOBILE_DOD.md` |
 | Decision log | `specs/DECISIONS.md` |
 | Modern UI components | `app/.../ui/components/modern/` (ShimmerLoading, ErrorState, etc.) |
-| Shared KMP module | `shared/commonMain/` (cross-platform domain logic) |
+| Shared KMP module | `shared/src/commonMain/` (cross-platform domain logic) |
 | Project context (LLM) | `.claude/PROJECT_CONTEXT.md` (contexto consolidado para AIs) |
 | Repo facts non-obvious | `AGENTS.md` (atalhos para agentes — Firebase setup, build quirks) |
 | Quick start guide | `QUICK_START.md` |
@@ -146,8 +153,8 @@ fastlane beta                              # Deploy to Firebase App Distribution
 - **Private repo** (`TechFernandesLTDA/futeba-dos-parcas`) — external collaborators need explicit access
 - **Squash-merge only** on `master`. `delete_branch_on_merge: true`. **NEVER push direto a master**
 - **Branch protection**: PR + 4 CI gates required; human/CODEOWNERS review is advisory (0 approvals required); no force-push or deletions
-- **Conventional Commits enforced** via `commitlint.config.js` + Husky pre-commit hook
-- **Node 22** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
+- **Conventional Commits enforced** via `commitlint.config.js` + Husky `commit-msg` hook
+- **Node 22** required (see `mise.toml` / `.nvmrc`) — run `mise install` before working in `web/` or `functions/`
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
 - **Firebase Hosting URL**: `https://futebadosparcas.com.br` (SPA, all routes → `/index.html`)
 - **Runners self-hosted (macOS + OCI Linux)**: `mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2` e `oci-prod01-futeba`. Topologia em `docs/CI_RUNNERS.md`
@@ -177,7 +184,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 - **Kotlin 2.4.21** with **Jetpack Compose** (Android) and **Compose Multiplatform 1.10.3** (`:composeApp` / iOS)
 - **MVVM + Clean Architecture**
-- **Koin 4.1.1** for DI (migrated from Hilt in CMP Phase 1)
+- **Koin 4.1.1** for DI (Hilt is not used)
 - **Firebase** (Firestore, Auth, Storage, Cloud Functions v2, FCM, **App Check**)
 - **Custom Claims** for role-based authorization (zero-cost JWT validation)
 - **Room** for local cache
@@ -186,7 +193,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 ### Version
 
-- **Current versions**: Web 1.61.1, Android 1.42.0 (build 83), iOS 1.8.0 (build 24), Functions 1.15.1. Source of truth: `versions.json`.
+- **App versions** (Web, Android, iOS, Functions): read `versions.json` (single source of truth, updated by `scripts/bump-version.js`).
 - **SDK**: compileSdk 37, minSdk 24, targetSdk 36, JDK 21
 - **Kotlin**: 2.4.21
 - **AGP**: 9.4.1
@@ -265,16 +272,11 @@ Data (Repositories → Firebase/Room)
 
 ### Custom Claims for Authorization
 
-**IMPLEMENTED**: specs/PERF_001_SECURITY_RULES_OPTIMIZATION.md
+Spec: `specs/PERF_001_SECURITY_RULES_OPTIMIZATION.md`.
 
-Firebase Custom Claims armazenam `role` no JWT token, eliminando 40% dos Firestore reads.
+O `role` do usuário fica no JWT (Firebase Custom Claims), e as Security Rules leem só o claim (`isAdmin()`, `isFieldOwner()` usam `request.auth.token.role`), sem ler o Firestore. Não há fallback para `getUserRole()`: sem o claim, o usuário não passa em `isAdmin()` nem em `isFieldOwner()`.
 
-**Migration Status**: FASE 1 (Backward Compatible)
-- ✅ Custom Claims setados em `onUserCreated` trigger
-- ✅ Security Rules aceitam AMBOS: `request.auth.token.role` OU `getUserRole()` (Firestore)
-- ⏳ FASE 2: Após 95% migração (2 semanas), remover fallback `getUserRole()`
-
-**Cloud Functions**:
+**Cloud Functions** (`functions/src/auth/custom-claims.ts`):
 ```typescript
 // Setar role de um usuário (apenas ADMIN)
 const setRole = httpsCallable(functions, 'setUserRole');
@@ -285,57 +287,17 @@ const migrate = httpsCallable(functions, 'migrateAllUsersToCustomClaims');
 await migrate();
 ```
 
-**Security Rules (Optimized)**:
-```javascript
-// ANTES (1 Firestore read):
-function isAdmin() {
-  return isAuthenticated() && getUserRole() == 'ADMIN';
-}
-
-// DEPOIS (0 reads):
-function isAdmin() {
-  return request.auth.token.role == 'ADMIN';
-}
-```
-
-**Expected Impact**:
-- Firestore reads: -40% (~20k reads/dia para 1k usuários)
-- Latência: -20ms em operações autorizadas
-- Custo: -$10-15/mês para 10k usuários
-
 ### App Check
 
-**STATUS**: Implementado no cliente, permissive mode nas Cloud Functions.
-
-**Cliente (Android)**:
-```kotlin
-// FutebaApplication.kt
-FirebaseApp.initializeApp(this)
-FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-    if (BuildConfig.DEBUG) DebugAppCheckProviderFactory.getInstance()
-    else PlayIntegrityAppCheckProviderFactory.getInstance()
-)
-```
-
-**Cloud Functions**:
-```typescript
-// Callable functions críticas (setUserRole, etc)
-export const setUserRole = onCall({
-    enforceAppCheck: true,  // TODO: Habilitar após 1 semana
-    consumeAppCheckToken: true
-}, async (request) => { ... });
-```
-
-**Rollout Plan**:
-1. ✅ Semana 1: `enforceAppCheck: false` (monitorar métricas)
-2. ⏳ Semana 2: `enforceAppCheck: true` (bloquear apps não-verificados)
+- **Cliente (Android)**: `FutebaApplication.kt` instala `AppCheckProviders.factory()`; o provider vem do source set da variante (debug usa o token de debug; release/benchmark usam Play Integrity, em `src/nonDebug`).
+- **Cloud Functions**: callables criadas com `secureCallable` (`functions/src/middleware/secure-callable-wrapper.ts`) exigem App Check por padrão (`enforceAppCheck` e `consumeAppCheckToken` ligados fora do emulador); as que usam `onCall` direto declaram `enforceAppCheck` nas próprias opções.
 
 ---
 
 ## Common Gotchas
 
 ### Compose
-- **NEVER** nest `LazyColumn` inside `LazyColumn` - use `FlowRow` instead
+- Don't nest `LazyColumn` inside `LazyColumn` - use `FlowRow` instead
 - Use `Icons.AutoMirrored.Filled.ArrowBack` (not `Icons.Default.ArrowBack`)
 - `HorizontalDivider` replaces deprecated `Divider`
 - `PullToRefreshBox` replaces deprecated `SwipeRefresh`
@@ -346,16 +308,16 @@ export const setUserRole = onCall({
 - Use `Source.CACHE` for offline-first reads
 
 ### ViewModels
-- **ALWAYS** cancel previous `Job` before starting new Flow collection
-- **ALWAYS** use `.catch {}` on Flow collections
+- Cancel the previous `Job` before starting a new Flow collection
+- Use `.catch {}` on Flow collections
 - Store Job reference: `private var loadJob: Job? = null`
 
 ### Colors (Material 3)
-- **NEVER** hardcode colors - use `MaterialTheme.colorScheme.*`
+- Don't hardcode colors - use `MaterialTheme.colorScheme.*`
 - Exception: Gamification colors (Gold, Silver, Bronze) with `ContrastHelper`
 
 ### Strings
-- **ALWAYS** use `strings.xml` - no hardcoded strings
+- Use `strings.xml` - no hardcoded strings
 
 ### Loading States (ShimmerLoading)
 - **FOR LISTS** (LazyColumn/LazyRow): Use `LoadingState()` with shimmer effect
@@ -363,27 +325,26 @@ export const setUserRole = onCall({
   is UiState.Loading -> LoadingState(shimmerCount = 8, itemType = LoadingItemType.CARD)
   ```
 - **FOR ACTIONS** (Buttons, Dialogs): Use `CircularProgressIndicator()` (small, in-place)
-- **NEVER** use `CircularProgressIndicator` for full-screen list loading - breaks perceived performance
+- Don't use `CircularProgressIndicator` for full-screen list loading - it breaks perceived performance
 - Available types: `CARD`, `GAME_CARD`, `PLAYER_CARD`, `RANKING_ITEM`, `LIST_ITEM`, `LOCATION_CARD`
 - See: `app/src/main/java/com/futebadosparcas/ui/components/states/LoadingState.kt`
 
 ### Web App (React) — auditoria de bugs já encontrados
 
-> Padrões descobertos por auditoria. **NÃO REPETIR**. Detalhes completos em `AGENTS.md`.
+> Padrões descobertos por auditoria de bugs. Detalhes completos em `AGENTS.md`.
 
-- **Firebase writes**: SEMPRE usar `serverTimestamp()` para `createdAt`/`updatedAt` (nunca `new Date()`); strip `id` e undefined fields antes de `setDoc`/`addDoc`
+- **Firebase writes**: usar `serverTimestamp()` para `createdAt`/`updatedAt` (nunca `new Date()`); strip `id` e undefined fields antes de `setDoc`/`addDoc`
 - **Hooks**: declarar todos os hooks (incluindo `useTheme`, `useToast`) ANTES de qualquer `if`/early return — quebrar regra dos Hooks gera bugs sutis
 - **Theme**: usar tokens MUI (`theme.palette.*`); nunca hardcode `#000`/`#fff`/`Color.Black`. Cor de fundo de seção via `theme.palette.background.default`, não `paper`
-- **Auth**: gates em rotas protegidas via `AuthGate` (já existe). Nunca verificar `currentUser` no componente da página — o gate cuida disso
-- **Toast**: `useToast()` retorna `{ showToast }`; SEMPRE chamar via hook, nunca importar singleton
-- **Estados obrigatórios** em toda tela: `loading`, `empty`, `error` + `success`. Componentes prontos em `web/src/components/states/`
+- **Auth**: rotas protegidas passam por `ProtectedRoute` (`web/src/App.tsx`). Não verificar `currentUser` no componente da página — a rota cuida disso
+- **Toast**: `useToast()` (`web/src/contexts/ToastContext.tsx`) retorna `showToast`, `showSuccess`, `showError` e afins; chamar sempre via hook, nunca importar singleton
+- **Estados obrigatórios** em toda tela: `loading`, `empty`, `error` + `success`. Componentes prontos em `web/src/components/common/` (`LoadingState`, `EmptyState`, `ErrorState`)
 
 ---
 
 ## XP System Quick Reference
 
-**Source of truth**: `shared/xp-constants.json` (consumido por functions, web, KMP).
-**SECFIX #439**: tabela alinhada com JSON (era divergente).
+**Source of truth**: `shared/xp-constants.json` (consumido por functions, web, KMP). Valores padrão; grupos podem sobrescrever, e os bônus extras (performance, comportamento, retenção) estão só no JSON.
 
 | Action | XP |
 |--------|-----|
@@ -409,13 +370,14 @@ export const setUserRole = onCall({
 ## Game States
 
 ```
-SCHEDULED → CONFIRMED → LIVE → FINISHED
+SCHEDULED → CONFIRMED → LIVE → FINISHED      (+ CANCELLED)
 ```
 
 - `SCHEDULED`: Game created, awaiting player confirmations
 - `CONFIRMED`: List closed, teams generated
 - `LIVE`: Game in progress (events: goals, assists, saves, cards)
 - `FINISHED`: Score final, MVP voting complete, XP processed
+- `CANCELLED`: Game cancelled
 
 **Post-game flow**: FINISHED → MVP Vote → XP Processing → Badges/Level-ups
 
@@ -441,44 +403,26 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 
 ### Cloud Functions (`functions/src/`)
 
-**Core (root-level):**
+`index.ts` is the export registry: every deployed function is defined there (`onGameStatusUpdate`, `recalculateLeagueRating`, `onGameDeleted`, ...) or re-exported from a module. Read its exports to find a function.
 
-| File | Purpose |
-|------|---------|
-| `index.ts` | Main entry, onUserCreate, onGameFinished, XP processing |
+| Location | Purpose |
+|----------|---------|
+| `index.ts` | Main entry and export registry; game status trigger (`onGameStatusUpdate`) |
 | `constants.ts` | Shared constants (XP values, limits, config) |
-| `league.ts` | recalculateLeagueRating, division changes |
-| `notifications.ts` | Push triggers (game created, MVP, level up, badges) |
-| `reminders.ts` | Game reminders, waitlist cleanup |
-| `activities.ts` | Activity feed processing |
-| `user-management.ts` | User profile operations |
-| `seeding.ts` | Data seeding utilities |
-
-**Modular directories:**
-
-| Directory | Files | Purpose |
-|-----------|-------|---------|
-| `auth/` | `custom-claims.ts` | Role management via Custom Claims (PERF_001) |
-| `badges/` | `badge-helper.ts` | Badge unlock logic |
-| `cache/` | `leaderboard-cache.ts` | Server-side leaderboard caching |
-| `maintenance/` | `cleanup-old-logs.ts`, `compact-streaks.ts`, `keep-warm.ts`, `soft-delete.ts` | Scheduled maintenance tasks |
-| `middleware/` | `rate-limiter.ts`, `secure-callable-wrapper.ts` | Security middleware (rate limiting, App Check) |
-| `monitoring/` | `alerting.ts`, `collect-metrics.ts` | Alerting and metrics collection |
-| `notifications/` | `batch-sender.ts` | Batch notification delivery |
-| `season/` | `index.ts` | Season management, monthly resets |
-| `storage/` | `generate-thumbnails.ts` | Image thumbnail generation |
-| `utils/` | `retry-with-backoff.ts`, `soft-delete-helper.ts` | Shared utilities |
-| `validation/` | `index.ts` | Input validation helpers |
-| `voting/` | `mvp-voting.ts` | MVP/Bola Murcha voting logic |
-| `xp/` | `processing.ts`, `parallel-processing.ts`, `migration-example.ts` | XP calculation and batch processing |
-| `examples/` | `P0_SECURITY_EXAMPLES.ts` | Security pattern examples/reference |
-| `scripts/` | `migrate-custom-claims.ts` | One-time migration scripts |
+| `league.ts`, `group-league.ts` | League rating, division changes, group leagues |
+| `notifications.ts`, `reminders.ts`, `activities.ts` | Push triggers, game reminders, activity feed |
+| `xp/` | XP pipeline (`pipeline.ts`, `on-game-status-update.ts`, `streaks.ts`, ...); see `xp/README.md` |
+| `auth/` | Custom Claims (`custom-claims.ts`), account merge/cleanup/deletion, data export |
+| `middleware/` | `secure-callable-wrapper.ts` (App Check, rate limit, auth, audit log), `rate-limiter.ts` |
+| `games/`, `groups/`, `voting/`, `season/`, `badges/` | Game, group, MVP/Bola Murcha voting, season and badge logic |
+| `maintenance/`, `monitoring/`, `storage/` | Scheduled cleanup, metrics/alerting, thumbnails |
+| `scripts/` | One-time migration scripts |
 
 ---
 
 ## Web App (React)
 
-The web app lives in `web/` and was fully rewritten in React + TypeScript (PR #194, merged 2026-03).
+The web app lives in `web/` (React + TypeScript).
 
 ### Tech Stack
 
@@ -528,15 +472,17 @@ web/src/
 
 ### Web Sizing & Layout (Epic #2581)
 
-**NUNCA** usar `<Container maxWidth>` raw em páginas. O padrão canônico é `<PageContainer>` com tiers semânticos de `web/src/theme/pageTokens.ts`.
+Não usar `<Container maxWidth>` raw em páginas. O padrão canônico é `<PageContainer>` com tiers semânticos de `web/src/theme/pageTokens.ts`.
 
 | Tier | maxWidth MUI | px aprox. | Usar em |
 |---|---|---|---|
-| `focused` | `xs` | ~444px | auth, onboarding, welcome (fluxos centrados, NÃO alargar) |
+| `focused` | `xs` | ~444px | auth, onboarding, welcome (fluxos centrados, não alargar) |
 | `form` | `md` | ~900px | formulários de criação/edição |
-| `list` | `lg` | ~1200px | listas |
-| `detail` | `lg` | ~1200px | detalhe de 1 entidade |
-| `dashboard` | `xl` | ~1536px | home, estatísticas, dashboards densos |
+| `list` | `xl` | 1320px (lg) / 1500px (xl) | listas |
+| `detail` | `xl` | 1320px (lg) / 1500px (xl) | detalhe de 1 entidade |
+| `dashboard` | `xl` | 1320px (lg) / 1500px (xl) | home, estatísticas, dashboards densos |
+
+Os tiers largos (`list`, `detail`, `dashboard`) usam `xl` do MUI, limitado pelo `PageContainer` (`web/src/components/common/PageContainer.tsx`).
 
 **Regras-chave**:
 - Todo grid de múltiplos itens escala colunas `xs → md → lg → xl`
@@ -544,28 +490,20 @@ web/src/
 - Padding via tokens `pageSpacing` do `pageTokens.ts` (nunca `py:2` ad-hoc)
 - Tokens de `gridLayout.cards` / `gridLayout.cardsWide` para grids comuns
 - `iconSizes`/`avatarSizes` de `iconSizes.ts` para ícones e avatares
-- ESLint Rules 3 e 4 guardam contra container raw e maxWidth numérico
+- Nenhum lint barra container raw nem maxWidth numérico hoje: as Rules 3 e 4 estão desligadas em `web/.eslintrc.cjs` (o comentário lá diz como religar), então a revisão é quem pega
 - Detalhes completos em `.claude/rules/web-react.md` → Pattern 3
 
 ---
 
 ## CMP Migration Status
 
-Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md`.
-
-| Phase | Status | PR | Description |
-|-------|--------|----|-------------|
-| Phase 0 | ✅ COMPLETE | #159 | CMP 1.7.3→1.10.0, SQLDelight 2.2.1, wasmJs targets |
-| Phase 1 | ✅ COMPLETE | #160 | Hilt → Koin 4.1.1 (14 modules) |
-| Phase 2 | ✅ COMPLETE | #161 | GitLive Firebase SDK 2.4.0 migration (merged 2026-02-20) |
-| Phase 3 | ⏳ PLANNED | - | Shared UI components in composeApp/ |
-| Phase 4 | ⏳ PLANNED | - | iOS app launch via TestFlight |
+Compose Multiplatform migration status and remaining phases: `specs/CMP_MULTIPLATFORM_MIGRATION.md`. The iOS app is already published, built from `:composeApp` (manual TestFlight pipeline `ios-testflight.yml`; process in `docs/RELEASE_PROCESS.md`).
 
 **Key CMP decisions:**
-- Koin 4.1.1 replaces Hilt (cross-platform DI)
-- GitLive Firebase SDK for Android+iOS (no wasmJs support yet)
-- `nativeAndAndroidMain` sourceset for shared Firebase code
-- wasmJs target uses stubs until GitLive adds support
+- Koin (cross-platform DI) — Hilt is not used
+- GitLive Firebase SDK (`dev.gitlive:firebase-*`) for Android+iOS, in the `nativeAndAndroidMain` sourceset of `:shared`
+- SQLDelight in `:shared`
+- No wasmJs/web target in the KMP modules: the web app is the separate React app in `web/`
 
 ---
 
@@ -594,9 +532,9 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 
 ### CI Known Behaviors (não fixar — comportamento esperado)
 
-- **KMP Framework build**: falha em Linux runners (requer macOS) — **ignorar** ou rodar em self-hosted ARM
-- **Notify Build Status**: depende do KMP Framework, falha em cascata em Linux — **ignorar**
-- **CodeQL removido (07/10/2026)**: exige GitHub Advanced Security (pago) em repo privado. SAST = Semgrep (falha em ERROR), segredos = gitleaks CLI, Kotlin = Detekt. Sem upload de SARIF (artifact). Ver `docs/CI_RUNNERS.md`
+- **Build ComposeApp Framework / Build iOS App** (`ios-build.yml`): só rodam com `IOS_MAC_RUNNER=true`, no Mac self-hosted; sem isso ficam `skipped` e só os testes KMP compartilhados rodam — esperado
+- **Notify Build Status** (`ios-build.yml`): falha quando os testes KMP falham (e, com o Mac ligado, quando o framework ou o app iOS falham) — é falha real, não ignorar
+- **Sem CodeQL**: exige GitHub Advanced Security (pago) em repo privado. SAST = Semgrep (falha em ERROR), segredos = gitleaks CLI, Kotlin = Detekt. Sem upload de SARIF (artifact). Ver `docs/CI_RUNNERS.md`
 - **Build iOS App**: `skipping` em PRs que não tocam `:shared` / `:composeApp` / `iosApp` — esperado
 - **Runners self-hosted**: `mac-futeba-1`, `mac-futeba-poller-1`, `mac-futeba-poller-2` (macOS) e `oci-prod01-futeba` (Linux OCI) — ver `docs/CI_RUNNERS.md`
 
@@ -608,7 +546,7 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 | `pr-check.yml` | PR | Quick PR validation |
 | `functions-ci.yml` | Push/PR | Cloud Functions build + lint |
 | `deploy-beta.yml` | Manual/Tag | Firebase App Distribution beta deploy |
-| `deploy-production.yml` | Release | Google Play production deploy |
+| `deploy-production.yml` | Tag `android-v*.*.*` / Manual | Build + sign AAB and upload to the Google Play `internal` track |
 | `release.yml` | Tag | Create GitHub release |
 | `version-bump.yml` | Manual | Bump version via script |
 | `ios-build.yml` | Push/PR | Testes KMP compartilhados (Linux); framework/app iOS só com `IOS_MAC_RUNNER=true` |
@@ -622,61 +560,9 @@ Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hostin
 
 ---
 
-## Opus 4.6 Optimization
+## Agent Teams
 
-This project is optimized for Claude Opus 4.6 (released Feb 5, 2026).
-
-### Key Opus 4.6 Capabilities Used
-
-| Feature | How This Project Uses It |
-|---------|--------------------------|
-| **1M token context** (beta) | Entire codebase (`:app` + `:shared` + `functions/`) fits in context for cross-layer analysis |
-| **128K output tokens** | Full-file generation for large screens, complete Cloud Function rewrites |
-| **Adaptive thinking** | Default `high` effort for implementation; use `max` for security rule audits |
-| **Context compaction** | Long sessions auto-summarize; CLAUDE.md + `.claude/rules/` survive compaction |
-| **Agent teams** | Parallel work on Compose + Cloud Functions + Security Rules (see below) |
-
-### Agent Teams (Research Preview)
-
-Teammates load CLAUDE.md and `.claude/rules/` automatically. Each teammate is a full Claude Code instance with its own context window.
-
-**Enable:**
-```json
-// .claude/settings.local.json
-{
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  }
-}
-```
-
-**Best tasks for agent teams in this project:**
-
-| Team Pattern | Teammates | Use When |
-|-------------|-----------|----------|
-| **Cross-layer feature** | Frontend (Compose) + Backend (Functions) + Security (Rules) | New feature touching all layers (e.g., new game type) |
-| **KMP parallel** | `:shared/commonMain` + `:shared/androidMain` + `:shared/iosMain` | Adding shared domain models or repository interfaces |
-| **Security audit** | Firestore rules + Cloud Functions middleware + Client validation | Pre-release security review |
-| **Performance review** | Compose recompositions + Firestore queries + Cloud Functions | Performance optimization sprints |
-| **Competing hypotheses** | 3-5 investigators testing different theories | Debugging hard-to-reproduce bugs |
-
-**Example prompt for cross-layer feature:**
-```
-Create an agent team for the new "Game Templates" feature:
-- Teammate 1 (Compose): Build UI screens at ui/templates/
-- Teammate 2 (Functions): Build Cloud Functions at functions/src/templates/
-- Teammate 3 (Rules): Update firestore.rules for templates collection
-Require plan approval before implementation. Use Sonnet for each teammate.
-```
-
-**Project-specific guidance:**
-- Each teammate auto-loads `.claude/rules/` for domain patterns
-- **NEVER** let two teammates edit the same Screen/ViewModel pair simultaneously
-- Use **delegate mode** (Shift+Tab) when orchestrating 3+ module changes - prevents lead from implementing directly
-- Use Shift+Up/Down to select and message individual teammates
-- Keep 5-6 tasks per teammate for optimal throughput
-- Start with research/review teams before attempting parallel implementation
-- See `.claude/rules/agent-teams.md` for detailed team patterns
+Padrões de time (divisão por camada, posse de arquivos, prompts): `.claude/rules/agent-teams.md`. Dois teammates não editam o mesmo par Screen/ViewModel ao mesmo tempo, porque isso gera conflito de merge.
 
 ---
 
@@ -704,7 +590,7 @@ Para comandos com output > 20 linhas (gradle builds, jest, gh api, git log, find
 | `/futeba-firestore-rules` | Editar/deploy security rules + indexes |
 | `/futeba-merge-train` | 3+ PRs do mesmo escopo ou stack/dependências |
 | `/futeba-rollback` | Reverter deploy prod / commit master |
-| `/futeba-spec` | Criar spec antes de feature/bugfix (Regra #1 SDD) |
+| `/futeba-spec` | Criar spec para funcionalidade nova ou mudança de dados/fluxo (Regra #1 SDD) |
 | `/futeba-xp-validate` | Validar integridade XP system |
 | `/futeba-kmp-build` | Build shared module + iOS Framework |
 | `/futeba-ollama` | Semantic search / code review local privacy-sensitive |
@@ -730,7 +616,7 @@ For in-depth guidance, see `.claude/rules/`:
 
 ## Critical Rules Summary
 
-1. **Spec-Driven Development** - NEVER implement features without approved spec
+1. **Spec-Driven Development** - Funcionalidade nova e mudança de dados ou fluxo só com spec aprovada (Regra #1); correção, ajuste visual e manutenção sem spec
 2. **All new screens use Compose** - No new XML layouts
 3. **StateFlow over LiveData** - Always use `StateFlow<UiState>`
 4. **Cancel jobs** - Always cancel previous Flow jobs before starting new ones
@@ -744,27 +630,15 @@ For in-depth guidance, see `.claude/rules/`:
 
 ## Scripts
 
-Located in `/scripts/` (~70 scripts). Run with: `node scripts/<script_name>.js`
-
-**Key scripts (most commonly used):**
+Located in `/scripts/` (Node, TypeScript and shell; subfolders `deploy/`, `migrations/`, `maintenance/`, `ci/`, ...). Each script documents its usage in its header comment.
 
 | Script | Purpose |
 |--------|---------|
-| `bump-version.js` | Version bumping for releases |
-| `migrate_firestore.js` | Firestore data migration utilities |
-| `reset_firestore.js` | Reset Firestore collections (dev only) |
-| `automate_seasons.js` | Season management automation |
-| `analyze_firebase_data.js` | Analyze Firebase data patterns |
-| `promote_to_admin.js` | Promote user to ADMIN role |
-| `run-migration-custom-claims.js` | Run Custom Claims migration |
-| `verify-custom-claims.js` | Verify Custom Claims migration status |
-
-**Quality audits** (bash scripts):
-- `audit-hardcoded-strings.sh` - Find hardcoded strings in code
-- `audit-content-descriptions.sh` - Check accessibility compliance
-- `audit-unused-resources.sh` - Detect unused Android resources
-- `audit-code-complexity.sh` - Analyze code complexity
-- `validate_all.sh` / `validate-optimizations.sh` - Run full validation suite
+| `bump-version.js` | Version bump per platform: `node scripts/bump-version.js <android\|web\|ios\|functions> [major\|minor\|patch]` (updates `versions.json`) |
+| `release-notes.js` | Release notes pipeline (CHANGELOG, fallback bundle, Firestore publish) |
+| `validate-pre-push.sh` | Checks run by the Husky `pre-push` hook |
+| `check-*-parity.js` | Parity checks between platforms (badges, design tokens, verification grace) |
+| `deploy/build-web-hosting.js` | Hosting `predeploy` (builds `web/dist`) |
 
 ---
 

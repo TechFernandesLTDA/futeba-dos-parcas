@@ -47,4 +47,5 @@ object MonetizationConfig {
     const val PREF_FIRST_WIN = "monetizacao.primeira_vitoria"
     const val PREF_ADS_FREE = "monetizacao.sem_anuncios"
     const val PREF_ATT_ASKED = "monetizacao.att_pedido"
+    const val PREF_SUBSCRIPTION_INVITE_SHOWN = "monetizacao.convite_sem_anuncios"
 }

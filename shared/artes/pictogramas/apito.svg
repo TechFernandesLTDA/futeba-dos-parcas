@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" data-descricao="Apito">
+  <path d="M10 9h9.5a1.5 1.5 0 0 1 0 3H14.6"/>
+  <circle cx="10" cy="14" r="5"/>
+  <circle cx="10" cy="14" r="1.2"/>
+  <path d="M6 9.5L4 7.5"/>
+</svg>

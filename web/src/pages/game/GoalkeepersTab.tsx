@@ -21,6 +21,7 @@ const GoalkeepersTab: React.FC<GoalkeepersTabProps> = ({ goalkeepers }) => {
   if (goalkeepers.length === 0) {
     return (
       <EmptyState
+        arte="banco_vazio"
         icon={<GoalieIcon />}
         title={t('empty.noGoalkeeper')}
         description={t('empty.noGoalkeeperConfirmed')}

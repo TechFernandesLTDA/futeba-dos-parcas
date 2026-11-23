@@ -777,6 +777,7 @@ export const UserManagementScreen: React.FC = () => {
         ) : filteredUsers.length === 0 ? (
           hasActiveFilters ? (
             <EmptyState
+              arte="lupa"
               icon={<SearchOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title={t('empty.noUserFound')}
               description={t('empty.noUserFoundDesc', { query: searchQuery || t('admin.userManagement.selectedFilters') })}
@@ -789,6 +790,7 @@ export const UserManagementScreen: React.FC = () => {
             />
           ) : (
             <EmptyState
+              arte="banco_vazio"
               icon={<PersonOffIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
               title={t('empty.noUserRegistered')}
               description={t('admin.noUserRegisteredDesc')}

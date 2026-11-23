@@ -16,6 +16,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.ui.components.artes.ArteDeEstado
 import androidx.compose.ui.res.stringResource
 
 @Deprecated(
@@ -69,14 +71,19 @@ fun ErrorState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+        // Erro leve: bola na trave (spec ARTES_DA_PELADA). Ícone próprio da tela continua valendo.
+        if (icon == Icons.Default.Error) {
+            ArteDeEstado(id = ArteId.BOLA_NA_TRAVE)
+            Spacer(modifier = Modifier.height(20.dp))
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         Text(
             text = stringResource(R.string.error_title),

@@ -1,6 +1,6 @@
 # Monetização: anúncios e assinatura "Sem anúncios"
 
-Decisão de 11/11/2026 (Renan): todos os apps TECHFERNANDES saem em Android, web e iOS com monetização. No Futeba dos Parças: **banner AdMob + assinatura anual `sem_anuncios_anual`** (R$ 9,90 por ano, mesmo modelo do Cuidia, Repia e Rotia) e **AdSense na web**. Este documento descreve o que está no código (fase 1, branch `feat/admob-sem-anuncios`) e o que falta para ligar (fase 2).
+Decisão de 11/11/2026 (Renan): todos os apps TECHFERNANDES saem em Android, web e iOS com monetização. No Futeba dos Parças: **banner AdMob + assinatura anual `sem_anuncios_anual`** (R$ 9,99 por ano no Google Play e R$ 9,90 na App Store, mesmo modelo do Cuidia, Repia e Rotia) e **AdSense na web**. Este documento descreve o que está no código (fase 1, branch `feat/admob-sem-anuncios`) e o que falta para ligar (fase 2).
 
 Nada disso está publicado: sem envio às lojas, sem deploy da web, sem merge.
 
@@ -71,7 +71,7 @@ Acrescentar ao que já está declarado:
 - **Anúncios**: "O app contém anúncios: Sim".
 - **ID de publicidade (AD_ID)**: a permissão `com.google.android.gms.permission.AD_ID` agora **está no manifesto** (antes era removida). Declarar "o app usa o ID de publicidade", finalidade "publicidade ou marketing". Sem a declaração a Play rejeita o envio.
 - Público-alvo: já exclui crianças (13+). Não marcar como "para crianças".
-- Produto de assinatura `sem_anuncios_anual` (plano `anual`, R$ 9,90) criado e ativado.
+- Produto de assinatura `sem_anuncios_anual` (plano básico `anual`, renovação automática anual, 178 países) criado e ativado em 21/11/2026. No Brasil custa BRL 9,99: a Play arredondou e não aceitou 9,90. O app mostra o preço que a loja devolve.
 
 ### App Store Connect: privacidade (rótulos)
 Acrescentar:

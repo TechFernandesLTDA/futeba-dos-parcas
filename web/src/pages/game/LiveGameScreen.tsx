@@ -744,6 +744,7 @@ export const LiveGameScreen: React.FC = () => {
 
             {events.length === 0 ? (
               <EmptyState
+                arte="placar_zerado"
                 icon={<HistoryIcon />}
                 title={t('games.live.noEvents')}
                 description={t('games.live.noEventsDesc')}

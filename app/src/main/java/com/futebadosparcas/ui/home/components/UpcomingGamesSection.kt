@@ -59,6 +59,9 @@ import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.util.toDate
 import com.futebadosparcas.ui.theme.AppDimensions
+import com.futebadosparcas.domain.artes.ArteId
+import com.futebadosparcas.ui.components.artes.ArteDaPelada
+import androidx.compose.foundation.layout.heightIn
 
 /**
  * Seção de próximos jogos na Home com status de confirmação (CMD-29)
@@ -109,7 +112,8 @@ fun UpcomingGamesSection(
                 onGameClick = onGameClick,
                 onConfirmClick = onConfirmClick,
                 onSeeAllClick = onSeeAllClick,
-                isPending = true
+                isPending = true,
+                mostrarCampo = true
             )
         }
 
@@ -127,7 +131,8 @@ fun UpcomingGamesSection(
                 onGameClick = onGameClick,
                 onConfirmClick = onConfirmClick,
                 onSeeAllClick = onSeeAllClick,
-                isPending = false
+                isPending = false,
+                mostrarCampo = pendingGames.isEmpty()
             )
         }
     }
@@ -146,7 +151,8 @@ private fun GamesByStatusSection(
     onGameClick: (gameId: String) -> Unit,
     onConfirmClick: (gameId: String) -> Unit,
     onSeeAllClick: () -> Unit,
-    isPending: Boolean
+    isPending: Boolean,
+    mostrarCampo: Boolean = false
 ) {
     Card(
         modifier = Modifier
@@ -169,6 +175,21 @@ private fun GamesByStatusSection(
         } else null
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
+            // Faixa com a arte do campo no primeiro card da seção (spec ARTES_DA_PELADA)
+            if (mostrarCampo) {
+                ArteDaPelada(
+                    id = ArteId.CAMPO,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 140.dp)
+                        .padding(
+                            start = AppDimensions.spacing_large,
+                            end = AppDimensions.spacing_large,
+                            top = AppDimensions.spacing_medium
+                        )
+                )
+            }
+
             // Header da seção
             SectionHeader(
                 title = title,

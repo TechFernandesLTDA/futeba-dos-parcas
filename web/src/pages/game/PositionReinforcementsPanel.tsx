@@ -149,6 +149,7 @@ export const PositionReinforcementsPanel: React.FC<PositionReinforcementsPanelPr
           </Box>
         ) : candidates.length === 0 ? (
           <EmptyState
+            arte="banco_vazio"
             icon={<SportsSoccerIcon sx={{ fontSize: 48 }} />}
             title={t('games.detail.reinforcements.emptyTitle')}
             description={t('games.detail.reinforcements.emptyDescription')}

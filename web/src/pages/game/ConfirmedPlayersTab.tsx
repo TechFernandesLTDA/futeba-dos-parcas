@@ -23,6 +23,7 @@ const ConfirmedPlayersTab: React.FC<ConfirmedPlayersTabProps> = ({ players }) =>
   if (players.length === 0) {
     return (
       <EmptyState
+        arte="banco_vazio"
         icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
         title={t('empty.noConfirmedPlayers')}
         description={t('empty.noConfirmedPlayersDesc')}

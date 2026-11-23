@@ -212,6 +212,7 @@ export const NearbyPlayersScreen: React.FC = () => {
 
         {!loading && !error && players.length === 0 && (
           <EmptyState
+            arte="lupa"
             icon={<PersonSearchIcon />}
             title={t('nearbyPlayers.emptyTitle')}
             description={t('nearbyPlayers.emptyDescription')}
