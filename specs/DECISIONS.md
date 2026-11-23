@@ -2513,3 +2513,13 @@ data sem tocar em `dateTime`. Sem o campo, o jogo some das listas, dos lembretes
 - O aviso "Jogo atualizado" deixa de contar o preenchimento como remarcação e deduplica por local, data e
   hora. Mudar só o horário passa a avisar.
 - Os jogos antigos ganham o campo pelo script `backfill-game-datetime.js`, que o Renan roda em produção.
+
+## 2026-11-23: Placar final gravado também em `teams.score` (spec bugfix-2026-11-23-placar-chega-aos-times)
+
+Contexto: o `finishGameLifecycle` gravava o placar só no jogo e em `live_scores`. O ranking semanal, o
+confronto direto do web e o card do time no app leem `teams.score` e viam todo jogo como 0 a 0.
+
+- A finalização grava o placar em cada documento de `teams` na mesma transação do `FINISHED`, a partir do mapa
+  `live_scores.scores` e, como alternativa, dos ids legados team1/team2.
+- Os jogos antigos ganham o placar pelo script `backfill-team-scores.js`, que o Renan roda em produção.
+- Os leitores não mudaram: corrigir a fonte resolve os três de uma vez.
