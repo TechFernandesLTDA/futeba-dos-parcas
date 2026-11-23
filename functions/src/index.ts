@@ -1050,6 +1050,9 @@ export {
   denormalizeGameLocations,
 } from "./games/denormalize-location";
 
+// Spec bugfix-2026-11-23-jogo-do-web-sem-datetime: dateTime a partir de date/time.
+export {onGameWrittenFillDateTime} from "./games/game-datetime";
+
 // SECFIX #430: detector de confirmacoes em jogos overlapping
 export {onConfirmationCreated} from "./voting/temporal-overlap";
 

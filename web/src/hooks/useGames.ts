@@ -26,6 +26,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { snakeToCamel, toDate } from '../utils/firestoreHelpers';
 import { camelToSnake } from '../utils/camelToSnake';
+import { gameDateTimeFromLocal } from '../utils/gameDateTime';
 import { createLogger } from '../utils/logger';
 import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 import { useTranslation } from 'react-i18next';
@@ -705,14 +706,16 @@ export function useCreateGame() {
         // Converter campos do formulário para snake_case do Firestore
         const snakeGameData = camelToSnake(gameData);
 
-        // dateTime is an exception to snake_case convention (canonical field in Firestore)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((gameData as any).dateTime) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          delete (snakeGameData as any).date_time;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (snakeGameData as any).dateTime = (gameData as any).dateTime;
+        // dateTime é exceção ao snake_case (campo canônico no Firestore). O formulário
+        // manda só date e time em texto; sem dateTime o jogo some das listas, dos
+        // lembretes e do chat (spec bugfix-2026-11-23-jogo-do-web-sem-datetime).
+        const formDateTime = (gameData as { dateTime?: unknown }).dateTime;
+        const dateTime = formDateTime ?? gameDateTimeFromLocal(gameData.date, gameData.time);
+        if (!dateTime) {
+          throw new Error(t('games.create.errorInvalidDateTime'));
         }
+        delete (snakeGameData as Record<string, unknown>).date_time;
+        (snakeGameData as Record<string, unknown>).dateTime = dateTime;
 
         // Remover campos undefined (Firestore não aceita)
         const cleanData: Record<string, unknown> = {};

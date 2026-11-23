@@ -102,10 +102,16 @@ function hasGameUpdateNotificationRelevantChange(
   before: Record<string, unknown>,
   after: Record<string, unknown>
 ): boolean {
+  // dateTime de ausente para presente é o preenchimento feito pelo servidor
+  // (games/game-datetime.ts), não uma remarcação: não conta como mudança.
+  const beforeDateTime = normalizeDateTimeForChangeCheck(before.dateTime);
+  const dateTimeRescheduled =
+    beforeDateTime !== "" &&
+    beforeDateTime !== normalizeDateTimeForChangeCheck(after.dateTime);
   return (
     before.date !== after.date ||
-    normalizeDateTimeForChangeCheck(before.dateTime) !==
-      normalizeDateTimeForChangeCheck(after.dateTime) ||
+    before.time !== after.time ||
+    dateTimeRescheduled ||
     before.location_id !== after.location_id ||
     before.locationId !== after.locationId
   );
@@ -124,15 +130,14 @@ function buildGameUpdateNotificationKey(
     (game.location_id as string | undefined) ||
     (game.locationId as string | undefined) ||
     "";
-  const date = String(game.date || "");
-  const dateTime = game.dateTime &&
-    typeof game.dateTime === "object" &&
-    "toMillis" in game.dateTime &&
-    typeof game.dateTime.toMillis === "function" ?
-    String(game.dateTime.toMillis()) :
-    "";
+  // Chave pela hora de parede (date + time), para o preenchimento ou o
+  // recálculo de dateTime pelo servidor não virar um segundo aviso do mesmo
+  // estado. Sem date, cai para o instante de dateTime.
+  const date = String(game.date || "") ||
+    normalizeDateTimeForChangeCheck(game.dateTime);
+  const time = String(game.time || "");
 
-  return `${locationId}|${date}|${dateTime}`;
+  return `${locationId}|${date}|${time}`;
 }
 
 /**

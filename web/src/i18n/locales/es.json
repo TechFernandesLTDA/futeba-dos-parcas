@@ -1289,6 +1289,7 @@
       "errorEndTimeBeforeStart": "La hora de término debe ser después de la hora de inicio",
       "errorGroupRequiredForVisibility": "Selecciona un grupo para usar esta configuración de visibilidad",
       "errorQualifiedOwnerGroupRequired": "Selecciona uno de tus grupos con al menos 5 miembros para crear el partido.",
+      "errorInvalidDateTime": "Revisa la fecha y la hora del partido.",
       "errorActiveFieldRequired": "Este lugar debe tener una cancha activa para crear un partido",
       "errorSelectField": "Selecciona una cancha",
       "errorSelectLocation": "Selecciona un lugar",

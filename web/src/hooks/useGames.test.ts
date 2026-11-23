@@ -829,6 +829,59 @@ describe('useCreateGame', () => {
     });
   });
 
+  it('grava dateTime a partir de date e time do formulário (bugfix-2026-11-23)', async () => {
+    const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.createGame({
+        date: '2026-03-20',
+        time: '19:00',
+        maxPlayers: 14,
+        groupId: 'group-qualified',
+      });
+    });
+
+    const gravado = mockAddDoc.mock.calls[0][1] as Record<string, unknown>;
+    expect(gravado.dateTime).toEqual(new Date(2026, 2, 20, 19, 0));
+    expect(gravado).not.toHaveProperty('date_time');
+    expect(gravado.date).toBe('2026-03-20');
+    expect(gravado.time).toBe('19:00');
+  });
+
+  it('mantém o dateTime que já vem pronto', async () => {
+    const pronto = new Date(2026, 4, 1, 8, 30);
+    const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
+
+    await act(async () => {
+      await result.current.createGame({
+        date: '2026-05-01',
+        time: '08:30',
+        dateTime: pronto,
+        maxPlayers: 14,
+        groupId: 'group-qualified',
+      });
+    });
+
+    expect((mockAddDoc.mock.calls[0][1] as Record<string, unknown>).dateTime).toBe(pronto);
+  });
+
+  it('não grava jogo com data inválida', async () => {
+    const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
+
+    await expect(
+      act(async () => {
+        await result.current.createGame({
+          date: '2026-02-31',
+          time: '19:00',
+          maxPlayers: 14,
+          groupId: 'group-qualified',
+        });
+      })
+    ).rejects.toThrow();
+
+    expect(mockAddDoc).not.toHaveBeenCalled();
+  });
+
   it('bloqueia criação sem grupo qualificado', async () => {
     const { result } = renderHook(() => useCreateGame(), { wrapper: createTestWrapper() });
 

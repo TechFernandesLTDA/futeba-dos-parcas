@@ -1289,6 +1289,7 @@
       "errorEndTimeBeforeStart": "End time must be after start time",
       "errorGroupRequiredForVisibility": "Select a group to use this visibility setting",
       "errorQualifiedOwnerGroupRequired": "Select one of your groups with at least 5 members to create the game.",
+      "errorInvalidDateTime": "Check the game date and time.",
       "errorActiveFieldRequired": "This location must have an active field before creating a game",
       "errorSelectField": "Select a field",
       "errorSelectLocation": "Select a location",
