@@ -12,6 +12,16 @@ type Doc = admin.firestore.QueryDocumentSnapshot;
 
 const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 
+/**
+ * Mínimo de confirmados para o jogo dar XP de participação, por regra
+ * (functions/src/xp/on-game-status-update.ts, MIN_PLAYERS). Abaixo disso a
+ * ausência de xp_logs e de estatísticas não é violação.
+ */
+const MIN_JOGADORES_XP = 6;
+
+/** Cada violação é registrada uma vez por simulação, não uma vez por semana. */
+const jaRegistradas = new Set<string>();
+
 export interface ResumoInvariantes {
   verificados: number;
   violacoes: number;
@@ -23,6 +33,11 @@ export async function conferirInvariantes(rotulo: string, ids: { grupos: string[
   let violacoes = 0;
   const violar = (acao: string, msg: string, dados?: unknown): void => {
     violacoes++;
+    // Chave estável: o alvo (jogo, pessoa, grupo), não os números que mudam a cada semana.
+    const d = (dados ?? {}) as { gameId?: string; uid?: string; groupId?: string };
+    const chave = `${acao}:${d.gameId ?? ''}:${d.uid ?? ''}:${d.groupId ?? ''}` || msg;
+    if (jaRegistradas.has(chave)) return;
+    jaRegistradas.add(chave);
     registrarAchado(`invariante:${acao}`, `[${rotulo}] ${msg}`, dados);
   };
 
@@ -77,13 +92,7 @@ export async function conferirInvariantes(rotulo: string, ids: { grupos: string[
         gameId, goalkeepers_count: jogo.get('goalkeepers_count'), goleiros: goleiros.length,
       });
     }
-    const lista = (jogo.get('players') as string[] | undefined) ?? [];
-    const ids = new Set(confirmados.map((c) => c.get('user_id') as string));
-    if (lista.length !== ids.size || lista.some((u) => !ids.has(u))) {
-      violar('players_array', `jogo ${gameId}: players[] (${lista.length}) diverge das confirmações (${ids.size})`, {
-        gameId, sobrando: lista.filter((u) => !ids.has(u)), faltando: [...ids].filter((u) => !lista.includes(u)),
-      });
-    }
+    // games.players[] não é conferido: é legado, gravado vazio e lido por ninguém.
     const max = num(jogo.get('max_players'));
     if (max > 0 && confirmados.length > max) {
       violar('lotacao', `jogo ${gameId}: ${confirmados.length} confirmados acima de max_players=${max}`, { gameId });
@@ -101,12 +110,14 @@ export async function conferirInvariantes(rotulo: string, ids: { grupos: string[
       verificados += 2;
       const logs = await db.collection('xp_logs').where('game_id', '==', gameId).get();
       const retido = jogo.get('xp_reward_status') === 'HELD_FOR_REVIEW';
-      if (!retido && logs.size < confirmados.length) {
+      const pequeno = confirmados.length < MIN_JOGADORES_XP;
+      if (!retido && !pequeno && logs.size < confirmados.length) {
         violar('xp_jogo', `jogo ${gameId} FINISHED: ${logs.size} xp_logs para ${confirmados.length} confirmados (xp_reward_status=${jogo.get('xp_reward_status')})`, {
           gameId, xp_logs: logs.size, confirmados: confirmados.length, xp_reward_status: jogo.get('xp_reward_status'),
         });
       }
-      if (jogo.get('voting_concluded') === true && !jogo.get('mvp_id')) {
+      // Jogo retido não tem MVP até a revisão; isso é o achado de retenção, não este.
+      if (!retido && jogo.get('voting_concluded') === true && !jogo.get('mvp_id')) {
         violar('mvp_sem_id', `jogo ${gameId}: votação concluída sem mvp_id`, { gameId });
       }
     }
@@ -137,7 +148,9 @@ export async function conferirInvariantes(rotulo: string, ids: { grupos: string[
   const finalizados = new Set<string>();
   for (const gameId of ids.jogos) {
     const j = await db.doc(`games/${gameId}`).get();
-    if (j.get('status') === 'FINISHED' && j.get('xp_reward_status') !== 'HELD_FOR_REVIEW') finalizados.add(gameId);
+    if (j.get('status') !== 'FINISHED' || j.get('xp_reward_status') === 'HELD_FOR_REVIEW') continue;
+    const n = await db.collection('confirmations').where('game_id', '==', gameId).where('status', '==', 'CONFIRMED').count().get();
+    if (n.data().count >= MIN_JOGADORES_XP) finalizados.add(gameId);
   }
   if (finalizados.size) {
     const jogosPorUid = new Map<string, { jogos: number; gols: number }>();
