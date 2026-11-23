@@ -174,3 +174,6 @@ coverage/
 *.bak
 *.orig
 *.rej
+
+# Saída da simulação de uso (scripts/bateria/simulacao)
+scripts/bateria/simulacao/saida/
