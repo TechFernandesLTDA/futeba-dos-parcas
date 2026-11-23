@@ -111,16 +111,22 @@ function readPlayerIds(value: unknown): string[] {
  * Sem documentos em `teams`, o início do jogo era recusado. Spec
  * bugfix-2026-11-23-times-do-web-iniciam-jogo.
  *
+ * Só entram jogadores com presença confirmada no jogo: o roster do jogo é
+ * gravado pelo cliente, e `teams.player_ids` alimenta ranking e liga.
+ *
  * @param {string} gameId Id do jogo.
  * @param {FirebaseFirestore.DocumentData} game Dados do jogo.
+ * @param {Set<string>} confirmedIds Jogadores com confirmação CONFIRMED.
  * @return {Array<object>} Os dois times, ou lista vazia se faltar jogador.
  */
 export function teamsFromGameRoster(
   gameId: string,
-  game: FirebaseFirestore.DocumentData
+  game: FirebaseFirestore.DocumentData,
+  confirmedIds: Set<string>
 ): Array<{id: string; name: string; playerIds: string[]}> {
-  const team1 = readPlayerIds(game.team1_players);
-  const team2 = readPlayerIds(game.team2_players).filter((id) => !team1.includes(id));
+  const team1 = readPlayerIds(game.team1_players).filter((id) => confirmedIds.has(id));
+  const team2 = readPlayerIds(game.team2_players)
+    .filter((id) => confirmedIds.has(id) && !team1.includes(id));
   if (team1.length === 0 || team2.length === 0) return [];
   const name = (value: unknown, fallback: string): string =>
     typeof value === "string" && value.trim() ? value.trim() : fallback;
@@ -265,7 +271,17 @@ export const startGameLifecycle = onCall<GameLifecycleRequest>(
       if (teams.length === 0) {
         // Times formados no web ficam só em team1_players/team2_players:
         // cria os documentos de `teams` aqui, no formato do app nativo.
-        const fromRoster = teamsFromGameRoster(gameId, game);
+        const confirmationsSnap = await tx.get(
+          db().collection("confirmations")
+            .where("game_id", "==", gameId)
+            .where("status", "==", "CONFIRMED")
+        );
+        const confirmedIds = new Set(
+          confirmationsSnap.docs
+            .map((doc) => doc.data().user_id)
+            .filter((id): id is string => typeof id === "string" && id !== "")
+        );
+        const fromRoster = teamsFromGameRoster(gameId, game, confirmedIds);
         for (const team of fromRoster) {
           tx.set(db().collection("teams").doc(team.id), {
             id: team.id,

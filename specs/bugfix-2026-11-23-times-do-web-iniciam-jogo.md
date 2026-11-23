@@ -28,6 +28,9 @@ No `startGameLifecycle`, dentro da mesma transação, quando o jogo não tem nen
 
 - monta os dois times a partir de `team1_players` e `team2_players` (ids de texto, sem vazios nem repetidos; um
   jogador nos dois lados fica só no time 1);
+- só entram jogadores com `confirmations` em `CONFIRMED` neste jogo, lidas na mesma transação. O roster do jogo
+  é gravado pelo cliente, e `teams.player_ids` alimenta o ranking semanal e a liga do grupo; sem esse filtro,
+  quem forma os times poderia pôr ali qualquer id;
 - se um dos lados estiver vazio, continua recusando como hoje;
 - grava `teams/{gameId}_team1` e `teams/{gameId}_team2` no formato do app nativo (`id`, `game_id`, `name`,
   `color` vazio, `player_ids`, `score: 0`, `created_at`, `created_by: "startGameLifecycle"`), com os nomes de
@@ -54,6 +57,7 @@ usuário autenticado e os ids de jogador já estão no jogo.
 - sem documentos em `teams`, cria os dois times e inicia (falha antes, passa depois);
 - com documentos em `teams`, usa os do app e não grava outros;
 - sem jogador num dos lados, continua recusando sem gravar nada;
+- jogador sem presença confirmada fica de fora, e um lado só com esses jogadores é recusado;
 - `teamsFromGameRoster` limpa ids vazios, repetidos e não texto e usa os nomes padrão (falha antes: a função
   não existia).
 
