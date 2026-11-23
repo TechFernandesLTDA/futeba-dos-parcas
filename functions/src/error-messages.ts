@@ -35,6 +35,13 @@ export const ERROR_MSGS = {
   ADMIN_ONLY: "Apenas administradores podem executar esta ação.",
   OWNER_ONLY: "Apenas o dono pode executar esta ação.",
   CONFIRMED_PLAYERS_ONLY: "Apenas jogadores confirmados podem votar.",
+  VOTER_SUSPICIOUS_OVERLAP:
+    "Sua presença neste jogo está em análise porque coincide com outro " +
+    "jogo no mesmo horário. Enquanto isso, não dá para votar.",
+  VOTER_NO_PRESENCE:
+    "Sua presença neste jogo não foi registrada, por isso não dá para votar.",
+  REPUTATION_CONFIRMED_ONLY:
+    "Só quem estava confirmado no jogo pode avaliar os colegas.",
   OWNER_OR_ADMIN_ONLY: "Apenas o dono ou administrador pode executar esta ação.",
 
   CANNOT_VOTE_SELF: "Não é permitido votar em si mesmo.",

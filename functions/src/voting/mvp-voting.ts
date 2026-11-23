@@ -55,8 +55,10 @@ import {
   getGameDate,
   getWeekKey,
   isRawParticipationEligible,
+  rawParticipationIneligibility,
   normalizeGameGender,
 } from "../game/helpers";
+import type {ParticipationIneligibility} from "../game/helpers";
 import {Game, UserStatistics} from "../models";
 import {isGameShape} from "../validation/guards";
 import {
@@ -72,6 +74,24 @@ import {db as getFirestore} from "../_db";
 
 /** Janela de votação (importada de constants.ts) */
 const VOTE_WINDOW_HOURS = MVP_VOTE_WINDOW_HOURS;
+
+/**
+ * Mensagem para quem não pode votar, pelo motivo real (#4629, item 11).
+ * @param {ParticipationIneligibility} reason Condição que falhou.
+ * @return {string} Mensagem em pt-BR para o cliente.
+ */
+export function voterIneligibleMessage(
+  reason: ParticipationIneligibility
+): string {
+  switch (reason) {
+  case "SUSPICIOUS_OVERLAP":
+    return ERROR_MSGS.VOTER_SUSPICIOUS_OVERLAP;
+  case "NO_PRESENCE":
+    return ERROR_MSGS.VOTER_NO_PRESENCE;
+  default:
+    return ERROR_MSGS.CONFIRMED_PLAYERS_ONLY;
+  }
+}
 
 /**
  * Monta a entrada de milestones a partir do documento canônico já persistido
@@ -451,14 +471,14 @@ export const submitMvpVote =
 
             const voterConfData =
               voterConfSnap.data();
-            if (
-              !isRawParticipationEligible(
-                voterConfData
-              )
-            ) {
+            // A mensagem diz o motivo real: antifraude ou falta de
+            // presença, não só "confirmados" (#4629, item 11).
+            const voterIneligibility =
+              rawParticipationIneligibility(voterConfData);
+            if (voterIneligibility) {
               throw new HttpsError(
                 "permission-denied",
-                ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
+                voterIneligibleMessage(voterIneligibility)
               );
             }
 
@@ -858,14 +878,14 @@ export const submitMvpVotes =
 
             const voterConfData =
               voterConfSnap.data();
-            if (
-              !isRawParticipationEligible(
-                voterConfData
-              )
-            ) {
+            // A mensagem diz o motivo real: antifraude ou falta de
+            // presença, não só "confirmados" (#4629, item 11).
+            const voterIneligibility =
+              rawParticipationIneligibility(voterConfData);
+            if (voterIneligibility) {
               throw new HttpsError(
                 "permission-denied",
-                ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
+                voterIneligibleMessage(voterIneligibility)
               );
             }
 

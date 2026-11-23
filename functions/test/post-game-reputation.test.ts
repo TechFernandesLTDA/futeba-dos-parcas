@@ -231,8 +231,12 @@ describe("submitPostGameReputation", () => {
       .rejects.toMatchObject({code: "permission-denied"});
 
     setupFirestore({reviewerConfirmation: {status: "WAITLISTED"}});
+    // Avaliação de colegas, não voto (#4629, item 11).
     await expect(submitPostGameReputation(makeRequest()))
-      .rejects.toMatchObject({code: "permission-denied"});
+      .rejects.toMatchObject({
+        code: "permission-denied",
+        message: expect.stringContaining("avaliar os colegas"),
+      });
 
     setupFirestore({targetConfirmation: null});
     await expect(submitPostGameReputation(makeRequest()))

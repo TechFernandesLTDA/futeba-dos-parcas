@@ -32,12 +32,16 @@ const db = {
   runTransaction: mockRunTransaction,
 };
 
+// Como no emulador: o namespace `admin.firestore` não traz FieldValue.
+// Só o import modular de firebase-admin/firestore tem (#4629, item 29).
 jest.mock("firebase-admin", () => ({
   apps: [{name: "test"}],
   initializeApp: jest.fn(),
-  firestore: Object.assign(jest.fn(() => db), {
-    FieldValue: {serverTimestamp: jest.fn(() => "SERVER_TIMESTAMP")},
-  }),
+  firestore: jest.fn(() => db),
+}));
+
+jest.mock("firebase-admin/firestore", () => ({
+  FieldValue: {serverTimestamp: jest.fn(() => "SERVER_TIMESTAMP")},
 }));
 
 jest.mock("firebase-functions/v2/https", () => ({

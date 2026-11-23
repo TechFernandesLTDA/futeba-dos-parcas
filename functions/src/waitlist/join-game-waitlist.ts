@@ -1,4 +1,7 @@
 import * as admin from "firebase-admin";
+// Modular: no emulador, `admin.firestore.FieldValue` vem undefined e a
+// callable quebrava com "reading 'serverTimestamp'" (#4629, item 29).
+import {FieldValue} from "firebase-admin/firestore";
 import {HttpsError, type CallableRequest} from "firebase-functions/v2/https";
 import {secureCallable} from "../middleware/secure-callable-wrapper";
 
@@ -191,7 +194,7 @@ export async function joinGameWaitlistHandler(
       position,
       queue_position: queuePosition,
       status: "WAITING",
-      added_at: admin.firestore.FieldValue.serverTimestamp(),
+      added_at: FieldValue.serverTimestamp(),
       notified_at: null,
       response_deadline: null,
     });

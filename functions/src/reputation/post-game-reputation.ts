@@ -452,9 +452,10 @@ export const submitPostGameReputation = onCall(
         !reviewerConfirmationSnap.exists ||
         reviewerConfirmation?.status !== "CONFIRMED"
       ) {
+        // Aqui é avaliação de colegas, não voto (#4629, item 11).
         throw new HttpsError(
           "permission-denied",
-          ERROR_MSGS.CONFIRMED_PLAYERS_ONLY
+          ERROR_MSGS.REPUTATION_CONFIRMED_ONLY
         );
       }
       if (
