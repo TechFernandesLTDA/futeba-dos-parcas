@@ -21,6 +21,12 @@ const logger = createLogger('useJoinRequests');
 
 export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+/**
+ * Estados do vínculo que impedem pedir para entrar (#4629 item 22): a regra de
+ * create de join_requests só aceita quem nunca foi membro ou saiu (INACTIVE).
+ */
+const NO_REQUEST_MEMBER_STATUSES = new Set(['REMOVED', 'BLOCKED', 'BANNED']);
+
 export interface JoinRequest {
   id: string;
   userId: string;
@@ -38,11 +44,16 @@ export interface JoinRequest {
  *
  * Estados:
  *  - status: PENDING/APPROVED/REJECTED ou null se nao tem request
+ *  - memberStatus: status do proprio documento de membro (null se nao existe)
+ *  - canRequest: pode pedir agora (sem pedido, recusado ou aprovado e depois
+ *    saiu do grupo), a menos que o vinculo seja REMOVED/BLOCKED/BANNED
  *  - loading: carregando estado inicial
  *  - submitting: ação em curso (criar/cancelar)
  *
  * Operações:
- *  - request(): cria novo request com status PENDING
+ *  - request(): cria novo request com status PENDING (apaga antes o pedido
+ *    antigo recusado ou aprovado, porque a regra nao deixa o dono do pedido
+ *    atualizar o documento)
  *  - cancel(): deleta proprio request (so funciona se PENDING)
  */
 export function useMyJoinRequest(groupId: string | undefined) {
@@ -55,6 +66,29 @@ export function useMyJoinRequest(groupId: string | undefined) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [memberStatus, setMemberStatus] = useState<string | null>(null);
+
+  // #4629 item 22: o proprio documento de membro diz se a pessoa saiu
+  // (INACTIVE, pode pedir de novo) ou foi removida (nao pode).
+  useEffect(() => {
+    if (!groupId || !uid) {
+      setMemberStatus(null);
+      return;
+    }
+    const unsub = onSnapshot(
+      doc(db, `groups/${groupId}/members/${uid}`),
+      (snap) => {
+        // Documento sem status conta como ativo, como no onMemberWritten.
+        setMemberStatus(snap.exists() ? (snap.data().status as string | undefined) ?? 'ACTIVE' : null);
+      },
+      (err) => {
+        // Sem o status, o botao continua; se a regra recusar, requestJoin avisa.
+        logger.error('useMyJoinRequest member snapshot error', err);
+        setMemberStatus(null);
+      }
+    );
+    return () => unsub();
+  }, [groupId, uid]);
 
   useEffect(() => {
     if (!groupId || !uid) {
@@ -100,6 +134,12 @@ export function useMyJoinRequest(groupId: string | undefined) {
     setError(null);
     try {
       const ref = doc(db, `groups/${groupId}/join_requests/${uid}`);
+      // A regra so deixa o dono ou admin do grupo atualizar o pedido. Para
+      // pedir de novo depois de recusado ou de sair, o pedido antigo e apagado
+      // e um novo e criado, em duas escritas separadas.
+      if (request && request.status !== 'PENDING') {
+        await deleteDoc(ref);
+      }
       await setDoc(ref, {
         user_id: uid,
         user_name: user.name || user.email || 'Anonimo',
@@ -116,7 +156,7 @@ export function useMyJoinRequest(groupId: string | undefined) {
     } finally {
       setSubmitting(false);
     }
-  }, [groupId, uid, user, showSuccess, showError, t]);
+  }, [groupId, uid, user, request, showSuccess, showError, t]);
 
   const cancelRequest = useCallback(async () => {
     if (!groupId || !uid) return;
@@ -135,11 +175,20 @@ export function useMyJoinRequest(groupId: string | undefined) {
     }
   }, [groupId, uid, showSuccess, showError, t]);
 
+  const blockedFromRequest = memberStatus !== null && NO_REQUEST_MEMBER_STATUSES.has(memberStatus);
+  const canRequest =
+    !blockedFromRequest &&
+    memberStatus !== 'ACTIVE' &&
+    (request === null || request.status === 'REJECTED' || request.status === 'APPROVED');
+
   return {
     request,
     loading,
     submitting,
     error,
+    memberStatus,
+    blockedFromRequest,
+    canRequest,
     requestJoin,
     cancelRequest,
   };

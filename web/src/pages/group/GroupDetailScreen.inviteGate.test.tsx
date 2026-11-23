@@ -71,6 +71,8 @@ vi.mock('../../hooks/useJoinRequests', () => ({
   useMyJoinRequest: () => ({
     request: null,
     submitting: false,
+    blockedFromRequest: false,
+    canRequest: true,
     requestJoin: vi.fn(),
     cancelRequest: vi.fn(),
   }),

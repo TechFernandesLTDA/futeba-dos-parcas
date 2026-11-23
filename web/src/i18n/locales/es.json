@@ -1757,7 +1757,9 @@
       "transferConfirm": "¿Estás seguro de que deseas transferir la propiedad del grupo \"{{groupName}}\" a {{name}}? Te convertirás en Admin del grupo.",
       "transferOwnership": "Transferir Propiedad",
       "transferring": "Transferiendo..."
-    }
+    },
+    "requestAgain": "Solicitar de nuevo",
+    "requestNotAllowed": "El organizador terminó tu participación en este grupo, así que no puedes solicitar entrar."
   },
   "groupDetail": {
     "closedDesc": "El grupo ya no está activo.",

@@ -388,3 +388,84 @@ describe('usePendingJoinRequests', () => {
     });
   });
 });
+// #4629 item 22: pedir de novo depois de recusado ou de sair do grupo.
+describe('useMyJoinRequest: pedir de novo', () => {
+  function mockDocs(docs: { request?: Record<string, unknown>; member?: Record<string, unknown> }) {
+    mockOnSnapshot.mockImplementation((ref: any, onNext: any) => {
+      const data = ref.path.includes('/members/') ? docs.member : docs.request;
+      onNext({ exists: () => data !== undefined, id: 'test-user-id', data: () => data });
+      return vi.fn();
+    });
+  }
+
+  async function render() {
+    const hook = renderHook(() => useMyJoinRequest('group-1'), { wrapper: createTestWrapper() });
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+    return hook.result;
+  }
+
+  it('escuta o proprio documento de membro', async () => {
+    await render();
+    expect(mockDoc).toHaveBeenCalledWith({}, 'groups/group-1/members/test-user-id');
+  });
+
+  it('pedido recusado: apaga o antigo e cria um novo PENDING, nessa ordem', async () => {
+    mockDocs({ request: { user_id: 'test-user-id', status: 'REJECTED' } });
+    const result = await render();
+    expect(result.current.canRequest).toBe(true);
+
+    await act(async () => {
+      await result.current.requestJoin();
+    });
+
+    expect(mockDeleteDoc).toHaveBeenCalledTimes(1);
+    expect((mockDeleteDoc.mock.calls[0][0] as any).path).toBe('groups/group-1/join_requests/test-user-id');
+    expect(mockSetDoc).toHaveBeenCalledTimes(1);
+    expect((mockSetDoc.mock.calls[0][1] as any).status).toBe('PENDING');
+    expect(mockDeleteDoc.mock.invocationCallOrder[0]).toBeLessThan(mockSetDoc.mock.invocationCallOrder[0]);
+  });
+
+  it('aprovado e depois saiu (INACTIVE): pode pedir de novo', async () => {
+    mockDocs({
+      request: { user_id: 'test-user-id', status: 'APPROVED' },
+      member: { user_id: 'test-user-id', status: 'INACTIVE' },
+    });
+    const result = await render();
+    expect(result.current.canRequest).toBe(true);
+    expect(result.current.blockedFromRequest).toBe(false);
+  });
+
+  it('sem pedido antigo: cria sem apagar nada', async () => {
+    const result = await render();
+    await act(async () => {
+      await result.current.requestJoin();
+    });
+    expect(mockDeleteDoc).not.toHaveBeenCalled();
+    expect(mockSetDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('pedido PENDING: não oferece pedir de novo', async () => {
+    mockDocs({ request: { user_id: 'test-user-id', status: 'PENDING' } });
+    const result = await render();
+    expect(result.current.canRequest).toBe(false);
+  });
+
+  it.each(['REMOVED', 'BLOCKED', 'BANNED'])('membro %s: não pode pedir', async (status) => {
+    mockDocs({
+      request: { user_id: 'test-user-id', status: 'APPROVED' },
+      member: { user_id: 'test-user-id', status },
+    });
+    const result = await render();
+    expect(result.current.blockedFromRequest).toBe(true);
+    expect(result.current.canRequest).toBe(false);
+  });
+
+  it('membro ACTIVE: não mostra pedido', async () => {
+    mockDocs({
+      request: { user_id: 'test-user-id', status: 'APPROVED' },
+      member: { user_id: 'test-user-id', status: 'ACTIVE' },
+    });
+    const result = await render();
+    expect(result.current.canRequest).toBe(false);
+  });
+});

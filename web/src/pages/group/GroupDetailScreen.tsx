@@ -662,6 +662,8 @@ export const GroupDetailScreen: React.FC = () => {
   const {
     request: joinRequest,
     submitting: joinSubmitting,
+    blockedFromRequest,
+    canRequest: canRequestJoin,
     requestJoin,
     cancelRequest,
   } = useMyJoinRequest(shouldTrackJoinRequest ? groupId : undefined);
@@ -1029,7 +1031,17 @@ export const GroupDetailScreen: React.FC = () => {
         {shouldTrackJoinRequest && (
           <Card variant="outlined" sx={{ mb: 2 }}>
             <CardContent>
-              {!joinRequest && (
+              {joinRequest?.status === 'REJECTED' && !blockedFromRequest && (
+                <Alert severity="warning" icon={false} sx={{ mb: 1 }}>
+                  {t('group.requestRejected')}
+                </Alert>
+              )}
+              {blockedFromRequest && (
+                <Alert severity="warning" icon={false}>
+                  {t('group.requestNotAllowed')}
+                </Alert>
+              )}
+              {canRequestJoin && (
                 <Button
                   variant="contained"
                   fullWidth
@@ -1037,7 +1049,9 @@ export const GroupDetailScreen: React.FC = () => {
                   disabled={joinSubmitting}
                   startIcon={joinSubmitting ? <CircularProgress size={16} color="inherit" /> : <InviteIcon />}
                 >
-                  {joinSubmitting ? t('group.sending') : t('group.requestJoin')}
+                  {joinSubmitting
+                    ? t('group.sending')
+                    : t(joinRequest?.status === 'REJECTED' ? 'group.requestAgain' : 'group.requestJoin')}
                 </Button>
               )}
               {joinRequest?.status === 'PENDING' && (
@@ -1054,11 +1068,6 @@ export const GroupDetailScreen: React.FC = () => {
                     {joinSubmitting ? t('group.cancelling') : t('group.cancelRequest')}
                   </Button>
                 </Stack>
-              )}
-              {joinRequest?.status === 'REJECTED' && (
-                <Alert severity="warning" icon={false}>
-                  {t('group.requestRejected')}
-                </Alert>
               )}
             </CardContent>
           </Card>

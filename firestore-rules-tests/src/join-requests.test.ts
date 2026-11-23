@@ -367,3 +367,71 @@ describe("join_requests — DELETE", () => {
     );
   });
 });
+
+// ============================================================
+// PEDIR DE NOVO (#4629 item 22)
+// ============================================================
+describe("join_requests — pedir de novo depois de recusado ou de sair", () => {
+  const requests = `groups/${GROUP_PUBLIC}/join_requests`;
+  const pending = (uid: string) => ({
+    user_id: uid,
+    user_name: "Jogador",
+    status: "PENDING",
+    requested_at: new Date(),
+  });
+
+  async function seedOldRequest(uid: string, status: "REJECTED" | "APPROVED") {
+    await seedDoc(testEnv, `${requests}/${uid}`, {
+      ...pending(uid),
+      status,
+      responded_by: UID_PLAYER_A,
+    });
+  }
+
+  async function seedMember(uid: string, status: string) {
+    await seedDoc(testEnv, `groups/${GROUP_PUBLIC}/members/${uid}`, {
+      user_id: uid,
+      role: "MEMBER",
+      status,
+    });
+  }
+
+  afterEach(async () => {
+    await cleanupJoinRequests();
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      for (const uid of [UID_PLAYER_B, UID_PLAYER_C]) {
+        await ctx.firestore().doc(`groups/${GROUP_PUBLIC}/members/${uid}`).delete();
+      }
+    });
+  });
+
+  it("sobrescrever o pedido recusado com PENDING é negado (o que o app fazia)", async () => {
+    await seedOldRequest(UID_PLAYER_B, "REJECTED");
+    const db = asPlayerB(testEnv);
+    await assertFails(db.collection(requests).doc(UID_PLAYER_B).set(pending(UID_PLAYER_B)));
+  });
+
+  it("recusado que nunca foi membro: apagar e criar de novo é permitido", async () => {
+    await seedOldRequest(UID_PLAYER_B, "REJECTED");
+    const db = asPlayerB(testEnv);
+    await assertSucceeds(db.collection(requests).doc(UID_PLAYER_B).delete());
+    await assertSucceeds(db.collection(requests).doc(UID_PLAYER_B).set(pending(UID_PLAYER_B)));
+  });
+
+  it("ex-membro que saiu (INACTIVE): lê o próprio vínculo, apaga o aprovado e cria de novo", async () => {
+    await seedOldRequest(UID_PLAYER_C, "APPROVED");
+    await seedMember(UID_PLAYER_C, "INACTIVE");
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(db.doc(`groups/${GROUP_PUBLIC}/members/${UID_PLAYER_C}`).get());
+    await assertSucceeds(db.collection(requests).doc(UID_PLAYER_C).delete());
+    await assertSucceeds(db.collection(requests).doc(UID_PLAYER_C).set(pending(UID_PLAYER_C)));
+  });
+
+  it("membro removido (REMOVED): apaga o pedido antigo, mas não cria outro", async () => {
+    await seedOldRequest(UID_PLAYER_C, "APPROVED");
+    await seedMember(UID_PLAYER_C, "REMOVED");
+    const db = asPlayerC(testEnv);
+    await assertSucceeds(db.collection(requests).doc(UID_PLAYER_C).delete());
+    await assertFails(db.collection(requests).doc(UID_PLAYER_C).set(pending(UID_PLAYER_C)));
+  });
+});
