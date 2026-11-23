@@ -55,18 +55,33 @@ export async function removeGroupMembershipArtifacts(
 
   if (options?.cleanupConfirmations !== false) {
     const gamesSnap = await getDocs(query(collection(db, 'games'), where('group_id', '==', groupId)));
-    for (const gameDoc of gamesSnap.docs) {
-      const gameData = gameDoc.data();
-      if (gameData.deleted_at || gameData.deletedAt) continue;
-      if (!GROUP_CONFIRMATION_CLEANUP_STATUSES.has(String(gameData.status || ''))) continue;
-      // FIX #4144: marcar CANCELLED em vez de apagar — o trigger onGameVacancy
-      // (before CONFIRMED → after CANCELLED) só existe em UPDATE; delete
-      // deixava a vaga sem promover a waitlist silenciosamente.
-      batch.update(doc(db, 'confirmations', `${gameDoc.id}_${userId}`), {
-        status: 'CANCELLED',
-        updated_at: serverTimestamp(),
-      });
-      confirmationDeletes += 1;
+    const activeGameIds = gamesSnap.docs
+      .filter((gameDoc) => {
+        const gameData = gameDoc.data();
+        if (gameData.deleted_at || gameData.deletedAt) return false;
+        return GROUP_CONFIRMATION_CLEANUP_STATUSES.has(String(gameData.status || ''));
+      })
+      .map((gameDoc) => gameDoc.id);
+    // Só as confirmações que existem e estão CONFIRMED: atualizar um documento
+    // ausente (a pessoa não confirmou aquele jogo) derrubava o lote inteiro, e a
+    // regra só aceita a passagem CONFIRMED -> CANCELLED.
+    const confirmationSnaps = await Promise.all(activeGameIds.map((gameId) => getDocs(query(
+      collection(db, 'confirmations'),
+      where('game_id', '==', gameId),
+      where('user_id', '==', userId),
+    ))));
+    for (const snap of confirmationSnaps) {
+      for (const confirmationDoc of snap.docs) {
+        if (confirmationDoc.data().status !== 'CONFIRMED') continue;
+        // FIX #4144: marcar CANCELLED em vez de apagar — o trigger onGameVacancy
+        // (before CONFIRMED → after CANCELLED) só existe em UPDATE; delete
+        // deixava a vaga sem promover a waitlist silenciosamente.
+        batch.update(confirmationDoc.ref, {
+          status: 'CANCELLED',
+          updated_at: serverTimestamp(),
+        });
+        confirmationDeletes += 1;
+      }
     }
   }
 

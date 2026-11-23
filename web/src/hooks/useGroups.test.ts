@@ -301,14 +301,38 @@ describe('removeGroupMembershipArtifacts', () => {
     mockWhere.mockImplementation((...args: unknown[]) => args);
   });
 
+  // Lê as consultas por collection + filtros: jogos do grupo e confirmações
+  // de cada jogo para o usuário.
+  function mockGroupData(
+    games: Array<{ id: string; data: Record<string, unknown> }>,
+    confirmations: Record<string, Array<{ status: string }>>,
+  ) {
+    mockGetDocs.mockImplementation(async (q: unknown[]) => {
+      const [source, ...filters] = q as [{ path: string }, ...unknown[][]];
+      if (source.path === 'games') {
+        return { docs: games.map((g) => ({ id: g.id, data: () => g.data })) };
+      }
+      const gameId = filters.find((f) => f[0] === 'game_id')?.[2] as string;
+      const docs = (confirmations[gameId] ?? []).map((c) => ({
+        id: `${gameId}_user-1`,
+        ref: makeDocRef('confirmations', `${gameId}_user-1`),
+        data: () => c,
+      }));
+      return { docs };
+    });
+  }
+
   it('marca confirmações futuras do grupo como CANCELLED (não apaga, FIX #4144)', async () => {
-    mockGetDocs.mockResolvedValue({
-      docs: [
-        { id: 'game-1', data: () => ({ status: 'SCHEDULED', group_id: 'group-1' }) },
-        { id: 'game-2', data: () => ({ status: 'CONFIRMED', group_id: 'group-1' }) },
-        { id: 'game-3', data: () => ({ status: 'FINISHED', group_id: 'group-1' }) },
-        { id: 'game-4', data: () => ({ status: 'SCHEDULED', group_id: 'group-1', deleted_at: { seconds: 1 } }) },
-      ],
+    mockGroupData([
+      { id: 'game-1', data: { status: 'SCHEDULED', group_id: 'group-1' } },
+      { id: 'game-2', data: { status: 'CONFIRMED', group_id: 'group-1' } },
+      { id: 'game-3', data: { status: 'FINISHED', group_id: 'group-1' } },
+      { id: 'game-4', data: { status: 'SCHEDULED', group_id: 'group-1', deleted_at: { seconds: 1 } } },
+    ], {
+      'game-1': [{ status: 'CONFIRMED' }],
+      'game-2': [{ status: 'CONFIRMED' }],
+      'game-3': [{ status: 'CONFIRMED' }],
+      'game-4': [{ status: 'CONFIRMED' }],
     });
 
     const result = await removeGroupMembershipArtifacts('group-1', 'user-1', 'REMOVED');
@@ -333,6 +357,37 @@ describe('removeGroupMembershipArtifacts', () => {
       expect.objectContaining({ path: 'confirmations/game-1_user-1' }),
     );
     expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it('não escreve confirmação de jogo futuro que a pessoa não confirmou', async () => {
+    mockGroupData([
+      { id: 'game-1', data: { status: 'SCHEDULED', group_id: 'group-1' } },
+      { id: 'game-2', data: { status: 'SCHEDULED', group_id: 'group-1' } },
+      { id: 'game-3', data: { status: 'CONFIRMED', group_id: 'group-1' } },
+    ], {
+      'game-1': [{ status: 'CONFIRMED' }],
+      // game-2: sem confirmação
+      'game-3': [{ status: 'PENDING' }],
+    });
+
+    const result = await removeGroupMembershipArtifacts('group-1', 'user-1', 'REMOVED');
+
+    expect(result.confirmationDeletes).toBe(1);
+    const confirmationWrites = mockBatchUpdate.mock.calls
+      .map(([ref]) => (ref as { path: string }).path)
+      .filter((path) => path.startsWith('confirmations/'));
+    expect(confirmationWrites).toEqual(['confirmations/game-1_user-1']);
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it('sem jogo futuro confirmado, só atualiza o vínculo e o espelho', async () => {
+    mockGroupData([{ id: 'game-1', data: { status: 'SCHEDULED', group_id: 'group-1' } }], {});
+
+    const result = await removeGroupMembershipArtifacts('group-1', 'user-1', 'INACTIVE');
+
+    expect(result.confirmationDeletes).toBe(0);
+    expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
+    expect(mockBatchDelete).toHaveBeenCalledTimes(1);
   });
 });
 
