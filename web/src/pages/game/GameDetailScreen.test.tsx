@@ -324,4 +324,20 @@ describe('GameDetailScreen', () => {
     // getStatusChipColors aplica o rótulo pt-BR do status CONFIRMED.
     expect(screen.getByText('Fechado')).toBeInTheDocument();
   });
+
+  it('jogo finalizado: a dica do editar desligado aparece e diz o motivo', async () => {
+    setDetail({ game: { ...gameFixture, status: 'FINISHED' } as Game });
+    const user = userEvent.setup();
+    renderWithProviders(<GameDetailScreen />);
+
+    const editButton = screen
+      .getAllByRole('button', { name: 'Editar Jogo', hidden: true })
+      .find((el) => el.tagName === 'BUTTON' && (el as HTMLButtonElement).disabled);
+    expect(editButton).toBeDefined();
+    // Botão desabilitado não recebe eventos: a dica depende do invólucro.
+    const wrapper = editButton!.parentElement!;
+    expect(wrapper.tagName).toBe('SPAN');
+    await user.hover(wrapper);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Só dá para editar o jogo antes de ele começar');
+  });
 });

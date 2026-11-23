@@ -869,28 +869,36 @@ export const GameDetailScreen: React.FC = () => {
                 <Box sx={{ display: { xs: 'none', md: 'contents' } }}>
                   {game.status === 'CONFIRMED' && (
                     <Tooltip title={t('games.detail.qrCheckInTitle')}>
-                      <IconButton
-                        onClick={handleGenerateQr}
-                        aria-label={t('games.detail.qrCheckInTitle')}
-                        disabled={qrLoading}
-                      >
-                        {qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon />}
-                      </IconButton>
+                      {/* span: botão desabilitado não dispara eventos e a dica não abriria. */}
+                      <span>
+                        <IconButton
+                          onClick={handleGenerateQr}
+                          aria-label={t('games.detail.qrCheckInTitle')}
+                          disabled={qrLoading}
+                        >
+                          {qrLoading ? <CircularProgress size={20} /> : <QrCodeIcon />}
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   )}
                   <Tooltip title={t('tooltip.duplicateGame')}>
-                    <IconButton
-                      onClick={handleDuplicateGame}
-                      aria-label={t('a11y.duplicateGame')}
-                      disabled={duplicateGameLoading}
-                    >
-                      {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}
-                    </IconButton>
+                    <span>
+                      <IconButton
+                        onClick={handleDuplicateGame}
+                        aria-label={t('a11y.duplicateGame')}
+                        disabled={duplicateGameLoading}
+                      >
+                        {duplicateGameLoading ? <CircularProgress size={20} /> : <DuplicateIcon />}
+                      </IconButton>
+                    </span>
                   </Tooltip>
-                  <Tooltip title={t('games.detail.editGame')}>
-                    <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')} disabled={!canEditGame}>
-                      <EditIcon />
-                    </IconButton>
+                  {/* Jogo finalizado ou cancelado: a dica explica por que editar está desligado. */}
+                  <Tooltip title={canEditGame ? t('games.detail.editGame') : t('games.detail.editGameLocked')}>
+                    <span>
+                      <IconButton onClick={openEditDialog} aria-label={t('games.detail.editGame')} disabled={!canEditGame}>
+                        <EditIcon />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                   <Tooltip title={t('games.detail.deleteGame')}>
                     <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label={t('games.detail.deleteGame')}>

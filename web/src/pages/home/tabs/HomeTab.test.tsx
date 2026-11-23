@@ -6,6 +6,8 @@ import { ThemeProvider } from '@mui/material';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
+const groupsState = vi.hoisted(() => ({ groups: [] as Array<Record<string, unknown>> }));
+const seasonState = vi.hoisted(() => ({ seasonId: null as string | null }));
 const nextGameState = vi.hoisted(() => ({
   nextGame: null as Record<string, unknown> | null,
   isLoading: false,
@@ -69,7 +71,11 @@ vi.mock('../../../hooks/useOnboarding', () => ({
 }));
 
 vi.mock('../../../hooks/useGroups', () => ({
-  useGroups: () => ({ groups: [], loading: false, error: null }),
+  useGroups: () => ({ groups: groupsState.groups, loading: false, error: null }),
+}));
+
+vi.mock('../../../hooks/useActiveSeason', () => ({
+  useActiveSeason: () => ({ seasonId: seasonState.seasonId, loading: false, error: null }),
 }));
 
 vi.mock('../../../hooks/useNextGame', () => ({
@@ -159,6 +165,8 @@ describe('HomeTab', () => {
     mockNavigate.mockClear();
     nextGameState.nextGame = null;
     nextGameState.isLoading = false;
+    groupsState.groups = [];
+    seasonState.seasonId = null;
     authUser.current = {
       id: 'user-1',
       name: 'Carlos Teste',
@@ -213,6 +221,56 @@ describe('HomeTab', () => {
     // O widget só aparece depois da checagem assíncrona de confirmação (skeleton antes).
     expect(await screen.findByText('games.nextGame')).toBeInTheDocument();
     expect(screen.getByText('Arena Centro')).toBeInTheDocument();
+  });
+
+  it('não aninha botão dentro de botão no cartão do próximo jogo', async () => {
+    nextGameState.nextGame = {
+      id: 'game-1',
+      status: 'SCHEDULED',
+      locationName: 'Arena Centro',
+      date: '2026-10-10',
+      time: '19:00',
+      playersCount: 3,
+      maxPlayers: 10,
+    };
+    const { container } = renderScreen();
+    expect(await screen.findByText('games.confirmPresenceBtn')).toBeInTheDocument();
+    expect(container.querySelectorAll('button button, button a, a button')).toHaveLength(0);
+  });
+
+  it('não aninha botão dentro de botão no cartão do jogo ao vivo', async () => {
+    nextGameState.nextGame = {
+      id: 'game-2',
+      status: 'LIVE',
+      locationName: 'Arena Centro',
+      date: '2026-10-10',
+      time: '19:00',
+      playersCount: 10,
+      maxPlayers: 10,
+    };
+    const { container } = renderScreen();
+    expect(await screen.findByText('games.watchLive')).toBeInTheDocument();
+    expect(container.querySelectorAll('button button, button a, a button')).toHaveLength(0);
+  });
+
+  it('mini-ranking filtra pela temporada ativa e por group_ids', async () => {
+    const { where, getDocs } = await import('firebase/firestore');
+    groupsState.groups = [
+      { id: 'g1', name: 'Pelada de Quarta' },
+      { id: 'g2', name: 'Pelada de Sábado' },
+    ];
+    seasonState.seasonId = 'season-2026-11';
+    const user = userEvent.setup();
+    renderScreen();
+
+    await vi.waitFor(() => expect(getDocs).toHaveBeenCalled());
+    expect(where).toHaveBeenCalledWith('season_id', '==', 'season-2026-11');
+    expect(where).toHaveBeenCalledWith('group_ids', 'array-contains', 'g1');
+    expect(where).not.toHaveBeenCalledWith('group_id', '==', 'g1');
+
+    // Com dois grupos, a pessoa escolhe o ranking (antes era sempre o primeiro).
+    await user.selectOptions(screen.getByLabelText('ranking.groupSelectLabel'), 'g2');
+    await vi.waitFor(() => expect(where).toHaveBeenCalledWith('group_ids', 'array-contains', 'g2'));
   });
 
   it('não crasha sem usuário autenticado', () => {

@@ -1505,7 +1505,8 @@
         "title": "Request reinforcement by position"
       },
       "yesCancel": "Yes, cancel",
-      "pricePerPlayer": "{{price}} per player"
+      "pricePerPlayer": "{{price}} per player",
+      "editGameLocked": "Games can only be edited before they start"
     },
     "empty": {
       "clearFilters": "Clear Filters",
@@ -3326,7 +3327,8 @@
       "streak7": "Streak 7+",
       "win": "Win"
     },
-    "you": "You"
+    "you": "You",
+    "groupSelectLabel": "Group"
   },
   "schedule": {
     "create": "Create Recurrence",

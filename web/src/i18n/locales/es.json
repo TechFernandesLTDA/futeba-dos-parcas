@@ -1505,7 +1505,8 @@
         "title": "Pedir refuerzo por posición"
       },
       "yesCancel": "Sí, cancelar",
-      "pricePerPlayer": "{{price}} por jugador"
+      "pricePerPlayer": "{{price}} por jugador",
+      "editGameLocked": "Solo se puede editar el partido antes de que empiece"
     },
     "empty": {
       "clearFilters": "Limpiar Filtros",
@@ -3326,7 +3327,8 @@
       "streak7": "Secuencia 7+",
       "win": "Victoria"
     },
-    "you": "Tú"
+    "you": "Tú",
+    "groupSelectLabel": "Grupo"
   },
   "schedule": {
     "create": "Crear Recurrencia",

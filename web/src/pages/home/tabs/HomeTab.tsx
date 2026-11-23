@@ -37,6 +37,7 @@ import {
   Button,
   ButtonBase,
   CircularProgress,
+  TextField,
   useTheme,
   useMediaQuery,
   alpha,
@@ -67,6 +68,7 @@ import { useNextGame } from '../../../hooks/useNextGame';
 import { getUsersByIds } from '../../../utils/userBatch';
 import { useWaitlist } from '../../../hooks/useWaitlist';
 import { useGroups } from '../../../hooks/useGroups';
+import { useActiveSeason } from '../../../hooks/useActiveSeason';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { formatGameDateLong, formatTimeAgo as formatTimeAgoUtil } from '../../../utils/dateFormatters';
 import { useToast } from '../../../contexts/ToastContext';
@@ -277,7 +279,8 @@ function NextGameWidget() {
                   {nextGame.locationName} • {t('games.playersCount', { current: nextGame.playersCount, max: nextGame.maxPlayers })}
                 </Typography>
               </Box>
-              <Button variant="contained" color="error" size="small" startIcon={<LiveTv />}>
+              {/* span: o cartão inteiro já é o botão; um <button> aqui seria aninhado. */}
+              <Button component="span" variant="contained" color="error" size="small" startIcon={<LiveTv />}>
                 {t('games.watchLive')}
               </Button>
             </Box>
@@ -352,6 +355,11 @@ function NextGameWidget() {
             </Box>
           )}
 
+        </CardContent>
+      </CardActionArea>
+      {/* Ações fora do CardActionArea: botão dentro de botão é HTML inválido
+          e o leitor de tela anuncia o cartão inteiro como um botão só. */}
+      <CardContent sx={{ pt: 0, pb: 2 }}>
           {isConfirmed ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Chip
@@ -434,7 +442,6 @@ function NextGameWidget() {
             </Button>
           )}
         </CardContent>
-      </CardActionArea>
     </Card>
   );
 }
@@ -447,18 +454,26 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
   const navigate = useNavigate();
   const gColors = useGamificationColors();
 
-  const primaryGroup = groups?.[0];
+  // Com mais de um grupo, a pessoa escolhe qual ranking ver (antes era sempre groups[0]).
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const primaryGroup = groups?.find((g) => g.id === selectedGroupId) ?? groups?.[0];
+  const { seasonId, loading: seasonLoading } = useActiveSeason({ enabled: !!user?.id && !!primaryGroup?.id });
 
-  const { data: players = [], isLoading } = useQuery<LeaguePlayer[]>({
-    queryKey: ['miniRanking', user?.id, primaryGroup?.id],
+  const { data: players = [], isLoading: rankingLoading } = useQuery<LeaguePlayer[]>({
+    queryKey: ['miniRanking', user?.id, primaryGroup?.id, seasonId],
     queryFn: async () => {
-      if (!primaryGroup?.id) return [];
+      if (!primaryGroup?.id || !seasonId) return [];
       const seasonRef = collection(db, 'season_participation');
-      // Escopa o mini-ranking ao grupo primário (evita misturar grupos)
+      // Temporada ativa + group_ids (todos os grupos em que a pessoa jogou na
+      // temporada). O group_id escalar guarda só o último grupo, então quem
+      // jogou em dois grupos sumia de um deles; sem season_id, misturava meses.
+      // A ordem por user_id desempata e casa com o índice existente.
       const q = query(
         seasonRef,
-        where('group_id', '==', primaryGroup.id),
+        where('season_id', '==', seasonId),
+        where('group_ids', 'array-contains', primaryGroup.id),
         orderBy('points', 'desc'),
+        orderBy('user_id', 'asc'),
         limit(3),
       );
       const snapshot = await getDocs(q);
@@ -509,9 +524,10 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
         };
       });
     },
-    enabled: !!user?.id && !!primaryGroup?.id,
+    enabled: !!user?.id && !!primaryGroup?.id && !!seasonId,
     staleTime: 3 * 60 * 1000,
   });
+  const isLoading = seasonLoading || (!!seasonId && rankingLoading);
 
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
@@ -570,6 +586,22 @@ function MiniRankingWidget({ groups }: { groups: Group[] }) {
               {t('ranking.viewFull')}
             </Link>
           </Box>
+          {(groups?.length ?? 0) > 1 && (
+            <TextField
+              select
+              size="small"
+              fullWidth
+              label={t('ranking.groupSelectLabel')}
+              value={primaryGroup.id}
+              onChange={(e) => setSelectedGroupId(e.target.value)}
+              SelectProps={{ native: true }}
+              sx={{ mb: 1 }}
+            >
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </TextField>
+          )}
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
