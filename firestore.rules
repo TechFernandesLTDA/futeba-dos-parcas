@@ -2614,6 +2614,22 @@ service cloud.firestore {
             isGroupOwnerById(groupId) &&
             fieldUnchanged('role') &&
             (resource.data.role != 'OWNER' || fieldUnchanged('status'))
+          ) ||
+          // Saída voluntária (spec bugfix-2026-11-23-membro-sai-do-grupo): web,
+          // Android e iOS saem marcando o próprio vínculo como INACTIVE. Só o
+          // próprio membro, MEMBER ou ADMIN (o dono transfere antes), só de
+          // ACTIVE para INACTIVE (banido ou removido não muda o próprio status)
+          // e só status/updated_at.
+          (
+            memberId == userId() &&
+            resource.data.role in ['MEMBER', 'ADMIN'] &&
+            get(/databases/$(database)/documents/groups/$(groupId)).data.owner_id != memberId &&
+            fieldUnchanged('role') &&
+            resource.data.get('status', 'ACTIVE') == 'ACTIVE' &&
+            request.resource.data.status == 'INACTIVE' &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at']) &&
+            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['updated_at']) ||
+             request.resource.data.updated_at == request.time)
           )
         ) &&
           resource.data.user_id == memberId &&
