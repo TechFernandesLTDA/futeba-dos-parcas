@@ -2485,3 +2485,18 @@ documentos em `teams`, então todo jogo com times formados no web era recusado a
 - A correção ficou no servidor porque o web deixa co-organizador formar times e a regra de `teams` só deixa o
   dono gravar; mexer na regra para isso seria afrouxar além do necessário.
 - Com documentos em `teams` já gravados pelo app, o comportamento é o de antes.
+
+## 2026-11-23: Aprovar XP retido limpa a marca de sobreposição das confirmações (spec bugfix-2026-11-23-xp-retido-aprovado)
+
+Contexto: a simulação de uso (#4621) mostrou que aprovar um jogo retido não devolvia o XP. A callable
+`reviewHeldGameRewards` mudava só o jogo, e o reprocessamento excluía de novo as confirmações com
+`suspicious_overlap = true`.
+
+- A aprovação do admin vale como revisão da sobreposição daquele jogo: na mesma transação, as confirmações
+  marcadas do jogo passam a `suspicious_overlap = false`, com `suspicious_overlap_cleared_at` e
+  `suspicious_overlap_cleared_by`. O `audit_logs/overlap_*` original fica.
+- Preferimos limpar a marca a ignorá-la no gate quando o jogo foi aprovado: assim a nota de validação, a
+  votação e qualquer outro leitor da marca veem o mesmo estado.
+- Recusar não muda as confirmações.
+- Ficam para depois: reavaliar a sobreposição quando o jogo é remarcado, ler `date` + `time` no fuso da
+  quadra em `getGameWindow` (depende do #4624) e dar a aprovação ao dono do grupo ou aos apps.
