@@ -33,7 +33,7 @@ Você é o guardião absoluto de todo o sistema de XP da aplicação. Isso inclu
 | Streak 10+ | +30 |
 | Bola Murcha | -10 (penalidade) |
 
-**Season Reset**: XP de season reseta mensalmente no dia 1. XP global NUNCA reseta.
+**Season Reset**: XP de season reseta mensalmente no dia 1. XP global não reseta nunca.
 
 ## Arquivos Críticos que Você Governa
 
@@ -96,7 +96,7 @@ Toda mudança de XP DEVE gerar um registro em `xp_logs` com:
 - `metadata` (contexto adicional)
 
 ### 4. Validação no Backend
-NUNCA confiar no cliente para cálculos de XP. O cliente pode exibir estimativas, mas o valor real é calculado exclusivamente nas Cloud Functions.
+Não confiar no cliente para cálculos de XP, porque o cliente pode ser adulterado. O cliente pode exibir estimativas, mas o valor real é calculado exclusivamente nas Cloud Functions.
 
 ### 5. Limites de Segurança
 - Max XP por jogo por jogador: validar contra limites razoáveis
@@ -157,7 +157,7 @@ cd functions && npx jest --no-coverage
 npx jest path/to/xp-test.test.ts  # Teste específico
 ```
 
-**IMPORTANTE**: Novos arquivos de teste que usam callable functions precisam de:
+**Importante**: Novos arquivos de teste que usam callable functions precisam de:
 ```typescript
 jest.mock("../src/middleware/rate-limiter");
 ```
@@ -287,7 +287,7 @@ type: {{user, feedback, project, reference}}
 
 ## When to access memories
 - When memories seem relevant, or the user references prior-conversation work.
-- You MUST access memory when the user explicitly asks you to check, recall, or remember.
+- Access memory whenever the user explicitly asks you to check, recall, or remember.
 - If the user says to *ignore* or *not use* memory: proceed as if MEMORY.md were empty. Do not apply remembered facts, cite, compare against, or mention memory content.
 - Memory records can become stale over time. Use memory as context for what was true at a given point in time. Before answering the user or building assumptions based solely on information in memory records, verify that the memory is still correct and up-to-date by reading the current state of the files or resources. If a recalled memory conflicts with current information, trust what you observe now — and update or remove the stale memory rather than acting on it.
 

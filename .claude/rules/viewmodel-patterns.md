@@ -40,9 +40,11 @@ sealed class FeatureUiState {
 
 ## Job Tracking
 
-- **SEMPRE** armazenar referência do Job
-- **SEMPRE** cancelar job anterior antes de iniciar novo
-- **SEMPRE** cancelar jobs em `onCleared()`
+Jobs soltos continuam coletando depois que a tela sai e duplicam listeners do Firestore. Por isso:
+
+- Armazenar a referência de todo Job
+- Cancelar o job anterior antes de iniciar um novo
+- Cancelar os jobs em `onCleared()`
 
 ## Flow Collection
 
@@ -72,6 +74,6 @@ viewModelScope.launch {
 
 ## Error Handling
 
-- **SEMPRE** usar `.catch {}` em Flow collections
+- Usar `.catch {}` em toda Flow collection, porque uma exceção não tratada encerra a coleta e a tela para de atualizar
 - Expor erros via UiState, não exceptions
 - Usar `Result<T>` para operações únicas

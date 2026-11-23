@@ -8,19 +8,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 As regras abaixo valem para todo trabalho no repositório.
 
-### Regra #1: Implementar só com spec aprovada
+### Regra #1: Spec quando a mudança é de produto, dados ou fluxo
 
-- Toda feature ou bugfix tem uma spec em `/specs/` antes de escrever código
-- Copie o template apropriado: `_TEMPLATE_FEATURE_MOBILE.md` ou `_TEMPLATE_BUGFIX_MOBILE.md`
-- Status da spec deve ser `APPROVED` antes de iniciar implementação
+Pede spec em `/specs/`, com status `APPROVED` antes de escrever código:
+- Funcionalidade nova
+- Mudança de dados: modelo ou campos no Firestore, `firestore.rules`, índices, contratos de Cloud Functions, XP e rankings
+- Mudança de fluxo: o caminho do usuário, permissões, navegação, login, compra
+- Correção que muda dados, regras ou fluxo (por exemplo, permissões, ID do documento, formato de convite): usa o template de bugfix
 
-### Regra #2: Fases obrigatórias
+Não pede spec: correção que não muda dados nem fluxo, ajuste visual, texto, manutenção (dependências, CI, refactor, testes, docs, release). Basta o PR explicar o que mudou e por quê.
+
+Templates: `_TEMPLATE_FEATURE_MOBILE.md`, `_TEMPLATE_BUGFIX_MOBILE.md`, `_TEMPLATE_SCREEN_UI.md`. Na dúvida, escreva a spec: ela custa menos que desfazer uma mudança de dados em produção.
+
+### Regra #2: Fases de uma spec
 
 ```
 REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY
 ```
 
-Não pule fases. Cada uma existe por um motivo.
+Quando a mudança tem spec, siga as fases nessa ordem: cada uma pega um tipo de erro antes de ele virar código.
 
 ### Regra #3: Sempre propor plano antes de editar código
 
@@ -584,7 +590,7 @@ Para comandos com output > 20 linhas (gradle builds, jest, gh api, git log, find
 | `/futeba-firestore-rules` | Editar/deploy security rules + indexes |
 | `/futeba-merge-train` | 3+ PRs do mesmo escopo ou stack/dependências |
 | `/futeba-rollback` | Reverter deploy prod / commit master |
-| `/futeba-spec` | Criar spec antes de feature/bugfix (Regra #1 SDD) |
+| `/futeba-spec` | Criar spec para funcionalidade nova ou mudança de dados/fluxo (Regra #1 SDD) |
 | `/futeba-xp-validate` | Validar integridade XP system |
 | `/futeba-kmp-build` | Build shared module + iOS Framework |
 | `/futeba-ollama` | Semantic search / code review local privacy-sensitive |
@@ -610,7 +616,7 @@ For in-depth guidance, see `.claude/rules/`:
 
 ## Critical Rules Summary
 
-1. **Spec-Driven Development** - NEVER implement features without approved spec
+1. **Spec-Driven Development** - Funcionalidade nova e mudança de dados ou fluxo só com spec aprovada (Regra #1); correção, ajuste visual e manutenção sem spec
 2. **All new screens use Compose** - No new XML layouts
 3. **StateFlow over LiveData** - Always use `StateFlow<UiState>`
 4. **Cancel jobs** - Always cancel previous Flow jobs before starting new ones

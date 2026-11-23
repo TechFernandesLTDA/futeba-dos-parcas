@@ -48,9 +48,9 @@ web/src/
 ## Core Principles
 
 ### 1. Spec-Driven Development (SDD)
-- **NEVER** implement features without an approved spec in `/specs/`
-- If no spec exists, propose creating one before coding
-- Follow the phases: REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY
+- Follow the spec rule in CLAUDE.md (Regra #1): new features and changes to data or flows need an approved spec in `/specs/` before coding; fixes, visual adjustments and maintenance don't
+- If a spec is needed and none exists, propose creating one before coding
+- When there is a spec, follow the phases: REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY
 
 ### 2. Always Propose a Plan First
 Before modifying any file:
@@ -92,7 +92,7 @@ Before modifying any file:
 - Memoize expensive computations with `useMemo` and callbacks with `useCallback`
 
 ### MUI 5 Theming
-- **NEVER** hardcode colors — use `theme.palette.*` or MUI's `sx` prop with theme tokens
+- Don't hardcode colors, so light and dark themes stay correct — use `theme.palette.*` or MUI's `sx` prop with theme tokens
 - Use `sx` prop for one-off styles, `styled()` for reusable styled components
 - Follow MUI's responsive breakpoints: `xs`, `sm`, `md`, `lg`, `xl`
 - Use `<Typography>` with the correct `variant` (not raw HTML tags with manual styles)
@@ -306,7 +306,7 @@ type: {{user, feedback, project, reference}}
 
 ## When to access memories
 - When memories seem relevant, or the user references prior-conversation work.
-- You MUST access memory when the user explicitly asks you to check, recall, or remember.
+- Access memory whenever the user explicitly asks you to check, recall, or remember.
 - If the user says to *ignore* or *not use* memory: proceed as if MEMORY.md were empty. Do not apply remembered facts, cite, compare against, or mention memory content.
 - Memory records can become stale over time. Use memory as context for what was true at a given point in time. Before answering the user or building assumptions based solely on information in memory records, verify that the memory is still correct and up-to-date by reading the current state of the files or resources. If a recalled memory conflicts with current information, trust what you observe now — and update or remove the stale memory rather than acting on it.
 

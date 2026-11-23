@@ -2,7 +2,9 @@
 
 Regras de segurança para o projeto Futeba dos Parças.
 
-## Arquivos Sensíveis - NUNCA Commitar
+## Arquivos Sensíveis - não commitar
+
+Estes arquivos guardam chaves e credenciais; uma vez no histórico do git, o segredo precisa ser trocado.
 
 ```
 .env
@@ -67,12 +69,12 @@ service cloud.firestore {
 
 ## Cloud Functions
 
-- Sempre verificar `context.auth` antes de operações
+- Verificar `context.auth` antes de qualquer operação, porque a function é chamável por qualquer cliente
 - Usar `onCall` com validação, não `onRequest` exposto
 - Rate limiting para operações sensíveis
 
 ## Logs
 
-- NUNCA logar senhas, tokens, ou PII
+- Não logar senhas, tokens nem PII: logs ficam acessíveis a mais gente e por mais tempo que os dados de origem
 - Usar níveis apropriados (DEBUG para dev, ERROR para prod)
 - Sanitizar dados antes de logar

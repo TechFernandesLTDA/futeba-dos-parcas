@@ -1,6 +1,6 @@
 # Web React — Padrões Obrigatórios
 
-Padrões descobertos em auditoria 2026-05-08 (#601). **NÃO REPETIR.**
+Padrões descobertos em auditoria 2026-05-08 (#601). Cada um corrige um bug que já aconteceu; siga-os em todo código novo para ele não voltar.
 
 ---
 
@@ -81,13 +81,13 @@ ESLint: `no-restricted-syntax` — selector com `:has()` em `CatchClause` — n�
 
 ## Pattern 3: Sizing & Layout — PageContainer + tokens
 
-**NUNCA** usar `<Container maxWidth>` raw em páginas. O padrão canônico é `<PageContainer>` com tiers semânticos de `web/src/theme/pageTokens.ts`.
+Não usar `<Container maxWidth>` raw em páginas: a largura e o espaçamento das páginas vêm dos tokens, não de cada página. O padrão canônico é `<PageContainer>` com tiers semânticos de `web/src/theme/pageTokens.ts`.
 
 ### Tiers de largura
 
 | Tier | maxWidth MUI | Usar em |
 |---|---|---|
-| `focused` | `xs` (~444px) | auth, onboarding, welcome — fluxos centrados **sem** shell; NÃO alargar |
+| `focused` | `xs` (~444px) | auth, onboarding, welcome — fluxos centrados **sem** shell; não alargar |
 | `form` | `md` (~900px) | formulários de criação/edição, texto/leitura |
 | `list` | `lg` (~1200px) | listas |
 | `detail` | `lg` (~1200px) | detalhe de 1 entidade |
