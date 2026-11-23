@@ -690,6 +690,55 @@ describe("submitMvpVote - rejeições via transaction", () => {
     await expect(submitMvpVoteHandler!(request)).rejects.toThrow("confirmados");
   });
 
+  // #4629 item 11: quem está confirmado ouvia "Apenas jogadores confirmados".
+  function voterConfirmationTx(voterConfirmation: Record<string, unknown>) {
+    return async (callback: any) => {
+      const transaction = makeReadBeforeWriteTransaction([
+        {exists: true, data: () => makeFinishedGame()},
+        {exists: true, data: () => voterConfirmation},
+      ]);
+      return callback(transaction);
+    };
+  }
+  const singleVoteRequest = {
+    auth: {uid: "voter1", token: {profileComplete: true}},
+    data: {gameId: "game1", votedPlayerId: "player2", category: "MVP"},
+  };
+
+  test("votante marcado pelo antifraude ouve que a presença está em análise", async () => {
+    mockRunTransaction.mockImplementation(voterConfirmationTx({
+      status: "CONFIRMED", user_id: "voter1", checked_in: true, suspicious_overlap: true,
+    }));
+    const err = await submitMvpVoteHandler!(singleVoteRequest).catch((e: any) => e);
+    expect(err.code).toBe("permission-denied");
+    expect(err.message).toContain("em análise");
+    expect(err.message).not.toContain("confirmados");
+  });
+
+  test("votante confirmado sem presença registrada ouve o motivo", async () => {
+    mockRunTransaction.mockImplementation(voterConfirmationTx({
+      status: "CONFIRMED", user_id: "voter1", checked_in: false,
+    }));
+    const err = await submitMvpVoteHandler!(singleVoteRequest).catch((e: any) => e);
+    expect(err.code).toBe("permission-denied");
+    expect(err.message).toContain("presença neste jogo não foi registrada");
+  });
+
+  test("voto em lote usa a mesma mensagem com motivo", async () => {
+    mockRunTransaction.mockImplementation(voterConfirmationTx({
+      status: "CONFIRMED", user_id: "voter1", was_present: false, checked_in: false,
+    }));
+    const err = await submitMvpVotesHandler!({
+      auth: {uid: "voter1", token: {profileComplete: true}},
+      data: {gameId: "game1", votes: [
+        {votedPlayerId: "player2", category: "MVP"},
+        {votedPlayerId: "player3", category: "WORST"},
+      ]},
+    }).catch((e: any) => e);
+    expect(err.code).toBe("permission-denied");
+    expect(err.message).toContain("não foi registrada");
+  });
+
 });
 
 // Nota: O comportamento de rate limiting do submitMvpVote é garantido pelo middleware

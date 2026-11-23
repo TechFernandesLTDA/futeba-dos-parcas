@@ -6,7 +6,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import {
   onDocumentCreated,
   onDocumentDeleted,
@@ -655,10 +655,11 @@ export async function promoteWaitlistOnVacancy(
       const entryData = entry.data();
       const nextUserId =
         entryData.user_id || entryData.userId;
-      const newDeadline =
-        admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + WAITLIST_RESPONSE_WINDOW_MS)
-        );
+      // Timestamp modular: o namespaced `admin.firestore.Timestamp` não
+      // existe no emulador e a promoção falhava lá (#4629, item 29).
+      const newDeadline = Timestamp.fromDate(
+        new Date(Date.now() + WAITLIST_RESPONSE_WINDOW_MS)
+      );
 
       const promoted = await db().runTransaction(async (tx) => {
         const fresh = await tx.get(entry.ref);

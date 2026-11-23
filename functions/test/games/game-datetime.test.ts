@@ -1,13 +1,28 @@
 /**
  * dateTime do jogo a partir de date/time (spec bugfix-2026-11-23-jogo-do-web-sem-datetime).
- * Só as funções puras; o trigger é uma casca em volta delas.
+ * Quase tudo são funções puras; o último bloco roda o trigger com o Firestore simulado.
  */
 jest.mock("firebase-functions/v2/firestore", () => ({
   onDocumentWritten: (_opts: unknown, handler: unknown) => handler,
 }));
 
+const mockTxUpdate = jest.fn();
+let mockFreshGame: Record<string, unknown> = {};
+// Como no emulador: o namespace `admin.firestore` não tem Timestamp.
+jest.mock("firebase-admin", () => ({
+  firestore: () => ({
+    doc: (path: string) => ({path}),
+    runTransaction: async (fn: (tx: unknown) => Promise<void>) => fn({
+      get: async () => ({data: () => mockFreshGame}),
+      update: mockTxUpdate,
+    }),
+  }),
+}));
+
+import {Timestamp} from "firebase-admin/firestore";
 import {
   isValidTimeZone,
+  onGameWrittenFillDateTime,
   shouldComputeDateTime,
   zonedDateTime,
 } from "../../src/games/game-datetime";
@@ -78,5 +93,22 @@ describe("shouldComputeDateTime", () => {
   it("escrita que não mexe na data não faz nada", () => {
     const antes = {...base, dateTime: ts("2026-03-20T22:00:00Z"), players_count: 3};
     expect(shouldComputeDateTime(antes, {...antes, players_count: 4})).toBe(false);
+  });
+});
+
+describe("onGameWrittenFillDateTime", () => {
+  it("grava dateTime como Timestamp do firebase-admin/firestore (#4629, item 29)", async () => {
+    const game = {date: "2026-12-01", time: "20:00"};
+    mockFreshGame = game;
+    mockTxUpdate.mockClear();
+    const handler = onGameWrittenFillDateTime as unknown as (e: unknown) => Promise<void>;
+    await handler({
+      data: {before: {data: () => undefined}, after: {data: () => game}},
+      params: {gameId: "jogo1"},
+    });
+    expect(mockTxUpdate).toHaveBeenCalledTimes(1);
+    const dateTime = mockTxUpdate.mock.calls[0][1].dateTime;
+    expect(dateTime).toBeInstanceOf(Timestamp);
+    expect(dateTime.toDate().toISOString()).toBe("2026-12-01T23:00:00.000Z");
   });
 });

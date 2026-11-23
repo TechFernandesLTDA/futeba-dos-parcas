@@ -17,6 +17,9 @@
  */
 
 import * as admin from "firebase-admin";
+// Timestamp modular: o namespaced `admin.firestore.Timestamp` não existe no
+// emulador; lá o gatilho morria no meio da transação e travava o jogo.
+import {Timestamp} from "firebase-admin/firestore";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import {FUNCTION_REGION} from "../constants";
@@ -184,7 +187,7 @@ export const onGameWrittenFillDateTime = onDocumentWritten(
       if (!data || data.date !== after.date || data.time !== after.time) return;
       if (isTimestampLike(data.dateTime) && data.dateTime.toDate().getTime() === computed.getTime()) return;
       if (!shouldComputeDateTime(before, data)) return;
-      tx.update(ref, {dateTime: admin.firestore.Timestamp.fromDate(computed)});
+      tx.update(ref, {dateTime: Timestamp.fromDate(computed)});
     });
     logger.info(`[GAME_DATETIME] ${gameId}: dateTime=${computed.toISOString()} (${timeZone})`);
   }

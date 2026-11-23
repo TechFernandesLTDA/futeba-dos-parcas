@@ -130,6 +130,35 @@ export function isRawParticipationEligible(
   return isParticipationEligible(toGameConfirmation(raw));
 }
 
+/** Motivo pelo qual uma confirmação não pode votar (#4629, item 11). */
+export type ParticipationIneligibility =
+  | "NOT_CONFIRMED"
+  | "SUSPICIOUS_OVERLAP"
+  | "NO_PRESENCE";
+
+/**
+ * Mesma regra de `isRawParticipationEligible`, mas diz qual condição falhou,
+ * para a mensagem de erro explicar o motivo real a quem está confirmado.
+ * @param {admin.firestore.DocumentData | undefined} raw Dados da confirmação.
+ * @return {ParticipationIneligibility | null} null quando pode votar.
+ */
+export function rawParticipationIneligibility(
+  raw?: admin.firestore.DocumentData
+): ParticipationIneligibility | null {
+  if (!raw) return "NOT_CONFIRMED";
+  const confirmation = toGameConfirmation(raw);
+  if (confirmation.status !== "CONFIRMED") return "NOT_CONFIRMED";
+  if (confirmation.suspiciousOverlap === true) return "SUSPICIOUS_OVERLAP";
+  if (
+    confirmation.hasPresenceSignal &&
+    confirmation.checkedIn !== true &&
+    confirmation.wasPresent !== true
+  ) {
+    return "NO_PRESENCE";
+  }
+  return null;
+}
+
 /**
  * Limite máximo de placar por time.
  * (P0 #30: Score bounds validation)

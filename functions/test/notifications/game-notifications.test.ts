@@ -61,6 +61,8 @@ const mockCollection = jest.fn(() => ({
   get: mockCollectionGet,
 }));
 
+import {Timestamp as RealTimestamp} from "firebase-admin/firestore";
+
 const mockFieldValue = {
   serverTimestamp: jest.fn(() => ({ _type: "ServerTimestamp" })),
   delete: jest.fn(() => ({ _type: "FieldDelete" })),
@@ -893,6 +895,15 @@ describe("Game Notifications", () => {
           response_deadline: expect.anything(),
         })
       );
+      // #4629 item 29: o prazo vem do Timestamp modular, não do namespaced.
+      const promotedUpdate = mockTransactionUpdate.mock.calls.find(
+        (c: any[]) => c[0] === entryRef && c[1]?.status === "NOTIFIED"
+      );
+      const deadline = promotedUpdate?.[1].response_deadline;
+      expect(deadline).toBeInstanceOf(RealTimestamp);
+      const minutesAhead = (deadline.toMillis() - Date.now()) / 60000;
+      expect(minutesAhead).toBeGreaterThan(29);
+      expect(minutesAhead).toBeLessThanOrEqual(30);
       expect(mockSendNotificationToUsers).toHaveBeenCalledWith(
         ["wl-user-1"],
         expect.objectContaining({type: "GAME_VACANCY"})
