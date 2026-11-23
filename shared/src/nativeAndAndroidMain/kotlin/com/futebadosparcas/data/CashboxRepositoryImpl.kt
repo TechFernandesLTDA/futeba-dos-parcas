@@ -78,10 +78,19 @@ class CashboxRepositoryImpl internal constructor(
                 receiptFilePath.orEmpty()
             ).joinToString("|")
             val requestId = requestIds.requestId(operationKey, entry.id)
-            val result = firebaseDataSource.addCashboxEntry(
-                groupId,
-                entry.copy(id = requestId),
-                receiptFilePath
+            // Caixa novo: o servidor pede reconciliação no primeiro lançamento (#4629)
+            val result = withCashboxReconcileRetry(
+                attempt = {
+                    firebaseDataSource.addCashboxEntry(
+                        groupId,
+                        entry.copy(id = requestId),
+                        receiptFilePath
+                    )
+                },
+                reconcile = {
+                    PlatformLogger.w(TAG, "Resumo do caixa ausente; reconciliando antes de lançar")
+                    firebaseDataSource.recalculateCashboxBalance(groupId)
+                }
             )
             if (result.isSuccess) requestIds.complete(operationKey, requestId)
             result

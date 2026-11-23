@@ -387,12 +387,14 @@ class FirebaseDataSourceImpl constructor(
 
     // ========== TEAMS ==========
 
+    // #4629: times na ordem do id do documento, a mesma do servidor (time 1 e time 2)
     override suspend fun getGameTeams(gameId: String): Result<List<Team>> {
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
             AppLogger.d(TAG) { "Buscando times do jogo: $gameId" }
 
             val snapshot = firestore.collection(COLLECTION_TEAMS)
                 .whereEqualTo("game_id", gameId)
+                .orderBy(FirestoreFieldPath.documentId())
                 .get()
                 .await()
 
@@ -405,6 +407,7 @@ class FirebaseDataSourceImpl constructor(
 
         val listener = firestore.collection(COLLECTION_TEAMS)
             .whereEqualTo("game_id", gameId)
+            .orderBy(FirestoreFieldPath.documentId())
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro no flow de times", error)

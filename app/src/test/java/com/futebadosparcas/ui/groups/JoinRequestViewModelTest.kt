@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.groups
 
 import com.futebadosparcas.domain.model.GroupJoinRequest
+import com.futebadosparcas.domain.model.GroupJoinRequestNotAllowedException
 import com.futebadosparcas.domain.model.GroupJoinRequestStatus
 import com.futebadosparcas.domain.repository.GroupRepository
 import com.futebadosparcas.util.InstantTaskExecutorExtension
@@ -147,6 +148,31 @@ class JoinRequestViewModelTest {
 
         assertEquals("Sem permissão", vm.pendingRequestsError.value?.message)
         assertTrue(vm.pendingRequests.value.isEmpty())
+    }
+
+    @Test
+    @DisplayName("requestJoin de quem foi removido mostra NotAllowed (#4629)")
+    fun requestJoin_notAllowed_emitsNotAllowed() = runTest(testDispatcher) {
+        coEvery { groupRepo.createJoinRequest("g1") } returns
+            Result.failure(GroupJoinRequestNotAllowedException())
+
+        val vm = JoinRequestViewModel(groupRepo)
+        vm.requestJoin("g1")
+        advanceUntilIdle()
+
+        assertEquals(MyJoinRequestState.NotAllowed, vm.myRequestState.value)
+    }
+
+    @Test
+    @DisplayName("requestJoin com outro erro mostra a mensagem")
+    fun requestJoin_otherError_emitsError() = runTest(testDispatcher) {
+        coEvery { groupRepo.createJoinRequest("g1") } returns Result.failure(Exception("offline"))
+
+        val vm = JoinRequestViewModel(groupRepo)
+        vm.requestJoin("g1")
+        advanceUntilIdle()
+
+        assertEquals(MyJoinRequestState.Error("offline"), vm.myRequestState.value)
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.futebadosparcas.data.repository
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -195,8 +196,10 @@ class LiveGameRepository constructor(
         try {
             val snapshot = scoreDoc.get().await()
             if (!snapshot.exists()) {
+                // #4629: time 1 e time 2 na ordem do id do documento, como no servidor
                 val teamsSnapshot = firestore.collection("teams")
                     .whereEqualTo("game_id", gameId)
+                    .orderBy(FieldPath.documentId())
                     .get()
                     .await()
                 

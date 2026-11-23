@@ -1113,27 +1113,19 @@ private fun JoinRequestSection(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
-                is MyJoinRequestState.NotRequested -> {
+                // #4629 item 22: pedido aprovado e a pessoa fora do grupo quer dizer que ela
+                // saiu depois; pode pedir de novo como quem nunca pediu.
+                is MyJoinRequestState.NotRequested, is MyJoinRequestState.Approved -> {
                     Text(
                         text = stringResource(R.string.join_request_can_request),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Button(
-                        onClick = onRequest,
-                        enabled = !submitting,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (submitting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(stringResource(R.string.join_request_action_request))
-                        }
-                    }
+                    JoinRequestButton(
+                        label = stringResource(R.string.join_request_action_request),
+                        submitting = submitting,
+                        onClick = onRequest
+                    )
                 }
                 is MyJoinRequestState.Pending -> {
                     Text(
@@ -1157,18 +1149,23 @@ private fun JoinRequestSection(
                         }
                     }
                 }
-                is MyJoinRequestState.Approved -> {
-                    Text(
-                        text = stringResource(R.string.join_request_approved),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
                 is MyJoinRequestState.Rejected -> {
                     Text(
                         text = stringResource(R.string.join_request_rejected),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
+                    )
+                    JoinRequestButton(
+                        label = stringResource(R.string.join_request_action_request_again),
+                        submitting = submitting,
+                        onClick = onRequest
+                    )
+                }
+                is MyJoinRequestState.NotAllowed -> {
+                    Text(
+                        text = stringResource(R.string.join_request_not_allowed),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 is MyJoinRequestState.Error -> {
@@ -1179,6 +1176,30 @@ private fun JoinRequestSection(
                     )
                 }
             }
+        }
+    }
+}
+
+/** Botão de pedir para entrar, com o progresso no lugar do texto enquanto envia. */
+@Composable
+private fun JoinRequestButton(
+    label: String,
+    submitting: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        enabled = !submitting,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (submitting) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(label)
         }
     }
 }
