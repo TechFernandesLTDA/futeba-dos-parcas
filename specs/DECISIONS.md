@@ -2465,3 +2465,12 @@ delete permitia sair.
   histórico do vínculo.
 - Banido e removido continuam sem poder mudar o próprio status.
 - A falha do lote do web quando falta uma confirmação de jogo futuro é outro defeito e tem PR próprio.
+
+## 2026-11-23: Chat do jogo arquiva pela data `dateTime` (spec bugfix-2026-11-23-chat-do-jogo-datetime)
+
+Contexto: a regra de create do chat lia `games/{id}.date_time`, campo que nenhum app grava (todos gravam
+`dateTime`), e negava toda mensagem. O teste semeava `date_time` e por isso não pegava.
+
+- A regra lê `dateTime` e cai para `date_time` em documento antigo.
+- Jogo sem data gravada não arquiva, como em `isFutureGameDate`; data em texto nega.
+- Os fixtures do teste usam o formato real.

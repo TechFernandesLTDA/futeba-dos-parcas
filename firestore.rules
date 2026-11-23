@@ -678,6 +678,19 @@ service cloud.firestore {
              dt > timestamp.value(request.time.toMillis() - 3600000);
     }
 
+    // Chat do jogo aberto (spec bugfix-2026-11-23-chat-do-jogo-datetime):
+    // a data do jogo + 7 dias ainda não passou. Os apps e as functions gravam
+    // `dateTime`; `date_time` fica como leitura de documento antigo. Jogo sem
+    // nenhuma das duas datas (criado pelo web antes da correção do dateTime)
+    // não arquiva, como em isFutureGameDate. Data em outro formato não abre.
+    function isGameChatOpen(gameId) {
+      let game = get(/databases/$(database)/documents/games/$(gameId)).data;
+      let dt = game.get('dateTime', game.get('date_time', null));
+      return dt == null ||
+             dt is timestamp &&
+             dt > timestamp.value(request.time.toMillis() - 7 * 24 * 60 * 60 * 1000);
+    }
+
     // Valida nome (2-100 caracteres)
     function isValidName(name) {
       return name is string && name.size() >= 2 && name.size() <= 100;
@@ -1426,7 +1439,7 @@ service cloud.firestore {
       // #3230 / spec feat-2026-07-03-game-chat-realtime.md
       // Chat em tempo real por jogo. Escrita restrita a confirmados,
       // gestores do jogo ou admin do grupo dono. Arquivamento 7d apos
-      // game.date_time (só-leitura). Soft-delete p/ auditoria.
+      // a data do jogo (só-leitura, ver isGameChatOpen). Soft-delete p/ auditoria.
       // ============================================
       match /chat/{messageId} {
         // Leitura: quem ja pode ler o jogo (mesmo gate de visibility do pai).
@@ -1441,7 +1454,7 @@ service cloud.firestore {
         // Create: só confirmados, gestores do jogo, ou admin do grupo dono.
         // Valida sender_id == userId(), texto 1..500, created_at == request.time
         // (previne backdate). Arquivamento: nao permite escrever se
-        // game.date_time + 7d < now. Admin tem bypass nas checagens de autor.
+        // a data do jogo + 7d < now. Admin tem bypass nas checagens de autor.
         allow create: if isAuthenticated() &&
           request.resource.data.keys().hasOnly([
             'sender_id',
@@ -1468,11 +1481,9 @@ service cloud.firestore {
                 isGroupAdmin(get(/databases/$(database)/documents/games/$(gameId)).data.group_id)))
             )
           ) &&
-          // Arquivamento: só permite criar se game.date_time + 7d > now
-          // Padrão: timestamp.value(millis) — ver linha 425 (isFutureGameDate).
-          // game.date_time + 7d > now  <=>  game.date_time > now - 7d
-          timestamp.value(get(/databases/$(database)/documents/games/$(gameId)).data.date_time.toMillis()) >
-            timestamp.value(request.time.toMillis() - 7 * 24 * 60 * 60 * 1000);
+          // Arquivamento: só permite criar até 7 dias depois da data do jogo.
+          // Ver isGameChatOpen (lê dateTime, o campo que os apps gravam).
+          isGameChatOpen(gameId);
 
         // Update: apenas soft-delete (deleted_by + deleted_at).
         // Autor, gestores do jogo, ou admin do grupo podem soft-deletar.
