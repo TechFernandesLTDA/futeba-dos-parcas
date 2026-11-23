@@ -2438,6 +2438,9 @@ então nem a leitura documento a documento serviria.
 - `getUsersByIds` (módulo compartilhado, usado no Android e no iOS, e o data source do `:app`) busca os
   outros jogadores pela mesma callable da web, em lotes de até 500. O mapeamento fica em
   `PublicPlayerProjection` (`shared/commonMain`), para as duas implementações lerem o mesmo contrato.
+- No módulo compartilhado a resposta é lida numa classe `@Serializable` (`LeaguePlayersResponse`), não em
+  `JsonElement`: o decodificador do SDK GitLive não é de JSON e lança exceção com `JsonElement`. O
+  `exportMyData` ainda pede `data<JsonElement>()` e tem o mesmo problema; fica para outro PR.
 - O próprio perfil continua vindo do documento (GET do dono), com todos os campos, para o cache local do
   usuário atual não ser trocado por um perfil sem e-mail.
 - Quem não está na projeção (perfil não pesquisável, excluído ou mesclado) fica de fora do resultado, como

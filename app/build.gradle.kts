@@ -368,6 +368,8 @@ dependencies {
 
     // MockK for Kotlin
     testImplementation("io.mockk:mockk:1.14.11")
+    // Decodificador do SDK GitLive (mesma versão do :shared), para testar a leitura das callables
+    testImplementation("dev.gitlive:firebase-common-internal:2.7.0")
     androidTestImplementation("io.mockk:mockk-android:1.14.11")
 
     // Turbine for Flow testing

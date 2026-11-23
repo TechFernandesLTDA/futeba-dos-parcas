@@ -381,13 +381,17 @@ internal class FirebaseUsersDataSource(
                 val response = Firebase.functions(FUNCTIONS_REGION)
                     .httpsCallable(PublicPlayerProjection.CALLABLE_NAME)
                     .invoke(PublicPlayerProjection.request(chunk))
-                    .data<JsonElement>()
-                PublicPlayerProjection.usersFromCallableData(response)
+                    // O decodificador do GitLive não é de JSON: `data<JsonElement>()` lança
+                    // exceção, por isso a resposta é lida numa classe @Serializable.
+                    .data(PublicPlayerProjection.LeaguePlayersResponse.serializer())
+                PublicPlayerProjection.usersFromResponse(response)
             }
 
             val byId = (others + listOfNotNull(self)).associateBy { it.id }
             Result.success(requestedIds.mapNotNull { byId[it] })
         } catch (e: Exception) {
+            // Quem chama costuma trocar a falha por lista vazia; sem este log o erro some.
+            println("FirebaseDataSource: getUsersByIds falhou: ${e::class.simpleName}: ${e.message}")
             Result.failure(e)
         }
     }

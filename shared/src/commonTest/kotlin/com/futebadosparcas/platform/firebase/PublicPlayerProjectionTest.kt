@@ -1,7 +1,7 @@
 package com.futebadosparcas.platform.firebase
 
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
+import com.futebadosparcas.platform.firebase.PublicPlayerProjection.LeaguePlayer
+import com.futebadosparcas.platform.firebase.PublicPlayerProjection.LeaguePlayersResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -11,23 +11,21 @@ import kotlin.test.assertTrue
 class PublicPlayerProjectionTest {
 
     @Test
-    fun usersFromCallableData_jsonDoGitLive_mapeiaNomeFotoEEstatisticas() {
-        val data = Json.parseToJsonElement(
-            """
-            {"success": true, "players": [{
-              "id": "part-1", "userId": "u1", "userName": "Carlos Silva",
-              "userPhoto": "https://exemplo.test/u1.jpg", "favoriteTeam": "Santos",
-              "level": 7, "experiencePoints": 2450, "preferredPosition": "ZAGUEIRO",
-              "strikerRating": 3.5, "gkRating": 1, "strikerRatingSet": true,
-              "autoMidRating": 2.25, "autoRatingSamples": 4
-            }]}
-            """.trimIndent()
+    fun usersFromResponse_mapeiaNomeFotoEEstatisticas() {
+        val response = LeaguePlayersResponse(
+            players = listOf(
+                LeaguePlayer(
+                    userId = "u1", userName = "Carlos Silva",
+                    userPhoto = "https://exemplo.test/u1.jpg", favoriteTeam = "Santos",
+                    level = 7, experiencePoints = 2450, preferredPosition = "ZAGUEIRO",
+                    strikerRating = 3.5, gkRating = 1.0, strikerRatingSet = true,
+                    autoMidRating = 2.25, autoRatingSamples = 4
+                )
+            )
         )
 
-        val users = PublicPlayerProjection.usersFromCallableData(data)
+        val user = PublicPlayerProjection.usersFromResponse(response).single()
 
-        assertEquals(1, users.size)
-        val user = users.single()
         assertEquals("u1", user.id)
         assertEquals("Carlos Silva", user.name)
         assertEquals("https://exemplo.test/u1.jpg", user.photoUrl)
@@ -40,6 +38,24 @@ class PublicPlayerProjectionTest {
         assertTrue(user.strikerRatingSet)
         assertEquals(2.25, user.autoMidRating)
         assertEquals(4, user.autoRatingSamples)
+        assertTrue(user.isSearchable)
+    }
+
+    @Test
+    fun usersFromResponse_descartaJogadorSemUserId() {
+        val response = LeaguePlayersResponse(
+            players = listOf(
+                LeaguePlayer(userName = "Sem id"),
+                LeaguePlayer(userId = "", userName = "Vazio"),
+                LeaguePlayer(userId = "u4")
+            )
+        )
+
+        val users = PublicPlayerProjection.usersFromResponse(response)
+
+        assertEquals(listOf("u4"), users.map { it.id })
+        assertEquals("", users.single().name)
+        assertNull(users.single().photoUrl)
     }
 
     @Test
@@ -51,7 +67,8 @@ class PublicPlayerProjectionTest {
                     "userName" to "Ana",
                     "level" to 3,
                     "experiencePoints" to 900L,
-                    "midRating" to 4
+                    "midRating" to 4,
+                    "userPhoto" to null
                 )
             )
         )
@@ -80,23 +97,10 @@ class PublicPlayerProjectionTest {
     }
 
     @Test
-    fun usersFromCallableData_descartaJogadorSemUserId() {
-        val data = Json.parseToJsonElement(
-            """{"players": [{"userName": "Sem id"}, {"userId": "", "userName": "Vazio"}, {"userId": "u4"}]}"""
-        )
-
-        val users = PublicPlayerProjection.usersFromCallableData(data)
-
-        assertEquals(listOf("u4"), users.map { it.id })
-        assertEquals("", users.single().name)
-    }
-
-    @Test
     fun usersFromCallableData_respostaInesperada_retornaListaVazia() {
         assertTrue(PublicPlayerProjection.usersFromCallableData(null).isEmpty())
         assertTrue(PublicPlayerProjection.usersFromCallableData("x").isEmpty())
-        val semPlayers: JsonElement = Json.parseToJsonElement("""{"success": true}""")
-        assertTrue(PublicPlayerProjection.usersFromCallableData(semPlayers).isEmpty())
+        assertTrue(PublicPlayerProjection.usersFromCallableData(mapOf("success" to true)).isEmpty())
     }
 
     @Test
