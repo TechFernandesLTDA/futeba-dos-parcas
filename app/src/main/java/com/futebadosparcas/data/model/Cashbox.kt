@@ -67,7 +67,8 @@ data class CashboxEntry(
 
     val status: String = CashboxAppStatus.ACTIVE.name,
 
-    @ServerTimestamp
+    // Sem @ServerTimestamp: a data do estorno só existe quando o lançamento é estornado.
+    // Com a anotação valendo, todo lançamento gravado pelo modelo sairia estornado (#4592).
     @get:PropertyName("voided_at")
     @set:PropertyName("voided_at")
     var voidedAt: Date? = null,
