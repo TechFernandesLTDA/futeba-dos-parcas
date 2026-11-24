@@ -79,5 +79,67 @@ jogar uma pelada pública do grupo entra de novo pelo fluxo público.
 
 - [x] Build, lint e testes das functions verdes
 - [ ] Deploy de `onMemberDepartedCleanupGames` depois do merge (fica com o Renan)
-- [ ] Vínculos que já saíram antes do deploy não são limpos. Se o Renan quiser, um backfill é outro passo,
-      com OK dele
+- [ ] Vínculos que já saíram antes do deploy não são limpos pelo trigger: o backfill da seção 5 faz isso,
+      rodado pelo Renan
+
+## 5. Backfill de quem saiu antes do deploy
+
+> **Status:** `PROPOSED` (seção acrescentada a pedido da sessão Central TF em 2026-11-23; a aprovação é o
+> merge do PR do backfill)
+
+O trigger só age em saídas novas. Quem saiu ou foi removido antes do deploy continua nos jogos futuros do
+grupo. O script `functions/src/scripts/backfill-departed-member-games.ts` passa por essas pessoas.
+
+**A limpeza é a do trigger.** O script chama `cleanupDepartedMemberGames`, a mesma função, em vez de copiar
+a lógica: mesmos jogos, mesmos status cancelados e a mesma passagem da vaga de quem estava `NOTIFIED`. Por
+isso ele fica em `functions/src/scripts` e não em `scripts/migrations`, que não enxerga o código das
+functions. Do padrão de `scripts/migrations` ele segue o resto: dry-run por padrão, `--apply` explícito,
+`--project=`, logs `SCAN`, `DRY-RUN`, `APLICAÇÃO` e `DEPOIS`.
+
+A função ganhou duas opções, que o trigger não passa:
+
+- `dryRun`: conta o que faria, sem transação e sem a claim em `notif_dedup`.
+- `backfill.departedAt`: o corte de jogo público, abaixo.
+
+**Quem entra:** os vínculos em `groups/{grupo}/members/{pessoa}` que não estão ativos pelo `isActiveMember`
+(`INACTIVE`, `REMOVED`, `BLOCKED`, `BANNED`), fora do merge de contas (`merged_to_uid`). A busca é um
+collection group sem `where()`, filtrada no script, para não depender de índice. Vínculo apagado não é
+encontrado e fica de fora.
+
+**Jogo aberto ao público** (`visibility: PUBLIC_OPEN`, ou `is_public` legado): quem saiu pode entrar de novo
+na fila como avulso (`joinGameWaitlist` aceita), e o trigger, que roda na hora da saída, nunca veria essa
+entrada nova. O backfill desfaz só o que o trigger teria visto: confirmação (`created_at`) e entrada da fila
+(`added_at`) até a data da saída, o `updated_at` do vínculo, que a saída pelo web grava. A saída pelo
+Android não grava data; nesse caso o item de jogo público fica como está e entra na contagem
+`jogoPublicoMantido`. Jogo só do grupo é limpo como no trigger, com ou sem data. Confirmar presença de novo
+não é possível para quem saiu: `confirmGamePresence` recusa vínculo que não está ativo.
+
+**Efeito no apply:** cada vaga repassada (`vagasRepassadas`) chama o próximo da fila com o push de vaga, como
+no trigger. O dry-run mostra esse número antes.
+
+**Idempotência:** cada escrita relê o documento. A passagem da vaga usa a claim
+`member_departed:backfill:{grupo}:{pessoa}:{jogo}`: rodar de novo, mesmo depois de uma queda entre repassar a
+vaga e apagar a entrada, não chama outra pessoa.
+
+**Saída:** só ids e contadores, uma linha por pessoa com algo a fazer, sem nome nem contato.
+
+**Como rodar** (Renan, depois do deploy do trigger):
+
+```bash
+cd functions && npm run build
+node lib/scripts/backfill-departed-member-games.js --project=futebadosparcas
+node lib/scripts/backfill-departed-member-games.js --apply --project=futebadosparcas
+```
+
+**Testes:** `functions/test/permissions/backfill-departed-member-games.test.ts` (Firestore falso): opções da
+linha de comando, quem entra no scan, dry-run sem nenhuma escrita, apply igual ao trigger com a vaga
+repassada uma vez, segunda rodada sem escrita, queda entre repassar e apagar, corte de jogo público com e sem
+data, e merge de contas. Os testes do trigger continuam passando sem mudança.
+
+**Verificação:**
+
+- [x] Build, lint e jest das functions verdes
+- [x] Emulador (`demo-futeba`): dry-run sem escrita, apply com 2 confirmações canceladas, 2 entradas da fila
+      removidas e 1 vaga repassada, segundo apply sem mudança; jogo encerrado, ativo, merge e jogo público
+      depois da saída ficaram como estavam
+- [ ] Dry-run e apply em produção (Renan, depois do deploy de `onMemberDepartedCleanupGames`)

@@ -4,7 +4,7 @@
  * Armazena documentos em memória, com caminhos completos ("groups/g1/members/u1").
  * Suporta o subconjunto usado pelos callables testados: doc/collection/get/set/
  * update/create/delete, queries com where (==, in, <, <=, >, >=, !=), limit,
- * orderBy, runTransaction (escritas aplicadas no commit) e batch.
+ * orderBy, collectionGroup, runTransaction (escritas aplicadas no commit) e batch.
  *
  * Sentinelas do FieldValue (serverTimestamp, increment, delete, arrayUnion,
  * arrayRemove) são resolvidas na escrita, como o Admin SDK faz.
@@ -228,6 +228,26 @@ class Query {
   }
 }
 
+/** collectionGroup: todo documento cuja coleção-mãe tem o nome dado. */
+class GroupQuery extends Query {
+  constructor(private readonly groupName: string) {
+    super("");
+  }
+  select(..._fields: string[]): GroupQuery {
+    return this;
+  }
+  snapshots(): DocSnap[] {
+    const out: DocSnap[] = [];
+    for (const [path, raw] of docs.entries()) {
+      const parts = path.split("/");
+      if (parts.length % 2 === 0 && parts[parts.length - 2] === this.groupName) {
+        out.push(new DocSnap(path, raw));
+      }
+    }
+    return out.filter((s) => this.filters.every((f) => matches(s, f)));
+  }
+}
+
 class CollRef extends Query {
   constructor(readonly path: string) {
     super(path);
@@ -289,6 +309,9 @@ const fakeDb = {
   },
   doc(path: string): DocRef {
     return new DocRef(path);
+  },
+  collectionGroup(name: string): GroupQuery {
+    return new GroupQuery(name);
   },
   async runTransaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T> {
     const buffer: PendingWrite[] = [];
