@@ -1,5 +1,6 @@
 package com.futebadosparcas.data
 
+import com.futebadosparcas.data.firestore.AndroidEscritoresFirestore
 import com.futebadosparcas.domain.model.GameTemplate
 import com.futebadosparcas.domain.repository.GameTemplateRepository
 import com.futebadosparcas.util.AppLogger
@@ -7,7 +8,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import com.futebadosparcas.data.util.toObjectTolerant
 
 /**
  * Implementacao Android do GameTemplateRepository.
@@ -23,7 +23,6 @@ class GameTemplateRepositoryImpl constructor(
 
     override suspend fun saveTemplate(template: GameTemplate): Result<String> = withContext(Dispatchers.Default) {
         try {
-            val templateWithDate = template.copy(createdAt = System.currentTimeMillis())
             val collection = firestore.collection("users")
                 .document(template.userId)
                 .collection("game_templates")
@@ -34,8 +33,8 @@ class GameTemplateRepositoryImpl constructor(
                 collection.document(template.id)
             }
 
-            val finalTemplate = templateWithDate.copy(id = docRef.id)
-            docRef.set(finalTemplate).await()
+            // #4645: mapa em snake_case (o modelo inteiro saía em camelCase).
+            docRef.set(AndroidEscritoresFirestore.modeloDeJogo(template)).await()
 
             Result.success(docRef.id)
         } catch (e: Exception) {
@@ -56,7 +55,7 @@ class GameTemplateRepositoryImpl constructor(
 
             val templates = snapshot.documents.mapNotNull { doc ->
                 try {
-                    doc.toObjectTolerant(GameTemplate::class.java)?.copy(id = doc.id)
+                    doc.data?.let { AndroidEscritoresFirestore.lerModeloDeJogo(doc.id, it) }
                 } catch (e: Exception) {
                     AppLogger.w(TAG) { "Erro ao parsear template ${doc.id}: ${e.message}" }
                     null

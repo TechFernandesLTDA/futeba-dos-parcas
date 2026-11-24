@@ -2536,3 +2536,16 @@ apps não cancelavam nada, e ninguém limpava a fila de espera.
 - Em jogo aberto ao público, o backfill só desfaz o que é anterior à data da saída, porque quem saiu pode ter
   entrado de novo como avulso. Sem data de saída (saída pelo Android), o item de jogo público fica.
 - O Renan roda o backfill em produção, depois do deploy do trigger.
+
+## 2026-11-24: Escritores do Android montam o documento campo a campo (spec bugfix-2026-11-24-android-escritores-snake-case)
+
+Contexto: quatro escritores do Android gravavam modelos de `shared/domain/model` inteiros. O mapper do SDK
+Android ignora `@SerialName`, então as chaves saíam em camelCase e criar grupo pelo Android era negado (#4645).
+
+- Os documentos de grupo, membro dono, espelho, perfil de reserva, modelo de jogo e gamificação saem de
+  `AndroidEscritoresFirestore`, com os nomes que as regras, o web e as functions leem. Modelo de `domain.model`
+  não vai mais inteiro para `set()` nesses quatro caminhos.
+- Os leitores do modelo de jogo e da gamificação no Android leem snake_case com o camelCase antigo como reserva.
+  Produção não tinha nenhum documento a migrar.
+- Ficam para decisão do Renan: cadastro pelo Android sem código de convite (a regra nega) e o esquema do modelo
+  de jogo, que é diferente no web.

@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
+import com.futebadosparcas.data.firestore.AndroidEscritoresFirestore
 import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.domain.model.GroupInvite
 import com.futebadosparcas.data.model.BlockedPlayer
@@ -35,6 +36,8 @@ import com.futebadosparcas.data.util.toObjectOrNullSafely
 import com.futebadosparcas.data.util.toObjectTolerant
 import com.futebadosparcas.data.util.toObjectsTolerant
 
+// Modelo devolvido à tela depois de criar o grupo. O que vai ao Firestore é
+// AndroidEscritoresFirestore.novoGrupo (#4645).
 internal fun buildPendingOwnerGroup(
     groupId: String,
     name: String,
@@ -50,19 +53,6 @@ internal fun buildPendingOwnerGroup(
     ownerName = ownerName,
     membersCount = 0,
     defaultGender = defaultGender
-)
-
-internal fun buildOwnerGroupMirror(
-    groupId: String,
-    groupName: String
-) = UserGroup(
-    id = groupId,
-    groupId = groupId,
-    groupName = groupName,
-    groupPhoto = null,
-    role = GroupMemberRole.OWNER.name,
-    memberCount = 1,
-    groupStatus = GroupStatus.ACTIVE.name
 )
 
 /**
@@ -189,31 +179,27 @@ class GroupRepository constructor(
                 defaultGender = defaultGender
             )
 
-            // 1. Transação para criar grupo e adicionar owner como membro (sem foto)
+            // 1. Transação para criar grupo e adicionar owner como membro (sem foto).
+            // #4645: grava mapas em snake_case. O `group` acima é só o retorno para a tela:
+            // gravado inteiro, saía em camelCase e a regra negava a transação.
             firestore.runTransaction { transaction ->
-                // Criar grupo
-                transaction.set(groupRef, group)
-
-                // Adicionar owner como membro
-                val memberRef = groupRef.collection("members").document(userId)
-                val member = GroupMember(
-                    id = userId,
-                    userId = userId,
-                    userName = userName,
-                    userPhoto = userPhoto,
-                    role = GroupMemberRole.OWNER.name,
-                    status = GroupMemberStatus.ACTIVE.name
+                transaction.set(
+                    groupRef,
+                    AndroidEscritoresFirestore.novoGrupo(
+                        name = name,
+                        description = description,
+                        ownerId = userId,
+                        ownerName = userName,
+                        defaultGender = defaultGender
+                    )
                 )
-                transaction.set(memberRef, member)
 
-                // Adicionar referência no usuário
+                val memberRef = groupRef.collection("members").document(userId)
+                transaction.set(memberRef, AndroidEscritoresFirestore.membroDono(userId, userName, userPhoto))
+
                 val userGroupRef = usersCollection.document(userId)
                     .collection("groups").document(groupRef.id)
-                val userGroup = buildOwnerGroupMirror(
-                    groupId = groupRef.id,
-                    groupName = name
-                )
-                transaction.set(userGroupRef, userGroup)
+                transaction.set(userGroupRef, AndroidEscritoresFirestore.espelhoDoDono(groupRef.id, name))
             }.await()
 
             // 2. Upload da foto depois que o grupo já existe no Firestore

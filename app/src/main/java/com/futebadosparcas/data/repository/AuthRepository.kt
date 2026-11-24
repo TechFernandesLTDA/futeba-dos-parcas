@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.repository
 
+import com.futebadosparcas.data.firestore.AndroidEscritoresFirestore
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
@@ -180,7 +181,15 @@ class AuthRepository constructor(
                     photoUrl = firebaseUser.photoUrl?.toString()
                 )
                 AppLogger.d(TAG) { "Creating new user document" }
-                usersCollection.document(uid).set(newUser).await()
+                // #4645: mapa em snake_case. O `newUser` inteiro saía em camelCase, com XP e nível,
+                // e a regra negava. A regra ainda exige `invited_by_code`, que o app não pede.
+                usersCollection.document(uid).set(
+                    AndroidEscritoresFirestore.perfilNovo(
+                        email = newUser.email,
+                        name = newUser.name,
+                        photoUrl = newUser.photoUrl
+                    )
+                ).await()
                 AppLogger.d(TAG) { "=== getCurrentUser() SUCCESS (new user created) ===" }
                 Result.success(newUser)
             }

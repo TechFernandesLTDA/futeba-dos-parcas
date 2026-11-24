@@ -7,7 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import com.futebadosparcas.data.util.toObjectTolerant
+import com.futebadosparcas.data.firestore.AndroidEscritoresFirestore
 
 /**
  * Implementacao Android do SettingsRepository.
@@ -28,7 +28,9 @@ class SettingsRepositoryImpl constructor(
         try {
             // PERF_001 P2: Firestore I/O deve usar Dispatchers.IO, não Default
             val snapshot = gamificationDoc.get().await()
-            val settings = snapshot.toObjectTolerant(GamificationSettings::class.java) ?: GamificationSettings()
+            // #4645: lê os nomes em snake_case, os mesmos que as functions usam.
+            val settings = snapshot.data?.let { AndroidEscritoresFirestore.lerConfiguracoesGamificacao(it) }
+                ?: GamificationSettings()
             Result.success(settings)
         } catch (e: Exception) {
             // Retorna configurações default se falhar (graceful degradation)
@@ -40,7 +42,8 @@ class SettingsRepositoryImpl constructor(
     override suspend fun updateGamificationSettings(settings: GamificationSettings): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             // PERF_001 P2: Firestore I/O deve usar Dispatchers.IO, não Default
-            gamificationDoc.set(settings).await()
+            // #4645: em camelCase, as functions não viam a edição do admin.
+            gamificationDoc.set(AndroidEscritoresFirestore.configuracoesGamificacao(settings)).await()
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao atualizar configurações de gamificação", e)
