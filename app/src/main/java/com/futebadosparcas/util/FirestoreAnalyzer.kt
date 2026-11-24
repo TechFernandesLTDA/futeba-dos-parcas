@@ -16,7 +16,7 @@ object FirestoreAnalyzer {
      * Analisa toda a estrutura do Firestore e retorna relatório
      */
     suspend fun analyzeDatabase(): DatabaseReport {
-        val firestore = FirebaseFirestore.getInstance()
+        val firestore = org.koin.java.KoinJavaComponent.get<FirebaseFirestore>(FirebaseFirestore::class.java)
         val report = DatabaseReport()
         
         try {

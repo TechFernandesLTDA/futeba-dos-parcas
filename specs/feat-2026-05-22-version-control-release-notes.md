@@ -388,6 +388,9 @@ class GetUnseenReleaseNotesUseCase(
 do iOS), `GetUnseenReleaseNotesUseCase` compara `BuildConfig.VERSION_CODE` (Android) /
 `VITE_APP_VERSION`→build (Web) / build iOS contra o `LastSeenVersionStore`. Se houver notas
 não vistas com `showPopup = true`, exibe o pop-up e grava o build atual como visto.
+Instalação nova (nenhum build visto): só a nota da versão instalada pode virar pop-up; se
+ela tem `showPopup = false`, nenhum pop-up aparece, para uma nota de versão anterior não se
+passar pela novidade da versão atual (#4613, 24/11/2026; mesma regra na Web e no iOS).
 
 ### 3.8 Cache e Offline
 

@@ -2,8 +2,6 @@ package com.futebadosparcas.util
 
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
-import com.google.firebase.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,7 +58,9 @@ object LocationEditTracker {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // Referência ao Firestore (lazy para não inicializar antes do Firebase estar pronto)
-    private val firestore: FirebaseFirestore by lazy { Firebase.firestore }
+    private val firestore: FirebaseFirestore by lazy {
+        org.koin.java.KoinJavaComponent.get<FirebaseFirestore>(FirebaseFirestore::class.java)
+    }
 
     // Flag para controlar se já carregamos dados do Firestore
     private var isInitialized = false

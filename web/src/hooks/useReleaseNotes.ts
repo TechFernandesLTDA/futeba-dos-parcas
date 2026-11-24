@@ -59,19 +59,24 @@ export function useReleaseNotes() {
  * - é mais nova que [lastSeenVersion] (ainda não vista neste dispositivo);
  * - não é mais nova que [currentVersion] (não anuncia uma versão que o
  *   navegador ainda não está rodando).
+ *
+ * Primeira visita (sem [lastSeenVersion]): só a nota da versão atual (a mais
+ * recente até [currentVersion]) pode virar pop-up. Se ela não tem pop-up, não
+ * aparece nenhum, para uma nota antiga não se passar pela novidade da versão
+ * atual (#4613, mesma regra do Android e do iOS).
  */
 export function decideWhatsNewPopup(
   notes: ReleaseNote[],
   lastSeenVersion: string,
   currentVersion: string,
 ): ReleaseNote | null {
-  const sorted = [...notes].sort((a, b) => compareVersions(b.version, a.version));
+  const instaladas = [...notes]
+    .sort((a, b) => compareVersions(b.version, a.version))
+    .filter((note) => compareVersions(note.version, currentVersion) <= 0);
+  const candidatas = lastSeenVersion ? instaladas : instaladas.slice(0, 1);
   return (
-    sorted.find(
-      (note) =>
-        note.showPopup &&
-        isNewerVersion(note.version, lastSeenVersion) &&
-        compareVersions(note.version, currentVersion) <= 0,
+    candidatas.find(
+      (note) => note.showPopup && isNewerVersion(note.version, lastSeenVersion),
     ) ?? null
   );
 }
