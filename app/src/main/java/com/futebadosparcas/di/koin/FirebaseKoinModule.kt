@@ -5,7 +5,6 @@ import com.futebadosparcas.util.AnalyticsHelper
 import com.futebadosparcas.util.FirebaseRegions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.MemoryCacheSettings
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
@@ -14,48 +13,16 @@ import org.koin.dsl.module
 
 val firebaseKoinModule = module {
 
-    // ⚠️ ALTERNE AQUI: true = Banco Local (Emulador), false = Banco de Produção (Real)
-    val useEmulator = false
+    // #4612: emulador e cache são configurados em FirebaseInicial, chamado no começo
+    // do Application.onCreate, antes de qualquer uso. Aqui só se devolvem as
+    // instâncias padrão, já configuradas.
 
     single<FirebaseAuth> {
-        val auth = FirebaseAuth.getInstance()
-        if (com.futebadosparcas.BuildConfig.DEBUG && useEmulator) {
-            try {
-                auth.useEmulator("10.0.2.2", 9099)
-            } catch (e: Exception) {
-                // Ignorar se já conectado
-            }
-        }
-        auth
+        FirebaseAuth.getInstance()
     }
 
     single<FirebaseFirestore> {
-        val firestore = FirebaseFirestore.getInstance()
-        if (com.futebadosparcas.BuildConfig.DEBUG && useEmulator) {
-            try {
-                firestore.useEmulator("10.0.2.2", 8085)
-                val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
-                    .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
-                    .build()
-                firestore.firestoreSettings = settings
-            } catch (e: Exception) {
-                // Ignorar
-            }
-        } else {
-            try {
-                val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
-                    .setLocalCacheSettings(
-                        com.google.firebase.firestore.PersistentCacheSettings.newBuilder()
-                            .setSizeBytes(100L * 1024L * 1024L) // 100MB cache size
-                            .build()
-                    )
-                    .build()
-                firestore.firestoreSettings = settings
-            } catch (e: Exception) {
-                // Settings já configuradas
-            }
-        }
-        firestore
+        FirebaseFirestore.getInstance()
     }
 
     single<FirebaseMessaging> {
@@ -69,15 +36,7 @@ val firebaseKoinModule = module {
     }
 
     single<FirebaseStorage> {
-        val storage = FirebaseStorage.getInstance()
-        if (com.futebadosparcas.BuildConfig.DEBUG && useEmulator) {
-            try {
-                storage.useEmulator("10.0.2.2", 9199)
-            } catch (e: Exception) {
-                // Ignorar
-            }
-        }
-        storage
+        FirebaseStorage.getInstance()
     }
 
     // CMD-06: Provider para ProfilePhotoDataSource

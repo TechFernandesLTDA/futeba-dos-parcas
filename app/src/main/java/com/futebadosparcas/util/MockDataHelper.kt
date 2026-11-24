@@ -16,7 +16,9 @@ import com.futebadosparcas.data.util.toObjectsTolerant
  */
 object MockDataHelper {
 
-    private val firestore by lazy { FirebaseFirestore.getInstance() }
+    private val firestore by lazy {
+        org.koin.java.KoinJavaComponent.get<FirebaseFirestore>(FirebaseFirestore::class.java)
+    }
     private val auth by lazy { FirebaseAuth.getInstance() }
 
     // Nomes de jogadores brasileiros comuns
