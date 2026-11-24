@@ -7,7 +7,6 @@ import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
-import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 /**
@@ -68,8 +67,9 @@ data class AppNotification(
     @set:PropertyName("read_at")
     var readAt: Date? = null,
 
-    // Campo interno que recebe Timestamp ou Date do Firestore
-    @ServerTimestamp
+    // Campo interno que recebe Timestamp ou Date do Firestore.
+    // Sem @ServerTimestamp: o mapper só aceita a anotação em Date ou Timestamp, e num campo
+    // Any? ela faria toda leitura e gravação do modelo lançar exceção (#4592).
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAtRaw: Any? = null,
