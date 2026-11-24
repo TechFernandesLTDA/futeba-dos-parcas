@@ -9,9 +9,12 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.main.MainActivityCompose
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -78,8 +81,11 @@ class NextGameWidget : AppWidgetProvider() {
                 }
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Em caso de erro, mostra estado vazio
+                // Registra antes de mostrar o estado de erro, para a falha não sumir.
+                AppLogger.e(TAG, "Falha ao buscar o próximo jogo do widget", e)
                 val views = createErrorViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
@@ -104,28 +110,16 @@ class NextGameWidget : AppWidgetProvider() {
         val gameIds = confirmations.documents.mapNotNull { it.getString("game_id") }
         if (gameIds.isEmpty()) return null
 
-        // FIX #584/H6: 3 bugs corrigidos:
-        // 1. `whereIn("id", ...)` → campo `id` não existe nos docs Firestore;
-        //    correto é FieldPath.documentId().
-        // 2. `whereGreaterThanOrEqualTo("date", todayStr)` → campo correto é
-        //    `dateTime` (Date), não `date` (string).
-        // 3. `gameIds.take(10)` silenciosamente trunca; agora avisa se truncou.
-        if (gameIds.size > 10) {
-            android.util.Log.w(
-                "NextGameWidget",
-                "Truncating ${gameIds.size} confirmations to 10 (Firestore whereIn limit)"
-            )
+        // #4594: filtro por ID de documento não combina com desigualdade em `dateTime`
+        // (o Firestore recusa a consulta). Busca por ID em blocos, só com `status in`,
+        // e escolhe no cliente o jogo futuro mais próximo. Percorre todos os blocos,
+        // em vez de só as dez primeiras confirmações.
+        val candidatos = ProximoJogoWidget.blocos(gameIds).flatMap { bloco ->
+            buscarBloco(firestore, bloco)
         }
-        val games = firestore.collection("games")
-            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), gameIds.take(10))
-            .whereGreaterThanOrEqualTo("dateTime", today)
-            .whereIn("status", listOf("SCHEDULED", "CONFIRMED"))
-            .orderBy("dateTime", Query.Direction.ASCENDING)
-            .limit(1)
-            .get()
-            .await()
-
-        val game = games.documents.firstOrNull() ?: return null
+        val game = ProximoJogoWidget.escolherProximo(candidatos, today) { doc ->
+            runCatching { doc.getDate("dateTime") }.getOrNull()
+        } ?: return null
 
         return NextGameData(
             id = game.id,
@@ -136,6 +130,40 @@ class NextGameWidget : AppWidgetProvider() {
             confirmedCount = (game.get("confirmed_count") as? Long)?.toInt() ?: 0,
             maxPlayers = (game.get("max_players") as? Long)?.toInt() ?: 14
         )
+    }
+
+    /**
+     * Lê um bloco de até dez jogos ativos. Se um jogo do bloco não puder mais ser lido
+     * (grupo de que a pessoa saiu), as regras negam a consulta inteira; nesse caso lê
+     * os jogos um por um e ignora os negados.
+     */
+    private suspend fun buscarBloco(
+        firestore: FirebaseFirestore,
+        bloco: List<String>
+    ): List<DocumentSnapshot> {
+        val games = firestore.collection("games")
+        return try {
+            games.whereIn(FieldPath.documentId(), bloco)
+                .whereIn("status", ProximoJogoWidget.STATUS_ATIVOS)
+                .get()
+                .await()
+                .documents
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AppLogger.w(TAG) { "Bloco de jogos negado; lendo um por um: ${e.message}" }
+            bloco.mapNotNull { id ->
+                try {
+                    games.document(id).get().await().takeIf { doc ->
+                        doc.exists() && doc.getString("status") in ProximoJogoWidget.STATUS_ATIVOS
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }
     }
 
     private fun createGameViews(
@@ -231,6 +259,7 @@ class NextGameWidget : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "com.futebadosparcas.widget.ACTION_REFRESH"
+        private const val TAG = "NextGameWidget"
 
         /**
          * Atualiza todos os widgets do app.
