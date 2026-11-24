@@ -55,6 +55,11 @@ class GetUnseenReleaseNotesUseCase(
          * - tem `buildNumber` maior que [lastSeenBuild] (ainda não vista);
          * - tem `buildNumber` menor ou igual a [currentBuild] (não anuncia um
          *   build que o aparelho ainda não tem instalado).
+         *
+         * Instalação nova ([lastSeenBuild] = 0): só a nota da versão instalada
+         * (a mais recente até [currentBuild]) pode virar pop-up. Se ela não tem
+         * pop-up, não aparece nenhum: uma nota antiga não pode se passar pela
+         * novidade da versão instalada (#4613).
          */
         fun decide(
             notes: List<ReleaseNote>,
@@ -62,10 +67,10 @@ class GetUnseenReleaseNotesUseCase(
             currentBuild: Int,
         ): UnseenReleaseNotes {
             val sorted = notes.sortedByDescending { it.buildNumber }
-            val popup = sorted.firstOrNull { note ->
-                note.showPopup &&
-                    note.buildNumber > lastSeenBuild &&
-                    note.buildNumber <= currentBuild
+            val instaladas = sorted.filter { it.buildNumber <= currentBuild }
+            val candidatas = if (lastSeenBuild <= 0) instaladas.take(1) else instaladas
+            val popup = candidatas.firstOrNull { note ->
+                note.showPopup && note.buildNumber > lastSeenBuild
             }
             return UnseenReleaseNotes(notes = sorted, popupNote = popup)
         }

@@ -67,6 +67,55 @@ class GetUnseenReleaseNotesUseCaseTest {
     }
 
     @Test
+    fun `fresh install whose installed note has no popup shows no older note`() {
+        // #4613: 1.45.0 e 1.44.0 sem pop-up; o 1.43.0 tem, mas não é a versão instalada.
+        val notes = listOf(
+            note("1.45.0", 96, showPopup = false),
+            note("1.44.0", 94, showPopup = false),
+            note("1.43.0", 84, showPopup = true),
+        )
+
+        val result = GetUnseenReleaseNotesUseCase.decide(
+            notes = notes,
+            lastSeenBuild = 0,
+            currentBuild = 96,
+        )
+
+        assertNull(result.popupNote)
+        assertEquals(3, result.notes.size)
+    }
+
+    @Test
+    fun `fresh install ignores notes newer than installed when picking popup`() {
+        val notes = listOf(note("1.46.0", 97), note("1.45.0", 96))
+
+        val result = GetUnseenReleaseNotesUseCase.decide(
+            notes = notes,
+            lastSeenBuild = 0,
+            currentBuild = 96,
+        )
+
+        assertEquals(96, result.popupNote?.buildNumber)
+    }
+
+    @Test
+    fun `update still shows newest unseen popup note across skipped versions`() {
+        // Atualização (não instalação nova): a regra antiga continua valendo.
+        val notes = listOf(
+            note("1.45.0", 96, showPopup = false),
+            note("1.43.0", 84, showPopup = true),
+        )
+
+        val result = GetUnseenReleaseNotesUseCase.decide(
+            notes = notes,
+            lastSeenBuild = 83,
+            currentBuild = 96,
+        )
+
+        assertEquals(84, result.popupNote?.buildNumber)
+    }
+
+    @Test
     fun `note for a build newer than installed is not shown in popup`() {
         // buildNumber 51 existe no Firestore mas o aparelho está no 50.
         val notes = listOf(note("1.27.0", 51), note("1.26.0", 50))
