@@ -90,6 +90,11 @@ android {
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
+        // #4612: aponta o build de depuração para o Firebase Emulator Suite sem editar
+        // código (`./gradlew installDebug -Pfuteba.useEmulator=true`). Release e
+        // benchmark ficam sempre em false.
+        buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
+
         // Igual ao AndroidJUnitRunner; só aponta o app para o Firebase Emulator Suite
         // quando recebe `-e bateria true` (scripts/bateria/android.sh).
         testInstrumentationRunner = "com.futebadosparcas.bateria.BateriaTestRunner"
@@ -109,6 +114,8 @@ android {
 
     buildTypes {
         debug {
+            val usarEmulador = (findProperty("futeba.useEmulator") as String?).toBoolean()
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", usarEmulador.toString())
             manifestPlaceholders["ADMOB_APP_ID"] = admobTestAppId
             buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"$admobTestBannerUnit\"")
         }
