@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import org.koin.java.KoinJavaComponent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -95,7 +96,8 @@ class NextGameWidget : AppWidgetProvider() {
     private suspend fun fetchNextGame(): NextGameData? {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
-        val firestore = FirebaseFirestore.getInstance()
+        // Instância do Koin, já configurada no Application (emulador ou produção, #4612)
+        val firestore = KoinJavaComponent.get<FirebaseFirestore>(FirebaseFirestore::class.java)
         val today = Date()
 
         // Busca próximas confirmações do usuário

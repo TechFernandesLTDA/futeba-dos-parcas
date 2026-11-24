@@ -43,6 +43,13 @@ class FutebaApplication : Application(), Configuration.Provider {
             enableStrictMode()
         }
 
+        // #4612: emulador e cache do Firebase antes de qualquer uso (inclusive do Koin).
+        // Com o emulador pedido e a configuração falhando, o app para em vez de
+        // seguir falando com produção.
+        com.futebadosparcas.di.koin.FirebaseInicial.configurar(
+            usarEmulador = BuildConfig.DEBUG && BuildConfig.USE_FIREBASE_EMULATOR
+        )
+
         // Inicializar Koin.
         // PERF: logger do Koin só em debug. Em release o nível INFO gerava log de
         // carga de módulos no caminho crítico do cold start sem uso em produção.
