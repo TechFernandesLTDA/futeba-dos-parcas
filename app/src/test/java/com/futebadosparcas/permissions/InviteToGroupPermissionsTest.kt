@@ -163,4 +163,16 @@ class InviteToGroupPermissionsTest {
         assertTrue(result.isFailure)
         coVerify(exactly = 0) { groupRepository.createGroupInvite(any()) }
     }
+
+    @Test
+    fun inviteToGroup_falhaAoVerificarConvitePendente_negaConviteEmVezDeCriar() = runTest {
+        // Esperado: se a checagem de convite pendente falha, não se cria um convite duplicado.
+        coEvery { groupRepository.hasPendingGroupInvite("group-1", "invitee-1") } returns
+            Result.failure(Exception("rede indisponível"))
+
+        val result = convidar()
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { groupRepository.createGroupInvite(any()) }
+    }
 }

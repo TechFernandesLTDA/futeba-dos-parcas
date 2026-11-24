@@ -82,7 +82,12 @@ class InviteToGroupUseCase constructor(
             params.groupId,
             invitedUserId
         )
-        if (existingInviteResult.isSuccess && existingInviteResult.getOrDefault(false)) {
+        if (existingInviteResult.isFailure) {
+            // Falha na checagem não pode virar "não há convite": o convite não é criado.
+            throw existingInviteResult.exceptionOrNull()
+                ?: Exception("Erro ao verificar convite pendente")
+        }
+        if (existingInviteResult.getOrDefault(false)) {
             throw InviteToGroupException("Já existe um convite pendente para este usuário")
         }
 
