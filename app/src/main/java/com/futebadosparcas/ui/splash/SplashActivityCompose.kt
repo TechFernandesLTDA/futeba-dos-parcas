@@ -62,8 +62,10 @@ class SplashActivityCompose : AppCompatActivity() {
     private var destinationState: SplashDestination? by mutableStateOf(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Instala a splash screen do sistema (Android 12+)
-        installSplashScreen()
+        // Instala a splash screen do sistema (Android 12+) e a segura até o destino
+        // ser decidido (SplashStartupResolver sempre decide, com teto de tempo).
+        // PERF #4411: evita a splash duplicada (sistema + Compose com delay fixo).
+        installSplashScreen().setKeepOnScreenCondition { destinationState == null }
         // Edge-to-edge em todas as versões, como nas outras Activities (no Android 15+ já é o padrão).
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -111,8 +113,8 @@ class SplashActivityCompose : AppCompatActivity() {
                 AppLogger.e(TAG, "Falha ao decidir o destino da splash: ${e.message}", e)
                 SplashDecision(SplashDestination.Login, user = null)
             }
-            // PERF (spec PERF_ANDROID_OPTIMIZATIONS_2026_10_31): sem delay aqui; o
-            // SplashScreen mostra o brasão por 800 ms quando há usuário.
+            // PERF #4411: sem delay aqui nem na splash Compose; o keep da splash
+            // do sistema segura até o destino ser decidido.
             userState = decision.user
             destinationState = decision.destination
         }

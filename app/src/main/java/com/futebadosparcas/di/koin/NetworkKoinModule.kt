@@ -24,13 +24,9 @@ val networkKoinModule = module {
             .readTimeout(15L, TimeUnit.SECONDS)
             .writeTimeout(15L, TimeUnit.SECONDS)
             .addInterceptor(logging)
-            .addNetworkInterceptor { chain ->
-                val originalRequest = chain.request()
-                val requestWithGzip = originalRequest.newBuilder()
-                    .header("Accept-Encoding", "gzip, deflate")
-                    .build()
-                chain.proceed(requestWithGzip)
-            }
+            // PERF #4411: sem header manual `Accept-Encoding` — forçar gzip/deflate
+            // desliga a descompressão transparente do OkHttp. O cliente já negocia
+            // gzip sozinho e infla a resposta (ViaCEP incluído).
             .build()
     }
 

@@ -34,7 +34,6 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.theme.AppDimensions
 import com.futebadosparcas.util.LevelBadgeHelper
-import kotlinx.coroutines.delay
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -62,14 +61,14 @@ fun SplashScreen(
     // com teto de tempo). Antes a navegação dependia de `userChecked`, que só virava
     // true quando a leitura do usuário no Firestore retornava (spec
     // BUGFIX_2026-11-09_SPLASH_TRAVADA_REVISAO_PLAY).
+    // PERF #4411: sem delay(800) artificial — o brasão nasce visível e o keep da
+    // splash do sistema (SplashActivityCompose) já segura até o destino existir.
     LaunchedEffect(destination) {
         val target = destination ?: return@LaunchedEffect
         if (hasNavigated) return@LaunchedEffect
         if (user != null) {
-            // Animação de aparecimento do brasão
             badgeAlpha = 1f
             badgeScale = 1f
-            delay(800)
         }
         hasNavigated = true
         onNavigate(target)
