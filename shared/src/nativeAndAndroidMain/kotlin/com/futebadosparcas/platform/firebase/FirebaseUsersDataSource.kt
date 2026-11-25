@@ -416,16 +416,16 @@ internal class FirebaseUsersDataSource(
 
             val mergedUser = if (privateDoc.exists) {
                 publicUser.copy(
-                    email = privateDoc.get<String?>("email") ?: publicUser.email,
-                    fcmToken = privateDoc.get<String?>("fcm_token")
+                    email = privateDoc.tryGet<String>("email") ?: publicUser.email,
+                    fcmToken = privateDoc.tryGet<String>("fcm_token")
                         ?: publicUser.fcmToken,
-                    birthDate = (privateDoc.get<Long?>("birth_date"))
+                    birthDate = (privateDoc.tryGet<Long>("birth_date"))
                         ?: publicUser.birthDate,
-                    heightCm = (privateDoc.get<Long?>("height_cm"))?.toInt()
+                    heightCm = (privateDoc.tryGet<Long>("height_cm"))?.toInt()
                         ?: publicUser.heightCm,
-                    weightKg = (privateDoc.get<Long?>("weight_kg"))?.toInt()
+                    weightKg = (privateDoc.tryGet<Long>("weight_kg"))?.toInt()
                         ?: publicUser.weightKg,
-                    gender = privateDoc.get<String?>("gender")
+                    gender = privateDoc.tryGet<String>("gender")
                         ?: publicUser.gender,
                 )
             } else {
@@ -760,11 +760,11 @@ internal class FirebaseUsersDataSource(
                 if (!doc.exists) return@mapNotNull null
                 FavoriteTeam(
                     id = doc.id,
-                    name = doc.get<String?>("name") ?: "",
-                    badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
-                    shortName = doc.get<String?>("short_name") ?: doc.get<String?>("shortName"),
-                    category = doc.get<String?>("category"),
-                    state = doc.get<String?>("state")
+                    name = doc.tryGet<String>("name") ?: "",
+                    badgeUrl = doc.tryGet<String>("badge_url") ?: doc.tryGet<String>("badgeUrl"),
+                    shortName = doc.tryGet<String>("short_name") ?: doc.tryGet<String>("shortName"),
+                    category = doc.tryGet<String>("category"),
+                    state = doc.tryGet<String>("state")
                 )
             }
             Result.success(teams)
@@ -786,11 +786,11 @@ internal class FirebaseUsersDataSource(
 
             val team = FavoriteTeam(
                 id = doc.id,
-                name = doc.get<String?>("name") ?: "",
-                badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
-                shortName = doc.get<String?>("short_name") ?: doc.get<String?>("shortName"),
-                category = doc.get<String?>("category"),
-                state = doc.get<String?>("state")
+                name = doc.tryGet<String>("name") ?: "",
+                badgeUrl = doc.tryGet<String>("badge_url") ?: doc.tryGet<String>("badgeUrl"),
+                shortName = doc.tryGet<String>("short_name") ?: doc.tryGet<String>("shortName"),
+                category = doc.tryGet<String>("category"),
+                state = doc.tryGet<String>("state")
             )
             Result.success(team)
         } catch (e: Exception) {
@@ -955,7 +955,7 @@ internal class FirebaseUsersDataSource(
         firestore.collection("notifications").where { "user_id" equalTo userId }
             .orderBy("created_at", Direction.DESCENDING).limit(limit).snapshots()
             .collect { emit(it.documents.mapNotNull { d -> d.toAppNotificationOrNull() }) }
-    }.catch { emit(emptyList()) }
+    }.catch { e -> println("FirebaseDataSource: erro ao observar notificações: ${e.message}"); emit(emptyList()) }
 
     suspend fun getUnreadNotifications(): Result<List<AppNotification>> {
         return try {

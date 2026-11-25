@@ -20,29 +20,29 @@ internal fun DocumentSnapshot.toCashboxEntryOrNull(): CashboxEntry? {
         // Fase 1 (compat read) BUGFIX_CASHBOX_DOUBLE_AND_TIMESTAMP:
         // Aceita amount_cents (Long, novo) OU amount (Double, legacy).
         // Quando ambos presentes, prefere amount_cents (autoritativo).
-        val amountCents = get<Long?>("amount_cents")
+        val amountCents = tryGet<Long>("amount_cents")
         val amount = amountCents?.let { it / 100.0 }
-            ?: get<Double?>("amount")
+            ?: tryGet<Double>("amount")
             ?: 0.0
         CashboxEntry(
             id = id,
-            type = get<String?>("type") ?: CashboxEntryType.INCOME.name,
-            category = get<String?>("category") ?: CashboxCategory.OTHER.name,
-            customCategory = get<String?>("custom_category"),
+            type = tryGet<String>("type") ?: CashboxEntryType.INCOME.name,
+            category = tryGet<String>("category") ?: CashboxCategory.OTHER.name,
+            customCategory = tryGet<String>("custom_category"),
             amount = amount,
-            description = get<String?>("description") ?: "",
-            createdById = get<String?>("created_by_id") ?: "",
-            createdByName = get<String?>("created_by_name") ?: "",
+            description = tryGet<String>("description") ?: "",
+            createdById = tryGet<String>("created_by_id") ?: "",
+            createdByName = tryGet<String>("created_by_name") ?: "",
             referenceDate = getDateFieldAsEpochMs("reference_date")
                 ?: kotlinx.datetime.Clock.System.now().toEpochMilliseconds(),
             createdAt = getDateFieldAsEpochMs("created_at"),
-            playerId = get<String?>("player_id"),
-            playerName = get<String?>("player_name"),
-            gameId = get<String?>("game_id"),
-            receiptUrl = get<String?>("receipt_url"),
-            status = get<String?>("status") ?: CashboxAppStatus.ACTIVE.name,
+            playerId = tryGet<String>("player_id"),
+            playerName = tryGet<String>("player_name"),
+            gameId = tryGet<String>("game_id"),
+            receiptUrl = tryGet<String>("receipt_url"),
+            status = tryGet<String>("status") ?: CashboxAppStatus.ACTIVE.name,
             voidedAt = getDateFieldAsEpochMs("voided_at"),
-            voidedBy = get<String?>("voided_by")
+            voidedBy = tryGet<String>("voided_by")
         )
     } catch (e: Exception) {
         println("CashboxFirebaseExt: Erro ao converter documento $id: ${e.message}")
@@ -85,11 +85,11 @@ internal fun DocumentSnapshot.toCashboxSummaryOrNull(): CashboxSummary? {
 
     return try {
         CashboxSummary(
-            balance = get<Double?>("balance") ?: 0.0,
-            totalIncome = get<Double?>("total_income") ?: 0.0,
-            totalExpense = get<Double?>("total_expense") ?: 0.0,
+            balance = tryGet<Double>("balance") ?: 0.0,
+            totalIncome = tryGet<Double>("total_income") ?: 0.0,
+            totalExpense = tryGet<Double>("total_expense") ?: 0.0,
             lastEntryAt = getDateFieldAsEpochMs("last_entry_at"),
-            entryCount = get<Long?>("entry_count")?.toInt() ?: 0
+            entryCount = tryGet<Long>("entry_count")?.toInt() ?: 0
         )
     } catch (e: Exception) {
         println("CashboxFirebaseExt: Erro ao converter summary: ${e.message}")

@@ -30,41 +30,41 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.safeInt(field: Stri
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
     if (!exists) return null
     return User(
-        id = id, email = get<String?>("email") ?: "", name = get<String?>("name") ?: "",
-        phone = get<String?>("phone"), nickname = get<String?>("nickname"),
-        photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
-        fcmToken = get<String?>("fcm_token") ?: get<String?>("fcmToken"),
-        isSearchable = get<Boolean?>("is_searchable") ?: get<Boolean?>("isSearchable") ?: true,
-        isProfilePublic = get<Boolean?>("is_profile_public") ?: get<Boolean?>("isProfilePublic") ?: true,
-        role = get<String?>("role") ?: UserRole.PLAYER.name,
+        id = id, email = tryGet<String>("email") ?: "", name = tryGet<String>("name") ?: "",
+        phone = tryGet<String>("phone"), nickname = tryGet<String>("nickname"),
+        photoUrl = tryGet<String>("photo_url") ?: tryGet<String>("photoUrl"),
+        fcmToken = tryGet<String>("fcm_token") ?: tryGet<String>("fcmToken"),
+        isSearchable = tryGet<Boolean>("is_searchable") ?: tryGet<Boolean>("isSearchable") ?: true,
+        isProfilePublic = tryGet<Boolean>("is_profile_public") ?: tryGet<Boolean>("isProfilePublic") ?: true,
+        role = tryGet<String>("role") ?: UserRole.PLAYER.name,
         createdAt = safeLong("created_at") ?: safeLong("createdAt"),
         updatedAt = safeLong("updated_at") ?: safeLong("updatedAt"),
-        strikerRating = get<Double?>("striker_rating") ?: get<Double?>("strikerRating") ?: 0.0,
-        midRating = get<Double?>("mid_rating") ?: get<Double?>("midRating") ?: 0.0,
-        defenderRating = get<Double?>("defender_rating") ?: get<Double?>("defenderRating") ?: 0.0,
-        gkRating = get<Double?>("gk_rating") ?: get<Double?>("gkRating") ?: 0.0,
-        strikerRatingSet = get<Boolean?>("striker_rating_set") ?: get<Boolean?>("strikerRatingSet") ?: false,
-        midRatingSet = get<Boolean?>("mid_rating_set") ?: get<Boolean?>("midRatingSet") ?: false,
-        defenderRatingSet = get<Boolean?>("defender_rating_set") ?: get<Boolean?>("defenderRatingSet") ?: false,
-        gkRatingSet = get<Boolean?>("gk_rating_set") ?: get<Boolean?>("gkRatingSet") ?: false,
-        preferredPosition = get<String?>("preferred_position") ?: get<String?>("preferredPosition"),
+        strikerRating = tryGet<Double>("striker_rating") ?: tryGet<Double>("strikerRating") ?: 0.0,
+        midRating = tryGet<Double>("mid_rating") ?: tryGet<Double>("midRating") ?: 0.0,
+        defenderRating = tryGet<Double>("defender_rating") ?: tryGet<Double>("defenderRating") ?: 0.0,
+        gkRating = tryGet<Double>("gk_rating") ?: tryGet<Double>("gkRating") ?: 0.0,
+        strikerRatingSet = tryGet<Boolean>("striker_rating_set") ?: tryGet<Boolean>("strikerRatingSet") ?: false,
+        midRatingSet = tryGet<Boolean>("mid_rating_set") ?: tryGet<Boolean>("midRatingSet") ?: false,
+        defenderRatingSet = tryGet<Boolean>("defender_rating_set") ?: tryGet<Boolean>("defenderRatingSet") ?: false,
+        gkRatingSet = tryGet<Boolean>("gk_rating_set") ?: tryGet<Boolean>("gkRatingSet") ?: false,
+        preferredPosition = tryGet<String>("preferred_position") ?: tryGet<String>("preferredPosition"),
         preferredFieldTypes = ((getStringList("preferred_field_types") ?: getStringList("preferredFieldTypes")))?.mapNotNull { item ->
             (item as? String)?.let { name -> try { FieldType.valueOf(name) } catch (e: Exception) { null } }
         } ?: emptyList(),
-        favoriteTeam = get<String?>("favorite_team") ?: get<String?>("favoriteTeam"),
+        favoriteTeam = tryGet<String>("favorite_team") ?: tryGet<String>("favoriteTeam"),
         birthDate = safeLong("birth_date") ?: safeLong("birthDate"),
-        gender = get<String?>("gender"), heightCm = safeInt("height_cm") ?: safeInt("heightCm"),
+        gender = tryGet<String>("gender"), heightCm = safeInt("height_cm") ?: safeInt("heightCm"),
         weightKg = safeInt("weight_kg") ?: safeInt("weightKg"),
-        dominantFoot = get<String?>("dominant_foot") ?: get<String?>("dominantFoot"),
-        primaryPosition = get<String?>("primary_position") ?: get<String?>("primaryPosition"),
-        secondaryPosition = get<String?>("secondary_position") ?: get<String?>("secondaryPosition"),
-        playStyle = get<String?>("play_style") ?: get<String?>("playStyle"),
+        dominantFoot = tryGet<String>("dominant_foot") ?: tryGet<String>("dominantFoot"),
+        primaryPosition = tryGet<String>("primary_position") ?: tryGet<String>("primaryPosition"),
+        secondaryPosition = tryGet<String>("secondary_position") ?: tryGet<String>("secondaryPosition"),
+        playStyle = tryGet<String>("play_style") ?: tryGet<String>("playStyle"),
         experienceYears = safeInt("experience_years") ?: safeInt("experienceYears"),
         level = safeInt("level") ?: 1,
         experiencePoints = safeLong("experience_points") ?: safeLong("experiencePoints") ?: 0L,
         milestonesAchieved = ((getStringList("milestones_achieved") ?: getStringList("milestonesAchieved")))?.mapNotNull { it as? String } ?: emptyList(),
-        autoStrikerRating = get<Double?>("auto_striker_rating") ?: 0.0, autoMidRating = get<Double?>("auto_mid_rating") ?: 0.0,
-        autoDefenderRating = get<Double?>("auto_defender_rating") ?: 0.0, autoGkRating = get<Double?>("auto_gk_rating") ?: 0.0,
+        autoStrikerRating = tryGet<Double>("auto_striker_rating") ?: 0.0, autoMidRating = tryGet<Double>("auto_mid_rating") ?: 0.0,
+        autoDefenderRating = tryGet<Double>("auto_defender_rating") ?: 0.0, autoGkRating = tryGet<Double>("auto_gk_rating") ?: 0.0,
         autoRatingSamples = safeInt("auto_rating_samples") ?: 0
     )
 }
@@ -72,67 +72,67 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): Use
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Game? {
     if (!exists) return null
     return Game(
-        id = id, scheduleId = get<String?>("schedule_id") ?: get<String?>("scheduleId") ?: "",
-        date = get<String?>("date") ?: "", time = get<String?>("time") ?: "",
-        endTime = get<String?>("end_time") ?: get<String?>("endTime") ?: "",
-        status = get<String?>("status") ?: GameStatus.SCHEDULED.name,
+        id = id, scheduleId = tryGet<String>("schedule_id") ?: tryGet<String>("scheduleId") ?: "",
+        date = tryGet<String>("date") ?: "", time = tryGet<String>("time") ?: "",
+        endTime = tryGet<String>("end_time") ?: tryGet<String>("endTime") ?: "",
+        status = tryGet<String>("status") ?: GameStatus.SCHEDULED.name,
         maxPlayers = safeInt("max_players") ?: safeInt("maxPlayers") ?: 14,
         maxGoalkeepers = safeInt("max_goalkeepers") ?: safeInt("maxGoalkeepers") ?: 3,
         playersCount = safeInt("players_count") ?: safeInt("playersCount") ?: 0,
         goalkeepersCount = safeInt("goalkeepers_count") ?: safeInt("goalkeepersCount") ?: 0,
-        dailyPrice = get<Double?>("daily_price") ?: get<Double?>("dailyPrice") ?: 0.0,
-        totalCost = get<Double?>("total_cost") ?: get<Double?>("totalCost") ?: 0.0,
-        pixKey = get<String?>("pix_key") ?: get<String?>("pixKey") ?: "",
+        dailyPrice = tryGet<Double>("daily_price") ?: tryGet<Double>("dailyPrice") ?: 0.0,
+        totalCost = tryGet<Double>("total_cost") ?: tryGet<Double>("totalCost") ?: 0.0,
+        pixKey = tryGet<String>("pix_key") ?: tryGet<String>("pixKey") ?: "",
         numberOfTeams = safeInt("number_of_teams") ?: safeInt("numberOfTeams") ?: 2,
-        ownerId = get<String?>("owner_id") ?: get<String?>("ownerId") ?: "",
-        ownerName = get<String?>("owner_name") ?: get<String?>("ownerName") ?: "",
-        locationId = get<String?>("location_id") ?: get<String?>("locationId") ?: "",
-        fieldId = get<String?>("field_id") ?: get<String?>("fieldId") ?: "",
-        locationName = get<String?>("location_name") ?: get<String?>("locationName") ?: "",
-        locationAddress = get<String?>("location_address") ?: get<String?>("locationAddress") ?: "",
-        locationLat = get<Double?>("location_lat") ?: get<Double?>("locationLat"),
-        locationLng = get<Double?>("location_lng") ?: get<Double?>("locationLng"),
-        fieldName = get<String?>("field_name") ?: get<String?>("fieldName") ?: "",
-        gameType = get<String?>("game_type") ?: get<String?>("gameType") ?: "Society",
+        ownerId = tryGet<String>("owner_id") ?: tryGet<String>("ownerId") ?: "",
+        ownerName = tryGet<String>("owner_name") ?: tryGet<String>("ownerName") ?: "",
+        locationId = tryGet<String>("location_id") ?: tryGet<String>("locationId") ?: "",
+        fieldId = tryGet<String>("field_id") ?: tryGet<String>("fieldId") ?: "",
+        locationName = tryGet<String>("location_name") ?: tryGet<String>("locationName") ?: "",
+        locationAddress = tryGet<String>("location_address") ?: tryGet<String>("locationAddress") ?: "",
+        locationLat = tryGet<Double>("location_lat") ?: tryGet<Double>("locationLat"),
+        locationLng = tryGet<Double>("location_lng") ?: tryGet<Double>("locationLng"),
+        fieldName = tryGet<String>("field_name") ?: tryGet<String>("fieldName") ?: "",
+        gameType = tryGet<String>("game_type") ?: tryGet<String>("gameType") ?: "Society",
         // Genero/categoria do jogo (Fase 4b) — sem este campo o read KMP/iOS
         // perdia o gender (caia em MIXED). Literal "MIXED" = GameGender.MIXED.name.
-        gender = get<String?>("gender") ?: "MIXED",
-        recurrence = get<String?>("recurrence") ?: "none",
+        gender = tryGet<String>("gender") ?: "MIXED",
+        recurrence = tryGet<String>("recurrence") ?: "none",
         recurrenceIndex = safeInt("recurrence_index") ?: safeInt("recurrenceIndex"),
         recurrenceCount = safeInt("recurrence_count") ?: safeInt("recurrenceCount"),
-        recurrenceEndDate = get<String?>("recurrence_end_date") ?: get<String?>("recurrenceEndDate"),
-        visibility = get<String?>("visibility") ?: GameVisibility.GROUP_ONLY.name,
+        recurrenceEndDate = tryGet<String>("recurrence_end_date") ?: tryGet<String>("recurrenceEndDate"),
+        visibility = tryGet<String>("visibility") ?: GameVisibility.GROUP_ONLY.name,
         createdAt = safeLong("created_at") ?: safeLong("createdAt"),
-        xpProcessed = get<Boolean?>("xp_processed") ?: get<Boolean?>("xpProcessed") ?: false,
-        xpProcessing = get<Boolean?>("xp_processing") ?: get<Boolean?>("xpProcessing") ?: false,
-        xpRewardStatus = get<String?>("xp_reward_status") ?: get<String?>("xpRewardStatus"),
+        xpProcessed = tryGet<Boolean>("xp_processed") ?: tryGet<Boolean>("xpProcessed") ?: false,
+        xpProcessing = tryGet<Boolean>("xp_processing") ?: tryGet<Boolean>("xpProcessing") ?: false,
+        xpRewardStatus = tryGet<String>("xp_reward_status") ?: tryGet<String>("xpRewardStatus"),
         xpRewardHeldAt = safeLong("xp_reward_held_at") ?: safeLong("xpRewardHeldAt"),
         xpRewardHoldReasons = ((getStringList("xp_reward_hold_reasons")
             ?: getStringList("xpRewardHoldReasons")))?.mapNotNull { it as? String } ?: emptyList(),
-        xpRewardReviewDecision = get<String?>("xp_reward_review_decision") ?: get<String?>("xpRewardReviewDecision"),
+        xpRewardReviewDecision = tryGet<String>("xp_reward_review_decision") ?: tryGet<String>("xpRewardReviewDecision"),
         xpRewardReviewedAt = safeLong("xp_reward_reviewed_at") ?: safeLong("xpRewardReviewedAt"),
-        xpRewardReviewedBy = get<String?>("xp_reward_reviewed_by") ?: get<String?>("xpRewardReviewedBy"),
-        xpRewardReviewReason = get<String?>("xp_reward_review_reason") ?: get<String?>("xpRewardReviewReason"),
-        xpRewardReviewPreviousStatus = get<String?>("xp_reward_review_previous_status") ?: get<String?>("xpRewardReviewPreviousStatus"),
-        xpRewardReviewNewStatus = get<String?>("xp_reward_review_new_status") ?: get<String?>("xpRewardReviewNewStatus"),
-        validationStatus = get<String?>("validation_status") ?: get<String?>("validationStatus"),
+        xpRewardReviewedBy = tryGet<String>("xp_reward_reviewed_by") ?: tryGet<String>("xpRewardReviewedBy"),
+        xpRewardReviewReason = tryGet<String>("xp_reward_review_reason") ?: tryGet<String>("xpRewardReviewReason"),
+        xpRewardReviewPreviousStatus = tryGet<String>("xp_reward_review_previous_status") ?: tryGet<String>("xpRewardReviewPreviousStatus"),
+        xpRewardReviewNewStatus = tryGet<String>("xp_reward_review_new_status") ?: tryGet<String>("xpRewardReviewNewStatus"),
+        validationStatus = tryGet<String>("validation_status") ?: tryGet<String>("validationStatus"),
         validationScore = safeInt("validation_score") ?: safeInt("validationScore"),
         validationVersion = safeInt("validation_version") ?: safeInt("validationVersion"),
         validationUpdatedAt = safeLong("validation_updated_at") ?: safeLong("validationUpdatedAt"),
-        validationMode = get<String?>("validation_mode") ?: get<String?>("validationMode"),
+        validationMode = tryGet<String>("validation_mode") ?: tryGet<String>("validationMode"),
         validationReasons = ((getStringList("validation_reasons")
             ?: getStringList("validationReasons")))?.mapNotNull { it as? String } ?: emptyList(),
-        mvpId = get<String?>("mvp_id") ?: get<String?>("mvpId"),
-        bestGkId = get<String?>("best_gk_id") ?: get<String?>("bestGkId"),
-        worstPlayerId = get<String?>("worst_player_id") ?: get<String?>("worstPlayerId"),
+        mvpId = tryGet<String>("mvp_id") ?: tryGet<String>("mvpId"),
+        bestGkId = tryGet<String>("best_gk_id") ?: tryGet<String>("bestGkId"),
+        worstPlayerId = tryGet<String>("worst_player_id") ?: tryGet<String>("worstPlayerId"),
         mvpVotes = safeInt("mvp_votes") ?: safeInt("mvpVotes") ?: 0,
         mvpTotalVotes = safeInt("mvp_total_votes") ?: safeInt("mvpTotalVotes") ?: 0,
         bestGkVotes = safeInt("best_gk_votes") ?: safeInt("bestGkVotes") ?: 0,
         bestGkTotalVotes = safeInt("best_gk_total_votes") ?: safeInt("bestGkTotalVotes") ?: 0,
         worstPlayerVotes = safeInt("worst_player_votes") ?: safeInt("worstPlayerVotes") ?: 0,
         worstPlayerTotalVotes = safeInt("worst_player_total_votes") ?: safeInt("worstPlayerTotalVotes") ?: 0,
-        votingStatus = get<String?>("voting_status") ?: get<String?>("votingStatus"),
-        votingConcluded = get<Boolean?>("voting_concluded") ?: get<Boolean?>("votingConcluded") ?: false,
+        votingStatus = tryGet<String>("voting_status") ?: tryGet<String>("votingStatus"),
+        votingConcluded = tryGet<Boolean>("voting_concluded") ?: tryGet<Boolean>("votingConcluded") ?: false,
         votingConcludedAt = safeLong("voting_concluded_at") ?: safeLong("votingConcludedAt"),
         votingSubmittedCount = safeInt("voting_submitted_count") ?: safeInt("votingSubmittedCount") ?: 0,
         voteResultReactions = (getLooseMap("vote_result_reactions")
@@ -143,40 +143,40 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameOrNull(): Gam
             }
             ?.toMap()
             .orEmpty(),
-        winnerTeam = get<String?>("winner_team") ?: get<String?>("winnerTeam"),
+        winnerTeam = tryGet<String>("winner_team") ?: tryGet<String>("winnerTeam"),
         team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0,
         team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0,
-        team1Name = get<String?>("team1_name") ?: get<String?>("team1Name") ?: "Time 1",
-        team2Name = get<String?>("team2_name") ?: get<String?>("team2Name") ?: "Time 2",
-        groupId = get<String?>("group_id") ?: get<String?>("groupId"),
-        groupName = get<String?>("group_name") ?: get<String?>("groupName")
+        team1Name = tryGet<String>("team1_name") ?: tryGet<String>("team1Name") ?: "Time 1",
+        team2Name = tryGet<String>("team2_name") ?: tryGet<String>("team2Name") ?: "Time 2",
+        groupId = tryGet<String>("group_id") ?: tryGet<String>("groupId"),
+        groupName = tryGet<String>("group_name") ?: tryGet<String>("groupName")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameConfirmationOrNull(): GameConfirmation? {
     if (!exists) return null
     return GameConfirmation(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        userName = get<String?>("user_name") ?: get<String?>("userName") ?: "",
-        userPhoto = get<String?>("user_photo") ?: get<String?>("userPhoto"),
-        position = get<String?>("position") ?: "FIELD",
-        teamId = get<String?>("team_id") ?: get<String?>("teamId"),
-        status = get<String?>("status") ?: ConfirmationStatus.CONFIRMED.name,
-        paymentStatus = get<String?>("payment_status") ?: get<String?>("paymentStatus") ?: PaymentStatus.PENDING.name,
-        isCasualPlayer = get<Boolean?>("is_casual_player") ?: get<Boolean?>("isCasualPlayer") ?: false,
+        id = id, gameId = tryGet<String>("game_id") ?: tryGet<String>("gameId") ?: "",
+        userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: "",
+        userName = tryGet<String>("user_name") ?: tryGet<String>("userName") ?: "",
+        userPhoto = tryGet<String>("user_photo") ?: tryGet<String>("userPhoto"),
+        position = tryGet<String>("position") ?: "FIELD",
+        teamId = tryGet<String>("team_id") ?: tryGet<String>("teamId"),
+        status = tryGet<String>("status") ?: ConfirmationStatus.CONFIRMED.name,
+        paymentStatus = tryGet<String>("payment_status") ?: tryGet<String>("paymentStatus") ?: PaymentStatus.PENDING.name,
+        isCasualPlayer = tryGet<Boolean>("is_casual_player") ?: tryGet<Boolean>("isCasualPlayer") ?: false,
         goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0, saves = safeInt("saves") ?: 0,
         yellowCards = safeInt("yellow_cards") ?: safeInt("yellowCards") ?: 0,
         redCards = safeInt("red_cards") ?: safeInt("redCards") ?: 0,
-        nickname = get<String?>("nickname"), xpEarned = safeInt("xp_earned") ?: safeInt("xpEarned") ?: 0,
-        isMvp = get<Boolean?>("is_mvp") ?: get<Boolean?>("isMvp") ?: false,
-        isBestGk = get<Boolean?>("is_best_gk") ?: get<Boolean?>("isBestGk") ?: false,
-        isWorstPlayer = get<Boolean?>("is_worst_player") ?: get<Boolean?>("isWorstPlayer") ?: false,
+        nickname = tryGet<String>("nickname"), xpEarned = safeInt("xp_earned") ?: safeInt("xpEarned") ?: 0,
+        isMvp = tryGet<Boolean>("is_mvp") ?: tryGet<Boolean>("isMvp") ?: false,
+        isBestGk = tryGet<Boolean>("is_best_gk") ?: tryGet<Boolean>("isBestGk") ?: false,
+        isWorstPlayer = tryGet<Boolean>("is_worst_player") ?: tryGet<Boolean>("isWorstPlayer") ?: false,
         confirmedAt = safeLong("confirmed_at") ?: safeLong("confirmedAt"),
-        partialPayment = get<Double?>("partial_payment") ?: get<Double?>("partialPayment") ?: 0.0,
-        expectedPayment = get<Double?>("expected_payment") ?: get<Double?>("expectedPayment") ?: 0.0,
+        partialPayment = tryGet<Double>("partial_payment") ?: tryGet<Double>("partialPayment") ?: 0.0,
+        expectedPayment = tryGet<Double>("expected_payment") ?: tryGet<Double>("expectedPayment") ?: 0.0,
         expectedPaymentCents = safeLong("expected_payment_cents") ?: safeLong("expectedPaymentCents") ?: 0,
-        wasPresent = get<Boolean?>("was_present") ?: get<Boolean?>("wasPresent") ?: false
+        wasPresent = tryGet<Boolean>("was_present") ?: tryGet<Boolean>("wasPresent") ?: false
     )
 }
 
@@ -185,7 +185,7 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(
     // Suporta tanto os nomes snake_case (escritor Android legado) quanto os nomes
     // camelCase gravados pelas Cloud Functions (`functions/src/index.ts`, `mvp-voting.ts`).
     return Statistics(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: id,
+        id = id, userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: id,
         totalGames = safeInt("total_games") ?: safeInt("totalGames") ?: 0,
         totalGoals = safeInt("total_goals") ?: safeInt("totalGoals") ?: 0,
         totalAssists = safeInt("total_assists") ?: safeInt("totalAssists") ?: 0,
@@ -208,11 +208,11 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toStatisticsOrNull(
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserGroupOrNull(): UserGroup? {
     if (!exists) return null
     return UserGroup(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        groupId = get<String?>("group_id") ?: get<String?>("groupId") ?: "",
-        groupName = get<String?>("group_name") ?: get<String?>("groupName") ?: "",
-        groupPhoto = get<String?>("group_photo") ?: get<String?>("groupPhoto"),
-        role = get<String?>("role") ?: GroupMemberRole.MEMBER.name,
+        id = id, userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: "",
+        groupId = tryGet<String>("group_id") ?: tryGet<String>("groupId") ?: "",
+        groupName = tryGet<String>("group_name") ?: tryGet<String>("groupName") ?: "",
+        groupPhoto = tryGet<String>("group_photo") ?: tryGet<String>("groupPhoto"),
+        role = tryGet<String>("role") ?: GroupMemberRole.MEMBER.name,
         joinedAt = safeLong("joined_at") ?: safeLong("joinedAt")
     )
 }
@@ -220,8 +220,8 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserGroupOrNull()
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toTeamOrNull(): Team? {
     if (!exists) return null
     return Team(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        name = get<String?>("name") ?: "", color = get<String?>("color") ?: "",
+        id = id, gameId = tryGet<String>("game_id") ?: tryGet<String>("gameId") ?: "",
+        name = tryGet<String>("name") ?: "", color = tryGet<String>("color") ?: "",
         playerIds = (getStringList("player_ids") ?: getStringList("playerIds"))?.filterIsInstance<String>() ?: emptyList(),
         score = safeInt("score") ?: 0
     )
@@ -230,8 +230,8 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toTeamOrNull(): Tea
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): XpLog? {
     if (!exists) return null
     return XpLog(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
+        id = id, userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: "",
+        gameId = tryGet<String>("game_id") ?: tryGet<String>("gameId") ?: "",
         xpEarned = safeLong("xp_earned") ?: safeLong("xpEarned") ?: 0L,
         xpBefore = safeLong("xp_before") ?: safeLong("xpBefore") ?: 0L,
         xpAfter = safeLong("xp_after") ?: safeLong("xpAfter") ?: 0L,
@@ -261,8 +261,8 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): Xp
         xpLastMinuteSaver = safeInt("xp_last_minute_saver") ?: 0,
         xpWaitlistPromoted = safeInt("xp_waitlist_promoted") ?: 0,
         goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0, saves = safeInt("saves") ?: 0,
-        wasMvp = get<Boolean?>("was_mvp") ?: get<Boolean?>("wasMvp") ?: false,
-        gameResult = get<String?>("game_result") ?: get<String?>("gameResult") ?: "",
+        wasMvp = tryGet<Boolean>("was_mvp") ?: tryGet<Boolean>("wasMvp") ?: false,
+        gameResult = tryGet<String>("game_result") ?: tryGet<String>("gameResult") ?: "",
         milestonesUnlocked = (getStringList("milestones_unlocked") ?: getStringList("milestonesUnlocked"))?.filterIsInstance<String>() ?: emptyList(),
         createdAt = safeLong("created_at") ?: safeLong("createdAt")
     )
@@ -271,26 +271,26 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toXpLogOrNull(): Xp
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGameEventOrNull(): GameEvent? {
     if (!exists) return null
     return GameEvent(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
-        eventType = get<String?>("event_type") ?: get<String?>("eventType") ?: GameEventType.GOAL.name,
-        playerId = get<String?>("player_id") ?: get<String?>("playerId") ?: "",
-        playerName = get<String?>("player_name") ?: get<String?>("playerName") ?: "",
-        teamId = get<String?>("team_id") ?: get<String?>("teamId") ?: "",
-        assistedById = get<String?>("assisted_by_id") ?: get<String?>("assistedById"),
-        assistedByName = get<String?>("assisted_by_name") ?: get<String?>("assistedByName"),
-        minute = safeInt("minute") ?: 0, createdBy = get<String?>("created_by") ?: get<String?>("createdBy") ?: "",
+        id = id, gameId = tryGet<String>("game_id") ?: tryGet<String>("gameId") ?: "",
+        eventType = tryGet<String>("event_type") ?: tryGet<String>("eventType") ?: GameEventType.GOAL.name,
+        playerId = tryGet<String>("player_id") ?: tryGet<String>("playerId") ?: "",
+        playerName = tryGet<String>("player_name") ?: tryGet<String>("playerName") ?: "",
+        teamId = tryGet<String>("team_id") ?: tryGet<String>("teamId") ?: "",
+        assistedById = tryGet<String>("assisted_by_id") ?: tryGet<String>("assistedById"),
+        assistedByName = tryGet<String>("assisted_by_name") ?: tryGet<String>("assistedByName"),
+        minute = safeInt("minute") ?: 0, createdBy = tryGet<String>("created_by") ?: tryGet<String>("createdBy") ?: "",
         createdAt = safeLong("created_at") ?: safeLong("createdAt")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toLiveScoreOrNull(): LiveScore? {
     if (!exists) return null
-    val team1Id = get<String?>("team1_id") ?: get<String?>("team1Id") ?: ""
+    val team1Id = tryGet<String>("team1_id") ?: tryGet<String>("team1Id") ?: ""
     val team1Score = safeInt("team1_score") ?: safeInt("team1Score") ?: 0
-    val team2Id = get<String?>("team2_id") ?: get<String?>("team2Id") ?: ""
+    val team2Id = tryGet<String>("team2_id") ?: tryGet<String>("team2Id") ?: ""
     val team2Score = safeInt("team2_score") ?: safeInt("team2Score") ?: 0
     return LiveScore(
-        id = id, gameId = get<String?>("game_id") ?: get<String?>("gameId") ?: "",
+        id = id, gameId = tryGet<String>("game_id") ?: tryGet<String>("gameId") ?: "",
         // #3942: mapa canônico scores (2-4 times) com fallback legado team1/team2.
         scores = readScoresMap(team1Id, team1Score, team2Id, team2Score),
         team1Id = team1Id,
@@ -344,24 +344,24 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.readScoresMap(
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupOrNull(): Group? {
     if (!exists) return null
     return Group(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
-        photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
-        ownerId = get<String?>("owner_id") ?: get<String?>("ownerId") ?: "",
-        ownerName = get<String?>("owner_name") ?: get<String?>("ownerName") ?: "",
+        id = id, name = tryGet<String>("name") ?: "", description = tryGet<String>("description") ?: "",
+        photoUrl = tryGet<String>("photo_url") ?: tryGet<String>("photoUrl"),
+        ownerId = tryGet<String>("owner_id") ?: tryGet<String>("ownerId") ?: "",
+        ownerName = tryGet<String>("owner_name") ?: tryGet<String>("ownerName") ?: "",
         membersCount = safeInt("members_count") ?: safeInt("membersCount") ?: 0,
         gamesCount = safeInt("games_count") ?: safeInt("gamesCount") ?: 0,
-        isPublic = get<Boolean?>("is_public") ?: get<Boolean?>("isPublic") ?: false,
-        inviteCode = get<String?>("invite_code") ?: get<String?>("inviteCode"),
-        pixKey = get<String?>("pix_key") ?: get<String?>("pixKey"),
-        defaultLocationId = get<String?>("default_location_id") ?: get<String?>("defaultLocationId"),
-        defaultLocationName = get<String?>("default_location_name") ?: get<String?>("defaultLocationName"),
+        isPublic = tryGet<Boolean>("is_public") ?: tryGet<Boolean>("isPublic") ?: false,
+        inviteCode = tryGet<String>("invite_code") ?: tryGet<String>("inviteCode"),
+        pixKey = tryGet<String>("pix_key") ?: tryGet<String>("pixKey"),
+        defaultLocationId = tryGet<String>("default_location_id") ?: tryGet<String>("defaultLocationId"),
+        defaultLocationName = tryGet<String>("default_location_name") ?: tryGet<String>("defaultLocationName"),
         defaultDayOfWeek = safeInt("default_day_of_week") ?: safeInt("defaultDayOfWeek"),
-        defaultTime = get<String?>("default_time") ?: get<String?>("defaultTime"),
+        defaultTime = tryGet<String>("default_time") ?: tryGet<String>("defaultTime"),
         defaultMaxPlayers = safeInt("default_max_players") ?: safeInt("defaultMaxPlayers") ?: 14,
-        defaultPrice = get<Double?>("default_price") ?: get<Double?>("defaultPrice") ?: 0.0,
+        defaultPrice = tryGet<Double>("default_price") ?: tryGet<Double>("defaultPrice") ?: 0.0,
         // Genero padrao do grupo (Fase 4b) — sem este campo a pre-selecao do
         // gender na criacao de jogo caia sempre em MIXED.
-        defaultGender = get<String?>("default_gender") ?: get<String?>("defaultGender"),
+        defaultGender = tryGet<String>("default_gender") ?: tryGet<String>("defaultGender"),
         createdAt = safeLong("created_at") ?: safeLong("createdAt"),
         updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
     )
@@ -369,14 +369,14 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupOrNull(): Gr
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupMemberOrNull(): GroupMember? {
     if (!exists) return null
-    val userId = get<String?>("user_id") ?: get<String?>("userId") ?: id
+    val userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: id
     val groupIdFromPath = reference.parent.parent?.id ?: ""
     return GroupMember(
-        id = id, groupId = get<String?>("group_id") ?: get<String?>("groupId") ?: groupIdFromPath,
-        userId = userId, userName = get<String?>("user_name") ?: get<String?>("userName") ?: "",
-        userPhoto = get<String?>("user_photo") ?: get<String?>("userPhoto"),
-        role = get<String?>("role") ?: GroupMemberRole.MEMBER.name,
-        nickname = get<String?>("nickname"),
+        id = id, groupId = tryGet<String>("group_id") ?: tryGet<String>("groupId") ?: groupIdFromPath,
+        userId = userId, userName = tryGet<String>("user_name") ?: tryGet<String>("userName") ?: "",
+        userPhoto = tryGet<String>("user_photo") ?: tryGet<String>("userPhoto"),
+        role = tryGet<String>("role") ?: GroupMemberRole.MEMBER.name,
+        nickname = tryGet<String>("nickname"),
         joinedAt = safeLong("joined_at") ?: safeLong("joinedAt"),
         gamesPlayed = safeInt("games_played") ?: safeInt("gamesPlayed") ?: 0,
         goals = safeInt("goals") ?: 0, assists = safeInt("assists") ?: 0
@@ -385,41 +385,41 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupMemberOrNull
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toPaymentOrNull(): Payment? {
     if (!exists) return null
-    val typeStr = get<String?>("type") ?: PaymentType.DAILY.name
-    val statusStr = get<String?>("status") ?: PaymentStatus.PENDING.name
-    val methodStr = get<String?>("payment_method")
+    val typeStr = tryGet<String>("type") ?: PaymentType.DAILY.name
+    val statusStr = tryGet<String>("status") ?: PaymentStatus.PENDING.name
+    val methodStr = tryGet<String>("payment_method")
     return Payment(
-        id = id, userId = get<String?>("user_id") ?: "", gameId = get<String?>("game_id"),
-        scheduleId = get<String?>("schedule_id"),
+        id = id, userId = tryGet<String>("user_id") ?: "", gameId = tryGet<String>("game_id"),
+        scheduleId = tryGet<String>("schedule_id"),
         type = try { PaymentType.valueOf(typeStr) } catch (e: Exception) { PaymentType.DAILY },
-        amount = get<Double?>("amount") ?: 0.0,
+        amount = tryGet<Double>("amount") ?: 0.0,
         status = try { PaymentStatus.valueOf(statusStr) } catch (e: Exception) { PaymentStatus.PENDING },
         paymentMethod = methodStr?.let { try { PaymentMethod.valueOf(it) } catch (e: Exception) { null } },
-        dueDate = get<String?>("due_date") ?: "", paidAt = safeLong("paid_at"),
-        pixKey = get<String?>("pix_key"), pixQrcode = get<String?>("pix_qrcode"),
-        pixTxid = get<String?>("pix_txid"), receiptUrl = get<String?>("receipt_url"),
-        notes = get<String?>("notes"), createdAt = safeLong("created_at")
+        dueDate = tryGet<String>("due_date") ?: "", paidAt = safeLong("paid_at"),
+        pixKey = tryGet<String>("pix_key"), pixQrcode = tryGet<String>("pix_qrcode"),
+        pixTxid = tryGet<String>("pix_txid"), receiptUrl = tryGet<String>("receipt_url"),
+        notes = tryGet<String>("notes"), createdAt = safeLong("created_at")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toRankingStatisticsOrNull(): Statistics? {
     if (!exists) return null
     return Statistics(
-        id = id, userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-        totalGames = get<Long?>("totalGames")?.toInt() ?: get<Long?>("total_games")?.toInt() ?: 0,
-        totalGoals = get<Long?>("totalGoals")?.toInt() ?: get<Long?>("total_goals")?.toInt() ?: 0,
-        totalAssists = get<Long?>("totalAssists")?.toInt() ?: get<Long?>("total_assists")?.toInt() ?: 0,
-        totalSaves = get<Long?>("totalSaves")?.toInt() ?: get<Long?>("total_saves")?.toInt() ?: 0,
-        totalWins = get<Long?>("totalWins")?.toInt() ?: get<Long?>("total_wins")?.toInt() ?: 0,
-        totalDraws = get<Long?>("totalDraws")?.toInt() ?: get<Long?>("total_draws")?.toInt() ?: 0,
-        totalLosses = get<Long?>("totalLosses")?.toInt() ?: get<Long?>("total_losses")?.toInt() ?: 0,
-        mvpCount = get<Long?>("mvpCount")?.toInt() ?: get<Long?>("mvp_count")?.toInt() ?: 0,
-        bestGkCount = get<Long?>("bestGkCount")?.toInt() ?: get<Long?>("best_gk_count")?.toInt() ?: 0,
-        worstPlayerCount = get<Long?>("worstPlayerCount")?.toInt() ?: get<Long?>("worst_player_count")?.toInt() ?: 0,
-        currentStreak = get<Long?>("currentStreak")?.toInt() ?: get<Long?>("current_streak")?.toInt() ?: 0,
-        bestStreak = get<Long?>("bestStreak")?.toInt() ?: get<Long?>("best_streak")?.toInt() ?: 0,
-        yellowCards = get<Long?>("yellowCards")?.toInt() ?: get<Long?>("yellow_cards")?.toInt() ?: 0,
-        redCards = get<Long?>("redCards")?.toInt() ?: get<Long?>("red_cards")?.toInt() ?: 0,
+        id = id, userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: "",
+        totalGames = tryGet<Long>("totalGames")?.toInt() ?: tryGet<Long>("total_games")?.toInt() ?: 0,
+        totalGoals = tryGet<Long>("totalGoals")?.toInt() ?: tryGet<Long>("total_goals")?.toInt() ?: 0,
+        totalAssists = tryGet<Long>("totalAssists")?.toInt() ?: tryGet<Long>("total_assists")?.toInt() ?: 0,
+        totalSaves = tryGet<Long>("totalSaves")?.toInt() ?: tryGet<Long>("total_saves")?.toInt() ?: 0,
+        totalWins = tryGet<Long>("totalWins")?.toInt() ?: tryGet<Long>("total_wins")?.toInt() ?: 0,
+        totalDraws = tryGet<Long>("totalDraws")?.toInt() ?: tryGet<Long>("total_draws")?.toInt() ?: 0,
+        totalLosses = tryGet<Long>("totalLosses")?.toInt() ?: tryGet<Long>("total_losses")?.toInt() ?: 0,
+        mvpCount = tryGet<Long>("mvpCount")?.toInt() ?: tryGet<Long>("mvp_count")?.toInt() ?: 0,
+        bestGkCount = tryGet<Long>("bestGkCount")?.toInt() ?: tryGet<Long>("best_gk_count")?.toInt() ?: 0,
+        worstPlayerCount = tryGet<Long>("worstPlayerCount")?.toInt() ?: tryGet<Long>("worst_player_count")?.toInt() ?: 0,
+        currentStreak = tryGet<Long>("currentStreak")?.toInt() ?: tryGet<Long>("current_streak")?.toInt() ?: 0,
+        bestStreak = tryGet<Long>("bestStreak")?.toInt() ?: tryGet<Long>("best_streak")?.toInt() ?: 0,
+        yellowCards = tryGet<Long>("yellowCards")?.toInt() ?: tryGet<Long>("yellow_cards")?.toInt() ?: 0,
+        redCards = tryGet<Long>("redCards")?.toInt() ?: tryGet<Long>("red_cards")?.toInt() ?: 0,
         lastGameDate = safeLong("last_game_date") ?: safeLong("lastGameDate"),
         updatedAt = safeLong("updated_at") ?: safeLong("updatedAt")
     )
@@ -428,45 +428,45 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toRankingStatistics
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserStreakOrNull(): UserStreak? {
     if (!exists) return null
     return UserStreak(
-        id = id, userId = get<String?>("user_id") ?: "", scheduleId = get<String?>("schedule_id"),
-        currentStreak = get<Long?>("current_streak")?.toInt() ?: 0,
-        longestStreak = get<Long?>("longest_streak")?.toInt() ?: 0,
-        lastGameDate = get<String?>("last_game_date"), streakStartedAt = get<String?>("streak_started_at")
+        id = id, userId = tryGet<String>("user_id") ?: "", scheduleId = tryGet<String>("schedule_id"),
+        currentStreak = tryGet<Long>("current_streak")?.toInt() ?: 0,
+        longestStreak = tryGet<Long>("longest_streak")?.toInt() ?: 0,
+        lastGameDate = tryGet<String>("last_game_date"), streakStartedAt = tryGet<String>("streak_started_at")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toBadgeDefinitionOrNull(): BadgeDefinition? {
     if (!exists) return null
-    val categoryStr = get<String?>("category") ?: "PERFORMANCE"
-    val rarityStr = get<String?>("rarity") ?: "COMMON"
+    val categoryStr = tryGet<String>("category") ?: "PERFORMANCE"
+    val rarityStr = tryGet<String>("rarity") ?: "COMMON"
     return BadgeDefinition(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
-        emoji = get<String?>("emoji") ?: "",
+        id = id, name = tryGet<String>("name") ?: "", description = tryGet<String>("description") ?: "",
+        emoji = tryGet<String>("emoji") ?: "",
         category = try { BadgeCategory.valueOf(categoryStr) } catch (e: Exception) { BadgeCategory.PERFORMANCE },
         rarity = try { BadgeRarity.valueOf(rarityStr) } catch (e: Exception) { BadgeRarity.COMMON },
-        requiredValue = get<Long?>("required_value")?.toInt() ?: 1,
-        isHidden = get<Boolean?>("is_hidden") ?: false
+        requiredValue = tryGet<Long>("required_value")?.toInt() ?: 1,
+        isHidden = tryGet<Boolean>("is_hidden") ?: false
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserBadgeOrNull(): UserBadge? {
     if (!exists) return null
     return UserBadge(
-        id = id, userId = get<String?>("user_id") ?: "", badgeId = get<String?>("badge_id") ?: "",
+        id = id, userId = tryGet<String>("user_id") ?: "", badgeId = tryGet<String>("badge_id") ?: "",
         unlockedAt = safeLong("unlocked_at") ?: 0,
-        unlockCount = get<Long?>("unlock_count")?.toInt() ?: get<Long?>("count")?.toInt() ?: 1
+        unlockCount = tryGet<Long>("unlock_count")?.toInt() ?: tryGet<Long>("count")?.toInt() ?: 1
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonOrNull(): Season? {
     if (!exists) return null
     return Season(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
+        id = id, name = tryGet<String>("name") ?: "", description = tryGet<String>("description") ?: "",
         startDate = safeLong("start_date") ?: 0, endDate = safeLong("end_date") ?: 0,
-        isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: false,
+        isActive = tryGet<Boolean>("is_active") ?: tryGet<Boolean>("isActive") ?: false,
         createdAt = safeLong("created_at"), closedAt = safeLong("closed_at"),
-        totalParticipants = get<Long?>("total_participants")?.toInt() ?: 0,
-        totalGames = get<Long?>("total_games")?.toInt() ?: 0
+        totalParticipants = tryGet<Long>("total_participants")?.toInt() ?: 0,
+        totalGames = tryGet<Long>("total_games")?.toInt() ?: 0
     )
 }
 
@@ -500,61 +500,61 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toSeasonParticipati
         if (seg != null) (seg[key] as? Number)?.toInt() ?: 0 else flat()
 
     return SeasonParticipation(
-        id = id, seasonId = get<String?>("season_id") ?: "", userId = get<String?>("user_id") ?: "",
-        division = get<String?>("division") ?: LeagueDivision.BRONZE.name,
-        leagueRating = get<Long?>("league_rating")?.toInt() ?: 1000,
-        points = stat("points") { get<Long?>("points")?.toInt() ?: 0 },
-        gamesPlayed = stat("games_played") { get<Long?>("games_played")?.toInt() ?: 0 },
-        wins = stat("wins") { get<Long?>("wins")?.toInt() ?: 0 },
-        draws = stat("draws") { get<Long?>("draws")?.toInt() ?: 0 },
-        losses = stat("losses") { get<Long?>("losses")?.toInt() ?: 0 },
-        goals = stat("goals_scored") { get<Long?>("goals")?.toInt() ?: get<Long?>("goals_scored")?.toInt() ?: 0 },
-        assists = stat("assists") { get<Long?>("assists")?.toInt() ?: 0 },
-        saves = get<Long?>("saves")?.toInt() ?: 0,
-        mvpCount = stat("mvp_count") { get<Long?>("mvp_count")?.toInt() ?: 0 },
-        bestGkCount = get<Long?>("best_gk_count")?.toInt() ?: 0,
-        worstPlayerCount = get<Long?>("worst_player_count")?.toInt() ?: 0,
-        currentStreak = get<Long?>("current_streak")?.toInt() ?: 0,
-        bestStreak = get<Long?>("best_streak")?.toInt() ?: 0,
-        xpEarned = get<Long?>("xp_earned") ?: 0L,
+        id = id, seasonId = tryGet<String>("season_id") ?: "", userId = tryGet<String>("user_id") ?: "",
+        division = tryGet<String>("division") ?: LeagueDivision.BRONZE.name,
+        leagueRating = tryGet<Long>("league_rating")?.toInt() ?: 1000,
+        points = stat("points") { tryGet<Long>("points")?.toInt() ?: 0 },
+        gamesPlayed = stat("games_played") { tryGet<Long>("games_played")?.toInt() ?: 0 },
+        wins = stat("wins") { tryGet<Long>("wins")?.toInt() ?: 0 },
+        draws = stat("draws") { tryGet<Long>("draws")?.toInt() ?: 0 },
+        losses = stat("losses") { tryGet<Long>("losses")?.toInt() ?: 0 },
+        goals = stat("goals_scored") { tryGet<Long>("goals")?.toInt() ?: tryGet<Long>("goals_scored")?.toInt() ?: 0 },
+        assists = stat("assists") { tryGet<Long>("assists")?.toInt() ?: 0 },
+        saves = tryGet<Long>("saves")?.toInt() ?: 0,
+        mvpCount = stat("mvp_count") { tryGet<Long>("mvp_count")?.toInt() ?: 0 },
+        bestGkCount = tryGet<Long>("best_gk_count")?.toInt() ?: 0,
+        worstPlayerCount = tryGet<Long>("worst_player_count")?.toInt() ?: 0,
+        currentStreak = tryGet<Long>("current_streak")?.toInt() ?: 0,
+        bestStreak = tryGet<Long>("best_streak")?.toInt() ?: 0,
+        xpEarned = tryGet<Long>("xp_earned") ?: 0L,
         createdAt = safeLong("created_at"), updatedAt = safeLong("updated_at")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toWeeklyChallengeOrNull(): WeeklyChallenge? {
     if (!exists) return null
-    val typeStr = get<String?>("type") ?: "score_goals"
+    val typeStr = tryGet<String>("type") ?: "score_goals"
     return WeeklyChallenge(
-        id = id, name = get<String?>("name") ?: "", description = get<String?>("description") ?: "",
+        id = id, name = tryGet<String>("name") ?: "", description = tryGet<String>("description") ?: "",
         type = try { ChallengeType.valueOf(typeStr) } catch (e: Exception) { ChallengeType.SCORE_GOALS },
-        targetValue = get<Long?>("target_value")?.toInt() ?: 0,
-        xpReward = get<Long?>("xp_reward") ?: 100L,
-        startDate = get<String?>("start_date") ?: "", endDate = get<String?>("end_date") ?: "",
-        isActive = get<Boolean?>("is_active") ?: true, scheduleId = get<String?>("schedule_id")
+        targetValue = tryGet<Long>("target_value")?.toInt() ?: 0,
+        xpReward = tryGet<Long>("xp_reward") ?: 100L,
+        startDate = tryGet<String>("start_date") ?: "", endDate = tryGet<String>("end_date") ?: "",
+        isActive = tryGet<Boolean>("is_active") ?: true, scheduleId = tryGet<String>("schedule_id")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserChallengeProgressOrNull(): UserChallengeProgress? {
     if (!exists) return null
     return UserChallengeProgress(
-        id = id, userId = get<String?>("user_id") ?: "", challengeId = get<String?>("challenge_id") ?: "",
-        currentProgress = get<Long?>("current_progress")?.toInt() ?: 0,
-        isCompleted = get<Boolean?>("is_completed") ?: false, completedAt = safeLong("completed_at")
+        id = id, userId = tryGet<String>("user_id") ?: "", challengeId = tryGet<String>("challenge_id") ?: "",
+        currentProgress = tryGet<Long>("current_progress")?.toInt() ?: 0,
+        isCompleted = tryGet<Boolean>("is_completed") ?: false, completedAt = safeLong("completed_at")
     )
 }
 
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toAppNotificationOrNull(): AppNotification? {
     if (!exists) return null
-    val typeStr = get<String?>("type") ?: NotificationType.GENERAL.name
-    val actionTypeStr = get<String?>("action_type")
+    val typeStr = tryGet<String>("type") ?: NotificationType.GENERAL.name
+    val actionTypeStr = tryGet<String>("action_type")
     return AppNotification(
-        id = id, userId = get<String?>("user_id") ?: "",
-        type = NotificationType.fromString(typeStr), title = get<String?>("title") ?: "",
-        message = get<String?>("message") ?: "", senderId = get<String?>("sender_id"),
-        senderName = get<String?>("sender_name"), senderPhoto = get<String?>("sender_photo"),
-        referenceId = get<String?>("reference_id"), referenceType = get<String?>("reference_type"),
+        id = id, userId = tryGet<String>("user_id") ?: "",
+        type = NotificationType.fromString(typeStr), title = tryGet<String>("title") ?: "",
+        message = tryGet<String>("message") ?: "", senderId = tryGet<String>("sender_id"),
+        senderName = tryGet<String>("sender_name"), senderPhoto = tryGet<String>("sender_photo"),
+        referenceId = tryGet<String>("reference_id"), referenceType = tryGet<String>("reference_type"),
         actionType = NotificationAction.fromString(actionTypeStr),
-        read = get<Boolean?>("read") ?: false, readAt = safeLong("read_at"),
+        read = tryGet<Boolean>("read") ?: false, readAt = safeLong("read_at"),
         createdAt = safeLong("created_at"), expiresAt = safeLong("expires_at")
     )
 }
@@ -562,12 +562,12 @@ internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toAppNotificationOr
 internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toActivityOrNull(): Activity? {
     if (!exists) return null
     return Activity(
-        id = id, userId = get<String?>("user_id") ?: "", userName = get<String?>("user_name") ?: "",
-        userPhoto = get<String?>("user_photo"), type = ActivityType.fromString(get<String?>("type")),
-        title = get<String?>("title") ?: "", description = get<String?>("description") ?: "",
-        referenceId = get<String?>("reference_id"), referenceType = get<String?>("reference_type"),
+        id = id, userId = tryGet<String>("user_id") ?: "", userName = tryGet<String>("user_name") ?: "",
+        userPhoto = tryGet<String>("user_photo"), type = ActivityType.fromString(tryGet<String>("type")),
+        title = tryGet<String>("title") ?: "", description = tryGet<String>("description") ?: "",
+        referenceId = tryGet<String>("reference_id"), referenceType = tryGet<String>("reference_type"),
         metadata = (getLooseMap("metadata") as? Map<String, String>) ?: emptyMap(),
-        createdAt = safeLong("created_at"), visibility = ActivityVisibility.fromString(get<String?>("visibility"))
+        createdAt = safeLong("created_at"), visibility = ActivityVisibility.fromString(tryGet<String>("visibility"))
     )
 }
 

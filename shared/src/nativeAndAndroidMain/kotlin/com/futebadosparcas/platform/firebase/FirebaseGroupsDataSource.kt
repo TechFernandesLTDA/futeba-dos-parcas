@@ -395,7 +395,7 @@ internal class FirebaseGroupsDataSource(
             val invDoc = firestore.collection("invites").document(normalized).get()
             val isModernInvite = run {
                 if (!invDoc.exists) return@run false
-                if (invDoc.get<Boolean?>("used") == true) return@run false
+                if (invDoc.tryGet<Boolean>("used") == true) return@run false
                 val expiresAt = invDoc.get<Timestamp?>("expires_at")
                 val nowMs = Clock.System.now().toEpochMilliseconds()
                 if (expiresAt != null && expiresAt.seconds * 1000L < nowMs) return@run false
@@ -414,7 +414,7 @@ internal class FirebaseGroupsDataSource(
                 // BUGFIX: o fluxo Android antigo NUNCA marcava o convite como usado
                 // (criava o member direto), deixando single-use furado. Agora o
                 // update é o gatilho do trigger.
-                val groupId = invDoc.get<String?>("group_id")
+                val groupId = invDoc.tryGet<String>("group_id")
                     ?: return Result.failure(Exception("Convite sem grupo associado"))
 
                 // A rule de update de invites exige
@@ -468,12 +468,12 @@ internal class FirebaseGroupsDataSource(
             if (!groupDoc.exists) {
                 return Result.failure(Exception("Grupo não encontrado"))
             }
-            val groupStatus = groupDoc.get<String?>("status") ?: "ACTIVE"
+            val groupStatus = groupDoc.tryGet<String>("status") ?: "ACTIVE"
             if (groupStatus != "ACTIVE") {
                 return Result.failure(Exception("Grupo não está mais ativo"))
             }
-            val groupName = groupDoc.get<String?>("name") ?: ""
-            val groupPhoto = groupDoc.get<String?>("photo_url")
+            val groupName = groupDoc.tryGet<String>("name") ?: ""
+            val groupPhoto = groupDoc.tryGet<String>("photo_url")
 
             firestore.runTransaction<Unit> {
                 val memberRef = firestore.collection(COLLECTION_GROUPS)
@@ -563,13 +563,13 @@ internal class FirebaseGroupsDataSource(
                 try {
                     Group(
                         id = doc.id,
-                        name = doc.get<String?>("name") ?: "",
-                        description = doc.get<String?>("description") ?: "",
-                        photoUrl = doc.get<String?>("photo_url"),
-                        ownerId = doc.get<String?>("owner_id") ?: "",
-                        ownerName = doc.get<String?>("owner_name") ?: "",
-                        isPublic = doc.get<Boolean?>("is_public") ?: false,
-                        membersCount = doc.get<Long?>("members_count")?.toInt() ?: 0,
+                        name = doc.tryGet<String>("name") ?: "",
+                        description = doc.tryGet<String>("description") ?: "",
+                        photoUrl = doc.tryGet<String>("photo_url"),
+                        ownerId = doc.tryGet<String>("owner_id") ?: "",
+                        ownerName = doc.tryGet<String>("owner_name") ?: "",
+                        isPublic = doc.tryGet<Boolean>("is_public") ?: false,
+                        membersCount = doc.tryGet<Long>("members_count")?.toInt() ?: 0,
                     )
                 } catch (_: Exception) {
                     null
@@ -614,11 +614,11 @@ internal class FirebaseGroupsDataSource(
             // falhar, conta como ausente e a regra de create decide, como no web.
             val memberStatus = runCatching {
                 val memberSnap = groupRef.collection("members").document(userId).get()
-                if (memberSnap.exists) memberSnap.get<String?>("status") ?: "ACTIVE" else null
+                if (memberSnap.exists) memberSnap.tryGet<String>("status") ?: "ACTIVE" else null
             }.getOrNull()
             val requestStatus = runCatching {
                 val requestSnap = requestRef.get()
-                if (requestSnap.exists) requestSnap.get<String?>("status") ?: "PENDING" else null
+                if (requestSnap.exists) requestSnap.tryGet<String>("status") ?: "PENDING" else null
             }.getOrNull()
             when (planJoinRequestWrite(memberStatus, requestStatus)) {
                 JoinRequestWritePlan.NOT_ALLOWED -> return Result.failure(GroupJoinRequestNotAllowedException())
@@ -761,7 +761,7 @@ internal class FirebaseGroupsDataSource(
                 .document(userId)
                 .get()
 
-            val role = snapshot.get<String?>("role")
+            val role = snapshot.tryGet<String>("role")
             Result.success(role)
         } catch (e: Exception) {
             Result.failure(e)
@@ -776,7 +776,7 @@ internal class FirebaseGroupsDataSource(
                 .document(userId)
                 .get()
 
-            val isMember = snapshot.exists && snapshot.get<String?>("status") == "ACTIVE"
+            val isMember = snapshot.exists && snapshot.tryGet<String>("status") == "ACTIVE"
             Result.success(isMember)
         } catch (e: Exception) {
             Result.failure(e)

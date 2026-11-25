@@ -107,10 +107,10 @@ internal class FirebaseLocationsDataSource(
             val nextCursor = if (hasMore && docsToReturn.isNotEmpty()) {
                 val lastDoc = docsToReturn.last()
                 val lastValue = when (sortBy) {
-                    LocationSortField.NAME -> lastDoc.get<String?>("name")
-                    LocationSortField.CITY -> lastDoc.get<String?>("city")
-                    LocationSortField.RATING -> lastDoc.get<Double?>("rating")?.toString()
-                    LocationSortField.CREATED_AT -> lastDoc.get<Long?>("createdAt")?.toString()
+                    LocationSortField.NAME -> lastDoc.tryGet<String>("name")
+                    LocationSortField.CITY -> lastDoc.tryGet<String>("city")
+                    LocationSortField.RATING -> lastDoc.tryGet<Double>("rating")?.toString()
+                    LocationSortField.CREATED_AT -> lastDoc.tryGet<Long>("createdAt")?.toString()
                 }
                 encodeCursor(lastDoc.reference.path, sortBy, lastValue)
             } else null
@@ -488,7 +488,7 @@ internal class FirebaseLocationsDataSource(
                 val groupSnap = firestore.collectionGroup("fields").where { FieldPath.documentId equalTo fieldId }.get()
                 if (groupSnap.documents.isNotEmpty()) {
                     val doc = groupSnap.documents.first()
-                    val locationId = doc.get<String?>("location_id") ?: ""
+                    val locationId = doc.tryGet<String>("location_id") ?: ""
                     if (locationId.isNotBlank()) {
                         firestore.collection("locations").document(locationId).collection("fields").document(fieldId)
                             .update(mapOf("is_active" to false))

@@ -16,108 +16,108 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
     return try {
         Location(
             id = id,
-            name = get<String?>("name") ?: "",
-            address = get<String?>("address") ?: "",
+            name = tryGet<String>("name") ?: "",
+            address = tryGet<String>("address") ?: "",
 
             // Endereço Estruturado
-            cep = get<String?>("cep") ?: "",
-            street = get<String?>("street") ?: "",
-            number = get<String?>("number") ?: "",
-            complement = get<String?>("complement") ?: "",
-            district = get<String?>("district") ?: "",
-            city = get<String?>("city") ?: "",
-            state = get<String?>("state") ?: "",
-            country = get<String?>("country") ?: "Brasil",
+            cep = tryGet<String>("cep") ?: "",
+            street = tryGet<String>("street") ?: "",
+            number = tryGet<String>("number") ?: "",
+            complement = tryGet<String>("complement") ?: "",
+            district = tryGet<String>("district") ?: "",
+            city = tryGet<String>("city") ?: "",
+            state = tryGet<String>("state") ?: "",
+            country = tryGet<String>("country") ?: "Brasil",
 
             // Localização detalhada
-            neighborhood = get<String?>("neighborhood") ?: "",
-            region = get<String?>("region") ?: "",
-            latitude = get<Double?>("latitude"),
-            longitude = get<Double?>("longitude"),
-            placeId = get<String?>("place_id") ?: get<String?>("placeId"),
+            neighborhood = tryGet<String>("neighborhood") ?: "",
+            region = tryGet<String>("region") ?: "",
+            latitude = tryGet<Double>("latitude"),
+            longitude = tryGet<Double>("longitude"),
+            placeId = tryGet<String>("place_id") ?: tryGet<String>("placeId"),
 
             // Proprietário
-            ownerId = get<String?>("owner_id") ?: get<String?>("ownerId") ?: "",
+            ownerId = tryGet<String>("owner_id") ?: tryGet<String>("ownerId") ?: "",
             managers = (getStringList("managers"))?.mapNotNull { it as? String } ?: emptyList(),
-            isVerified = get<Boolean?>("is_verified") ?: get<Boolean?>("isVerified") ?: false,
-            isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: true,
+            isVerified = tryGet<Boolean>("is_verified") ?: tryGet<Boolean>("isVerified") ?: false,
+            isActive = tryGet<Boolean>("is_active") ?: tryGet<Boolean>("isActive") ?: true,
 
             // Status comercial/publicacao
-            publicationStatus = get<String?>("publication_status") ?: get<String?>("publicationStatus") ?: "DRAFT",
-            commercialStatus = get<String?>("commercial_status") ?: get<String?>("commercialStatus") ?: "TRIAL",
-            subscriptionStatus = get<String?>("subscription_status") ?: get<String?>("subscriptionStatus") ?: "TRIAL",
-            billingPlanCode = get<String?>("billing_plan_code") ?: get<String?>("billingPlanCode"),
-            billingPlanLabel = get<String?>("billing_plan_label") ?: get<String?>("billingPlanLabel"),
-            billingCycle = get<String?>("billing_cycle") ?: get<String?>("billingCycle"),
-            billingBaseFeeCents = get<Long?>("billing_base_fee_cents") ?: get<Long?>("billingBaseFeeCents"),
-            monthlyFeeCents = get<Long?>("monthly_fee_cents") ?: get<Long?>("monthlyFeeCents"),
-            billingDueDay = get<Long?>("billing_due_day")?.toInt() ?: get<Long?>("billingDueDay")?.toInt(),
+            publicationStatus = tryGet<String>("publication_status") ?: tryGet<String>("publicationStatus") ?: "DRAFT",
+            commercialStatus = tryGet<String>("commercial_status") ?: tryGet<String>("commercialStatus") ?: "TRIAL",
+            subscriptionStatus = tryGet<String>("subscription_status") ?: tryGet<String>("subscriptionStatus") ?: "TRIAL",
+            billingPlanCode = tryGet<String>("billing_plan_code") ?: tryGet<String>("billingPlanCode"),
+            billingPlanLabel = tryGet<String>("billing_plan_label") ?: tryGet<String>("billingPlanLabel"),
+            billingCycle = tryGet<String>("billing_cycle") ?: tryGet<String>("billingCycle"),
+            billingBaseFeeCents = tryGet<Long>("billing_base_fee_cents") ?: tryGet<Long>("billingBaseFeeCents"),
+            monthlyFeeCents = tryGet<Long>("monthly_fee_cents") ?: tryGet<Long>("monthlyFeeCents"),
+            billingDueDay = tryGet<Long>("billing_due_day")?.toInt() ?: tryGet<Long>("billingDueDay")?.toInt(),
             billingStartsAt = safeLongLocation("billing_starts_at") ?: safeLongLocation("billingStartsAt"),
             billingExpiresAt = safeLongLocation("billing_expires_at") ?: safeLongLocation("billingExpiresAt"),
-            billingExceptionNote = get<String?>("billing_exception_note") ?: get<String?>("billingExceptionNote"),
-            venueAccountId = get<String?>("venue_account_id") ?: get<String?>("venueAccountId"),
-            venueAccountStatus = get<String?>("venue_account_status") ?: get<String?>("venueAccountStatus"),
-            venueAccountChargeScope = get<String?>("venue_account_charge_scope") ?: get<String?>("venueAccountChargeScope"),
-            venueAccountPlanCode = get<String?>("venue_account_plan_code") ?: get<String?>("venueAccountPlanCode"),
-            venueAccountPlanLabel = get<String?>("venue_account_plan_label") ?: get<String?>("venueAccountPlanLabel"),
-            venueAccountMonthlyTotalCents = get<Long?>("venue_account_monthly_total_cents")
-                ?: get<Long?>("venueAccountMonthlyTotalCents"),
-            venueAccountLinkedLocationsCount = get<Long?>("venue_account_linked_locations_count")?.toInt()
-                ?: get<Long?>("venueAccountLinkedLocationsCount")?.toInt() ?: 0,
-            venueAccountActiveFieldsCount = get<Long?>("venue_account_active_fields_count")?.toInt()
-                ?: get<Long?>("venueAccountActiveFieldsCount")?.toInt() ?: 0,
+            billingExceptionNote = tryGet<String>("billing_exception_note") ?: tryGet<String>("billingExceptionNote"),
+            venueAccountId = tryGet<String>("venue_account_id") ?: tryGet<String>("venueAccountId"),
+            venueAccountStatus = tryGet<String>("venue_account_status") ?: tryGet<String>("venueAccountStatus"),
+            venueAccountChargeScope = tryGet<String>("venue_account_charge_scope") ?: tryGet<String>("venueAccountChargeScope"),
+            venueAccountPlanCode = tryGet<String>("venue_account_plan_code") ?: tryGet<String>("venueAccountPlanCode"),
+            venueAccountPlanLabel = tryGet<String>("venue_account_plan_label") ?: tryGet<String>("venueAccountPlanLabel"),
+            venueAccountMonthlyTotalCents = tryGet<Long>("venue_account_monthly_total_cents")
+                ?: tryGet<Long>("venueAccountMonthlyTotalCents"),
+            venueAccountLinkedLocationsCount = tryGet<Long>("venue_account_linked_locations_count")?.toInt()
+                ?: tryGet<Long>("venueAccountLinkedLocationsCount")?.toInt() ?: 0,
+            venueAccountActiveFieldsCount = tryGet<Long>("venue_account_active_fields_count")?.toInt()
+                ?: tryGet<Long>("venueAccountActiveFieldsCount")?.toInt() ?: 0,
             publishedAt = safeLongLocation("published_at") ?: safeLongLocation("publishedAt"),
-            publishedBy = get<String?>("published_by") ?: get<String?>("publishedBy"),
-            unpublishedReason = get<String?>("unpublished_reason") ?: get<String?>("unpublishedReason"),
-            ownerNotes = get<String?>("owner_notes") ?: get<String?>("ownerNotes"),
-            adminNotes = get<String?>("admin_notes") ?: get<String?>("adminNotes"),
+            publishedBy = tryGet<String>("published_by") ?: tryGet<String>("publishedBy"),
+            unpublishedReason = tryGet<String>("unpublished_reason") ?: tryGet<String>("unpublishedReason"),
+            ownerNotes = tryGet<String>("owner_notes") ?: tryGet<String>("ownerNotes"),
+            adminNotes = tryGet<String>("admin_notes") ?: tryGet<String>("adminNotes"),
 
             // Avaliação
-            rating = get<Double?>("rating") ?: 0.0,
-            ratingCount = get<Long?>("rating_count")?.toInt() ?: get<Long?>("ratingCount")?.toInt() ?: 0,
+            rating = tryGet<Double>("rating") ?: 0.0,
+            ratingCount = tryGet<Long>("rating_count")?.toInt() ?: tryGet<Long>("ratingCount")?.toInt() ?: 0,
 
             // Descrição e mídia
-            description = get<String?>("description") ?: "",
-            photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
+            description = tryGet<String>("description") ?: "",
+            photoUrl = tryGet<String>("photo_url") ?: tryGet<String>("photoUrl"),
 
             // Infraestrutura
             amenities = (getStringList("amenities"))?.mapNotNull { it as? String } ?: emptyList(),
 
             // Contato
-            phone = get<String?>("phone"),
-            website = get<String?>("website"),
-            instagram = get<String?>("instagram"),
+            phone = tryGet<String>("phone"),
+            website = tryGet<String>("website"),
+            instagram = tryGet<String>("instagram"),
 
             // Horário de funcionamento
-            openingTime = get<String?>("opening_time") ?: get<String?>("openingTime") ?: "08:00",
-            closingTime = get<String?>("closing_time") ?: get<String?>("closingTime") ?: "23:00",
+            openingTime = tryGet<String>("opening_time") ?: tryGet<String>("openingTime") ?: "08:00",
+            closingTime = tryGet<String>("closing_time") ?: tryGet<String>("closingTime") ?: "23:00",
             operatingDays = (getIntList("operating_days") ?: getIntList("operatingDays"))
                 ?.mapNotNull { (it as? Number)?.toInt() } ?: listOf(1, 2, 3, 4, 5, 6, 7),
-            minGameDurationMinutes = get<Long?>("min_game_duration_minutes")?.toInt()
-                ?: get<Long?>("minGameDurationMinutes")?.toInt() ?: 60,
+            minGameDurationMinutes = tryGet<Long>("min_game_duration_minutes")?.toInt()
+                ?: tryGet<Long>("minGameDurationMinutes")?.toInt() ?: 60,
 
-            timeZone = get<String?>("time_zone") ?: get<String?>("timeZone"),
+            timeZone = tryGet<String>("time_zone") ?: tryGet<String>("timeZone"),
 
             // Dados denormalizados de Fields
-            fieldCount = get<Long?>("field_count")?.toInt() ?: get<Long?>("fieldCount")?.toInt() ?: 0,
-            activeFieldCount = get<Long?>("active_field_count")?.toInt() ?: get<Long?>("activeFieldCount")?.toInt() ?: 0,
+            fieldCount = tryGet<Long>("field_count")?.toInt() ?: tryGet<Long>("fieldCount")?.toInt() ?: 0,
+            activeFieldCount = tryGet<Long>("active_field_count")?.toInt() ?: tryGet<Long>("activeFieldCount")?.toInt() ?: 0,
             activeFieldTypes = (getStringList("active_field_types") ?: getStringList("activeFieldTypes"))
                 ?.mapNotNull { it as? String } ?: emptyList(),
             activeFieldAmenities = (getStringList("active_field_amenities") ?: getStringList("activeFieldAmenities"))
                 ?.mapNotNull { it as? String } ?: emptyList(),
-            primaryFieldType = get<String?>("primary_field_type") ?: get<String?>("primaryFieldType"),
-            hasActiveFields = get<Boolean?>("has_active_fields") ?: get<Boolean?>("hasActiveFields") ?: false,
-            minHourlyPriceCents = get<Long?>("min_hourly_price_cents") ?: get<Long?>("minHourlyPriceCents"),
-            averageHourlyPriceCents = get<Long?>("average_hourly_price_cents") ?: get<Long?>("averageHourlyPriceCents"),
-            gamesCount = get<Long?>("games_count")?.toInt() ?: get<Long?>("gamesCount")?.toInt() ?: 0,
-            finishedGamesCount = get<Long?>("finished_games_count")?.toInt()
-                ?: get<Long?>("finishedGamesCount")?.toInt() ?: 0,
-            upcomingGamesCount = get<Long?>("upcoming_games_count")?.toInt()
-                ?: get<Long?>("upcomingGamesCount")?.toInt() ?: 0,
-            gamesThisWeekCount = get<Long?>("games_this_week_count")?.toInt()
-                ?: get<Long?>("gamesThisWeekCount")?.toInt() ?: 0,
-            gamesLast30DaysCount = get<Long?>("games_last_30_days_count")?.toInt()
-                ?: get<Long?>("gamesLast30DaysCount")?.toInt() ?: 0,
+            primaryFieldType = tryGet<String>("primary_field_type") ?: tryGet<String>("primaryFieldType"),
+            hasActiveFields = tryGet<Boolean>("has_active_fields") ?: tryGet<Boolean>("hasActiveFields") ?: false,
+            minHourlyPriceCents = tryGet<Long>("min_hourly_price_cents") ?: tryGet<Long>("minHourlyPriceCents"),
+            averageHourlyPriceCents = tryGet<Long>("average_hourly_price_cents") ?: tryGet<Long>("averageHourlyPriceCents"),
+            gamesCount = tryGet<Long>("games_count")?.toInt() ?: tryGet<Long>("gamesCount")?.toInt() ?: 0,
+            finishedGamesCount = tryGet<Long>("finished_games_count")?.toInt()
+                ?: tryGet<Long>("finishedGamesCount")?.toInt() ?: 0,
+            upcomingGamesCount = tryGet<Long>("upcoming_games_count")?.toInt()
+                ?: tryGet<Long>("upcomingGamesCount")?.toInt() ?: 0,
+            gamesThisWeekCount = tryGet<Long>("games_this_week_count")?.toInt()
+                ?: tryGet<Long>("gamesThisWeekCount")?.toInt() ?: 0,
+            gamesLast30DaysCount = tryGet<Long>("games_last_30_days_count")?.toInt()
+                ?: tryGet<Long>("gamesLast30DaysCount")?.toInt() ?: 0,
             lastGameAt = safeLongLocation("last_game_at") ?: safeLongLocation("lastGameAt"),
             lastActivityAt = safeLongLocation("last_activity_at") ?: safeLongLocation("lastActivityAt"),
             locationStatsUpdatedAt = safeLongLocation("location_stats_updated_at")
@@ -127,7 +127,7 @@ internal fun DocumentSnapshot.toLocationOrNull(): Location? {
             updatedAt = safeLongLocation("updated_at") ?: safeLongLocation("updatedAt")
         )
     } catch (e: Exception) {
-        logLocationDeserializationError(id, get<String?>("owner_id"), e)
+        logLocationDeserializationError(id, tryGet<String>("owner_id"), e)
         null
     }
 }
@@ -141,21 +141,21 @@ internal fun DocumentSnapshot.toFieldOrNull(): Field? {
     return try {
         Field(
             id = id,
-            locationId = get<String?>("location_id") ?: get<String?>("locationId") ?: "",
-            name = get<String?>("name") ?: "",
-            type = (get<String?>("type") ?: "SOCIETY").uppercase(),
-            description = get<String?>("description"),
-            photoUrl = get<String?>("photo_url") ?: get<String?>("photoUrl"),
-            isActive = get<Boolean?>("is_active") ?: get<Boolean?>("isActive") ?: true,
-            hourlyPrice = get<Double?>("hourly_price") ?: get<Double?>("hourlyPrice") ?: get<Double?>("price_per_hour") ?: get<Double?>("pricePerHour") ?: 0.0,
+            locationId = tryGet<String>("location_id") ?: tryGet<String>("locationId") ?: "",
+            name = tryGet<String>("name") ?: "",
+            type = (tryGet<String>("type") ?: "SOCIETY").uppercase(),
+            description = tryGet<String>("description"),
+            photoUrl = tryGet<String>("photo_url") ?: tryGet<String>("photoUrl"),
+            isActive = tryGet<Boolean>("is_active") ?: tryGet<Boolean>("isActive") ?: true,
+            hourlyPrice = tryGet<Double>("hourly_price") ?: tryGet<Double>("hourlyPrice") ?: tryGet<Double>("price_per_hour") ?: tryGet<Double>("pricePerHour") ?: 0.0,
             photos = (getStringList("photos"))?.mapNotNull { it as? String } ?: emptyList(),
             managers = (getStringList("managers"))?.mapNotNull { it as? String } ?: emptyList(),
-            surface = get<String?>("surface"),
-            isCovered = get<Boolean?>("is_covered") ?: get<Boolean?>("isCovered") ?: false,
-            dimensions = get<String?>("dimensions")
+            surface = tryGet<String>("surface"),
+            isCovered = tryGet<Boolean>("is_covered") ?: tryGet<Boolean>("isCovered") ?: false,
+            dimensions = tryGet<String>("dimensions")
         )
     } catch (e: Exception) {
-        logFieldDeserializationError(id, get<String?>("location_id"), e)
+        logFieldDeserializationError(id, tryGet<String>("location_id"), e)
         null
     }
 }
@@ -169,16 +169,16 @@ internal fun DocumentSnapshot.toLocationReviewOrNull(): LocationReview? {
     return try {
         LocationReview(
             id = id,
-            locationId = get<String?>("location_id") ?: get<String?>("locationId") ?: "",
-            userId = get<String?>("user_id") ?: get<String?>("userId") ?: "",
-            userName = get<String?>("user_name") ?: get<String?>("userName") ?: "",
-            userPhotoUrl = get<String?>("user_photo_url") ?: get<String?>("userPhotoUrl"),
-            rating = get<Double?>("rating")?.toFloat() ?: get<Long?>("rating")?.toFloat() ?: 0f,
-            comment = get<String?>("comment") ?: "",
+            locationId = tryGet<String>("location_id") ?: tryGet<String>("locationId") ?: "",
+            userId = tryGet<String>("user_id") ?: tryGet<String>("userId") ?: "",
+            userName = tryGet<String>("user_name") ?: tryGet<String>("userName") ?: "",
+            userPhotoUrl = tryGet<String>("user_photo_url") ?: tryGet<String>("userPhotoUrl"),
+            rating = tryGet<Double>("rating")?.toFloat() ?: tryGet<Long>("rating")?.toFloat() ?: 0f,
+            comment = tryGet<String>("comment") ?: "",
             createdAt = safeLongLocation("created_at")
         )
     } catch (e: Exception) {
-        logLocationReviewDeserializationError(id, get<String?>("location_id"), e)
+        logLocationReviewDeserializationError(id, tryGet<String>("location_id"), e)
         null
     }
 }
@@ -200,11 +200,11 @@ internal fun DocumentSnapshot.toLocationAuditLogOrNull(): LocationAuditLog? {
 
         LocationAuditLog(
             id = id,
-            locationId = get<String?>("location_id") ?: "",
-            userId = get<String?>("user_id") ?: "",
-            userName = get<String?>("user_name") ?: "",
+            locationId = tryGet<String>("location_id") ?: "",
+            userId = tryGet<String>("user_id") ?: "",
+            userName = tryGet<String>("user_name") ?: "",
             action = LocationAuditAction.valueOf(
-                get<String?>("action")?.uppercase() ?: "UPDATE"
+                tryGet<String>("action")?.uppercase() ?: "UPDATE"
             ),
             changes = changesMap,
             timestamp = safeLongLocation("timestamp") ?: 0L

@@ -15,6 +15,12 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 internal class FirebaseFinanceDataSource(
     private val firestore: FirebaseFirestore = Firebase.firestore,
@@ -64,17 +70,17 @@ internal class FirebaseFinanceDataSource(
             val stats = snapshot.documents.mapNotNull { doc ->
                 LivePlayerStats(
                     id = doc.id,
-                    gameId = doc.get<String?>("game_id") ?: "",
-                    playerId = doc.get<String?>("player_id") ?: "",
-                    playerName = doc.get<String?>("player_name") ?: "",
-                    teamId = doc.get<String?>("team_id") ?: "",
-                    position = doc.get<String?>("position") ?: "LINE",
-                    goals = doc.get<Long?>("goals")?.toInt() ?: 0,
-                    assists = doc.get<Long?>("assists")?.toInt() ?: 0,
-                    saves = doc.get<Long?>("saves")?.toInt() ?: 0,
-                    yellowCards = doc.get<Long?>("yellow_cards")?.toInt() ?: 0,
-                    redCards = doc.get<Long?>("red_cards")?.toInt() ?: 0,
-                    isPlaying = doc.get<Boolean?>("is_playing") ?: true
+                    gameId = doc.tryGet<String>("game_id") ?: "",
+                    playerId = doc.tryGet<String>("player_id") ?: "",
+                    playerName = doc.tryGet<String>("player_name") ?: "",
+                    teamId = doc.tryGet<String>("team_id") ?: "",
+                    position = doc.tryGet<String>("position") ?: "LINE",
+                    goals = doc.tryGet<Long>("goals")?.toInt() ?: 0,
+                    assists = doc.tryGet<Long>("assists")?.toInt() ?: 0,
+                    saves = doc.tryGet<Long>("saves")?.toInt() ?: 0,
+                    yellowCards = doc.tryGet<Long>("yellow_cards")?.toInt() ?: 0,
+                    redCards = doc.tryGet<Long>("red_cards")?.toInt() ?: 0,
+                    isPlaying = doc.tryGet<Boolean>("is_playing") ?: true
                 )
             }
 
@@ -92,17 +98,17 @@ internal class FirebaseFinanceDataSource(
                 val stats = snapshot.documents.mapNotNull { doc ->
                     LivePlayerStats(
                         id = doc.id,
-                        gameId = doc.get<String?>("game_id") ?: "",
-                        playerId = doc.get<String?>("player_id") ?: "",
-                        playerName = doc.get<String?>("player_name") ?: "",
-                        teamId = doc.get<String?>("team_id") ?: "",
-                        position = doc.get<String?>("position") ?: "LINE",
-                        goals = doc.get<Long?>("goals")?.toInt() ?: 0,
-                        assists = doc.get<Long?>("assists")?.toInt() ?: 0,
-                        saves = doc.get<Long?>("saves")?.toInt() ?: 0,
-                        yellowCards = doc.get<Long?>("yellow_cards")?.toInt() ?: 0,
-                        redCards = doc.get<Long?>("red_cards")?.toInt() ?: 0,
-                        isPlaying = doc.get<Boolean?>("is_playing") ?: true
+                        gameId = doc.tryGet<String>("game_id") ?: "",
+                        playerId = doc.tryGet<String>("player_id") ?: "",
+                        playerName = doc.tryGet<String>("player_name") ?: "",
+                        teamId = doc.tryGet<String>("team_id") ?: "",
+                        position = doc.tryGet<String>("position") ?: "LINE",
+                        goals = doc.tryGet<Long>("goals")?.toInt() ?: 0,
+                        assists = doc.tryGet<Long>("assists")?.toInt() ?: 0,
+                        saves = doc.tryGet<Long>("saves")?.toInt() ?: 0,
+                        yellowCards = doc.tryGet<Long>("yellow_cards")?.toInt() ?: 0,
+                        redCards = doc.tryGet<Long>("red_cards")?.toInt() ?: 0,
+                        isPlaying = doc.tryGet<Boolean>("is_playing") ?: true
                     )
                 }
                 Result.success(stats)
@@ -208,6 +214,9 @@ internal class FirebaseFinanceDataSource(
                 val up = uploadCashboxReceipt(groupId, receiptFilePath)
                 if (up.isSuccess) entry.copy(receiptUrl = up.getOrNull()) else entry
             } else entry
+            // #4595 item 4: `data<Map<String, Any?>>()` lança no Kotlin/Native
+            // ("Serializer for class 'Any' is not found"). JsonElement evita o
+            // serializador de Any (mesmo padrão do exportMyData).
             val response = Firebase.functions(FUNCTIONS_REGION)
                 .httpsCallable("createCashboxEntry")
                 .invoke(
@@ -226,8 +235,8 @@ internal class FirebaseFinanceDataSource(
                         "gameId" to finalEntry.gameId
                     )
                 )
-                .data<Map<String, Any?>>()
-            val entryId = response["entryId"] as? String
+                .data<JsonElement>()
+            val entryId = response.jsonObject["entryId"]?.jsonPrimitive?.contentOrNull
                 ?: return Result.failure(Exception("Resposta inválida ao criar entrada"))
             Result.success(entryId)
         } catch (e: Exception) {
@@ -333,14 +342,17 @@ internal class FirebaseFinanceDataSource(
 
     suspend fun recalculateCashboxBalance(groupId: String): Result<CashboxSummary> {
         return try {
-            val response = Firebase.functions(FUNCTIONS_REGION)
+            // #4595 item 4: ver createCashboxEntry (JsonElement no lugar de
+            // `data<Map<String, Any?>>()`, que lança no Kotlin/Native).
+            val json = Firebase.functions(FUNCTIONS_REGION)
                 .httpsCallable("reconcileCashboxSummary")
                 .invoke(mapOf("groupId" to groupId))
-                .data<Map<String, Any?>>()
-            val balance = (response["balance"] as? Number)?.toDouble() ?: 0.0
-            val totalIncome = (response["totalIncome"] as? Number)?.toDouble() ?: 0.0
-            val totalExpense = (response["totalExpense"] as? Number)?.toDouble() ?: 0.0
-            val entryCount = (response["entryCount"] as? Number)?.toInt() ?: 0
+                .data<JsonElement>()
+            val fields = json.jsonObject
+            val balance = fields["balance"]?.jsonPrimitive?.doubleOrNull ?: 0.0
+            val totalIncome = fields["totalIncome"]?.jsonPrimitive?.doubleOrNull ?: 0.0
+            val totalExpense = fields["totalExpense"]?.jsonPrimitive?.doubleOrNull ?: 0.0
+            val entryCount = fields["entryCount"]?.jsonPrimitive?.intOrNull ?: 0
             Result.success(
                 CashboxSummary(
                     balance = balance,
