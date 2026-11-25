@@ -128,8 +128,8 @@ internal class FirebaseGamificationDataSource(
             val collection = if (category == "XP") COLLECTION_USERS else COLLECTION_STATISTICS
             val snapshot = firestore.collection(collection).orderBy(field, Direction.DESCENDING).limit(limit).get()
             Result.success(snapshot.documents.mapNotNull { doc ->
-                val value = if (category == "XP") doc.get<Long?>("experience_points") ?: 0L else doc.get<Long?>(field) ?: 0L
-                val games = if (category == "XP") 0 else doc.get<Long?>("totalGames")?.toInt() ?: doc.get<Long?>("total_games")?.toInt() ?: 0
+                val value = if (category == "XP") doc.tryGet<Long>("experience_points") ?: 0L else doc.tryGet<Long>(field) ?: 0L
+                val games = if (category == "XP") 0 else doc.tryGet<Long>("totalGames")?.toInt() ?: doc.tryGet<Long>("total_games")?.toInt() ?: 0
                 Triple(doc.id, value, games)
             })
         } catch (e: Exception) {
@@ -144,8 +144,8 @@ internal class FirebaseGamificationDataSource(
                 .where { "period" equalTo periodName }.where { "period_key" equalTo periodKey }
                 .orderBy(deltaField, Direction.DESCENDING).limit(limit).get()
             Result.success(snapshot.documents.mapNotNull { doc ->
-                val userId = doc.get<String?>("user_id") ?: return@mapNotNull null
-                Triple(userId, doc.get<Long?>(deltaField) ?: 0L, doc.get<Long?>("games_added")?.toInt() ?: 0)
+                val userId = doc.tryGet<String>("user_id") ?: return@mapNotNull null
+                Triple(userId, doc.tryGet<Long>(deltaField) ?: 0L, doc.tryGet<Long>("games_added")?.toInt() ?: 0)
             }.filter { (_, _, g) -> g >= minGames })
         } catch (e: Exception) {
             println("FirebaseDataSource: Erro ao buscar ranking deltas: ${e.message}")
@@ -290,7 +290,9 @@ internal class FirebaseGamificationDataSource(
         return firestore.collection("season_participation").where { "season_id" equalTo seasonId }
             .orderBy(orderField, Direction.DESCENDING).limit(limit).snapshots()
             .map { it.documents.mapNotNull { d -> d.toSeasonParticipationOrNull(genderKey) } }
-            .catch { emit(emptyList()) }
+            // #4595 item 4: sem Crashlytics no KMP, o erro ao menos aparece no
+            // log em vez de virar lista vazia silenciosamente.
+            .catch { e -> println("FirebaseDataSource: erro ao observar season_participation: ${e.message}"); emit(emptyList()) }
     }
 
     suspend fun getSeasonParticipation(seasonId: String, userId: String): Result<SeasonParticipation?> {

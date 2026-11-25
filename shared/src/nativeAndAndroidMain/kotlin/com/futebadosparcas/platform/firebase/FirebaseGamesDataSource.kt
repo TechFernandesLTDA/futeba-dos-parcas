@@ -98,13 +98,36 @@ internal class FirebaseGamesDataSource(
                 return Result.success(emptyList())
             }
 
-            // 3. Buscar jogos em chunks (whereIn limit = 10)
+            // 3. Buscar jogos em chunks (whereIn limit = 10), um a um.
+            // #4595 item 2: um chunk com id ilegível (ex.: jogo GROUP_ONLY de
+            // grupo do qual a pessoa saiu) retornava permission-denied na query
+            // inteira e descartava os 10 jogos do bloco. Cada chunk falho cai
+            // para leitura por documento, descartando só o que for negado.
             val games = mutableListOf<Game>()
+            var lastError: Exception? = null
+            var anyReadSucceeded = false
             gameIds.chunked(10).forEach { chunk ->
-                val snapshot = firestore.collection(COLLECTION_GAMES)
-                    .where { FieldPath.documentId inArray chunk }
-                    .get()
-                games.addAll(snapshot.documents.mapNotNull { it.toGameOrNull() })
+                try {
+                    val snapshot = firestore.collection(COLLECTION_GAMES)
+                        .where { FieldPath.documentId inArray chunk }
+                        .get()
+                    games.addAll(snapshot.documents.mapNotNull { it.toGameOrNull() })
+                    anyReadSucceeded = true
+                } catch (e: Exception) {
+                    lastError = e
+                    for (id in chunk) {
+                        try {
+                            val doc = firestore.collection(COLLECTION_GAMES).document(id).get()
+                            if (doc.exists) doc.toGameOrNull()?.let { games.add(it) }
+                            anyReadSucceeded = true
+                        } catch (_: Exception) {
+                            // Ilegível (permission-denied): descarta só este jogo.
+                        }
+                    }
+                }
+            }
+            if (!anyReadSucceeded) {
+                return Result.failure(lastError ?: IllegalStateException("Falha ao ler jogos confirmados"))
             }
 
             // 4. Ordenar por data do jogo
@@ -408,13 +431,13 @@ internal class FirebaseGamesDataSource(
             confirmPresence(
                 gameId = gameId,
                 userId = userId,
-                userName = invitation.get<String?>("user_name")
-                    ?: invitation.get<String?>("userName") ?: "",
-                userPhoto = invitation.get<String?>("user_photo")
-                    ?: invitation.get<String?>("userPhoto"),
+                userName = invitation.tryGet<String>("user_name")
+                    ?: invitation.tryGet<String>("userName") ?: "",
+                userPhoto = invitation.tryGet<String>("user_photo")
+                    ?: invitation.tryGet<String>("userPhoto"),
                 position = position,
-                isCasualPlayer = invitation.get<Boolean?>("is_casual_player")
-                    ?: invitation.get<Boolean?>("isCasualPlayer") ?: false
+                isCasualPlayer = invitation.tryGet<Boolean>("is_casual_player")
+                    ?: invitation.tryGet<Boolean>("isCasualPlayer") ?: false
             )
         } catch (e: Exception) {
             Result.failure(e)
@@ -464,18 +487,18 @@ internal class FirebaseGamesDataSource(
             .snapshots()
             .map { snapshot ->
                 val entries = snapshot.documents.mapNotNull { doc ->
-                    val status = doc.get<String?>("status") ?: WaitlistStatus.WAITING.name
+                    val status = doc.tryGet<String>("status") ?: WaitlistStatus.WAITING.name
                     if (status != WaitlistStatus.WAITING.name && status != WaitlistStatus.NOTIFIED.name) {
                         return@mapNotNull null
                     }
                     GameWaitlist(
                         id = doc.id,
-                        gameId = doc.get<String?>("game_id") ?: gameId,
-                        userId = doc.get<String?>("user_id") ?: doc.id,
-                        userName = doc.get<String?>("user_name") ?: "",
-                        userPhoto = doc.get<String?>("user_photo"),
-                        position = doc.get<String?>("position") ?: "FIELD",
-                        queuePosition = doc.get<Long?>("queue_position")?.toInt() ?: 0,
+                        gameId = doc.tryGet<String>("game_id") ?: gameId,
+                        userId = doc.tryGet<String>("user_id") ?: doc.id,
+                        userName = doc.tryGet<String>("user_name") ?: "",
+                        userPhoto = doc.tryGet<String>("user_photo"),
+                        position = doc.tryGet<String>("position") ?: "FIELD",
+                        queuePosition = doc.tryGet<Long>("queue_position")?.toInt() ?: 0,
                         status = status,
                         addedAt = doc.safeLong("added_at"),
                         notifiedAt = doc.safeLong("notified_at"),
@@ -508,13 +531,13 @@ internal class FirebaseGamesDataSource(
             val entry = if (doc.exists) {
                 GameWaitlist(
                     id = doc.id,
-                    gameId = doc.get<String?>("game_id") ?: gameId,
-                    userId = doc.get<String?>("user_id") ?: uid,
-                    userName = doc.get<String?>("user_name") ?: (auth.currentUser?.displayName ?: ""),
-                    userPhoto = doc.get<String?>("user_photo"),
-                    position = doc.get<String?>("position") ?: normalizedPos,
-                    queuePosition = doc.get<Long?>("queue_position")?.toInt() ?: 1,
-                    status = doc.get<String?>("status") ?: WaitlistStatus.WAITING.name
+                    gameId = doc.tryGet<String>("game_id") ?: gameId,
+                    userId = doc.tryGet<String>("user_id") ?: uid,
+                    userName = doc.tryGet<String>("user_name") ?: (auth.currentUser?.displayName ?: ""),
+                    userPhoto = doc.tryGet<String>("user_photo"),
+                    position = doc.tryGet<String>("position") ?: normalizedPos,
+                    queuePosition = doc.tryGet<Long>("queue_position")?.toInt() ?: 1,
+                    status = doc.tryGet<String>("status") ?: WaitlistStatus.WAITING.name
                 )
             } else {
                 GameWaitlist(
@@ -751,7 +774,7 @@ internal class FirebaseGamesDataSource(
         return try {
             // Verificar se é owner do jogo
             val gameDoc = firestore.collection("games").document(gameId).get()
-            val ownerId = gameDoc.get<String?>("owner_id")
+            val ownerId = gameDoc.tryGet<String>("owner_id")
             if (ownerId == currentUserId) {
                 println("FirebaseDataSource: canManageGameEvents: Usuário é owner")
                 return true
@@ -761,7 +784,7 @@ internal class FirebaseGamesDataSource(
             val confirmationId = "${gameId}_$currentUserId"
             val confDoc = firestore.collection("confirmations").document(confirmationId).get()
             if (confDoc.exists) {
-                val status = confDoc.get<String?>("status")
+                val status = confDoc.tryGet<String>("status")
                 if (status == "CONFIRMED") {
                     println("FirebaseDataSource: canManageGameEvents: Usuário confirmado")
                     return true
@@ -878,10 +901,10 @@ internal class FirebaseGamesDataSource(
                 // 2. Sync com GameConfirmation
                 val confSnapshot = get(confDocRef)
                 if (confSnapshot.exists) {
-                    val currentGoals = confSnapshot.get<Long?>("goals") ?: 0
-                    val currentYellow = confSnapshot.get<Long?>("yellow_cards") ?: 0
-                    val currentRed = confSnapshot.get<Long?>("red_cards") ?: 0
-                    val currentSaves = confSnapshot.get<Long?>("saves") ?: 0
+                    val currentGoals = confSnapshot.tryGet<Long>("goals") ?: 0
+                    val currentYellow = confSnapshot.tryGet<Long>("yellow_cards") ?: 0
+                    val currentRed = confSnapshot.tryGet<Long>("red_cards") ?: 0
+                    val currentSaves = confSnapshot.tryGet<Long>("saves") ?: 0
 
                     when (eventType) {
                         GameEventType.GOAL -> update(confDocRef, mapOf("goals" to currentGoals + 1))
@@ -916,7 +939,7 @@ internal class FirebaseGamesDataSource(
                     // Update Confirmation
                     val assistConfSnapshot = get(assistConfDocRef)
                     if (assistConfSnapshot.exists) {
-                        val currentAssistCount = assistConfSnapshot.get<Long?>("assists") ?: 0
+                        val currentAssistCount = assistConfSnapshot.tryGet<Long>("assists") ?: 0
                         update(assistConfDocRef, mapOf("assists" to currentAssistCount + 1))
                     }
                 }

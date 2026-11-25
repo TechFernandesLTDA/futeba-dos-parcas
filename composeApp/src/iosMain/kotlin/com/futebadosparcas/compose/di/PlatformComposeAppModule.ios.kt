@@ -65,7 +65,9 @@ private fun firebaseModule(): Module = module {
 
 /**
  * Jogos da aba "Jogos" no iOS: próximos jogos públicos (o filtro de visibilidade é exigido
- * pelas regras do Firestore) somados aos jogos em que a pessoa confirmou presença.
+ * pelas regras do Firestore) somados aos jogos dos grupos da pessoa (#4595 item 3 —
+ * jogo GROUP_ONLY aparecia só depois de confirmar presença no web/Android já vinha
+ * por grupo) e aos jogos em que a pessoa confirmou presença.
  * Se só a parte dos confirmados falhar, a lista pública continua valendo.
  */
 private fun gamesForList(dataSource: FirebaseDataSource): Flow<Result<List<GameWithConfirmations>>> = flow {
@@ -76,23 +78,34 @@ private fun gamesForList(dataSource: FirebaseDataSource): Flow<Result<List<GameW
     } else {
         emptyList()
     }
+    // Jogos GROUP_ONLY dos grupos da pessoa (paridade web #4588/Android).
+    val groupGames = if (userId != null) {
+        val groups = dataSource.getUserGroups(userId).getOrNull().orEmpty()
+        groups.flatMap { group ->
+            dataSource.getGamesByGroup(group.groupId, GROUP_GAMES_LIMIT).getOrNull().orEmpty()
+        }
+    } else {
+        emptyList()
+    }
     val confirmedIds = confirmed.map { it.id }.toSet()
     publicGames.fold(
         onSuccess = { games ->
-            val all = (games + confirmed).distinctBy { it.id }
+            val all = (games + groupGames + confirmed).distinctBy { it.id }
                 .sortedBy { "${it.date} ${it.time}" }
                 .map { GameWithConfirmations(it, it.playersCount, it.id in confirmedIds) }
             emit(Result.success(all))
         },
         onFailure = { error ->
-            if (confirmed.isEmpty()) {
+            if (confirmed.isEmpty() && groupGames.isEmpty()) {
                 emit(Result.failure(error))
             } else {
-                emit(Result.success(confirmed.sortedBy { "${it.date} ${it.time}" }
-                    .map { GameWithConfirmations(it, it.playersCount, true) }))
+                val fallback = (groupGames + confirmed).distinctBy { it.id }
+                emit(Result.success(fallback.sortedBy { "${it.date} ${it.time}" }
+                    .map { GameWithConfirmations(it, it.playersCount, it.id in confirmedIds) }))
             }
         }
     )
 }
 
 private const val PUBLIC_GAMES_LIMIT = 50
+private const val GROUP_GAMES_LIMIT = 50
