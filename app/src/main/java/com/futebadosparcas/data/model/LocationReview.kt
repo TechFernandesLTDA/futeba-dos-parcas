@@ -26,7 +26,7 @@ data class LocationReview(
     val userPhotoUrl: String? = null,
     val rating: Float = 0f,
     val comment: String = "",
-    @ServerTimestamp
+    @get:ServerTimestamp
     @PropertyName("created_at")
     val createdAt: Date? = null
 ) {

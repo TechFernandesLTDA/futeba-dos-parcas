@@ -50,7 +50,9 @@ data class UserStatistics(
     var gamesAttended: Int = 0, // Total de jogos que compareceu (confirmou e jogou)
 
     // Data do último cálculo de estatísticas (#12 - Validação Firebase)
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `last_calculated_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("last_calculated_at")
     @set:PropertyName("last_calculated_at")
     var lastCalculatedAt: Date? = null,

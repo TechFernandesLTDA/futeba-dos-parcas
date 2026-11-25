@@ -27,7 +27,9 @@ data class MVPVote(
     @set:PropertyName("voted_player_id")
     var votedPlayerId: String = "",
     val category: VoteCategory = VoteCategory.MVP,
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `voted_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("voted_at")
     @set:PropertyName("voted_at")
     var votedAt: Date? = null
@@ -76,7 +78,7 @@ data class LiveScore(
     @get:PropertyName("reporter_id")
     @set:PropertyName("reporter_id")
     var reporterId: String = "",
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null
@@ -138,7 +140,7 @@ data class TacticalBoard(
     @get:PropertyName("image_url")
     @set:PropertyName("image_url")
     var imageUrl: String? = null,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null
@@ -172,7 +174,7 @@ data class SocialCard(
     @set:PropertyName("image_url")
     var imageUrl: String = "",
     val data: Map<String, Any> = emptyMap(), // Dados para gerar o card
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null

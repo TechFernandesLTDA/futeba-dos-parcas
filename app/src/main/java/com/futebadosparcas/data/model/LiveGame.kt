@@ -38,7 +38,9 @@ data class LiveGameScore(
     var ownerId: String = "",
     @get:PropertyName("started_at")
     @set:PropertyName("started_at")
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `started_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     var startedAt: Date? = null,
     @get:PropertyName("finished_at")
     @set:PropertyName("finished_at")
@@ -79,7 +81,7 @@ data class GameEvent(
     @get:PropertyName("created_by")
     @set:PropertyName("created_by")
     var createdBy: String = "",
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null

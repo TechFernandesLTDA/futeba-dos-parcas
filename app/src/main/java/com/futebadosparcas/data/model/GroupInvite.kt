@@ -52,7 +52,7 @@ data class GroupInvite(
 
     val status: String = InviteStatus.PENDING.name,
 
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
@@ -61,7 +61,7 @@ data class GroupInvite(
     @set:PropertyName("expires_at")
     var expiresAt: Date? = null,
 
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null,

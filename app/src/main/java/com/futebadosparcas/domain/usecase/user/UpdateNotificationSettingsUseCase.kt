@@ -203,7 +203,7 @@ data class NotificationSettings(
     val enableCashboxNotifications: Boolean = true,
     val reminderTimeMinutes: Int = 60,
     val muteUntilTime: Date? = null,
-    @ServerTimestamp
+    @get:ServerTimestamp
     val createdAt: Date? = null,
     val updatedAt: Date? = null
 ) {

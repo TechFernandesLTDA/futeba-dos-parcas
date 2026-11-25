@@ -122,7 +122,7 @@ data class Season(
     @get:PropertyName("schedule_id")
     @set:PropertyName("schedule_id")
     var scheduleId: String? = null,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
