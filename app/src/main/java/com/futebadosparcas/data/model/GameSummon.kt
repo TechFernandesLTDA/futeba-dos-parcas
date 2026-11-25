@@ -52,7 +52,9 @@ data class GameSummon(
     @set:PropertyName("summoned_by_name")
     var summonedByName: String = "",
 
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `summoned_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("summoned_at")
     @set:PropertyName("summoned_at")
     var summonedAt: Date? = null,

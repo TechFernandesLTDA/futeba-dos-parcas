@@ -115,7 +115,7 @@ data class GroupWallPost(
     @set:PropertyName("comments_count")
     var commentsCount: Int = 0,
 
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,

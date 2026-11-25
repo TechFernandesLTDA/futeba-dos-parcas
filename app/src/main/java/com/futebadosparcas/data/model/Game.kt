@@ -118,13 +118,13 @@ data class Game(
     @get:PropertyName("dateTime")
     @set:PropertyName("dateTime")
     var dateTimeRaw: Any? = null,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
 
     // Campo de auditoria: última atualização (#1 - Validação Firebase)
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null,
@@ -764,7 +764,9 @@ data class GameConfirmation(
     @get:PropertyName("saves")
     @set:PropertyName("saves")
     var saves: Int = 0,
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `confirmed_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("confirmed_at")
     @set:PropertyName("confirmed_at")
     var confirmedAt: Date? = null,

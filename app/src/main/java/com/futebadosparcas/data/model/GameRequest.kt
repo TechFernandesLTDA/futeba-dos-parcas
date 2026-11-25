@@ -79,7 +79,9 @@ data class GameJoinRequest(
 
     val status: String = RequestStatus.PENDING.name,
 
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `requested_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("requested_at")
     @set:PropertyName("requested_at")
     var requestedAt: Date? = null,

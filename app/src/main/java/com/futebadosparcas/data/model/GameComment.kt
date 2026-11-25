@@ -36,7 +36,7 @@ data class GameComment(
     var parentId: String? = null,
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    @ServerTimestamp
+    @get:ServerTimestamp
     var createdAt: Date? = null,
     @get:PropertyName("edited_at")
     @set:PropertyName("edited_at")

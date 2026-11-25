@@ -218,11 +218,11 @@ data class Location(
     var locationStatsUpdatedAt: Date? = null,
 
     // Auditoria
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null,

@@ -33,7 +33,7 @@ data class GameChatMessage(
     var text: String = "",
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    @ServerTimestamp
+    @get:ServerTimestamp
     var createdAt: Date? = null,
     @get:PropertyName("deleted_by")
     @set:PropertyName("deleted_by")

@@ -119,7 +119,7 @@ data class XpLog(
     @get:PropertyName("milestones_unlocked")
     @set:PropertyName("milestones_unlocked")
     var milestonesUnlocked: List<String> = emptyList(),
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null
@@ -234,7 +234,7 @@ data class RankingDocument(
     @get:PropertyName("min_games")
     @set:PropertyName("min_games")
     var minGames: Int = 2,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null
@@ -276,7 +276,7 @@ data class RankingDelta(
     @get:PropertyName("mvp_added")
     @set:PropertyName("mvp_added")
     var mvpAdded: Int = 0,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null
@@ -363,7 +363,9 @@ data class SeasonParticipationV2(
     @get:PropertyName("protection_games")
     @set:PropertyName("protection_games")
     var protectionGames: Int = 0,
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `last_calculated_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("last_calculated_at")
     @set:PropertyName("last_calculated_at")
     var lastCalculatedAt: Date? = null

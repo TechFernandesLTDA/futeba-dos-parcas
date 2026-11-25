@@ -166,11 +166,13 @@ data class SavedTeamFormation(
     @get:PropertyName("times_used")
     @set:PropertyName("times_used")
     var timesUsed: Int = 0,
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `last_used_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("last_used_at")
     @set:PropertyName("last_used_at")
     var lastUsedAt: Date? = null

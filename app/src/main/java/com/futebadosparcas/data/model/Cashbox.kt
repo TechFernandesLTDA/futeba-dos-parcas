@@ -44,7 +44,7 @@ data class CashboxEntry(
     @set:PropertyName("reference_date")
     var referenceDate: Date = Date(),
 
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,

@@ -41,7 +41,7 @@ data class Group(
 
     val status: String = GroupStatus.ACTIVE.name,
 
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
@@ -285,7 +285,9 @@ data class GroupMember(
 
     val status: String = GroupMemberStatus.ACTIVE.name,
 
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `joined_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("joined_at")
     @set:PropertyName("joined_at")
     var joinedAt: Date? = null,
@@ -424,7 +426,9 @@ data class UserGroup(
     @set:PropertyName("group_status")
     var groupStatus: String = GroupStatus.ACTIVE.name,
 
-    @ServerTimestamp
+    // Sem @ServerTimestamp: `joined_at` é a hora do evento/derivacao, escrita com
+    // FieldValue.serverTimestamp() no ponto de criacao; com a anotacao valendo,
+    // qualquer set(modelo) posterior sobrescreveria a data (#4592).
     @get:PropertyName("joined_at")
     @set:PropertyName("joined_at")
     var joinedAt: Date? = null

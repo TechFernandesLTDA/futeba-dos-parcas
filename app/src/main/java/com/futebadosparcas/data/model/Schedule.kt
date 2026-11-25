@@ -68,7 +68,7 @@ data class Schedule(
     @get:PropertyName("member_ids")
     @set:PropertyName("member_ids")
     var memberIds: List<String> = emptyList(),
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,

@@ -94,7 +94,7 @@ data class VoteCategoryConfig(
     @set:PropertyName("created_by")
     var createdBy: String = "",
 
-    @ServerTimestamp
+    @get:ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
     var createdAt: Date? = null,
