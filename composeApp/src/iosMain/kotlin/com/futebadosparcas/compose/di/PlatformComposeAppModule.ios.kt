@@ -3,23 +3,33 @@ package com.futebadosparcas.compose.di
 import com.futebadosparcas.data.AuthRepositoryImpl
 import com.futebadosparcas.data.CashboxRepositoryImpl
 import com.futebadosparcas.data.GamificationRepositoryImpl
+import com.futebadosparcas.data.GroupRepositoryImpl
 import com.futebadosparcas.data.LocationRepositoryImpl
 import com.futebadosparcas.data.RankingRepositoryImpl
 import com.futebadosparcas.data.StatisticsRepositoryImpl
 import com.futebadosparcas.data.ThemeRepositoryImpl
+import com.futebadosparcas.data.database.DatabaseFactory
+import com.futebadosparcas.data.database.DatabaseDriverFactory
+import com.futebadosparcas.data.repository.InviteRepositoryImpl
 import com.futebadosparcas.data.repository.LiveGameRepositoryImpl
+import com.futebadosparcas.data.repository.UserRepositoryImpl
+import com.futebadosparcas.db.FutebaDatabase
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.CashboxRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.GroupRepository
+import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.LiveGameRepository
 import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.ThemeRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.domain.model.GameWithConfirmations
 import com.futebadosparcas.ui.core.GamesViewModel
+import com.futebadosparcas.ui.core.InviteViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.koin.core.module.Module
@@ -56,10 +66,19 @@ private fun firebaseModule(): Module = module {
     single<CashboxRepository> { CashboxRepositoryImpl(get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get()) }
     single<LiveGameRepository> { LiveGameRepositoryImpl(get()) }
-    // Aba Jogos: não existe `GameRepository` no iOS; a lista vem direto do Firestore.
+    // #4595 item 5: convites no iOS (InviteViewModel em App.kt usa koinViewModelOrNull).
+    single<FutebaDatabase> { DatabaseFactory(DatabaseDriverFactory()).createDatabase() }
+    single<UserRepository> { UserRepositoryImpl(get(), get(), get()) }
+    single<GroupRepository> { GroupRepositoryImpl(get(), get()) }
+    single<InviteRepository> { InviteRepositoryImpl() }
+    viewModel { GamesViewModel(observeGames = { gamesForList(get()) }) }
     viewModel {
         val dataSource = get<FirebaseDataSource>()
-        GamesViewModel(observeGames = { gamesForList(dataSource) })
+        InviteViewModel(
+            userRepository = get(),
+            inviteRepository = get(),
+            groupRepository = get()
+        )
     }
 }
 
