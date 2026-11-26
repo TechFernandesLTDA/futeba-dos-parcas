@@ -138,6 +138,7 @@ private fun RegisterForm(
     var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -223,9 +224,9 @@ private fun RegisterForm(
             Button(
                 onClick = {
                     // Validação client-side antes do submit (#3184)
-                    nameError = ValidationHelper.validateName(name)
-                    emailError = ValidationHelper.validateEmail(email)
-                    passwordError = ValidationHelper.validatePassword(password)
+                    nameError = ValidationHelper.validateName(name, context)
+                    emailError = ValidationHelper.validateEmail(email, context)
+                    passwordError = ValidationHelper.validatePassword(password, context)
                     if (nameError == null && emailError == null && passwordError == null) {
                         onRegisterWithEmail(email, password, name)
                     }

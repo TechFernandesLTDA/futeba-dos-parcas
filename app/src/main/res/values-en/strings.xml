@@ -614,4 +614,10 @@
     <string name="about_export_my_data_error">We could not create the file with your data. Try again in a moment.</string>
     <string name="about_export_my_data_rate_limited">You reached the limit of 3 exports per day. Try again tomorrow.</string>
     <string name="about_export_my_data_too_large">Your data is larger than the maximum size for direct download. Contact support to receive the copy.</string>
+    <string name="validation_email_required">Email is required</string>
+    <string name="validation_email_invalid">Invalid email</string>
+    <string name="validation_password_required">Password is required</string>
+    <string name="validation_password_min">Password must be at least 6 characters</string>
+    <string name="validation_password_max">Password too long</string>
+    <string name="validation_name_short">Name is too short</string>
 </resources>

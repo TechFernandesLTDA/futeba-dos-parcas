@@ -4839,4 +4839,10 @@ subir no ranking!</string>
     <string name="head_to_head_total_matches_format">%1$d jogos disputados</string>
     <string name="pair_players_with_partner_format">com %1$s</string>
     <string name="evolution_league_record_format">%1$dV %2$dE %3$dD</string>
+    <string name="validation_email_required">Email é obrigatório</string>
+    <string name="validation_email_invalid">Email inválido</string>
+    <string name="validation_password_required">Senha é obrigatória</string>
+    <string name="validation_password_min">Senha deve ter no mínimo 6 caracteres</string>
+    <string name="validation_password_max">Senha muito longa</string>
+    <string name="validation_name_short">Nome muito curto</string>
 </resources>

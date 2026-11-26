@@ -208,6 +208,7 @@ private fun LoginCard(
     // Erros de validação client-side (#3184) - exibidos inline via supportingText
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -305,8 +306,8 @@ private fun LoginCard(
                 Button(
                     onClick = {
                         // Validação client-side antes do submit (#3184)
-                        emailError = ValidationHelper.validateEmail(email)
-                        passwordError = ValidationHelper.validatePassword(password)
+                        emailError = ValidationHelper.validateEmail(email, context)
+                        passwordError = ValidationHelper.validatePassword(password, context)
                         if (emailError == null && passwordError == null) {
                             onEmailPasswordSignIn(email, password)
                         }
@@ -321,7 +322,7 @@ private fun LoginCard(
                 TextButton(
                     onClick = {
                         // Valida formato do email antes de disparar o reset (#3184)
-                        emailError = ValidationHelper.validateEmail(email)
+                        emailError = ValidationHelper.validateEmail(email, context)
                         if (emailError == null) {
                             onForgotPassword(email)
                         }
