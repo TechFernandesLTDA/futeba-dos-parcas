@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
 import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
@@ -269,14 +270,20 @@ data class Location(
             errors.add(cepResult)
         }
 
-        // Validação de rating (0.0-5.0)
-        if (!ValidationHelper.isValidRating(rating)) {
-            errors.add(ValidationResult.Invalid("rating", "Rating deve estar entre 0 e 5"))
-        }
+        // Validação de rating (0.0-5.0) — mesmo template do helper
+        val ratingResult = ValidationHelper.validateRating(rating, "rating")
+        if (ratingResult is ValidationResult.Invalid) errors.add(ratingResult)
 
-        // Validação de ownerId obrigatório
+        // Validação de ownerId obrigatório (#4596: chave localizada)
         if (ownerId.isBlank()) {
-            errors.add(ValidationResult.Invalid("owner_id", "Local deve ter um proprietário"))
+            errors.add(
+                ValidationResult.Invalid(
+                    "owner_id",
+                    "Local deve ter um proprietário",
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.owner_required"
+                )
+            )
         }
 
         // Validação de timestamps
@@ -285,15 +292,29 @@ data class Location(
             errors.add(timestampResult)
         }
 
-        // Validação de coordenadas (#29 - Validação de coordenadas)
+        // Validação de coordenadas (#29 - Validação de coordenadas) — nulas são permitidas
         latitude?.let { lat ->
             if (lat < -90.0 || lat > 90.0) {
-                errors.add(ValidationResult.Invalid("latitude", "Latitude deve estar entre -90 e 90"))
+                errors.add(
+                    ValidationResult.Invalid(
+                        "latitude",
+                        "Latitude deve estar entre -90 e 90",
+                        ValidationErrorCode.OUT_OF_RANGE,
+                        "validation_model.latitude_range"
+                    )
+                )
             }
         }
         longitude?.let { lng ->
             if (lng < -180.0 || lng > 180.0) {
-                errors.add(ValidationResult.Invalid("longitude", "Longitude deve estar entre -180 e 180"))
+                errors.add(
+                    ValidationResult.Invalid(
+                        "longitude",
+                        "Longitude deve estar entre -180 e 180",
+                        ValidationErrorCode.OUT_OF_RANGE,
+                        "validation_model.longitude_range"
+                    )
+                )
             }
         }
 
@@ -307,12 +328,26 @@ data class Location(
 
         // Validação de dias de funcionamento (1-7 representando seg-dom)
         if (operatingDays.any { it < 1 || it > 7 }) {
-            errors.add(ValidationResult.Invalid("operating_days", "Dias de funcionamento devem estar entre 1 (seg) e 7 (dom)"))
+            errors.add(
+                ValidationResult.Invalid(
+                    "operating_days",
+                    "Dias de funcionamento devem estar entre 1 (seg) e 7 (dom)",
+                    ValidationErrorCode.OUT_OF_RANGE,
+                    "validation_model.operating_days_range"
+                )
+            )
         }
 
         // Validação de fieldCount não-negativo
         if (fieldCount < 0) {
-            errors.add(ValidationResult.Invalid("field_count", "Contagem de quadras não pode ser negativa"))
+            errors.add(
+                ValidationResult.Invalid(
+                    "field_count",
+                    "Contagem de quadras não pode ser negativa",
+                    ValidationErrorCode.NEGATIVE_VALUE,
+                    "validation_model.field_count_negative"
+                )
+            )
         }
 
         return errors
