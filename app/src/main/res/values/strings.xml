@@ -1860,6 +1860,44 @@ subir no ranking!</string>
     <string name="admin_confirm_permission">Tem certeza que deseja alterar o nível de acesso de %s para %s?</string>
     <string name="admin_confirm">Confirmar</string>
 
+    <!-- Admin: Fila de revisão de recompensas XP (spec FEAT_2026-11-26_admin-revisao-xp-apps.md) -->
+    <string name="admin_review_queue_title">Fila de Revisão de XP</string>
+    <string name="admin_review_organizer">Organizador: %1$s</string>
+    <string name="admin_review_filter_all">Todos (%1$d)</string>
+    <string name="admin_review_filter_pending">Pendentes (%1$d)</string>
+    <string name="admin_review_filter_released">Liberados (%1$d)</string>
+    <string name="admin_review_filter_rejected">Rejeitados (%1$d)</string>
+    <string name="admin_review_filter_autoclose">Auto-close (%1$d)</string>
+    <string name="admin_review_status_held">Retido para revisão</string>
+    <string name="admin_review_status_eligible">Liberado</string>
+    <string name="admin_review_status_rejected">Rejeitado</string>
+    <string name="admin_review_autoclose_chip">Auto-close em revisão</string>
+    <string name="admin_review_pending_processing">Liberado — processamento de XP pendente</string>
+    <string name="admin_review_last_decision">Última decisão: %1$s — %2$s</string>
+    <string name="admin_review_empty_title">Nada na fila</string>
+    <string name="admin_review_empty_message">Nenhum jogo aguardando revisão de recompensas de XP.</string>
+    <string name="admin_review_access_denied_title">Área do administrador</string>
+    <string name="admin_review_access_denied_message">Apenas administradores podem revisar recompensas de XP.</string>
+    <string name="admin_review_load_error">Erro ao carregar a fila de revisão de XP.</string>
+    <string name="admin_review_action_approve">Liberar recompensas</string>
+    <string name="admin_review_action_reject">Rejeitar recompensas</string>
+    <string name="admin_review_dialog_title_approve">Liberar recompensas de XP</string>
+    <string name="admin_review_dialog_title_reject">Rejeitar recompensas de XP</string>
+    <string name="admin_review_dialog_body_approve">Isso libera o XP, ranking e badges deste jogo imediatamente. A ação é irreversível.</string>
+    <string name="admin_review_dialog_body_reject">O jogo ficará marcado como rejeitado e o XP não será processado. A ação é irreversível.</string>
+    <string name="admin_review_dialog_reason_label">Justificativa (obrigatória)</string>
+    <string name="admin_review_dialog_reason_support">Entre 10 e 500 caracteres</string>
+    <string name="admin_review_dialog_counter">%1$d/500</string>
+    <string name="admin_review_success_approve">Recompensas liberadas com sucesso.</string>
+    <string name="admin_review_success_reject">Recompensas rejeitadas com sucesso.</string>
+    <string name="admin_review_already_reviewed">Este jogo já foi revisado. Atualizando a fila…</string>
+    <string name="admin_review_error_unauthenticated">Login obrigatório.</string>
+    <string name="admin_review_error_permission">Apenas administradores podem executar esta ação.</string>
+    <string name="admin_review_error_rate_limit">Muitas tentativas. Tente novamente em instantes.</string>
+    <string name="admin_review_error_invalid_argument">Dados inválidos para a revisão. Verifique a justificativa (10 a 500 caracteres) e tente novamente.</string>
+    <string name="admin_review_error_not_found">Jogo não encontrado.</string>
+    <string name="admin_review_error_generic">Não foi possível enviar a revisão. Tente novamente.</string>
+
     <!-- Badges Screen -->
     <string name="badges_title">Conquistas</string>
     <string name="badges_progress">Seu Progresso</string>

@@ -83,6 +83,7 @@ fun ProfileScreen(
     onSchedulesClick: () -> Unit,
     onLevelJourneyClick: () -> Unit,
     onUserManagementClick: () -> Unit,
+    onGameReviewQueueClick: () -> Unit,
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
     onFieldOwnerDashboardClick: () -> Unit,
@@ -122,6 +123,7 @@ fun ProfileScreen(
                 onSchedulesClick = onSchedulesClick,
                 onLevelJourneyClick = onLevelJourneyClick,
                 onUserManagementClick = onUserManagementClick,
+                onGameReviewQueueClick = onGameReviewQueueClick,
                 onMyLocationsClick = onMyLocationsClick,
                 onManageLocationsClick = onManageLocationsClick,
                 onFieldOwnerDashboardClick = onFieldOwnerDashboardClick,
@@ -160,6 +162,7 @@ fun ProfileScreen(
                 onSchedulesClick = onSchedulesClick,
                 onLevelJourneyClick = onLevelJourneyClick,
                 onUserManagementClick = onUserManagementClick,
+                onGameReviewQueueClick = onGameReviewQueueClick,
                 onMyLocationsClick = onMyLocationsClick,
                 onManageLocationsClick = onManageLocationsClick,
                 onFieldOwnerDashboardClick = onFieldOwnerDashboardClick,
@@ -217,6 +220,7 @@ private fun ProfileContent(
     onSchedulesClick: () -> Unit,
     onLevelJourneyClick: () -> Unit,
     onUserManagementClick: () -> Unit,
+    onGameReviewQueueClick: () -> Unit,
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
     onFieldOwnerDashboardClick: () -> Unit,
@@ -365,6 +369,7 @@ private fun ProfileContent(
                     isFieldOwner = isFieldOwner,
                     myLocationsCount = myLocationsCount,
                     onUserManagementClick = onUserManagementClick,
+                    onGameReviewQueueClick = onGameReviewQueueClick,
                     onMyLocationsClick = onMyLocationsClick,
                     onManageLocationsClick = onManageLocationsClick,
                     onFieldOwnerDashboardClick = onFieldOwnerDashboardClick,
@@ -1181,6 +1186,7 @@ private fun AdminSection(
     isFieldOwner: Boolean,
     myLocationsCount: Int,
     onUserManagementClick: () -> Unit,
+    onGameReviewQueueClick: () -> Unit,
     onMyLocationsClick: () -> Unit,
     onManageLocationsClick: () -> Unit,
     onFieldOwnerDashboardClick: () -> Unit,
@@ -1210,6 +1216,14 @@ private fun AdminSection(
                     onClick = onUserManagementClick
                 )
                 // Dark mode: outlineVariant é o token oficial M3 para divisores; alpha 0.2f invisível
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Fila de revisão de recompensas XP (spec FEAT_2026-11-26_admin-revisao-xp-apps.md)
+                AdminMenuItem(
+                    icon = Icons.Default.Gavel,
+                    title = stringResource(R.string.admin_review_queue_title),
+                    onClick = onGameReviewQueueClick
+                )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 

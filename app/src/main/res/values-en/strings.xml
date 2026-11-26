@@ -677,4 +677,42 @@
     <string name="validation_model_owner_required">The venue must have an owner</string>
     <string name="validation_model_operating_days_range">Operating days must be between 1 (Mon) and 7 (Sun)</string>
     <string name="validation_model_field_count_negative">Field count cannot be negative</string>
+
+    <!-- Admin: XP reward review queue (spec FEAT_2026-11-26_admin-revisao-xp-apps.md) -->
+    <string name="admin_review_queue_title">XP Review Queue</string>
+    <string name="admin_review_organizer">Organizer: %1$s</string>
+    <string name="admin_review_filter_all">All (%1$d)</string>
+    <string name="admin_review_filter_pending">Pending (%1$d)</string>
+    <string name="admin_review_filter_released">Released (%1$d)</string>
+    <string name="admin_review_filter_rejected">Rejected (%1$d)</string>
+    <string name="admin_review_filter_autoclose">Auto-close (%1$d)</string>
+    <string name="admin_review_status_held">Held for review</string>
+    <string name="admin_review_status_eligible">Released</string>
+    <string name="admin_review_status_rejected">Rejected</string>
+    <string name="admin_review_autoclose_chip">Auto-close under review</string>
+    <string name="admin_review_pending_processing">Released — XP processing pending</string>
+    <string name="admin_review_last_decision">Last decision: %1$s — %2$s</string>
+    <string name="admin_review_empty_title">Queue is empty</string>
+    <string name="admin_review_empty_message">No games awaiting XP reward review.</string>
+    <string name="admin_review_access_denied_title">Admin area</string>
+    <string name="admin_review_access_denied_message">Only administrators can review XP rewards.</string>
+    <string name="admin_review_load_error">Failed to load the XP review queue.</string>
+    <string name="admin_review_action_approve">Release rewards</string>
+    <string name="admin_review_action_reject">Reject rewards</string>
+    <string name="admin_review_dialog_title_approve">Release XP rewards</string>
+    <string name="admin_review_dialog_title_reject">Reject XP rewards</string>
+    <string name="admin_review_dialog_body_approve">This immediately releases XP, ranking and badges for this game. This action cannot be undone.</string>
+    <string name="admin_review_dialog_body_reject">The game will be marked as rejected and no XP will be processed. This action cannot be undone.</string>
+    <string name="admin_review_dialog_reason_label">Justification (required)</string>
+    <string name="admin_review_dialog_reason_support">Between 10 and 500 characters</string>
+    <string name="admin_review_dialog_counter">%1$d/500</string>
+    <string name="admin_review_success_approve">Rewards released successfully.</string>
+    <string name="admin_review_success_reject">Rewards rejected successfully.</string>
+    <string name="admin_review_already_reviewed">This game has already been reviewed. Refreshing the queue…</string>
+    <string name="admin_review_error_unauthenticated">Login required.</string>
+    <string name="admin_review_error_permission">Only administrators can perform this action.</string>
+    <string name="admin_review_error_rate_limit">Too many attempts. Please try again shortly.</string>
+    <string name="admin_review_error_invalid_argument">Invalid review data. Check the justification (10 to 500 characters) and try again.</string>
+    <string name="admin_review_error_not_found">Game not found.</string>
+    <string name="admin_review_error_generic">Could not submit the review. Please try again.</string>
 </resources>

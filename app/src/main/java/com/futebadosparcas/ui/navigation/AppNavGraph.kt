@@ -81,6 +81,7 @@ import com.futebadosparcas.ui.schedules.SchedulesScreen
 import com.futebadosparcas.ui.statistics.StatisticsScreen
 import com.futebadosparcas.ui.tactical.TacticalBoardScreen
 import com.futebadosparcas.ui.theme.ThemeSettingsScreen
+import com.futebadosparcas.ui.admin.AdminGameReviewQueueScreen
 import com.futebadosparcas.ui.admin.UserManagementScreen
 import com.futebadosparcas.ui.league.LeagueScreen
 import com.futebadosparcas.ui.profile.LevelJourneyScreen
@@ -205,6 +206,7 @@ sealed class Screen(
 
     // Admin
     data object UserManagement : Screen("user_management", titleResId = R.string.admin_manage_users)
+    data object AdminGameReviewQueue : Screen("admin_game_review_queue", titleResId = R.string.admin_review_queue_title)
 }
 
 /**
@@ -581,6 +583,9 @@ fun AppNavHost(
                 },
                 onUserManagementClick = {
                     navController.navigate(Screen.UserManagement.route)
+                },
+                onGameReviewQueueClick = {
+                    navController.navigate(Screen.AdminGameReviewQueue.route)
                 },
                 onMyLocationsClick = {
                     navController.navigate(Screen.LocationsMap.route)
@@ -1196,6 +1201,19 @@ fun AppNavHost(
             UserManagementScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Fila de revisão de recompensas XP (admin) — spec FEAT_2026-11-26_admin-revisao-xp-apps.md
+        composable(Screen.AdminGameReviewQueue.route) {
+            val viewModel: com.futebadosparcas.ui.admin.AdminGameReviewQueueViewModel = koinViewModel()
+            // TopBar customizada com filtros — não usa SecondaryScreenWrapper
+            AdminGameReviewQueueScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onOpenGameDetail = { gameId ->
+                    navController.navigate(Screen.GameDetail.createRoute(gameId))
+                }
             )
         }
 
