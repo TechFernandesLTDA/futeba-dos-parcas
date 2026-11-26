@@ -46,12 +46,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 
 class LocationDetailViewModel(
+    application: android.app.Application,
     private val locationRepository: LocationRepository,
     private val userRepository: UserRepository,
     private val addressRepository: KmpAddressRepository,
     private val locationAnalytics: LocationAnalytics,
     private val fieldPhotoDataSource: FieldPhotoDataSource
-) : ViewModel() {
+) : androidx.lifecycle.AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "LocationDetailViewModel"
@@ -152,8 +153,11 @@ class LocationDetailViewModel(
             // Validar antes de salvar
             val validationErrors = newLocation.validate()
             if (validationErrors.isNotEmpty()) {
+                // #4596: mensagens localizadas via chave (fallback para PT do modelo).
                 _uiState.value = LocationDetailUiState.Error(
-                    validationErrors.joinToString(", ") { it.message }
+                    validationErrors.joinToString(", ") {
+                        com.futebadosparcas.ui.validation.ValidationMessages.resolve(getApplication(), it)
+                    }
                 )
                 return@launch
             }
@@ -288,7 +292,9 @@ class LocationDetailViewModel(
         val validationErrors = updatedLocation.validate()
         if (validationErrors.isNotEmpty()) {
             _uiState.value = LocationDetailUiState.Error(
-                validationErrors.joinToString(", ") { it.message }
+                validationErrors.joinToString(", ") {
+                    com.futebadosparcas.ui.validation.ValidationMessages.resolve(getApplication(), it)
+                }
             )
             return
         }
