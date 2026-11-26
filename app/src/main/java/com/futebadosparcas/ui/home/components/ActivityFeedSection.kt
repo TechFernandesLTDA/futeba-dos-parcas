@@ -97,8 +97,8 @@ fun ActivityCard(activity: Activity) {
 
             if (isLevelUp && level != null) {
                 // Show level badge
-                androidx.compose.foundation.Image(
-                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+                AsyncImage(
+                    model = LevelBadgeHelper.getBadgeForLevel(level),
                     contentDescription = stringResource(R.string.activity_feed_level_badge_cd, level),
                     modifier = Modifier.size(AppDimensions.rank_badge_size)
                 )

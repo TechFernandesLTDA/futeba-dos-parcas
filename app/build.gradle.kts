@@ -288,9 +288,6 @@ dependencies {
     // (koin-compose-viewmodel-navigation, 2.9.1) e era alinhada a 2.10.2 pelo
     // navigation-fragment-ktx, que não tem uso (app 100% Compose, sem nav graph XML).
     implementation("androidx.navigation:navigation-compose:2.10.2")
-    // Mantida só porque os themes.xml ainda declaram preferenceTheme (sem tela de
-    // Preference em uso). Remover junto com esse item quando o tema for revisto.
-    implementation("androidx.preference:preference-ktx:1.2.1")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")

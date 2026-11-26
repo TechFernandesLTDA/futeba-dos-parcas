@@ -134,8 +134,8 @@ private fun CompactHeaderLayout(
             )
 
             // Brasão de Nível
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(summary.level)),
+            AsyncImage(
+                model = LevelBadgeHelper.getBadgeForLevel(summary.level),
                 contentDescription = LevelBadgeHelper.getBadgeDescription(summary.level, summary.levelName),
                 modifier = Modifier
                     .size(badgeSize)
@@ -255,8 +255,8 @@ private fun ExpandedHeaderLayout(
                     size = photoSize
                 )
 
-                androidx.compose.foundation.Image(
-                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(summary.level)),
+                AsyncImage(
+                    model = LevelBadgeHelper.getBadgeForLevel(summary.level),
                     contentDescription = LevelBadgeHelper.getBadgeDescription(summary.level, summary.levelName),
                     modifier = Modifier
                         .size(badgeSize)

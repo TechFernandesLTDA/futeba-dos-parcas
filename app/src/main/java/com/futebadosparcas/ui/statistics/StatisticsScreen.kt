@@ -814,8 +814,8 @@ private fun RankingItem(
                 )
 
                 // Badge de nível
-                Image(
-                    painter = painterResource(LevelBadgeHelper.getBadgeForLevel(item.level)),
+                AsyncImage(
+                    model = LevelBadgeHelper.getBadgeForLevel(item.level),
                     contentDescription = stringResource(R.string.statistics_level_badge, item.level),
                     modifier = Modifier
                         .size(20.dp)
