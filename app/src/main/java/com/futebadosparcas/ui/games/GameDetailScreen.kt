@@ -689,6 +689,14 @@ private fun GameValidationStatusCard(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
         )
+        // #4629 item 8: jogo abaixo do mínimo de confirmados não gera XP —
+        // o banner diz isso em vez de "liberadas"/"validado".
+        rewardStatus == "INELIGIBLE_MIN_PLAYERS" -> ValidationBannerUi(
+            titleResId = R.string.validation_banner_title_min_players,
+            bodyResId = R.string.validation_banner_body_min_players,
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        )
         rewardStatus == "ELIGIBLE" && game.xpRewardReviewDecision == "APPROVED" -> ValidationBannerUi(
             titleResId = R.string.validation_banner_title_approved,
             bodyResId = R.string.validation_banner_body_approved,

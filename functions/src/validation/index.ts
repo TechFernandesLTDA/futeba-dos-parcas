@@ -17,6 +17,7 @@ import {
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
   LEVEL_TABLE,
+  MIN_PLAYERS_FOR_XP,
 } from "../constants";
 
 // ============================================
@@ -86,8 +87,8 @@ export const VALIDATION_CONSTANTS = {
   // Limites de placar (P0 #30)
   MAX_SCORE: 100,
 
-  // Limites de jogo
-  MIN_PLAYERS_FOR_XP: 6,
+  // Limites de jogo (#4629 item 8: piso vem de shared/xp-constants.json)
+  MIN_PLAYERS_FOR_XP,
   MIN_TEAMS: 2,
 };
 

@@ -1,6 +1,6 @@
 export type GameStatus = 'SCHEDULED' | 'CONFIRMED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
 export type GameValidationStatus = 'VALIDATED' | 'LOW_CONFIDENCE' | 'REVIEW_REQUIRED';
-export type XpRewardStatus = 'ELIGIBLE' | 'HELD_FOR_REVIEW' | 'PROCESSED' | 'REJECTED_BY_ADMIN';
+export type XpRewardStatus = 'ELIGIBLE' | 'HELD_FOR_REVIEW' | 'PROCESSED' | 'REJECTED_BY_ADMIN' | 'INELIGIBLE_MIN_PLAYERS';
 
 export type GameVisibility = 'GROUP_ONLY' | 'PUBLIC_CLOSED' | 'PUBLIC_OPEN';
 
