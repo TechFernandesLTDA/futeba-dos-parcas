@@ -20,7 +20,8 @@
 # Gson
 -keepattributes Signature
 -keepattributes *Annotation*
--keep class com.google.gson.stream.** { *; }
+# Gson: só conversores de objetos (ViaCEP); streaming (.stream) não é usado —
+# removido o keep amplo (#4411). TypeAdapters aplicados permanecem.
 -keep class * extends com.google.gson.TypeAdapter
 -keep class * implements com.google.gson.TypeAdapterFactory
 -keep class * implements com.google.gson.JsonSerializer
