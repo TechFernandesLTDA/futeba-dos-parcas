@@ -581,3 +581,22 @@ internal fun activityToMap(activity: Activity): Map<String, Any?> {
     )
 }
 
+
+internal fun dev.gitlive.firebase.firestore.DocumentSnapshot.toGroupInviteOrNull(): GroupInvite? {
+    if (!exists) return null
+    return GroupInvite(
+        id = id,
+        groupId = tryGet<String>("group_id") ?: tryGet<String>("groupId") ?: "",
+        groupName = tryGet<String>("group_name") ?: tryGet<String>("groupName") ?: "",
+        groupPhoto = tryGet<String>("group_photo") ?: tryGet<String>("groupPhoto"),
+        invitedUserId = tryGet<String>("invited_user_id") ?: tryGet<String>("invitedUserId") ?: "",
+        invitedUserName = tryGet<String>("invited_user_name") ?: tryGet<String>("invitedUserName") ?: "",
+        invitedUserEmail = tryGet<String>("invited_user_email") ?: tryGet<String>("invitedUserEmail") ?: "",
+        invitedById = tryGet<String>("invited_by_id") ?: tryGet<String>("invitedById") ?: "",
+        invitedByName = tryGet<String>("invited_by_name") ?: tryGet<String>("invitedByName") ?: "",
+        status = tryGet<String>("status") ?: InviteStatus.PENDING.name,
+        createdAt = safeLong("created_at") ?: safeLong("createdAt"),
+        expiresAt = safeLong("expires_at") ?: safeLong("expiresAt"),
+        respondedAt = safeLong("responded_at") ?: safeLong("respondedAt")
+    )
+}
