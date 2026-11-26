@@ -4184,6 +4184,12 @@ subir no ranking!</string>
     <string name="route_post_game_share_title">Relatório pós-jogo</string>
     <string name="route_post_game_share_text">Relatório pós-jogo do Futeba dos Parças.</string>
     <string name="game_detail_fallback_title">Jogo</string>
+    <string name="game_detail_rewards_held_title">Recompensas retidas para revisão</string>
+    <string name="game_detail_rewards_held_body">Este jogo está em análise pelo antifraude. XP, ranking e badges ficam pausados até o fim da revisão.</string>
+    <string name="game_detail_rewards_rejected_title">Recompensas rejeitadas</string>
+    <string name="game_detail_rewards_rejected_body">A revisão administrativa rejeitou as recompensas deste jogo. XP, ranking e badges não serão processados.</string>
+    <string name="game_detail_rewards_min_players_title">Jogo incompleto — sem XP</string>
+    <string name="game_detail_rewards_min_players_body">Este jogo não teve o mínimo de 6 confirmados para gerar XP, ranking e badges (votação à parte).</string>
     <string name="game_detail_action_team_formation">Formação dos times</string>
     <string name="game_detail_action_voting">Votação pós-jogo</string>
     <string name="group_detail_title">Grupo</string>
