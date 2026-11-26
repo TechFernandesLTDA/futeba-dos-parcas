@@ -318,6 +318,7 @@ val viewModelKoinModule = module {
 
     viewModel {
         LocationDetailViewModel(
+            application = get(),
             locationRepository = get(),
             userRepository = get(),
             addressRepository = get(),

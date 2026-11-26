@@ -16,13 +16,18 @@ sealed class ValidationResult {
      * Validação falhou.
      *
      * @param field Nome do campo que falhou na validação
-     * @param message Mensagem descritiva do erro (em PT-BR)
+     * @param message Mensagem descritiva do erro (em PT-BR, para logs)
      * @param code Código do erro para tratamento programático
+     * @param messageKey Chave de tradução (ex.: "validation_model.cep_invalid");
+     *   a UI resolve em `strings.xml` (pt/en/es). Vazio = exibir `message`.
+     * @param messageArgs Argumentos numéricos/textuais do template (se houver).
      */
     data class Invalid(
         val field: String,
         val message: String,
-        val code: ValidationErrorCode = ValidationErrorCode.GENERIC
+        val code: ValidationErrorCode = ValidationErrorCode.GENERIC,
+        val messageKey: String = "",
+        val messageArgs: List<Any?> = emptyList()
     ) : ValidationResult()
 
     /**
@@ -52,8 +57,10 @@ sealed class ValidationResult {
         fun invalid(
             field: String,
             message: String,
-            code: ValidationErrorCode = ValidationErrorCode.GENERIC
-        ): ValidationResult = Invalid(field, message, code)
+            code: ValidationErrorCode = ValidationErrorCode.GENERIC,
+            messageKey: String = "",
+            messageArgs: List<Any?> = emptyList()
+        ): ValidationResult = Invalid(field, message, code, messageKey, messageArgs)
 
         /**
          * Combina múltiplos resultados de validação.
