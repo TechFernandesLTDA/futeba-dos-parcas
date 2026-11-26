@@ -40,7 +40,6 @@
         <item name="colorAccent">@color/tertiary</item>
 
         <!-- Preferences Theme -->
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
         <!-- AppBar/Toolbar defaults -->
         <item name="appBarLayoutStyle">@style/FutebaAppBar</item>

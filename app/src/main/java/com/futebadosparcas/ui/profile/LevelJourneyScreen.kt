@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.shrinkVertically
+import coil3.compose.AsyncImage
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -291,8 +292,8 @@ private fun CurrentLevelCard(
                         )
                 )
 
-                androidx.compose.foundation.Image(
-                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+                AsyncImage(
+                    model = LevelBadgeHelper.getBadgeForLevel(level),
                     contentDescription = stringResource(R.string.cd_level_journey_badge, level),
                     modifier = Modifier.size(90.dp)
                 )
@@ -595,8 +596,8 @@ private fun LevelJourneyItemContent(
             modifier = Modifier.size(56.dp),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+            AsyncImage(
+                model = LevelBadgeHelper.getBadgeForLevel(level),
                 contentDescription = stringResource(R.string.cd_level_journey_badge, level),
                 modifier = Modifier
                     .size(if (isCurrent) 52.dp else 44.dp)
@@ -899,8 +900,8 @@ private fun LevelBadgeDialog(
                             )
                     )
 
-                    androidx.compose.foundation.Image(
-                        painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+                    AsyncImage(
+                        model = LevelBadgeHelper.getBadgeForLevel(level),
                         contentDescription = stringResource(R.string.cd_level_journey_badge, level),
                         modifier = Modifier.size(160.dp)
                     )

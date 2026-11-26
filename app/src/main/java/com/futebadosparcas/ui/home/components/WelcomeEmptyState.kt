@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.home.components
 
+import coil3.compose.AsyncImage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,8 +53,8 @@ fun WelcomeEmptyState(
             modifier = Modifier.size(120.dp),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(userLevel)),
+            AsyncImage(
+                model = LevelBadgeHelper.getBadgeForLevel(userLevel),
                 contentDescription = stringResource(R.string.welcome_level_badge_cd, userLevel),
                 modifier = Modifier.size(120.dp)
             )

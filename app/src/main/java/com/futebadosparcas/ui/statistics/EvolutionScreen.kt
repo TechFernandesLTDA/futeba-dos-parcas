@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.model.MilestoneType
@@ -252,8 +253,8 @@ private fun LevelHeader(
                 )
 
                 // Badge image
-                androidx.compose.foundation.Image(
-                    painter = painterResource(LevelBadgeHelper.getBadgeForLevel(currentLevel)),
+                AsyncImage(
+                    model = LevelBadgeHelper.getBadgeForLevel(currentLevel),
                     contentDescription = stringResource(R.string.level_prefix, currentLevel),
                     modifier = Modifier.size(72.dp)
                 )
