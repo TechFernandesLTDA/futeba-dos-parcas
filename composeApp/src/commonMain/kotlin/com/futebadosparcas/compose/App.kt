@@ -89,6 +89,12 @@ import com.futebadosparcas.compose.di.composeAppKoinModules
 import com.futebadosparcas.compose.navigation.AppRoutes
 import com.futebadosparcas.compose.resources.cancel
 import com.futebadosparcas.compose.resources.cd_back
+import com.futebadosparcas.compose.resources.game_detail_rewards_held_title
+import com.futebadosparcas.compose.resources.game_detail_rewards_held_body
+import com.futebadosparcas.compose.resources.game_detail_rewards_rejected_title
+import com.futebadosparcas.compose.resources.game_detail_rewards_rejected_body
+import com.futebadosparcas.compose.resources.game_detail_rewards_min_players_title
+import com.futebadosparcas.compose.resources.game_detail_rewards_min_players_body
 import com.futebadosparcas.compose.resources.profile_hub_action_remove_ads
 import com.futebadosparcas.compose.resources.profile_hub_action_remove_ads_body
 import com.futebadosparcas.compose.monetization.MonetizationController
@@ -1635,6 +1641,40 @@ private fun UnavailableRouteScreen(
  *
  * Lista de ações como `OutlinedButton`s; cada uma navega para a respectiva tela.
  */
+enum class XpBannerKind { WARNING, ERROR, INFO }
+
+@Composable
+private fun XpRewardBanner(title: String, body: String, kind: XpBannerKind) {
+    val container = when (kind) {
+        XpBannerKind.WARNING -> MaterialTheme.colorScheme.tertiaryContainer
+        XpBannerKind.ERROR -> MaterialTheme.colorScheme.errorContainer
+        XpBannerKind.INFO -> MaterialTheme.colorScheme.primaryContainer
+    }
+    val onContainer = when (kind) {
+        XpBannerKind.WARNING -> MaterialTheme.colorScheme.onTertiaryContainer
+        XpBannerKind.ERROR -> MaterialTheme.colorScheme.onErrorContainer
+        XpBannerKind.INFO -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = container)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = onContainer
+            )
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyMedium,
+                color = onContainer
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GameDetailHub(
@@ -1729,6 +1769,26 @@ private fun GameDetailHub(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                // Banner de status de recompensas (paridade web/Android, #4629):
+                // HELD_FOR_REVIEW/iníneligível/rejeitado ganham um card informativo.
+                when (game.xpRewardStatus) {
+                    "HELD_FOR_REVIEW" -> XpRewardBanner(
+                        title = stringResource(Res.string.game_detail_rewards_held_title),
+                        body = stringResource(Res.string.game_detail_rewards_held_body),
+                        kind = XpBannerKind.WARNING
+                    )
+                    "REJECTED_BY_ADMIN" -> XpRewardBanner(
+                        title = stringResource(Res.string.game_detail_rewards_rejected_title),
+                        body = stringResource(Res.string.game_detail_rewards_rejected_body),
+                        kind = XpBannerKind.ERROR
+                    )
+                    "INELIGIBLE_MIN_PLAYERS" -> XpRewardBanner(
+                        title = stringResource(Res.string.game_detail_rewards_min_players_title),
+                        body = stringResource(Res.string.game_detail_rewards_min_players_body),
+                        kind = XpBannerKind.INFO
+                    )
+                }
 
                 // Card de Confirmação de Presença e Lista de Espera (#4434 / #4435 — G2 & G3)
                 Card(
