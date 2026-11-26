@@ -1780,7 +1780,7 @@
     "deleteSuccess": "Group deleted successfully",
     "finishedGames": "Finished",
     "generateInvite": "Generate Invite",
-    "generateInvitePrompt": "Generate an invite code to share with your friends",
+    "generateInvitePrompt": "Generate an invite code for one person (single-use, valid 7 days)",
     "gameHistory": "Game history",
     "groupGames": "Group games",
     "groupGamesDesc": "{{count}} game loaded in recent history",
@@ -2263,7 +2263,11 @@
     "teamOfTheWeek": "Team of the Week",
     "viewFullRanking": "View full ranking",
     "viewStat": "View {{stat}}",
-    "weeklyRanking": "Weekly Ranking"
+    "weeklyRanking": "Weekly Ranking",
+    "welcomeTitle": "Your first kickabout starts here",
+    "welcomeDesc": "Browse open games near you or create yours and invite the crew.",
+    "welcomeViewPublic": "View public games",
+    "welcomeCreate": "Create game"
   },
   "invite": {
     "ambassadorLevel": "Your Ambassador Level",

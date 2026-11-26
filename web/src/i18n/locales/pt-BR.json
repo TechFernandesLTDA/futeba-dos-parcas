@@ -1780,7 +1780,7 @@
     "deleteSuccess": "Grupo excluído com sucesso",
     "finishedGames": "Finalizados",
     "generateInvite": "Gerar Convite",
-    "generateInvitePrompt": "Gere um código de convite para compartilhar com seus amigos",
+    "generateInvitePrompt": "Gere um código de convite para uma pessoa (uso único, válido por 7 dias)",
     "gameHistory": "Histórico de jogos",
     "groupGames": "Jogos do grupo",
     "groupGamesDesc": "{{count}} jogo carregado no histórico recente",
@@ -2263,7 +2263,11 @@
     "teamOfTheWeek": "Time da Semana",
     "viewFullRanking": "Ver ranking completo",
     "viewStat": "Ver {{stat}}",
-    "weeklyRanking": "Ranking Semanal"
+    "weeklyRanking": "Ranking Semanal",
+    "welcomeTitle": "Sua primeira pelada começa aqui",
+    "welcomeDesc": "Veja jogos abertos por perto ou crie o seu e chame a galera.",
+    "welcomeViewPublic": "Ver jogos públicos",
+    "welcomeCreate": "Criar jogo"
   },
   "invite": {
     "ambassadorLevel": "Seu nível de Embaixador",

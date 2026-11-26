@@ -1780,7 +1780,7 @@
     "deleteSuccess": "Grupo eliminado con éxito",
     "finishedGames": "Finalizados",
     "generateInvite": "Generar Invitación",
-    "generateInvitePrompt": "Genera un código de invitación para compartir con tus amigos",
+    "generateInvitePrompt": "Genera un código de invitación para una persona (uso único, válido por 7 días)",
     "gameHistory": "Historial de partidos",
     "groupGames": "Partidos del grupo",
     "groupGamesDesc": "{{count}} partido cargado en el historial reciente",
@@ -2263,7 +2263,11 @@
     "teamOfTheWeek": "Equipo de la Semana",
     "viewFullRanking": "Ver ranking completo",
     "viewStat": "Ver {{stat}}",
-    "weeklyRanking": "Ranking Semanal"
+    "weeklyRanking": "Ranking Semanal",
+    "welcomeTitle": "Tu primera pachanga empieza aquí",
+    "welcomeDesc": "Mira partidos abiertos cerca de ti o crea el tuyo y llama a tu gente.",
+    "welcomeViewPublic": "Ver partidos abiertos",
+    "welcomeCreate": "Crear partido"
   },
   "invite": {
     "ambassadorLevel": "Tu nivel de Embajador",
