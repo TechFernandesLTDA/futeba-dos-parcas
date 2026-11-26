@@ -677,4 +677,42 @@
     <string name="validation_model_owner_required">El lugar debe tener un propietario</string>
     <string name="validation_model_operating_days_range">Los días de funcionamiento deben estar entre 1 (lun) y 7 (dom)</string>
     <string name="validation_model_field_count_negative">El conteo de canchas no puede ser negativo</string>
+
+    <!-- Admin: Fila de revisión de recompensas XP (spec FEAT_2026-11-26_admin-revisao-xp-apps.md) -->
+    <string name="admin_review_queue_title">Cola de Revisión de XP</string>
+    <string name="admin_review_organizer">Organizador: %1$s</string>
+    <string name="admin_review_filter_all">Todos (%1$d)</string>
+    <string name="admin_review_filter_pending">Pendientes (%1$d)</string>
+    <string name="admin_review_filter_released">Liberados (%1$d)</string>
+    <string name="admin_review_filter_rejected">Rechazados (%1$d)</string>
+    <string name="admin_review_filter_autoclose">Auto-close (%1$d)</string>
+    <string name="admin_review_status_held">Retenido para revisión</string>
+    <string name="admin_review_status_eligible">Liberado</string>
+    <string name="admin_review_status_rejected">Rechazado</string>
+    <string name="admin_review_autoclose_chip">Auto-close en revisión</string>
+    <string name="admin_review_pending_processing">Liberado — procesamiento de XP pendiente</string>
+    <string name="admin_review_last_decision">Última decisión: %1$s — %2$s</string>
+    <string name="admin_review_empty_title">Nada en la cola</string>
+    <string name="admin_review_empty_message">Ningún partido esperando revisión de recompensas de XP.</string>
+    <string name="admin_review_access_denied_title">Área del administrador</string>
+    <string name="admin_review_access_denied_message">Solo los administradores pueden revisar recompensas de XP.</string>
+    <string name="admin_review_load_error">Error al cargar la cola de revisión de XP.</string>
+    <string name="admin_review_action_approve">Liberar recompensas</string>
+    <string name="admin_review_action_reject">Rechazar recompensas</string>
+    <string name="admin_review_dialog_title_approve">Liberar recompensas de XP</string>
+    <string name="admin_review_dialog_title_reject">Rechazar recompensas de XP</string>
+    <string name="admin_review_dialog_body_approve">Esto libera el XP, el ranking y las insignias de este partido de inmediato. La acción es irreversible.</string>
+    <string name="admin_review_dialog_body_reject">El partido quedará marcado como rechazado y el XP no se procesará. La acción es irreversible.</string>
+    <string name="admin_review_dialog_reason_label">Justificación (obligatoria)</string>
+    <string name="admin_review_dialog_reason_support">Entre 10 y 500 caracteres</string>
+    <string name="admin_review_dialog_counter">%1$d/500</string>
+    <string name="admin_review_success_approve">Recompensas liberadas con éxito.</string>
+    <string name="admin_review_success_reject">Recompensas rechazadas con éxito.</string>
+    <string name="admin_review_already_reviewed">Este partido ya fue revisado. Actualizando la cola…</string>
+    <string name="admin_review_error_unauthenticated">Inicio de sesión obligatorio.</string>
+    <string name="admin_review_error_permission">Solo los administradores pueden ejecutar esta acción.</string>
+    <string name="admin_review_error_rate_limit">Demasiados intentos. Inténtalo de nuevo en unos instantes.</string>
+    <string name="admin_review_error_invalid_argument">Datos inválidos para la revisión. Verifica la justificación (10 a 500 caracteres) e inténtalo de nuevo.</string>
+    <string name="admin_review_error_not_found">Partido no encontrado.</string>
+    <string name="admin_review_error_generic">No fue posible enviar la revisión. Inténtalo de nuevo.</string>
 </resources>

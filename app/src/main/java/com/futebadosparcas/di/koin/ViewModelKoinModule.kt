@@ -2,6 +2,7 @@ package com.futebadosparcas.di.koin
 
 import com.futebadosparcas.data.repository.AuthRepository as AndroidAuthRepository
 import com.futebadosparcas.data.repository.GroupRepository as AndroidGroupRepository
+import com.futebadosparcas.ui.admin.AdminGameReviewQueueViewModel
 import com.futebadosparcas.ui.admin.UserManagementViewModel
 import com.futebadosparcas.ui.auth.LoginViewModel
 import com.futebadosparcas.ui.auth.RegisterViewModel
@@ -406,6 +407,15 @@ val viewModelKoinModule = module {
         UserManagementViewModel(
             userRepository = get(),
             firebaseFunctions = get()
+        )
+    }
+
+    // Fila de revisão de recompensas XP (admin) — spec FEAT_2026-11-26_admin-revisao-xp-apps.md
+    viewModel {
+        AdminGameReviewQueueViewModel(
+            firestore = get(),
+            functions = get(),
+            permissionManager = get()
         )
     }
 
