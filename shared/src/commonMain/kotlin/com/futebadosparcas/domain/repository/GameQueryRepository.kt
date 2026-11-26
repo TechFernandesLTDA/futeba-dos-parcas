@@ -61,11 +61,6 @@ interface GameQueryRepository {
     fun getAllGamesWithConfirmationCountFlow(): Flow<Result<List<GameWithConfirmations>>>
 
     /**
-     * Busca jogos confirmados pelo usuario.
-     */
-    suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>>
-
-    /**
      * Flow de jogos ao vivo e proximos.
      */
     fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>>

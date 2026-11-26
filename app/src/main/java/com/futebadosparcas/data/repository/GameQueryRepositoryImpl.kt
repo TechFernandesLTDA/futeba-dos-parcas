@@ -619,50 +619,6 @@ class GameQueryRepositoryImpl constructor(
         }
     }
 
-    override suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>> {
-        return try {
-            val uid = auth.currentUser?.uid ?: return Result.success(emptyList())
-
-            val games = withTimeout(8000L) {
-                val gameIds = confirmationRepository.getConfirmedGameIds(uid)
-
-                val androidGamesList = if (gameIds.isEmpty()) {
-                    emptyList<AndroidGame>()
-                } else {
-                    // Paraleliza os chunks para reduzir latência
-                    coroutineScope {
-                        val deferreds = gameIds.chunked(10).map { chunk ->
-                            async {
-                                val snapshot = gamesCollection
-                                    .whereIn(FieldPath.documentId(), chunk)
-                                    .get()
-                                    .await()
-
-                                snapshot.documents.mapNotNull { doc ->
-                                    doc.toObjectTolerant(AndroidGame::class.java)?.apply { id = doc.id }
-                                }
-                            }
-                        }
-                        deferreds.awaitAll().flatten()
-                    }
-                }
-
-                // P2 #40: Filtra soft-deletados, apenas jogos futuros e ordena por data
-                val now = java.util.Date()
-                androidGamesList
-                    .filterNotSoftDeleted()
-                    .filter { val dt = it.dateTime; dt != null && dt > now }
-                    .sortedBy { it.dateTime }
-            }
-
-            Result.success((games as List<AndroidGame>).map { it.toKmpGame() })
-
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao buscar jogos confirmados do usuario", e)
-            Result.success(emptyList())
-        }
-    }
-
     override suspend fun getGameDetails(gameId: String): Result<Game> {
         return try {
             val doc = gamesCollection.document(gameId).get().await()

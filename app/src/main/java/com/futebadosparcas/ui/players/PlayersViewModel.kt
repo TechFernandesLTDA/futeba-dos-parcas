@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -37,6 +38,11 @@ class PlayersViewModel(
 
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
+
+    // #4596 item 5: só o dono convida (regra de `group_invites`); o botão só
+    // aparece quando a pessoa é dona de ao menos um grupo.
+    private val _canInvite = MutableStateFlow(false)
+    val canInvite: StateFlow<Boolean> = _canInvite.asStateFlow()
 
     // Estatísticas do jogador selecionado para o PlayerCard
     private val _selectedPlayerStats = MutableStateFlow<com.futebadosparcas.domain.model.Statistics?>(null)
@@ -86,6 +92,20 @@ class PlayersViewModel(
         }
         observeUnreadCount()
         observeSearchQuery()
+        loadCanInvite()
+    }
+
+    /**
+     * #4596 item 5: verifica se a pessoa é dona de ao menos um grupo (só o
+     * dono convida pela regra de `group_invites`; admin recebe o erro no repo).
+     */
+    private fun loadCanInvite() {
+        viewModelScope.launch {
+            groupRepository.getMyGroups().fold(
+                onSuccess = { groups -> _canInvite.value = groups.any { it.isOwner() } },
+                onFailure = { _canInvite.value = false }
+            )
+        }
     }
 
     private fun observeUnreadCount() {
@@ -300,25 +320,26 @@ class PlayersViewModel(
 
     /**
      * Convida jogador para um grupo
-     * - Verifica grupos onde usuário é admin
+     * - Verifica grupos onde usuário é dono (regra de `group_invites`;
+     *   admin não pode convidar — #4596 item 5)
      * - Se apenas 1 grupo, envia direto
      * - Se múltiplos, pede para escolher
      */
     fun invitePlayer(user: User) {
         viewModelScope.launch {
             try {
-                // Verifica grupos onde sou admin
+                // Verifica grupos onde sou dono
                 groupRepository.getMyGroups().fold(
                     onSuccess = { groups ->
-                        val adminGroups = groups.filter { it.isAdmin() }
-                        if (adminGroups.isEmpty()) {
-                            _inviteEvent.emit(InviteUiEvent.Error("Você precisa ser admin de um grupo para convidar."))
-                        } else if (adminGroups.size == 1) {
+                        val ownerGroups = groups.filter { it.isOwner() }
+                        if (ownerGroups.isEmpty()) {
+                            _inviteEvent.emit(InviteUiEvent.Error("Você precisa ser dono de um grupo para convidar."))
+                        } else if (ownerGroups.size == 1) {
                             // Envia direto
-                            sendInvite(adminGroups.first().groupId, user)
+                            sendInvite(ownerGroups.first().groupId, user)
                         } else {
                             // Pede pra escolher
-                            _inviteEvent.emit(InviteUiEvent.ShowGroupSelection(adminGroups, user))
+                            _inviteEvent.emit(InviteUiEvent.ShowGroupSelection(ownerGroups, user))
                         }
                     },
                     onFailure = { error ->

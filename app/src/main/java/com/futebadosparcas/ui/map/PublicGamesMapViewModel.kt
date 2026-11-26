@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.util.toObjectTolerant
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.RealtimeTelemetry
@@ -148,7 +149,7 @@ class PublicGamesMapViewModel(
         .limit(PAGE_SIZE)
 
     private fun DocumentSnapshot.toMarker(): MapGameMarker? {
-        val game = toObject(Game::class.java)?.let { parsed ->
+        val game = toObjectTolerant(Game::class.java)?.let { parsed ->
             if (parsed.id.isBlank()) parsed.copy(id = id) else parsed
         } ?: return null
         val latitude = game.locationLat ?: return null

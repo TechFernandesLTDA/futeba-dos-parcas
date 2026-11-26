@@ -246,8 +246,7 @@ class GameRepositoryImpl constructor(
             result.map { it.toAndroidGameWithConfirmations() }
         }
 
-    override suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>> =
-        queryRepository.getConfirmedUpcomingGamesForUser()
+    // ========== OPTIMIZED UI QUERIES (Fase 1) ==========
 
     override fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>> =
         queryRepository.getLiveAndUpcomingGamesFlow().map { result ->

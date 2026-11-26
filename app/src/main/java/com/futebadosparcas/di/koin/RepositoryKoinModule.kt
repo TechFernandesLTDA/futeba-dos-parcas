@@ -20,7 +20,6 @@ import com.futebadosparcas.data.ReleaseNotesRepositoryImpl
 import com.futebadosparcas.data.StatisticsRepositoryImpl
 import com.futebadosparcas.data.database.DatabaseDriverFactory
 import com.futebadosparcas.data.database.DatabaseFactory
-import com.futebadosparcas.data.repository.CachedGameRepository
 import com.futebadosparcas.data.repository.LiveGameRepositoryImpl
 import com.futebadosparcas.data.repository.MeteredLocationRepository
 import com.futebadosparcas.data.repository.PaymentRepositoryImpl
@@ -53,8 +52,6 @@ import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.releasenotes.ReleaseNotesAssetReader
 import com.futebadosparcas.platform.storage.LastSeenVersionStore
 import com.futebadosparcas.platform.storage.PreferencesService
-import com.futebadosparcas.data.datasource.FirebaseDataSource as AndroidFirebaseDataSource
-import com.futebadosparcas.data.datasource.FirebaseDataSourceImpl
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -62,11 +59,6 @@ val repositoryKoinModule = module {
 
     single<FirebaseDataSource> {
         FirebaseDataSource()
-    }
-
-    // FirebaseDataSource Android (abstração Android, diferente do FirebaseDataSource do shared/KMP)
-    single<AndroidFirebaseDataSource> {
-        FirebaseDataSourceImpl(get(), get())
     }
 
     single<FutebaDatabase> {
@@ -194,10 +186,6 @@ val repositoryKoinModule = module {
 
     single<com.futebadosparcas.data.repository.WaitlistRepository> {
         WaitlistRepositoryImpl(get(), get())
-    }
-
-    single<com.futebadosparcas.data.repository.CachedGameRepository> {
-        CachedGameRepository(get(), get())
     }
 
     single<GroupWallRepository> {

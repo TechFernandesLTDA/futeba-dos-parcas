@@ -63,13 +63,7 @@ actual class FirebaseDataSource actual constructor() {
             FirebaseUsersDataSource.exportPayloadFromCallableData(data)
     }
 
-    // ========== GAMES ==========
-    actual suspend fun getUpcomingGames(limit: Int): Result<List<Game>> =
-        games.getUpcomingGames(limit)
-
-    actual fun getUpcomingGamesFlow(limit: Int): Flow<Result<List<Game>>> =
-        games.getUpcomingGamesFlow(limit)
-
+    // ========== GAMES ========== (#4596: sem getUpcomingGames — removido)
     actual suspend fun getGameById(gameId: String): Result<Game> =
         games.getGameById(gameId)
 
