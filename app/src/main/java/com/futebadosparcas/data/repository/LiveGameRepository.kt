@@ -203,7 +203,11 @@ class LiveGameRepository constructor(
                     .get()
                     .await()
                 
-                val teams = teamsSnapshot.toObjectsTolerant(Team::class.java)
+                // #4596: id a partir do documento (não do campo `id` gravado por
+                // alguns escritores) — a leitura não depende mais disso.
+                val teams = teamsSnapshot.documents.mapNotNull { doc ->
+                    doc.toObjectTolerant(Team::class.java)?.copy(id = doc.id)
+                }
                 if (teams.size >= 2) {
                     startLiveGame(gameId, teams[0].id, teams[1].id)
                     AppLogger.d(TAG) { "Placar inicializado sob demanda para o jogo $gameId" }

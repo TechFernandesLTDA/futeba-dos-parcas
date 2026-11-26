@@ -76,18 +76,6 @@ class FakeGameRepository constructor() : GameRepository {
         emit(Result.success(result))
     }
 
-    override suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>> {
-        val confirmedGameIds = confirmations
-            .filter { it.userId == "mock_user_id" && it.status == "CONFIRMED" }
-            .map { it.gameId }
-            .toSet()
-        
-        val upcomingGames = games.filter { 
-            (it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name) && it.id in confirmedGameIds 
-        }
-        return Result.success(upcomingGames)
-    }
-
     override suspend fun getGameDetails(gameId: String): Result<Game> {
         val game = games.find { it.id == gameId }
         return if (game != null) Result.success(game) else Result.failure(Exception("Game not found"))

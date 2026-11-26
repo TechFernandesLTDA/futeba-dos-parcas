@@ -1,11 +1,6 @@
 package com.futebadosparcas.di.koin
 
-import com.futebadosparcas.domain.usecase.CalculateTeamBalanceUseCase
-import com.futebadosparcas.domain.usecase.ConfirmPresenceUseCase
-import com.futebadosparcas.domain.usecase.GetLeagueRankingUseCase
-import com.futebadosparcas.domain.usecase.GetPlayerStatisticsUseCase
 import com.futebadosparcas.domain.usecase.GetUnseenReleaseNotesUseCase
-import com.futebadosparcas.domain.usecase.GetUpcomingGamesUseCase
 import com.futebadosparcas.domain.usecase.ConfirmationUseCase
 import com.futebadosparcas.domain.usecase.livegame.AddGameEventUseCase
 import com.futebadosparcas.domain.usecase.livegame.FinishLiveGameUseCase
@@ -25,26 +20,6 @@ val useCaseKoinModule = module {
 
     single<UpdateProfileUseCase> {
         UpdateProfileUseCase(get(), get())
-    }
-
-    single<GetUpcomingGamesUseCase> {
-        GetUpcomingGamesUseCase(get())
-    }
-
-    single<ConfirmPresenceUseCase> {
-        ConfirmPresenceUseCase(get(), get())
-    }
-
-    single<GetPlayerStatisticsUseCase> {
-        GetPlayerStatisticsUseCase(get(), get())
-    }
-
-    single<CalculateTeamBalanceUseCase> {
-        CalculateTeamBalanceUseCase(get(), get())
-    }
-
-    single<GetLeagueRankingUseCase> {
-        GetLeagueRankingUseCase(get(), get())
     }
 
     single<ConfirmationUseCase> {

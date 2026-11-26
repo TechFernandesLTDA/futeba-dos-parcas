@@ -2,6 +2,7 @@ package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.model.GroupWallPost
 import com.futebadosparcas.data.model.UserGroup
+import com.futebadosparcas.data.util.toObjectTolerant
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -326,7 +327,7 @@ class SocialFeedRepository(
         groupNames: Map<String, String>,
         hiddenKeys: Set<String>
     ): SocialFeedCandidate {
-        val post = toObject(GroupWallPost::class.java)?.copy(id = id)
+        val post = toObjectTolerant(GroupWallPost::class.java)?.copy(id = id)
         val feedPost = post?.let {
             SocialFeedPost(it, groupNames[it.groupId] ?: "Grupo")
         }

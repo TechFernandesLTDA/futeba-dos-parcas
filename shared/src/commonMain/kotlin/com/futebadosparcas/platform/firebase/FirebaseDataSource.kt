@@ -19,10 +19,9 @@ import kotlinx.coroutines.flow.Flow
  */
 expect class FirebaseDataSource() {
 
-    // ========== GAMES ==========
-
-    suspend fun getUpcomingGames(limit: Int = 50): Result<List<Game>>
-    fun getUpcomingGamesFlow(limit: Int = 50): Flow<Result<List<Game>>>
+    // ========== GAMES ========== (sem getUpcomingGames — sem filtro de
+    // visibilidade/dono/grupo, removido na #4596; listas de jogos são por
+    // grupo, públicos ou confirmados)
     suspend fun getGameById(gameId: String): Result<Game>
     fun getGameByIdFlow(gameId: String): Flow<Result<Game>>
     suspend fun getConfirmedGamesForUser(userId: String): Result<List<Game>>

@@ -213,13 +213,18 @@ class GameConfirmationRepositoryImpl constructor(
             return kotlinx.coroutines.flow.flowOf(emptySet())
         }
 
-        return dataSource.getUpcomingGamesFlow()
-            .map { result ->
-                result.getOrDefault(emptyList())
-                    .map { it.id }
-                    .toSet()
-            }
-            .catch { emit(emptySet()) }
+        // #4596: antes usava getUpcomingGamesFlow (sem filtro de visibilidade —
+        // as regras negam a query inteira quando o resultado inclui um jogo que
+        // a pessoa não pode ler) e ainda devolvia os IDs de TODOS os jogos
+        // próximos. getConfirmedGamesForUser já devolve exatamente os jogos em
+        // que a pessoa confirmou (tolerante a chunks desde a #4595).
+        return kotlinx.coroutines.flow.flow {
+            emit(
+                dataSource.getConfirmedGamesForUser(userId)
+                    .map { games -> games.map { it.id }.toSet() }
+                    .getOrDefault(emptySet())
+            )
+        }
     }
 
     override suspend fun acceptInvitation(

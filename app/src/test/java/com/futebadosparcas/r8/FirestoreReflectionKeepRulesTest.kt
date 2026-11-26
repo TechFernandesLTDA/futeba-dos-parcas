@@ -38,8 +38,12 @@ class FirestoreReflectionKeepRulesTest {
         "shared/src/nativeAndAndroidMain/kotlin"
     ).map { File(repositoryRoot, it) }.filter { it.isDirectory }
 
+    // #4596: toObjectTolerant/toObjectsTolerant passam pela mesma reflexão do
+    // CustomClassMapper (constructor, getters/campos) que toObject, então
+    // entram na conta das classes que precisam de keep. Sem essa inclusão, o
+    // scanner ficava cego quando as leituras diretas por toObject saem.
     private val toObjectCall =
-        Regex("""\btoObjects?\s*(?:\(\s*([A-Za-z_][\w]*)::class\.java|<\s*([A-Za-z_][\w]*)\s*>)""")
+        Regex("""\b(?:toObjects?|toObjectsTolerant|toObjectTolerant)\s*(?:\(\s*([A-Za-z_][\w]*)::class\.java|<\s*([A-Za-z_][\w]*)\s*>)""")
     private val importLine = Regex("""^import\s+([\w.]+?)(\.\*)?(?:\s+as\s+(\w+))?\s*$""", RegexOption.MULTILINE)
     private val packageLine = Regex("""^package\s+([\w.]+)""", RegexOption.MULTILINE)
     private val topLevelClass =

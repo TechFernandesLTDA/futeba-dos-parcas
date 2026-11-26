@@ -39,7 +39,6 @@ interface GameRepository {
     suspend fun getAllGames(): Result<List<Game>>
     suspend fun getAllGamesWithConfirmationCount(): Result<List<GameWithConfirmations>>
     fun getAllGamesWithConfirmationCountFlow(): kotlinx.coroutines.flow.Flow<Result<List<GameWithConfirmations>>>
-    suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>>
     
     // Novas queries otimizadas para UI (Fase 1)
     fun getLiveAndUpcomingGamesFlow(): kotlinx.coroutines.flow.Flow<Result<List<GameWithConfirmations>>>

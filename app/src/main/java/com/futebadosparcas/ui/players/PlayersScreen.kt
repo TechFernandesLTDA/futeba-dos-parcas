@@ -88,6 +88,8 @@ fun PlayersScreen(
     // Estados do ViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
+    // #4596 item 5: botão de convite só para quem é dono de grupo.
+    val canInvite by viewModel.canInvite.collectAsStateWithLifecycle()
 
     // Estados locais
     var searchQuery by remember { mutableStateOf(viewModel.currentQuery) }
@@ -223,6 +225,7 @@ fun PlayersScreen(
                             PlayersListContent(
                                 players = state.players,
                                 isComparisonMode = isComparisonMode,
+                                showInviteButton = canInvite,
                                 selectedPlayers = selectedPlayers,
                                 onPlayerClick = { user ->
                                     if (isComparisonMode) {
@@ -548,6 +551,7 @@ private fun PlayersLoadingContent(
 private fun PlayersListContent(
     players: List<User>,
     isComparisonMode: Boolean,
+    showInviteButton: Boolean,
     selectedPlayers: Set<String>,
     onPlayerClick: (User) -> Unit,
     onInviteClick: (User) -> Unit,
@@ -570,6 +574,7 @@ private fun PlayersListContent(
                 player = player,
                 isSelected = selectedPlayers.contains(player.id),
                 isComparisonMode = isComparisonMode,
+                showInviteButton = showInviteButton,
                 onClick = { onPlayerClick(player) },
                 onInviteClick = { onInviteClick(player) },
                 modifier = Modifier.animateItem()
@@ -586,6 +591,7 @@ private fun PlayerCard(
     player: User,
     isSelected: Boolean,
     isComparisonMode: Boolean,
+    showInviteButton: Boolean,
     onClick: () -> Unit,
     onInviteClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -679,8 +685,8 @@ private fun PlayerCard(
                     )
                 }
 
-                // Botão de convite (apenas se não estiver em modo comparação)
-                if (!isComparisonMode) {
+                // Botão de convite (apenas para o dono de grupo, fora do modo comparação — #4596 item 5)
+                if (!isComparisonMode && showInviteButton) {
                     IconButton(
                         onClick = onInviteClick,
                         modifier = Modifier.size(AppDimensions.icon_extraLarge)

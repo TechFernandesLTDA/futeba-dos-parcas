@@ -66,6 +66,8 @@ class PlayersViewModelTest {
         every { observeUnreadCountUseCase() } returns MutableStateFlow(0)
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
         coEvery { userRepository.searchUsers(any(), any()) } returns Result.success(emptyList())
+        // #4596 item 5: o ViewModel carrega `canInvite` no init (getMyGroups).
+        coEvery { groupRepository.getMyGroups() } returns Result.success(emptyList())
     }
 
     @AfterEach
@@ -538,6 +540,9 @@ class PlayersViewModelTest {
             every { this@apply.groupId } returns id
             every { this@apply.groupName } returns name
             every { this@apply.isAdmin() } returns isAdmin
+            // #4596 item 5: o convite exige dono; os testes de convite usam
+            // grupos privilegiados, então o dono acompanha o admin mockado.
+            every { this@apply.isOwner() } returns isAdmin
         }
     }
 }

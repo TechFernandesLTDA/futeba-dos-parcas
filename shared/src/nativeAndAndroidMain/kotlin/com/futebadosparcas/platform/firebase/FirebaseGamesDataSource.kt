@@ -27,35 +27,7 @@ internal class FirebaseGamesDataSource(
     private val firestore: FirebaseFirestore = Firebase.firestore,
     private val auth: FirebaseAuth = Firebase.auth
 ) {
-    // ========== GAMES ==========
-
-    suspend fun getUpcomingGames(limit: Int): Result<List<Game>> {
-        return try {
-            val nowMillis = Clock.System.now().toEpochMilliseconds()
-            val nowTs = Timestamp(nowMillis / 1000, ((nowMillis % 1000) * 1_000_000).toInt())
-            val snapshot = firestore.collection(COLLECTION_GAMES)
-                .where { "dateTime" greaterThanOrEqualTo nowTs }
-                .orderBy("dateTime", Direction.ASCENDING)
-                .limit(limit)
-                .get()
-
-            Result.success(snapshot.documents.mapNotNull { it.toGameOrNull() })
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    fun getUpcomingGamesFlow(limit: Int): Flow<Result<List<Game>>> {
-        val nowMillis = Clock.System.now().toEpochMilliseconds()
-        val nowTs = Timestamp(nowMillis / 1000, ((nowMillis % 1000) * 1_000_000).toInt())
-        return firestore.collection(COLLECTION_GAMES)
-            .where { "dateTime" greaterThanOrEqualTo nowTs }
-            .orderBy("dateTime", Direction.ASCENDING)
-            .limit(limit)
-            .snapshots()
-            .map { snapshot -> Result.success(snapshot.documents.mapNotNull { it.toGameOrNull() }) }
-            .catch { e -> emit(Result.failure(e)) }
-    }
+    // ========== GAMES ========== (#4596: sem getUpcomingGames/Flow — removidos)
 
     suspend fun getGameById(gameId: String): Result<Game> {
         return try {
