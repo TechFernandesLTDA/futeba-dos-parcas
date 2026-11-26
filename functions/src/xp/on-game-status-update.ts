@@ -32,10 +32,12 @@ import {
   finalizeGameXpAndSideEffects,
 } from "./post-game-effects";
 import {brtDateKey} from "./streaks";
+import {MIN_PLAYERS_FOR_XP} from "../constants";
 
 const GAME_CONFIRMATIONS_QUERY_LIMIT = 200;
 const GAME_TEAMS_QUERY_LIMIT = 100;
-const MIN_PLAYERS = 6;
+// #4629 item 8: piso central em shared/xp-constants.json (valor 6).
+const MIN_PLAYERS = MIN_PLAYERS_FOR_XP;
 
 /**
  * Handler principal do trigger `onGameStatusUpdate` (games/{gameId}).
@@ -184,10 +186,14 @@ export async function handleGameStatusUpdate(
         `/${MIN_PLAYERS}). ` +
         "Marking processed."
       );
+      // #4629 item 8: status honesto (antes ficava ELIGIBLE e as telas
+      // mostravam "liberadas"/"validado" para um jogo que nunca pagou).
       await event.data.after.ref.update({
         xp_processed: true,
         xp_processing: false,
         xp_processed_at: FieldValue.serverTimestamp(),
+        xp_reward_status: "INELIGIBLE_MIN_PLAYERS",
+        xp_reward_hold_reasons: ["MIN_PLAYERS"],
       });
       return;
     }

@@ -38,6 +38,9 @@ export const PERFORMANCE_BONUSES = xpConstants.performanceBonuses;
 export const BEHAVIOR_BONUSES = xpConstants.behaviorBonuses;
 export const RETENTION_BONUSES = xpConstants.retentionBonuses;
 export const LEVEL_TABLE = xpConstants.levelTable;
+// #4629 item 8: piso de confirmados para pagar XP (fonte: xp-constants.json).
+export const MIN_PLAYERS_FOR_XP =
+  (xpConstants as unknown as { gameRules?: { minPlayersForXp?: number } }).gameRules?.minPlayersForXp ?? 6;
 
 // ==========================================
 // CLOUD FUNCTIONS CONFIG

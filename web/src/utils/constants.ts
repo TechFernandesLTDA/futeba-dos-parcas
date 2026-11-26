@@ -45,6 +45,8 @@ export const STALE_TIME_MS = 5 * 60 * 1000; // 5 minutos
 
 // XP System — source of truth: shared/xp-constants.json
 export const XP_PARTICIPATION = xpConstants.xpActions.PARTICIPATION;
+// #4629 item 8: piso de confirmados para pagar XP (shared/xp-constants.json).
+export const MIN_PLAYERS_FOR_XP = (xpConstants as unknown as { gameRules?: { minPlayersForXp?: number } }).gameRules?.minPlayersForXp ?? 6;
 export const XP_GOAL = xpConstants.xpActions.GOAL;
 export const XP_ASSIST = xpConstants.xpActions.ASSIST;
 export const XP_SAVE = xpConstants.xpActions.SAVE;

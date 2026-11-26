@@ -192,6 +192,15 @@ function getRewardAlertConfig(game: Game, isAdmin: boolean, canManage: boolean) 
         ctaLabel: null,
         ...shared,
       };
+    case 'INELIGIBLE_MIN_PLAYERS':
+      return {
+        severity: 'warning' as const,
+        title: 'Jogo incompleto — sem XP',
+        body: 'Este jogo não teve o mínimo de 6 confirmados para gerar XP, ranking e badges (votação à parte).',
+        cta: null,
+        ctaLabel: null,
+        ...shared,
+      };
     case 'REJECTED_BY_ADMIN':
       return {
         severity: 'error' as const,

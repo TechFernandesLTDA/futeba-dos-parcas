@@ -53,6 +53,8 @@
     <string name="validation_banner_body_review_required">O jogo foi finalizado com sinais de risco e precisa de revisão antes de liberar recompensas automáticas.</string>
     <string name="validation_banner_title_low_confidence">Baixa confiança</string>
     <string name="validation_banner_body_low_confidence">O antifraude detectou baixa confiança neste jogo. A partida segue registrada, mas merece atenção operacional.</string>
+    <string name="validation_banner_title_min_players">Jogo incompleto — sem XP</string>
+    <string name="validation_banner_body_min_players">Este jogo não teve o mínimo de 6 confirmados para gerar XP, ranking e badges (votação à parte).</string>
     <string name="validation_banner_title_validated">Jogo validado</string>
     <string name="validation_banner_body_validated">As evidências coletadas validaram este jogo para processamento normal de recompensas.</string>
     <string name="validation_reasons_label">Sinais observados</string>
