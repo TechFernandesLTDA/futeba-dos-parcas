@@ -76,6 +76,10 @@ object AppRoutes {
     // ─── Bucket Power ────────────────────────────────────────────────────────
     const val CASHBOX = "cashbox"
 
+    // ─── Admin ───────────────────────────────────────────────────────────────
+    /** Fila de revisão de recompensas XP (spec FEAT_2026-11-26). Só admin vê o entrypoint. */
+    const val ADMIN_GAME_REVIEW = "admin_game_review"
+
     /**
      * Rota concreta para o hub de detalhe de jogo.
      *

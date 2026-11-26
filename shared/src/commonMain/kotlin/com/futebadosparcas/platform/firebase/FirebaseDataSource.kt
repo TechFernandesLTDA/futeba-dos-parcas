@@ -31,6 +31,46 @@ expect class FirebaseDataSource() {
     suspend fun updateGame(gameId: String, updates: Map<String, Any>): Result<Unit>
     suspend fun deleteGame(gameId: String): Result<Unit>
 
+    // ========== ADMIN: FILA DE REVISÃO DE RECOMPENSAS XP (spec FEAT_2026-11-26) ==========
+
+    /**
+     * Fila de revisão de recompensas XP para administradores (paridade com
+     * `web/src/pages/admin/GameReviewQueueScreen.tsx`).
+     *
+     * Duas queries no `games`, limit 100 cada, merge por id (doc da query de
+     * auto-close prevalece):
+     * 1. `xp_reward_status in [HELD_FOR_REVIEW, ELIGIBLE, REJECTED_BY_ADMIN]`
+     * 2. `auto_close_review_required == true`
+     *
+     * Mantém apenas jogos FINISHED/CANCELLED e ordena por
+     * `xp_reward_held_at` → `validation_updated_at` → `date`+`time` (desc).
+     *
+     * A leitura é autorizada pelas `firestore.rules` (`isAdmin()` libera `list`
+     * de games sem filtros, fix #4571); não-admin recebe permission-denied.
+     */
+    suspend fun getGamesInRewardReview(): Result<List<Game>>
+
+    /**
+     * IDs (FINISHED/CANCELLED) dos jogos com `auto_close_review_required == true`
+     * (limit 100). Complementa [getGamesInRewardReview]: o modelo `Game` não expõe
+     * a flag de auto-close, então o chamador usa este conjunto para o filtro e o
+     * contador "Auto-close em revisão".
+     */
+    suspend fun getAutoCloseReviewGameIds(): Result<Set<String>>
+
+    /**
+     * Decide as recompensas de um jogo `HELD_FOR_REVIEW` pela callable
+     * `reviewHeldGameRewards` (region `southamerica-east1`, App Check enforced).
+     *
+     * @param action `"APPROVE"` (paga o XP imediatamente) ou `"REJECT"` (terminal).
+     * @param reason justificativa com 10–500 caracteres (trim) — auditável.
+     *
+     * Em falha, devolve [CallableException] com o código do protocolo
+     * (`permission-denied`, `resource-exhausted`, `invalid-argument`,
+     * `not-found`, `failed-precondition`...).
+     */
+    suspend fun reviewHeldGameRewards(gameId: String, action: String, reason: String): Result<Unit>
+
     // ========== GAME CONFIRMATIONS ==========
 
     suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>>

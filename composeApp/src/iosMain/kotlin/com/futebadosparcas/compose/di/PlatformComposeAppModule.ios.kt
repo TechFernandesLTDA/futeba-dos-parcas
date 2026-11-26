@@ -28,6 +28,7 @@ import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.domain.model.GameWithConfirmations
+import com.futebadosparcas.ui.admin.AdminGameReviewQueueViewModel
 import com.futebadosparcas.ui.core.GamesViewModel
 import com.futebadosparcas.ui.core.InviteViewModel
 import kotlinx.coroutines.flow.Flow
@@ -72,6 +73,19 @@ private fun firebaseModule(): Module = module {
     single<GroupRepository> { GroupRepositoryImpl(get(), get()) }
     single<InviteRepository> { InviteRepositoryImpl() }
     viewModel { GamesViewModel(observeGames = { gamesForList(get()) }) }
+    // Fila de revisão de recompensas XP (spec FEAT_2026-11-26): duas queries da fila
+    // + callable reviewHeldGameRewards via FirebaseDataSource. Dentro do firebaseModule
+    // (modo smoke-test sem plist resolve para null → estado "indisponível" na rota).
+    viewModel {
+        val dataSource = get<FirebaseDataSource>()
+        AdminGameReviewQueueViewModel(
+            loadQueue = { dataSource.getGamesInRewardReview() },
+            loadAutoCloseIds = { dataSource.getAutoCloseReviewGameIds() },
+            submitReview = { gameId, action, reason ->
+                dataSource.reviewHeldGameRewards(gameId, action, reason)
+            }
+        )
+    }
     viewModel {
         val dataSource = get<FirebaseDataSource>()
         InviteViewModel(

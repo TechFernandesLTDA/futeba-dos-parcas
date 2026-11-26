@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
@@ -109,6 +110,10 @@ import com.futebadosparcas.domain.monetization.PreferencesAdsStateStore
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.futebadosparcas.compose.resources.delete_account_title
 import com.futebadosparcas.compose.resources.delete_account_unavailable_env
+import com.futebadosparcas.compose.resources.admin_review_queue_title
+import com.futebadosparcas.compose.resources.admin_review_queue_unavailable_env
+import com.futebadosparcas.compose.resources.admin_review_queue_hub_action
+import com.futebadosparcas.compose.resources.admin_review_queue_hub_action_body
 import com.futebadosparcas.compose.resources.game_detail_action_team_formation
 import com.futebadosparcas.compose.resources.game_detail_fallback_title
 import com.futebadosparcas.compose.resources.route_post_game_share_text
@@ -204,6 +209,8 @@ import com.futebadosparcas.platform.PlatformShareFactory
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.futebadosparcas.ui.HomeScreen
 import com.futebadosparcas.ui.account.DeleteAccountScreen
+import com.futebadosparcas.ui.admin.AdminGameReviewQueueScreen
+import com.futebadosparcas.ui.admin.AdminGameReviewQueueViewModel
 import com.futebadosparcas.ui.account.DeleteAccountViewModel
 import com.futebadosparcas.ui.account.ExportMyDataError
 import com.futebadosparcas.ui.account.ExportMyDataUiState
@@ -994,11 +1001,20 @@ fun AppNavigation(
                 state = exportState,
                 onDismiss = { exportVm?.dismissResult() }
             )
+            // Fila de revisão de recompensas XP (FEAT_2026-11-26): entrypoint visível só
+            // para admin (role == "ADMIN" no doc do usuário — gating de UX; a callable
+            // `reviewHeldGameRewards` revalida o claim no backend).
+            var isAdminUser by remember { mutableStateOf(false) }
+            LaunchedEffect(authRepository) {
+                isAdminUser = authRepository?.getCurrentUser()?.getOrNull()?.isAdmin() == true
+            }
             FeatureHubScreen(
                 title = stringResource(Res.string.profile_hub_title),
                 body = stringResource(Res.string.profile_hub_body),
                 onNavigateBack = { navController.popBackStack() },
-                actions = listOf(
+                actions = buildList {
+                    addAll(
+                        listOf(
                     FeatureHubAction(
                         label = stringResource(Res.string.profile_hub_action_setup),
                         description = stringResource(Res.string.profile_hub_action_setup_body),
@@ -1050,7 +1066,23 @@ fun AppNavigation(
                         description = stringResource(Res.string.profile_hub_action_theme_body),
                         icon = Icons.Filled.Palette,
                         onClick = { navController.navigate(AppRoutes.THEME_SETTINGS) }
-                    ),
+                    )
+                        )
+                    )
+                    // Fila de revisão de recompensas XP (FEAT_2026-11-26) — antes das
+                    // ações de conta, só para administradores.
+                    if (isAdminUser) {
+                        add(
+                            FeatureHubAction(
+                                label = stringResource(Res.string.admin_review_queue_hub_action),
+                                description = stringResource(Res.string.admin_review_queue_hub_action_body),
+                                icon = Icons.Filled.AdminPanelSettings,
+                                onClick = { navController.navigate(AppRoutes.ADMIN_GAME_REVIEW) }
+                            )
+                        )
+                    }
+                    addAll(
+                        listOf(
                     // Conta (#4401 / #4483): exportar dados (LGPD), sair e excluir ficam no fim do hub.
                     FeatureHubAction(
                         label = if (exportState is ExportMyDataUiState.Loading) {
@@ -1081,7 +1113,9 @@ fun AppNavigation(
                         destructive = true,
                         onClick = { navController.navigate(AppRoutes.DELETE_ACCOUNT) }
                     )
-                )
+                        )
+                    )
+                }
             )
         }
 
@@ -1105,6 +1139,28 @@ fun AppNavigation(
                     UnavailableRouteScreen(
                         title = stringResource(Res.string.delete_account_title),
                         message = stringResource(Res.string.delete_account_unavailable_env),
+                        onRetry = { retryKey += 1 },
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+
+        // Admin: fila de revisão de recompensas XP (spec FEAT_2026-11-26).
+        // Entrypoint só aparece no hub de Perfil para role == "ADMIN"; o backend revalida.
+        composable(AppRoutes.ADMIN_GAME_REVIEW) {
+            var retryKey by remember { mutableIntStateOf(0) }
+            key(retryKey) {
+                val adminReviewVm = koinViewModelOrNull<AdminGameReviewQueueViewModel>()
+                if (adminReviewVm != null) {
+                    AdminGameReviewQueueScreen(
+                        viewModel = adminReviewVm,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    UnavailableRouteScreen(
+                        title = stringResource(Res.string.admin_review_queue_title),
+                        message = stringResource(Res.string.admin_review_queue_unavailable_env),
                         onRetry = { retryKey += 1 },
                         onNavigateBack = { navController.popBackStack() }
                     )
