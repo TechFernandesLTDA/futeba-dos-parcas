@@ -181,6 +181,22 @@ targets:
           - "$(inherited)"
           - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
 
+  # #4432: QA visual automatizado. O Simulador não tem CLI de toque; o caminho
+  # repetível é XCUITest, que abre o app, avança as telas e anexa capturas ao
+  # .xcresult. Rodado por scripts/bateria/ios-ui-capturas.sh em claro/escuro/AX3.
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iosAppUITests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: iosApp
+
 # Esquema explícito para garantir que xcodegen crie .xcscheme compartilhado.
 # Sem isto, Xcode 26.x usa esquema "auto" que falha no xcodebuild CLI.
 schemes:
@@ -200,3 +216,13 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  iosAppUITests:
+    build:
+      targets:
+        iosApp: all
+        iosAppUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - iosAppUITests
