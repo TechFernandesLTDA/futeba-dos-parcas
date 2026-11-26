@@ -13,9 +13,8 @@ kotlin {
         }
     }
 
-    // iOS targets
+    // iOS targets (#4265 etapa 4b: iosX64 removido no CMP 1.12 — só Arm64)
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -35,7 +34,6 @@ kotlin {
         val iosMain by creating {
             dependsOn(commonMain)
         }
-        val iosX64Main by getting { dependsOn(iosMain) }
         val iosArm64Main by getting { dependsOn(iosMain) }
         val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
 
@@ -64,12 +62,12 @@ kotlin {
             // Shared module - business logic
             implementation(project(":shared"))
 
-            // Navigation - atualizado para CMP 1.10.0
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
+            // Navigation - alinhada ao CMP 1.12 (#4265 etapa 4b)
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.10.0")
 
-            // ViewModel + Lifecycle - atualizado para 2.9.6
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
+            // ViewModel + Lifecycle - alinhados ao CMP 1.12 (#4265 etapa 4b)
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
 
             // Koin 4.1.1 — DI multiplatform (mesmo usado no :app Android)
             // koin-core: módulos, get(), startKoin
