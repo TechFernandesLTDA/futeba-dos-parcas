@@ -27,6 +27,13 @@ internal class FirebaseGamesDataSource(
     private val firestore: FirebaseFirestore = Firebase.firestore,
     private val auth: FirebaseAuth = Firebase.auth
 ) {
+    companion object {
+        /** Statuses rastreados na fila de recompensas (paridade web TRACKED_REWARD_STATUSES). */
+        internal val REWARD_REVIEW_TRACKED_STATUSES =
+            listOf("HELD_FOR_REVIEW", "ELIGIBLE", "REJECTED_BY_ADMIN")
+        internal const val REWARD_REVIEW_QUERY_LIMIT = 100
+    }
+
     // ========== GAMES ========== (#4596: sem getUpcomingGames/Flow — removidos)
 
     suspend fun getGameById(gameId: String): Result<Game> {
@@ -185,6 +192,117 @@ internal class FirebaseGamesDataSource(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    // ========== ADMIN: FILA DE REVISÃO DE RECOMPENSAS XP (spec FEAT_2026-11-26) ==========
+
+    /**
+     * Fila de revisão de recompensas XP (paridade total com
+     * `web/src/pages/admin/GameReviewQueueScreen.tsx`):
+     *
+     * 1. Query 1 — `xp_reward_status in [HELD_FOR_REVIEW, ELIGIBLE, REJECTED_BY_ADMIN]`
+     *    (mesmo IN index usado pela web), limit 100.
+     * 2. Query 2 — `auto_close_review_required == true`, limit 100.
+     *
+     * Merge por id (documento da query de auto-close prevalece, como na web),
+     * apenas FINISHED/CANCELLED, ordenado por `xp_reward_held_at` →
+     * `validation_updated_at` → `date`+`time` (desc).
+     */
+    suspend fun getGamesInRewardReview(): Result<List<Game>> {
+        return try {
+            val rewardDocs = firestore.collection(COLLECTION_GAMES)
+                .where { "xp_reward_status" inArray REWARD_REVIEW_TRACKED_STATUSES }
+                .limit(REWARD_REVIEW_QUERY_LIMIT)
+                .get()
+            val autoCloseDocs = firestore.collection(COLLECTION_GAMES)
+                .where { "auto_close_review_required" equalTo true }
+                .limit(REWARD_REVIEW_QUERY_LIMIT)
+                .get()
+
+            // LinkedHashMap preserva a ordem estável do merge antes da ordenação final.
+            val merged = LinkedHashMap<String, Game>()
+            // Auto-close por último: em id duplicado o doc da query 2 prevalece (web parity).
+            (rewardDocs.documents + autoCloseDocs.documents).forEach { doc ->
+                val game = doc.toGameOrNull() ?: return@forEach
+                if (!game.isFinished() && !game.isCancelled()) return@forEach
+                merged[game.id] = game
+            }
+
+            Result.success(merged.values.sortedByDescending { it.rewardReviewSortKey() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * IDs (FINISHED/CANCELLED) dos jogos com `auto_close_review_required == true`.
+     * Complementa [getGamesInRewardReview] — o modelo `Game` não expõe a flag,
+     * e o chamador precisa dela para o filtro e o contador de auto-close.
+     */
+    suspend fun getAutoCloseReviewGameIds(): Result<Set<String>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_GAMES)
+                .where { "auto_close_review_required" equalTo true }
+                .limit(REWARD_REVIEW_QUERY_LIMIT)
+                .get()
+            Result.success(
+                snapshot.documents.mapNotNull { doc ->
+                    val game = doc.toGameOrNull() ?: return@mapNotNull null
+                    if (game.isFinished() || game.isCancelled()) game.id else null
+                }.toSet()
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Callable `reviewHeldGameRewards` (region southamerica-east1).
+     * Payload `{gameId, action, reason}`; APPROVE paga o XP imediatamente,
+     * REJECT é terminal. Erros viram [CallableException] com o código do
+     * protocolo (`permission-denied`, `resource-exhausted`, `invalid-argument`,
+     * `not-found`, `failed-precondition`) e `details.reason` tolerante.
+     */
+    suspend fun reviewHeldGameRewards(gameId: String, action: String, reason: String): Result<Unit> {
+        return try {
+            Firebase.functions(FUNCTIONS_REGION)
+                .httpsCallable("reviewHeldGameRewards")
+                .invoke(
+                    mapOf(
+                        "gameId" to gameId,
+                        "action" to action,
+                        "reason" to reason
+                    )
+                )
+            Result.success(Unit)
+        } catch (e: FirebaseFunctionsException) {
+            // "PERMISSION_DENIED" -> "permission-denied": mesmo formato do código
+            // no protocolo das callables (padrão deleteAccount/exportMyData).
+            Result.failure(
+                CallableException(
+                    code = e.code.name.lowercase().replace('_', '-'),
+                    message = e.message,
+                    cause = e,
+                    reason = CallableException.reasonFromDetails(e.details),
+                    groups = CallableException.groupsFromDetails(e.details)
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Chave de ordenação da fila: held_at → validation_updated_at → data/hora do jogo. */
+    private fun Game.rewardReviewSortKey(): Long {
+        xpRewardHeldAt?.let { return it }
+        validationUpdatedAt?.let { return it }
+        // Fallback: data/hora combinadas ("2026-11-26T14:30"), como no createGame.
+        val epochSeconds = runCatching {
+            LocalDateTime.parse("${date}T$time")
+                .toInstant(TimeZone.currentSystemDefault())
+                .epochSeconds
+        }.getOrNull()
+        return (epochSeconds ?: createdAt ?: 0L)
     }
 
     // ========== CONFIRMATIONS ==========

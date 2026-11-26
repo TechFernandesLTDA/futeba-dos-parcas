@@ -88,6 +88,16 @@ actual class FirebaseDataSource actual constructor() {
     actual suspend fun deleteGame(gameId: String): Result<Unit> =
         games.deleteGame(gameId)
 
+    // ========== ADMIN: FILA DE REVISÃO DE RECOMPENSAS XP (spec FEAT_2026-11-26) ==========
+    actual suspend fun getGamesInRewardReview(): Result<List<Game>> =
+        games.getGamesInRewardReview()
+
+    actual suspend fun getAutoCloseReviewGameIds(): Result<Set<String>> =
+        games.getAutoCloseReviewGameIds()
+
+    actual suspend fun reviewHeldGameRewards(gameId: String, action: String, reason: String): Result<Unit> =
+        games.reviewHeldGameRewards(gameId, action, reason)
+
     actual suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>> =
         games.getGameConfirmations(gameId)
 
