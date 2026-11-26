@@ -674,4 +674,7 @@
     <string name="validation_model_field_invalid_format">%1$s tiene un formato inválido</string>
     <string name="validation_model_enum_invalid">%1$s tiene un valor inválido: %2$s</string>
     <string name="validation_model_logical_inconsistency">%1$s (%2$s) no puede ser mayor que %3$s (%4$s)</string>
+    <string name="validation_model_owner_required">El lugar debe tener un propietario</string>
+    <string name="validation_model_operating_days_range">Los días de funcionamiento deben estar entre 1 (lun) y 7 (dom)</string>
+    <string name="validation_model_field_count_negative">El conteo de canchas no puede ser negativo</string>
 </resources>

@@ -674,4 +674,7 @@
     <string name="validation_model_field_invalid_format">%1$s has an invalid format</string>
     <string name="validation_model_enum_invalid">%1$s has an invalid value: %2$s</string>
     <string name="validation_model_logical_inconsistency">%1$s (%2$s) cannot be greater than %3$s (%4$s)</string>
+    <string name="validation_model_owner_required">The venue must have an owner</string>
+    <string name="validation_model_operating_days_range">Operating days must be between 1 (Mon) and 7 (Sun)</string>
+    <string name="validation_model_field_count_negative">Field count cannot be negative</string>
 </resources>

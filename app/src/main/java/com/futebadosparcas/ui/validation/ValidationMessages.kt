@@ -68,6 +68,9 @@ object ValidationMessages {
         "validation_model.field_invalid_format" to R.string.validation_model_field_invalid_format,
         "validation_model.enum_invalid" to R.string.validation_model_enum_invalid,
         "validation_model.logical_inconsistency" to R.string.validation_model_logical_inconsistency,
+        "validation_model.field_count_negative" to R.string.validation_model_field_count_negative,
+        "validation_model.operating_days_range" to R.string.validation_model_operating_days_range,
+        "validation_model.owner_required" to R.string.validation_model_owner_required,
     )
 
     /** Texto exibível do erro; PT (a `message`) quando sem chave conhecida. */
