@@ -37,6 +37,7 @@ import {
   Button,
   ButtonBase,
   CircularProgress,
+  Stack,
   TextField,
   useTheme,
   useMediaQuery,
@@ -876,6 +877,10 @@ export function HomeTab() {
     onboardingState.checklistCompletedAt === null &&
     checklistSteps.some(s => !s.completed);
 
+  // #4629 item 14: novato (sem jogo, sem grupo) vê boas-vindas com ações de
+  // jogo em vez do destaque para convidar amigos.
+  const isNewUser = (user?.totalGames ?? 0) === 0 && (groups?.length ?? 0) === 0;
+
   const currentXp = user?.experiencePoints || 0;
   const currentLevel = getLevelForXp(currentXp);
   const levelEntry = getLevelEntry(currentLevel);
@@ -1144,7 +1149,44 @@ export function HomeTab() {
         </CardContent>
       </Card>
 
-      <HomeInviteCard onInvite={() => navigate('/invite-friend')} />
+      {isNewUser ? (
+        <Card
+          variant="outlined"
+          sx={{
+            mb: 2,
+            overflow: 'hidden',
+            borderColor: alpha(theme.palette.primary.main, 0.35),
+            background: `linear-gradient(120deg, ${alpha(theme.palette.primary.main, 0.13)}, ${alpha(theme.palette.success.main, 0.07)})`,
+          }}
+        >
+          <CardContent>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 0.5 }}>
+              {t('home.welcomeTitle')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {t('home.welcomeDesc')}
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/public-games')}
+                startIcon={<SportsSoccer aria-hidden="true" />}
+              >
+                {t('home.welcomeViewPublic')}
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/game/create')}
+                startIcon={<AddIcon aria-hidden="true" />}
+              >
+                {t('home.welcomeCreate')}
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      ) : (
+        <HomeInviteCard onInvite={() => navigate('/invite-friend')} />
+      )}
 
       {isMd ? (
         <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>

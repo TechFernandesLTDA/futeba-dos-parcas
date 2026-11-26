@@ -31,6 +31,7 @@ import { WhatsNewPopupHost } from '../../components/whatsnew/WhatsNewPopupHost';
 import { QuickActions } from '../../components/home/QuickActions';
 import { InstallAppPrompt } from '../../components/common/InstallAppPrompt';
 import { AppPermissionsPrompt } from '../../components/common/AppPermissionsPrompt';
+import { useAuth } from '../../contexts/AuthContext';
 import { pageSpacing } from '../../theme/pageTokens';
 
 const TeamOfTheWeek = lazy(() => import('../../components/game/TeamOfTheWeek').then(m => ({ default: m.TeamOfTheWeek })));
@@ -55,6 +56,7 @@ export function HomeScreen() {
   const tabValue = getSafeHomeTabValue(searchParams.get('tab'));
   const [mountedTabs, setMountedTabs] = useState<Set<number>>(() => new Set([tabValue]));
   const [towExpanded, setTowExpanded] = useState(false);
+  const { user } = useAuth();
   const { t } = useTranslation();
   const theme = useTheme();
   useDocumentTitle(t('common.appName'));
@@ -73,7 +75,9 @@ export function HomeScreen() {
       {tabValue === 0 && (
         <Box sx={{ flexShrink: 0, px: pageSpacing.pagePadding, pt: { xs: 1, md: 0.75 }, pb: towExpanded ? 0 : { xs: 0.5, md: 0 } }}>
           <InstallAppPrompt sx={{ mb: { xs: 1, md: 1.25 } }} />
-          <AppPermissionsPrompt />
+          {/* #4629 item 14: sem primeiro jogo confirmado, a faixa de permisos
+              vira ruído antes de qualquer valor; aparece depois do 1º jogo. */}
+          {(user?.totalGames ?? 0) > 0 && <AppPermissionsPrompt />}
           <Box
             onClick={() => setTowExpanded(!towExpanded)}
             role="button"

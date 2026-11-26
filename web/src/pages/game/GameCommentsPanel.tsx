@@ -451,9 +451,12 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 )}
                 {canDelete && (
                   <Tooltip title={t('common.delete')}>
-                    <IconButton size="small" onClick={handleDelete} disabled={saving} aria-label={t('common.delete')}>
-                      {saving ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
-                    </IconButton>
+                    {/* span: botão desabilitado não dispara eventos e a dica não abriria (#4629, item 26). */}
+                    <span>
+                      <IconButton size="small" onClick={handleDelete} disabled={saving} aria-label={t('common.delete')}>
+                        {saving ? <CircularProgress size={16} /> : <DeleteIcon fontSize="small" />}
+                      </IconButton>
+                    </span>
                   </Tooltip>
                 )}
               </Stack>
