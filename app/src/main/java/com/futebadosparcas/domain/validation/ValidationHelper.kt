@@ -128,7 +128,8 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "CEP é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.cep_required"
                 )
             } else {
                 ValidationResult.Valid
@@ -139,7 +140,8 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "CEP inválido. Use o formato 12345-678 ou 12345678",
-                ValidationErrorCode.INVALID_CEP
+                ValidationErrorCode.INVALID_CEP,
+                "validation_model.cep_invalid"
             )
         }
 
@@ -200,14 +202,16 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Email é obrigatório",
-                ValidationErrorCode.REQUIRED_FIELD
+                ValidationErrorCode.REQUIRED_FIELD,
+                "validation_model.email_required"
             )
         }
         if (!EMAIL_PATTERN.matcher(email.trim()).matches()) {
             return ValidationResult.invalid(
                 fieldName,
                 "Formato de email inválido",
-                ValidationErrorCode.INVALID_EMAIL
+                ValidationErrorCode.INVALID_EMAIL,
+                "validation_model.email_invalid"
             )
         }
         return ValidationResult.Valid
@@ -243,7 +247,8 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "Nome é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.name_required"
                 )
             } else {
                 ValidationResult.Valid
@@ -255,21 +260,26 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Nome deve ter pelo menos $min caracteres",
-                ValidationErrorCode.INVALID_LENGTH
+                ValidationErrorCode.INVALID_LENGTH,
+                "validation_model.name_min_length",
+                listOf(min)
             )
         }
         if (trimmed.length > max) {
             return ValidationResult.invalid(
                 fieldName,
                 "Nome deve ter no máximo $max caracteres",
-                ValidationErrorCode.INVALID_LENGTH
+                ValidationErrorCode.INVALID_LENGTH,
+                "validation_model.name_max_length",
+                listOf(max)
             )
         }
         if (!NAME_PATTERN.matcher(trimmed).matches()) {
             return ValidationResult.invalid(
                 fieldName,
                 "Nome contém caracteres inválidos",
-                ValidationErrorCode.INVALID_FORMAT
+                ValidationErrorCode.INVALID_FORMAT,
+                "validation_model.name_invalid"
             )
         }
         return ValidationResult.Valid
@@ -298,7 +308,9 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "$fieldName é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.field_required",
+                    listOf(fieldName)
                 )
             } else {
                 ValidationResult.Valid
@@ -309,14 +321,18 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName deve ter pelo menos $min caracteres",
-                ValidationErrorCode.INVALID_LENGTH
+                ValidationErrorCode.INVALID_LENGTH,
+                "validation_model.field_min_length",
+                listOf(fieldName, min)
             )
         }
         if (value.length > max) {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName deve ter no máximo $max caracteres",
-                ValidationErrorCode.INVALID_LENGTH
+                ValidationErrorCode.INVALID_LENGTH,
+                "validation_model.field_max_length",
+                listOf(fieldName, max)
             )
         }
         return ValidationResult.Valid
@@ -374,7 +390,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Rating deve estar entre $RATING_MIN e $RATING_MAX",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.rating_range",
+                listOf(RATING_MIN, RATING_MAX)
             )
         }
         return ValidationResult.Valid
@@ -404,7 +422,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "League rating deve estar entre $LEAGUE_RATING_MIN e $LEAGUE_RATING_MAX",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.league_rating_range",
+                listOf(LEAGUE_RATING_MIN, LEAGUE_RATING_MAX)
             )
         }
         return ValidationResult.Valid
@@ -434,7 +454,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Nível deve estar entre $LEVEL_MIN e $LEVEL_MAX",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.level_range",
+                listOf(LEVEL_MIN, LEVEL_MAX)
             )
         }
         return ValidationResult.Valid
@@ -456,14 +478,18 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName é obrigatório",
-                ValidationErrorCode.REQUIRED_FIELD
+                ValidationErrorCode.REQUIRED_FIELD,
+                "validation_model.field_required",
+                    listOf(fieldName)
             )
         }
         if (amount <= 0) {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName deve ser maior que zero",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.amount_greater_than_zero",
+                listOf(fieldName)
             )
         }
         return ValidationResult.Valid
@@ -486,7 +512,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName não pode ser negativo",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.non_negative",
+                listOf(fieldName)
             )
         }
         return ValidationResult.Valid
@@ -511,41 +539,49 @@ object ValidationHelper {
         saves: Int
     ): ValidationResult {
         if (goals < 0) {
-            return ValidationResult.invalid("goals", "Gols não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE)
+            return ValidationResult.invalid("goals", "Gols não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE, "validation_model.goals_negative")
         }
         if (goals > MAX_GOALS_PER_GAME) {
             return ValidationResult.invalid(
                 "goals",
                 "Máximo de $MAX_GOALS_PER_GAME gols por jogo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.goals_max",
+                listOf(MAX_GOALS_PER_GAME)
             )
         }
         if (assists < 0) {
             return ValidationResult.invalid(
                 "assists",
                 "Assistências não pode ser negativo",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.assists_negative"
             )
         }
         if (assists > MAX_ASSISTS_PER_GAME) {
             return ValidationResult.invalid(
                 "assists",
                 "Máximo de $MAX_ASSISTS_PER_GAME assistências por jogo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.assists_max",
+                listOf(MAX_ASSISTS_PER_GAME)
             )
         }
         if (saves < 0) {
             return ValidationResult.invalid(
                 "saves",
                 "Defesas não pode ser negativo",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.saves_negative"
             )
         }
         if (saves > MAX_SAVES_PER_GAME) {
             return ValidationResult.invalid(
                 "saves",
                 "Máximo de $MAX_SAVES_PER_GAME defesas por jogo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.saves_max",
+                listOf(MAX_SAVES_PER_GAME)
             )
         }
         return ValidationResult.Valid
@@ -556,13 +592,15 @@ object ValidationHelper {
      */
     fun validateXPGain(xp: Int): ValidationResult {
         if (xp < 0) {
-            return ValidationResult.invalid("xp", "XP não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE)
+            return ValidationResult.invalid("xp", "XP não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE, "validation_model.xp_negative")
         }
         if (xp > MAX_XP_PER_GAME) {
             return ValidationResult.invalid(
                 "xp",
                 "Máximo de $MAX_XP_PER_GAME XP por jogo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.xp_max",
+                listOf(MAX_XP_PER_GAME)
             )
         }
         return ValidationResult.Valid
@@ -587,7 +625,8 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 "timestamps",
                 "Data de criação não pode ser posterior à data de atualização",
-                ValidationErrorCode.INVALID_TIMESTAMP
+                ValidationErrorCode.INVALID_TIMESTAMP,
+                "validation_model.timestamp_order"
             )
         }
         return ValidationResult.Valid
@@ -672,14 +711,18 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Mínimo de $MIN_PLAYERS_PER_GAME jogadores para um jogo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.players_min",
+                listOf(MIN_PLAYERS_PER_GAME)
             )
         }
         if (count > MAX_PLAYERS_PER_GAME) {
             return ValidationResult.invalid(
                 fieldName,
                 "Máximo de $MAX_PLAYERS_PER_GAME jogadores por jogo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.players_max",
+                listOf(MAX_PLAYERS_PER_GAME)
             )
         }
         return ValidationResult.Valid
@@ -698,14 +741,17 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 "teams",
                 "Times devem ter no máximo 1 jogador de diferença (atual: $diff)",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.teams_balance",
+                listOf(diff)
             )
         }
         if (teamASize <= 0 || teamBSize <= 0) {
             return ValidationResult.invalid(
                 "teams",
                 "Cada time deve ter pelo menos 1 jogador",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.teams_minimum"
             )
         }
         return ValidationResult.Valid
@@ -723,14 +769,18 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Duração mínima de $MIN_GAME_DURATION_MINUTES minutos",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.duration_min",
+                listOf(MIN_GAME_DURATION_MINUTES)
             )
         }
         if (durationMinutes > MAX_GAME_DURATION_MINUTES) {
             return ValidationResult.invalid(
                 fieldName,
                 "Duração máxima de $MAX_GAME_DURATION_MINUTES minutos",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.duration_max",
+                listOf(MAX_GAME_DURATION_MINUTES)
             )
         }
         return ValidationResult.Valid
@@ -748,14 +798,16 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Data do jogo é obrigatória",
-                ValidationErrorCode.REQUIRED_FIELD
+                ValidationErrorCode.REQUIRED_FIELD,
+                "validation_model.game_date_required"
             )
         }
         if (!isFutureDate(gameDate)) {
             return ValidationResult.invalid(
                 fieldName,
                 "Data do jogo deve ser no futuro",
-                ValidationErrorCode.INVALID_TIMESTAMP
+                ValidationErrorCode.INVALID_TIMESTAMP,
+                "validation_model.game_date_future"
             )
         }
         return ValidationResult.Valid
@@ -773,21 +825,27 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Valor é obrigatório",
-                ValidationErrorCode.REQUIRED_FIELD
+                ValidationErrorCode.REQUIRED_FIELD,
+                "validation_model.field_required",
+                    listOf(fieldName)
             )
         }
         if (value < MIN_PAYMENT_VALUE) {
             return ValidationResult.invalid(
                 fieldName,
                 "Valor deve ser maior que R$ ${String.format(Locale.getDefault(), "%.2f", MIN_PAYMENT_VALUE)}",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.payment_min",
+                listOf(String.format(Locale.getDefault(), "%.2f", MIN_PAYMENT_VALUE))
             )
         }
         if (value > MAX_PAYMENT_VALUE) {
             return ValidationResult.invalid(
                 fieldName,
                 "Valor máximo é R$ ${String.format(Locale.getDefault(), "%.2f", MAX_PAYMENT_VALUE)}",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.payment_max",
+                listOf(String.format(Locale.getDefault(), "%.2f", MAX_PAYMENT_VALUE))
             )
         }
         return ValidationResult.Valid
@@ -805,14 +863,17 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Grupo deve ter pelo menos 1 membro",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.group_min"
             )
         }
         if (memberCount > MAX_GROUP_MEMBERS) {
             return ValidationResult.invalid(
                 fieldName,
                 "Máximo de $MAX_GROUP_MEMBERS membros por grupo",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.group_max",
+                listOf(MAX_GROUP_MEMBERS)
             )
         }
         return ValidationResult.Valid
@@ -842,21 +903,24 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 "coordenadas",
                 "Coordenadas são obrigatórias",
-                ValidationErrorCode.REQUIRED_FIELD
+                ValidationErrorCode.REQUIRED_FIELD,
+                "validation_model.coords_required"
             )
         }
         if (latitude < -90.0 || latitude > 90.0) {
             return ValidationResult.invalid(
                 "latitude",
                 "Latitude deve estar entre -90 e 90",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.latitude_range"
             )
         }
         if (longitude < -180.0 || longitude > 180.0) {
             return ValidationResult.invalid(
                 "longitude",
                 "Longitude deve estar entre -180 e 180",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.longitude_range"
             )
         }
         return ValidationResult.Valid
@@ -874,7 +938,8 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 "placar",
                 "Placar não pode ser negativo",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.score_negative"
             )
         }
         val maxScore = 50 // Limite razoável para pelada
@@ -882,7 +947,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 "placar",
                 "Placar máximo é $maxScore gols por time",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.score_max",
+                listOf(maxScore)
             )
         }
         return ValidationResult.Valid
@@ -912,14 +979,16 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Mínimo de 2 times",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.teams_count_min"
             )
         }
         if (teamCount > 4) {
             return ValidationResult.invalid(
                 fieldName,
                 "Máximo de 4 times",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.teams_count_max"
             )
         }
         return ValidationResult.Valid
@@ -937,7 +1006,8 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Streak não pode ser negativo",
-                ValidationErrorCode.NEGATIVE_VALUE
+                ValidationErrorCode.NEGATIVE_VALUE,
+                "validation_model.streak_negative"
             )
         }
         val maxStreak = 365 // Máximo 1 ano seguido
@@ -945,7 +1015,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Streak máximo é $maxStreak jogos consecutivos",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.streak_max",
+                listOf(maxStreak)
             )
         }
         return ValidationResult.Valid
@@ -1023,7 +1095,9 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "$fieldName é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.field_required",
+                    listOf(fieldName)
                 )
             } else {
                 ValidationResult.Valid
@@ -1034,7 +1108,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "URL excede o tamanho máximo de $URL_MAX_LENGTH caracteres",
-                ValidationErrorCode.INVALID_URL
+                ValidationErrorCode.INVALID_URL,
+                "validation_model.url_max",
+                listOf(URL_MAX_LENGTH)
             )
         }
 
@@ -1042,7 +1118,8 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "URL deve começar com https:// ou gs://",
-                ValidationErrorCode.INVALID_URL
+                ValidationErrorCode.INVALID_URL,
+                "validation_model.url_scheme"
             )
         }
 
@@ -1062,7 +1139,8 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "Telefone é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.phone_required"
                 )
             } else {
                 ValidationResult.Valid
@@ -1073,7 +1151,8 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "Formato de telefone inválido",
-                ValidationErrorCode.INVALID_PHONE
+                ValidationErrorCode.INVALID_PHONE,
+                "validation_model.phone_invalid"
             )
         }
 
@@ -1095,7 +1174,9 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "$fieldName é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.field_required",
+                    listOf(fieldName)
                 )
             } else {
                 ValidationResult.Valid
@@ -1105,7 +1186,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName deve estar entre $min e $max",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.field_range",
+                listOf(fieldName, min, max)
             )
         }
         return ValidationResult.Valid
@@ -1126,7 +1209,9 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "$fieldName é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.field_required",
+                    listOf(fieldName)
                 )
             } else {
                 ValidationResult.Valid
@@ -1136,7 +1221,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName deve estar entre $min e $max",
-                ValidationErrorCode.OUT_OF_RANGE
+                ValidationErrorCode.OUT_OF_RANGE,
+                "validation_model.field_range",
+                listOf(fieldName, min, max)
             )
         }
         return ValidationResult.Valid
@@ -1153,14 +1240,18 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName é obrigatório",
-                ValidationErrorCode.REQUIRED_FIELD
+                ValidationErrorCode.REQUIRED_FIELD,
+                "validation_model.field_required",
+                    listOf(fieldName)
             )
         }
         if (!isValidDocumentId(id)) {
             return ValidationResult.invalid(
                 fieldName,
                 "$fieldName contém formato inválido",
-                ValidationErrorCode.INVALID_FORMAT
+                ValidationErrorCode.INVALID_FORMAT,
+                "validation_model.field_invalid_format",
+                listOf(fieldName)
             )
         }
         return ValidationResult.Valid
@@ -1179,7 +1270,9 @@ object ValidationHelper {
                 ValidationResult.invalid(
                     fieldName,
                     "$fieldName é obrigatório",
-                    ValidationErrorCode.REQUIRED_FIELD
+                    ValidationErrorCode.REQUIRED_FIELD,
+                    "validation_model.field_required",
+                    listOf(fieldName)
                 )
             } else {
                 ValidationResult.Valid
@@ -1193,7 +1286,9 @@ object ValidationHelper {
             ValidationResult.invalid(
                 fieldName,
                 "$fieldName contém valor inválido: $value",
-                ValidationErrorCode.INVALID_STATUS
+                ValidationErrorCode.INVALID_STATUS,
+                "validation_model.enum_invalid",
+                listOf(fieldName, value)
             )
         }
     }
@@ -1211,7 +1306,9 @@ object ValidationHelper {
             return ValidationResult.invalid(
                 lesserName,
                 "$lesserName ($lesser) não pode ser maior que $greaterName ($greater)",
-                ValidationErrorCode.LOGICAL_INCONSISTENCY
+                ValidationErrorCode.LOGICAL_INCONSISTENCY,
+                "validation_model.logical_inconsistency",
+                listOf(lesserName, lesser, greaterName, greater)
             )
         }
         return ValidationResult.Valid
