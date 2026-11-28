@@ -30,6 +30,30 @@ Mudanças já na `master` que ainda não saíram nas lojas. Entram nas notas da 
 
 ## Android
 
+### [1.46.0][android-1.46.0] - 2026-11-28
+
+#### Adicionado
+- Fila de revisão de XP retido para administradores (#4668).
+- Pedido de avaliação nativo, uma vez só, após o 3º jogo com XP (#4605).
+- Baseline profile gerado (#4660).
+
+#### Mudado
+- Splash sem atraso fixo e descompressão transparente (#4649, #4618); brasões via AsyncImage (#4655); R8 sem regras amplas (#4618, #4665).
+- Mensagens de validação por chave em `strings.xml` (#4654, #4659, #4664).
+- Piso de XP central em `shared/xp-constants.json` e status `INELIGIBLE_MIN_PLAYERS` no detalhe do jogo (#4658).
+- KMP etapa 4b: CMP 1.12, sem iosX64 (#4656).
+
+#### Corrigido
+- Escritores gravam snake_case; criar grupo passa na regra (#4648).
+- Widget Próximo jogo com consulta aceita pelo Firestore (#4643).
+- Convite pendente não duplica quando a checagem falha (#4642).
+- `@ServerTimestamp` em Cashbox, AppNotification e modelos renomeados (#4644, #4650).
+- Caixa no primeiro lançamento, pedir de novo, ordem dos times e sem `players` vazio (#4637).
+- Outros jogadores vêm da projeção pública, não de LIST em users (#4620).
+- Código morto e leituras frágeis removidos (#4652).
+
+_Issues: #4411, #4592, #4595, #4596, #4629 · PRs: #4605, #4618, #4619, #4620, #4637, #4642, #4643, #4644, #4647, #4648, #4649, #4650, #4652, #4654, #4655, #4656, #4658, #4659, #4660, #4664, #4665, #4668_
+
 ### [1.45.0][android-1.45.0] - 2026-11-21
 
 #### Adicionado
@@ -502,6 +526,21 @@ _Issues: #443, #1303, #1310 · PRs: #1295, #1313, #1312, #1286_
 - Bump de versão de manutenção após a mega audit wave de 2026-05-11, sem mudanças funcionais no Android nesta tag.
 
 ## Web
+
+### [1.64.1][web-1.64.1] - 2026-11-28
+
+#### Adicionado
+- Status `INELIGIBLE_MIN_PLAYERS` tratado no banner do detalhe do jogo e aviso na criação quando `maxPlayers` fica abaixo de `minPlayersForXp` (#4658).
+
+#### Mudado
+- Piso de XP lido de `shared/xp-constants.json` (`minPlayersForXp`) (#4658).
+- `AppPermissionsPrompt` só após `user.totalGames > 0`; cartão "Primeira pelada" no lugar do `HomeInviteCard` para novato (#4653).
+
+#### Corrigido
+- Instalação nova não herda a última versão vista e não abre Novidades antigas (#4647).
+- Tooltip do delete em `GameCommentsPanel` com botão desativado (#4653).
+
+_Issues: #4629 · PRs: #4647, #4653, #4658_
 
 ### [1.64.0][web-1.64.0] - 2026-11-21
 
@@ -3499,6 +3538,7 @@ _Issues: #2981_
 _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 
 
+[android-1.46.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.46.0.md
 [android-1.45.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.45.0.md
 [android-1.44.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.44.0.md
 [android-1.43.5]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.43.5.md
@@ -3536,6 +3576,7 @@ _Issues: #1478, #1467 · PRs: #1478, #1467, #1500, #1501, #1516_
 [android-1.26.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.26.0.md
 [android-1.25.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.25.0.md
 [android-1.24.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/android/1.24.0.md
+[web-1.64.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.64.1.md
 [web-1.64.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.64.0.md
 [web-1.63.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.63.0.md
 [web-1.61.1]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/blob/master/release-notes/web/1.61.1.md

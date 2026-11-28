@@ -1,7 +1,31 @@
 {
   "platform": "web",
-  "generatedAt": "2026-11-21T22:35:44.673Z",
+  "generatedAt": "2026-11-28T03:25:30.577Z",
   "notes": [
+    {
+      "version": "1.64.1",
+      "buildNumber": null,
+      "releaseDate": "2026-11-28",
+      "type": "patch",
+      "showPopup": false,
+      "published": true,
+      "headline": "Quem está começando tem um caminho mais claro até a primeira pelada, e jogos incompletos dizem com clareza que não rendem XP.",
+      "highlights": [],
+      "added": [],
+      "improved": [
+        "Conta nova, sem jogo e sem grupo, vê o cartão \"Primeira pelada\", com atalhos para ver jogos públicos e para criar um jogo.",
+        "O convite de grupo diz que vale para uma pessoa e por 7 dias.",
+        "Jogo com menos de 6 confirmados mostra \"Sem XP por jogo incompleto\", e a criação avisa quando o máximo de jogadores fica abaixo desse mínimo.",
+        "O pedido de permissões só aparece depois do primeiro jogo."
+      ],
+      "fixed": [
+        "Quem instala o app pela primeira vez não vê mais as Novidades de uma versão anterior.",
+        "A dica do botão de apagar comentário aparece mesmo quando o botão está desativado."
+      ],
+      "issueRefs": [
+        4629
+      ]
+    },
     {
       "version": "1.64.0",
       "buildNumber": null,
