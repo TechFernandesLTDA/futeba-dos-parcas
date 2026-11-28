@@ -1,7 +1,45 @@
 {
   "platform": "android",
-  "generatedAt": "2026-11-21T23:38:05.985Z",
+  "generatedAt": "2026-11-28T03:25:30.574Z",
   "notes": [
+    {
+      "version": "1.46.0",
+      "buildNumber": 97,
+      "releaseDate": "2026-11-28",
+      "type": "minor",
+      "showPopup": false,
+      "published": true,
+      "headline": "O app abre mais rápido e ficou mais confiável em convites, grupos, caixa e no widget de Próximo jogo.",
+      "highlights": [
+        {
+          "icon": "speed",
+          "title": "Abre mais rápido",
+          "description": "A abertura ficou mais curta e as imagens dos brasões carregam com menos peso."
+        }
+      ],
+      "added": [
+        "Depois do seu terceiro jogo com XP, o app pede uma vez a sua avaliação na Google Play."
+      ],
+      "improved": [
+        "Jogo com menos de 6 confirmados mostra \"Sem XP por jogo incompleto\", em vez de dizer que foi validado.",
+        "As mensagens de erro dos formulários aparecem no idioma do celular.",
+        "A contagem e o botão da pelada pública mudam na hora quando você confirma presença."
+      ],
+      "fixed": [
+        "Criar grupo voltou a funcionar.",
+        "O widget Próximo jogo voltou a mostrar o jogo.",
+        "Uma falha ao checar um convite pendente não cria mais um convite repetido.",
+        "O caixa funciona desde o primeiro lançamento, e dá para pedir de novo para entrar num grupo.",
+        "Quem instala o app pela primeira vez não vê mais as Novidades de uma versão anterior."
+      ],
+      "issueRefs": [
+        4411,
+        4592,
+        4595,
+        4596,
+        4629
+      ]
+    },
     {
       "version": "1.45.0",
       "buildNumber": 96,
