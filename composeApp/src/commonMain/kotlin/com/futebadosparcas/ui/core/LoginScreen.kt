@@ -37,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -289,7 +290,9 @@ private fun LoginCard(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    // testTag vira accessibilityIdentifier no iOS: é o que permite
+                    // o XCUITest (e o VoiceOver) achar o campo como campo (#4671).
+                    modifier = Modifier.fillMaxWidth().testTag("login-email"),
                     label = { Text(stringResource(Res.string.email)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(
@@ -303,7 +306,7 @@ private fun LoginCard(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("login-password"),
                     label = { Text(stringResource(Res.string.password)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
